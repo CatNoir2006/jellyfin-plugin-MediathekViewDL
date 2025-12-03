@@ -1,16 +1,19 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using Jellyfin.Plugin.Template.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Api;
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Services;
+using Jellyfin.Plugin.MediathekViewDL.Tasks;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Plugins;
 using MediaBrowser.Model.Serialization;
 
-namespace Jellyfin.Plugin.Template;
+namespace Jellyfin.Plugin.MediathekViewDL;
 
 /// <summary>
-/// The main plugin.
+/// The main plugin class.
 /// </summary>
 public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
@@ -26,10 +29,13 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     }
 
     /// <inheritdoc />
-    public override string Name => "Template";
+    public override string Name => "Mediathek Downloader";
 
     /// <inheritdoc />
-    public override Guid Id => Guid.Parse("eb5d7894-8eef-4b36-aa6f-5d124e828ce1");
+    public override string Description => "Sucht und lädt Inhalte aus den Mediatheken über die MediathekViewWeb-API.";
+
+    /// <inheritdoc />
+    public override Guid Id => Guid.Parse("a31b415a-5264-419d-b152-8c8192a54994");
 
     /// <summary>
     /// Gets the current plugin instance.

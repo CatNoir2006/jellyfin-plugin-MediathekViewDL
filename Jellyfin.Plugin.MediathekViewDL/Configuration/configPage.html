@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Mediathek Downloader</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="/web/themes/base.css" />
+    <link rel="stylesheet" type="text/css" href="/web/themes/shared.css" />
+    <style>
+        .page {
+            margin: 2em;
+        }
+
+        .config-tabs {
+            border-bottom: 1px solid #444;
+            margin-bottom: 2em;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            color: #ccc;
+            padding: 1em 1.5em;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        .tab-button.active {
+            color: #00a4dc;
+            border-bottom: 2px solid #00a4dc;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 2em;
+        }
+
+        .section h3 {
+            margin-bottom: 0.5em;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1em;
+        }
+
+        .input-group input[type="text"] {
+            flex-grow: 1;
+            margin-right: 1em;
+        }
+
+        .result-item, .sub-item {
+            background-color: #1a1a1a;
+            padding: 1em;
+            border-radius: 5px;
+            margin-bottom: 1em;
+            border-left: 3px solid #00a4dc;
+        }
+
+        .result-item h4, .sub-item h4 {
+            margin-top: 0;
+        }
+
+        .result-details {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-bottom: 1em;
+        }
+
+        .sub-form {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 1em;
+        }
+
+        .sub-form label {
+            text-align: right;
+            padding-right: 1em;
+            align-self: center;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-left-color: #00a4dc;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin: 1em auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+        <h1 class="page-title">Mediathek Downloader</h1>
+
+        <div class="config-tabs">
+            <button class="tab-button active" data-tab="tab-settings">Einstellungen & Suche</button>
+            <button class="tab-button" data-tab="tab-subs">Abonnements</button>
+        </div>
+
+        <form class="plugin-config-form">
+            <!-- Tab 1: Settings & Search -->
+            <div id="tab-settings" class="tab-content active">
+                <div class="section">
+                    <h3>Allgemeine Einstellungen</h3>
+                    <div class="paper-form">
+                        <div class="input-container">
+                            <input type="text" id="txtDefaultDownloadPath" name="DefaultDownloadPath" class="text-input" label="Standard-Downloadpfad" />
+                            <div class="input-label">Standard-Downloadpfad</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Manuelle Suche</h3>
+                    <div class="input-group paper-form">
+                        <input type="text" id="txtSearchQuery" class="text-input" placeholder="z.B. 'Tatort Münster'" />
+                        <button type="button" id="btnSearch" class="paper-button">Suchen</button>
+                    </div>
+                    <div class="input-group paper-form">
+                        <input type="number" id="txtMinDuration" class="text-input" placeholder="Min. Dauer (Sekunden, optional)" />
+                        <input type="number" id="txtMaxDuration" class="text-input" placeholder="Max. Dauer (Sekunden, optional)" />
+                    </div>
+                    <div class="spinner" id="searchSpinner"></div>
+                    <div id="searchResults"></div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Subscriptions -->
+            <div id="tab-subs" class="tab-content">
+                <div class="section">
+                    <button type="button" id="btnAddSub" class="paper-button">Neues Abo hinzufügen</button>
+                </div>
+                <div id="subscriptionsContainer"></div>
+            </div>
+
+            <button type="submit" id="btnSave" style="display:none;"></button>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Use the ApiClient provided by jellyfin-web
+            const getApiClient = () => window.ApiClient;
+            const PLUGIN_ID = 'a31b415a-5264-419d-b152-8c8192a54994';
+
+            const AppApiClient = {
+                async getConfig() {
+                    return await getApiClient().getPluginConfiguration(PLUGIN_ID);
+                },
+                async updateConfig(config) {
+                    return await getApiClient().updatePluginConfiguration(PLUGIN_ID, config);
+                },
+                async search(query, minDuration, maxDuration) {
+                    let url = `${getApiClient().getUrl('MediathekViewDL/Search')}?query=${encodeURIComponent(query)}`;
+                    if (minDuration) {
+                        url += `&minDuration=${minDuration}`;
+                    }
+                    if (maxDuration) {
+                        url += `&maxDuration=${maxDuration}`;
+                    }
+                    return await getApiClient().getJSON(url);
+                },
+                async download(item) {
+                    const url = getApiClient().getUrl('MediathekViewDL/Download');
+                    const response = await getApiClient().ajax({
+                        type: "POST",
+                        url: url,
+                        dataType: "json",
+                        contentType: 'application/json',
+                        data: JSON.stringify(item)
+                    });
+                    Dashboard.alert(`Download für "${item.title}" angefordert.`);
+                }
+            };
+
+            let config = {};
+
+            const txtDefaultDownloadPath = document.getElementById('txtDefaultDownloadPath');
+            const subscriptionsContainer = document.getElementById('subscriptionsContainer');
+
+            // --- TABS ---
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-button, .tab-content').forEach(el => el.classList.remove('active'));
+                    button.classList.add('active');
+                    document.getElementById(button.dataset.tab).classList.add('active');
+                });
+            });
+
+            // --- DATA LOADING & SAVING ---
+            async function loadConfig() {
+                try {
+                    config = await AppApiClient.getConfig();
+                    if (!config.Subscriptions) {
+                        config.Subscriptions = [];
+                    }
+                    txtDefaultDownloadPath.value = config.DefaultDownloadPath || '';
+                    renderSubscriptions();
+                } catch(e) {
+                    console.error("Error loading plugin configuration", e);
+                    Dashboard.alert("Fehler beim Laden der Konfiguration.");
+                }
+            }
+
+            async function saveConfig(event) {
+                if(event) event.preventDefault();
+
+                Dashboard.showLoadingMsg();
+                config.DefaultDownloadPath = txtDefaultDownloadPath.value;
+
+                const subForms = subscriptionsContainer.querySelectorAll('.sub-item');
+                const updatedSubs = [];
+                subForms.forEach(form => {
+                    const sub = {
+                        Id: form.dataset.id,
+                        Name: form.querySelector('[name="SubName"]').value,
+                        SearchQuery: form.querySelector('[name="SubSearchQuery"]').value,
+                        DownloadPath: form.querySelector('[name="SubDownloadPath"]').value,
+                        EnforceSeriesParsing: form.querySelector('[name="SubEnforceSeriesParsing"]').checked,
+                        AllowAudioDescription: form.querySelector('[name="SubAllowAudioDescription"]').checked,
+                    };
+                    updatedSubs.push(sub);
+                });
+                config.Subscriptions = updatedSubs;
+
+                try {
+                    await AppApiClient.updateConfig(config);
+                    Dashboard.hideLoadingMsg();
+                    Dashboard.alert('Konfiguration gespeichert.');
+                } catch(e) {
+                    Dashboard.hideLoadingMsg();
+                    console.error("Error saving plugin configuration", e);
+                    Dashboard.alert("Fehler beim Speichern der Konfiguration.");
+                }
+            }
+
+            document.querySelector('.plugin-config-form').addEventListener('submit', saveConfig);
+
+            // --- SUBSCRIPTIONS ---
+            function renderSubscriptions() {
+                subscriptionsContainer.innerHTML = '';
+                (config.Subscriptions || []).forEach(sub => {
+                    const subId = sub.Id || `new_${Date.now()}`;
+                    const subDiv = document.createElement('div');
+                    subDiv.className = 'sub-item';
+                    subDiv.dataset.id = subId;
+
+                    subDiv.innerHTML = `
+                        <h4>Abo: ${sub.Name || 'Neues Abo'}</h4>
+                        <div class="paper-form">
+                            <div class="sub-form">
+                                <label for="subName_${subId}">Name:</label>
+                                <input type="text" name="SubName" id="subName_${subId}" class="text-input" value="${sub.Name || ''}" placeholder="Name des Abos (wird zum Ordnernamen)">
+
+                                <label for="subQuery_${subId}">Suchbegriff:</label>
+                                <input type="text" name="SubSearchQuery" id="subQuery_${subId}" class="text-input" value="${sub.SearchQuery || ''}" placeholder="Suchbegriff für die API">
+
+                                <label for="subPath_${subId}">Downloadpfad:</label>
+                                <input type="text" name="SubDownloadPath" id="subPath_${subId}" class="text-input" value="${sub.DownloadPath || ''}" placeholder="Optional, überschreibt Standardpfad">
+
+                                <div></div>
+                                <div class="checkbox-container">
+                                   <label class="checkbox-label">
+                                        <input type="checkbox" name="SubEnforceSeriesParsing" class="emby-checkbox" ${sub.EnforceSeriesParsing ? 'checked' : ''}>
+                                        <span class="checkbox-label-text">Nur bei erkannter Staffel/Episode laden</span>
+                                   </label>
+                                </div>
+
+                                <div></div>
+                                <div class="checkbox-container">
+                                   <label class="checkbox-label">
+                                        <input type="checkbox" name="SubAllowAudioDescription" class="emby-checkbox" ${sub.AllowAudioDescription ? 'checked' : ''}>
+                                        <span class="checkbox-label-text">Audiodeskription-Versionen erlauben</span>
+                                   </label>
+                                </div>
+                            </div>
+                            <button type="button" class="paper-button btn-delete-sub" data-id="${subId}">Löschen</button>
+                        </div>
+                    `;
+                    subscriptionsContainer.appendChild(subDiv);
+                });
+            }
+
+            document.getElementById('btnAddSub').addEventListener('click', () => {
+                const newId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+
+                config.Subscriptions.push({
+                    Id: newId,
+                    Name: '', SearchQuery: '', DownloadPath: '', EnforceSeriesParsing: true, AllowAudioDescription: false
+                });
+                renderSubscriptions();
+            });
+
+            subscriptionsContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-delete-sub')) {
+                    const subIdToDelete = e.target.dataset.id;
+                    config.Subscriptions = config.Subscriptions.filter(s => s.Id != subIdToDelete);
+                    renderSubscriptions();
+                }
+            });
+
+            // --- SEARCH ---
+            const searchSpinner = document.getElementById('searchSpinner');
+            const searchResultsContainer = document.getElementById('searchResults');
+
+            document.getElementById('btnSearch').addEventListener('click', async () => {
+                const query = document.getElementById('txtSearchQuery').value;
+                const minDuration = parseInt(document.getElementById('txtMinDuration').value);
+                const maxDuration = parseInt(document.getElementById('txtMaxDuration').value);
+
+                // Pass null if not a valid number or empty string
+                const finalMinDuration = isNaN(minDuration) ? null : minDuration;
+                const finalMaxDuration = isNaN(maxDuration) ? null : maxDuration;
+
+                if (!query) return;
+
+                searchResultsContainer.innerHTML = '';
+                searchSpinner.style.display = 'block';
+
+                try {
+                    const results = await AppApiClient.search(query, finalMinDuration, finalMaxDuration);
+                    renderSearchResults(results, query);
+                } catch (err) {
+                    console.error("Search failed", err);
+                    Dashboard.alert('Fehler bei der Suche.');
+                } finally {
+                    searchSpinner.style.display = 'none';
+                }
+            });
+
+            function renderSearchResults(results, originalQuery) {
+                searchResultsContainer.innerHTML = '';
+                 if (!results || results.length === 0) {
+                    searchResultsContainer.innerHTML = '<p>Keine Ergebnisse gefunden.</p>';
+                    return;
+                }
+
+                results.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'result-item';
+                    const itemDate = new Date(item.timestamp * 1000).toLocaleString();
+                    const itemDuration = Math.round(item.duration / 60) + ' min';
+
+                    itemDiv.innerHTML = `
+                        <h4>${item.title}</h4>
+                        <div class="result-details">
+                            <span>${item.channel}</span> | <span>${itemDate}</span> | <span>${itemDuration}</span>
+                        </div>
+                        <p>${item.description || ''}</p>
+                        <button type="button" class="paper-button btn-download" data-item='${JSON.stringify(item)}'>Einzel-Download</button>
+                        <button type="button" class="paper-button btn-add-from-search" data-query="${originalQuery}" data-title="${item.topic || item.title}">Als Abo speichern</button>
+                    `;
+                    searchResultsContainer.appendChild(itemDiv);
+                });
+            }
+
+            searchResultsContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('btn-download')) {
+                    const item = JSON.parse(e.target.dataset.item);
+                    AppApiClient.download(item);
+                }
+                if (e.target.classList.contains('btn-add-from-search')) {
+                    const newId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
+                    config.Subscriptions.push({
+                        Id: newId,
+                        Name: e.target.dataset.title,
+                        SearchQuery: e.target.dataset.query,
+                        DownloadPath: '',
+                        EnforceSeriesParsing: true,
+                        AllowAudioDescription: false
+                    });
+                    renderSubscriptions();
+                    Dashboard.alert(`Abo für "${e.target.dataset.title}" hinzugefügt. Bitte im Tab "Abonnements" überprüfen und speichern.`);
+
+                    document.querySelectorAll('.tab-button, .tab-content').forEach(el => el.classList.remove('active'));
+                    document.querySelector('[data-tab="tab-subs"]').classList.add('active');
+                    document.getElementById('tab-subs').classList.add('active');
+                }
+            });
+
+            // Initial Load
+            loadConfig();
+        });
+    </script>
+</body>
+
+</html>
