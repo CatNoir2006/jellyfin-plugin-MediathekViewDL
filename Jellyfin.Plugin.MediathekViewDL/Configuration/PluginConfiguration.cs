@@ -17,6 +17,7 @@ public class PluginConfiguration : BasePluginConfiguration
     {
         Subscriptions = new Collection<Subscription>();
         DefaultDownloadPath = string.Empty;
+        DownloadSubtitles = true;
     }
 
     /// <summary>
@@ -24,6 +25,11 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Can be overridden by a subscription.
     /// </summary>
     public string DefaultDownloadPath { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether subtitles should be downloaded if available.
+    /// </summary>
+    public bool DownloadSubtitles { get; set; }
 
     /// <summary>
     /// Gets the list of download subscriptions.

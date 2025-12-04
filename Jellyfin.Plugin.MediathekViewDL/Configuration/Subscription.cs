@@ -1,4 +1,6 @@
 using System;
+using System.Collections.ObjectModel;
+using Jellyfin.Plugin.MediathekViewDL.Api;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Configuration;
 
@@ -14,7 +16,6 @@ public class Subscription
     {
         Id = Guid.NewGuid();
         Name = string.Empty;
-        SearchQuery = string.Empty;
         DownloadPath = string.Empty;
     }
 
@@ -29,10 +30,9 @@ public class Subscription
     public string Name { get; set; }
 
     /// <summary>
-    /// Gets or sets the search query for the MediathekViewWeb API.
-    /// Todo: Replace with Collection of Filters and add min and max length.
+    /// Gets the search query for the MediathekViewWeb API.
     /// </summary>
-    public string SearchQuery { get; set; }
+    public Collection<QueryFields> Queries { get; init; } = new();
 
     /// <summary>
     /// Gets or sets the specific download path for this subscription. Overrides the default path if set.
@@ -48,4 +48,14 @@ public class Subscription
     /// Gets or sets a value indicating whether to allow downloading versions with audio descriptions.
     /// </summary>
     public bool AllowAudioDescription { get; set; }
+
+    /// <summary>
+    /// Gets or sets the minimum duration in minutes for search results.
+    /// </summary>
+    public int? MinDurationMinutes { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum duration in minutes for search results.
+    /// </summary>
+    public int? MaxDurationMinutes { get; set; }
 }

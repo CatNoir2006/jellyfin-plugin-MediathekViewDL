@@ -80,6 +80,14 @@
                                 </div>
                             </div>
 
+                            <div class="checkboxContainer checkboxContainer-withDescription" style="margin-top: 20px;">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkDownloadSubtitles" type="checkbox" is="emby-checkbox" />
+                                    <span>Untertitel herunterladen (wenn verfügbar)</span>
+                                </label>
+                                <div class="fieldDescription">Lädt eine separate VTT- oder TTML-Datei für Untertitel herunter, falls vom Sender bereitgestellt.</div>
+                            </div>
+
                             <!-- Anzeige des letzten Laufs (Read Only) -->
                             <div class="inputContainer">
                                 <label class="inputLabel">Letzter Lauf</label>
@@ -121,9 +129,27 @@
                                 <input is="emby-input" type="text" id="subName" required />
                             </div>
 
+                            <!-- Container für dynamische Queries -->
                             <div class="inputContainer">
-                                <label class="inputLabel" for="subQuery">Suchbegriff (Query)</label>
-                                <input is="emby-input" type="text" id="subQuery" required />
+                                <label class="inputLabel">Suchanfragen</label>
+                                <div id="queriesContainer" style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
+                                    <!-- Query-Zeilen werden hier dynamisch eingefügt -->
+                                </div>
+                                <button is="emby-button" type="button" class="raised" onclick="MediathekPluginConfig.addQueryRow()" style="margin-top: 10px;">
+                                    <span class="material-icons add"></span>
+                                    <span>Anfrage hinzufügen</span>
+                                </button>
+                            </div>
+
+                            <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                <div class="inputContainer" style="flex-grow: 1;">
+                                    <label class="inputLabel" for="subMinDuration">Min. Dauer (Minuten)</label>
+                                    <input is="emby-input" type="number" id="subMinDuration" />
+                                </div>
+                                <div class="inputContainer" style="flex-grow: 1;">
+                                    <label class="inputLabel" for="subMaxDuration">Max. Dauer (Minuten)</label>
+                                    <input is="emby-input" type="number" id="subMaxDuration" />
+                                </div>
                             </div>
 
                             <div class="inputContainer">
@@ -133,7 +159,6 @@
                                         <input is="emby-input" type="text" id="subPath" />
                                         <div class="fieldDescription">Leer lassen, um den Standardpfad zu nutzen.</div>
                                     </div>
-                                    <!-- Button hat nun eine ID für den Event Listener -->
                                     <button type="button" is="paper-icon-button-light" id="btnSelectSubPath" title="Ordner auswählen" style="margin-left: 10px; margin-top: 15px;">
                                         <span class="material-icons folder_open"></span>
                                     </button>
@@ -175,6 +200,7 @@
                 const pluginId = "a31b415a-5264-419d-b152-8c8192a54994";
                 const pluginName = "MediathekViewDL";
                 let currentConfig = null;
+                let currentSearchResults = [];
 
                 // --- Helper Functions ---
                 function confirmationPopup(message, title, resultCallback) {
@@ -210,7 +236,6 @@
                                 }
                             });
                         } else {
-                            // Fallback wenn Dashboard nicht verfügbar ist
                             var currentValue = document.getElementById(inputId).value;
                             var newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
                             if (newPath !== null && newPath.trim() !== '') {
@@ -219,7 +244,6 @@
                         }
                     } catch (e) {
                         console.error('Error opening folder dialog:', e);
-                        // Fallback
                         var currentValue = document.getElementById(inputId).value;
                         var newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
                         if (newPath !== null && newPath.trim() !== '') {
@@ -235,11 +259,10 @@
                     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
                         currentConfig = config;
 
-                        // Tab 2: Settings populate
                         document.querySelector('#txtDefaultDownloadPath').value = config.DefaultDownloadPath || "";
+                        document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
                         document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
 
-                        // Tab 3: Subscriptions populate
                         renderSubscriptionsList();
 
                         Dashboard.hideLoadingMsg();
@@ -280,14 +303,14 @@
                     }
 
                     Dashboard.showLoadingMsg();
-
-                    let url = ApiClient.getUrl('/' + pluginName + '/Search'); // `/${pluginName}/Search` is not used because it intrudes issues with tranlation in Jellyfin
+                    let url = ApiClient.getUrl('/' + pluginName + '/Search');
                     url += '?query=' + encodeURIComponent(query);
                     if(minD) url += '&minDuration=' + minD;
                     if(maxD) url += '&maxDuration=' + maxD;
 
                     ApiClient.getJSON(url).then(function(results) {
-                        renderSearchResults(results);
+                        currentSearchResults = results; // Store results
+                        renderSearchResults();
                         Dashboard.hideLoadingMsg();
                     }).catch(function(err) {
                         Dashboard.hideLoadingMsg();
@@ -295,43 +318,85 @@
                     });
                 }
 
-                function renderSearchResults(items) {
+                function renderSearchResults() {
                     const container = document.getElementById('searchResults');
                     container.innerHTML = "";
 
-                    if (!items || items.length === 0) {
+                    if (!currentSearchResults || currentSearchResults.length === 0) {
                         container.innerHTML = "<p>Keine Ergebnisse gefunden.</p>";
                         return;
                     }
 
-                    let html = '<div class="list-group">';
-                    items.forEach(item => {
+                    let html = '<div class="paperList">';
+                    currentSearchResults.forEach(function(item, index) {
                         const durationStr = Math.floor(item.duration / 60) + " Min";
                         const safeTitle = item.title.replace(/"/g, '&quot;');
                         const safeChannel = item.channel.replace(/"/g, '&quot;');
+                        const safeTopic = item.topic.replace(/"/g, '&quot;');
 
-                        html += `
-                        <div class="listItem listItem-border">
-                            <div class="listItemBody two-line">
-                                <h3 class="listItemBodyText">` + item.title + `</h3>
-                                <div class="listItemBodyText secondary">` + item.channel + ` | ` + item.topic + ` | ` + durationStr + `</div>
-                                <div class="listItemBodyText secondary" style="font-size:0.9em; opacity:0.7;">` + (item.description ? item.description : '') + `</div>
-                            </div>
-                            <button class="fab emby-button" title="Abo erstellen" onclick="MediathekPluginConfig.createSubFromSearch('`+ safeTitle + `', '` + safeChannel +`')">
-                                <span class="material-icons add"></span>
-                            </button>
-                        </div>`;
+                        html +=
+                        '<div class="listItem listItem-border">' +
+                            '<div class="listItemBody two-line">' +
+                                '<h3 class="listItemBodyText">' + item.title + '</h3>' +
+                                '<div class="listItemBodyText secondary" style="display: inline-flex; align-items: center; gap: 8px;"><span>' + item.channel + ' | ' + item.topic + ' | ' + durationStr + (item.url_subtitle ? ' | </span><span class="material-icons closed_caption" title="Untertitel verfügbar"></span>' : '</span>') + '</div>' +
+                                '<div class="listItemBodyText secondary" style="font-size:0.9em; opacity:0.7;">' + (item.description ? item.description : '') + '</div>' +
+                            '</div>' +
+                            '<div style="display:flex; gap: 10px;">' +
+                                // Download-Button
+                                '<button is="emby-button" type="button" class="paper-icon-button-light" title="Herunterladen" onclick="MediathekPluginConfig.downloadItem(' + index + ')">' +
+                                    '<span class="material-icons file_download"></span>' +
+                                '</button>' +
+                                // Abo erstellen Button
+                                '<button is="emby-button" type="button" class="paper-icon-button-light" title="Abo erstellen" onclick="MediathekPluginConfig.createSubFromSearch(this, \''+ safeTitle + '\', \'' + safeChannel +'\', \'' + safeTopic + '\')">' +
+                                    '<span class="material-icons add"></span>' +
+                                '</button>' +
+                            '</div>' +
+                        '</div>';
                     });
                     html += '</div>';
                     container.innerHTML = html;
                 }
 
-                function createSubFromSearch(title, channel) {
-                    switchTab('subscriptions');
-                    editSubscription(null);
-                    document.getElementById('subName').value = title;
-                    document.getElementById('subQuery').value = channel + " " + title;
+                function downloadItem(index) {
+                    const item = currentSearchResults[index];
+                    if (!item) return;
+
+                    const url = ApiClient.getUrl('/' + pluginName + '/Download');
+
+                    Dashboard.showLoadingMsg();
+                    ApiClient.ajax({
+                        type: "POST",
+                        url: url,
+                        data: JSON.stringify(item),
+                        contentType: 'application/json'
+                    }).then(function(result) {
+                        Dashboard.hideLoadingMsg();
+                        showToast("Download für '" + item.title + "' gestartet.");
+                    }).catch(function(err) {
+                        Dashboard.hideLoadingMsg();
+                        showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                    });
                 }
+
+                function createSubFromSearch(btn, title, channel, topic) {
+                    switchTab('subscriptions');
+                    const newSub = {
+                        Id: null,
+                        Name: title,
+                        Queries: [
+                            { fields: ["title"], query: title },
+                            { fields: ["channel"], query: channel },
+                            { fields: ["topic"], query: topic }
+                        ],
+                        MinDurationMinutes: null,
+                        MaxDurationMinutes: null,
+                        DownloadPath: "",
+                        EnforceSeriesParsing: false,
+                        AllowAudioDescription: false
+                    };
+                    editSubscription(null, newSub);
+                }
+
 
                 // --- SUBSCRIPTION LOGIC ---
 
@@ -345,50 +410,104 @@
                     }
 
                     let html = '';
-                    currentConfig.Subscriptions.forEach(sub => {
-                        html += `
-                        <div class="listItem listItem-border">
-                            <div class="listItemBody two-line">
-                                <h3 class="listItemBodyText">` + sub.Name + `</h3>
-                                <div class="listItemBodyText secondary">Query: ` + sub.SearchQuery + `</div>
-                            </div>
-                            <div style="display:flex; gap:5px;">
-                                <button type="button" class="paper-icon-button-light" onclick="MediathekPluginConfig.editSubscription('` + sub.Id + `')" title="Bearbeiten">
-                                    <span class="material-icons edit"></span>
-                                </button>
-                                <button type="button" class="paper-icon-button-light" onclick="MediathekPluginConfig.deleteSubscription('` + sub.Id + `')" title="Löschen">
-                                    <span class="material-icons delete"></span>
-                                </button>
-                            </div>
-                        </div>`;
+                    currentConfig.Subscriptions.forEach(function(sub) {
+                        const queriesSummary = (sub.Queries || []).map(function(q) { return q.query; }).join(', ');
+                        html +=
+                        '<div class="listItem listItem-border">' +
+                            '<div class="listItemBody two-line">' +
+                                '<h3 class="listItemBodyText">' + sub.Name + '</h3>' +
+                                '<div class="listItemBodyText secondary">Queries: ' + queriesSummary + '</div>' +
+                            '</div>' +
+                            '<div style="display:flex; gap:5px;">' +
+                                '<button type="button" class="paper-icon-button-light" onclick="MediathekPluginConfig.editSubscription(\'' + sub.Id + '\', null)" title="Bearbeiten">' +
+                                    '<span class="material-icons edit"></span>' +
+                                '</button>' +
+                                '<button type="button" class="paper-icon-button-light" onclick="MediathekPluginConfig.deleteSubscription(\'' + sub.Id + '\')" title="Löschen">' +
+                                    '<span class="material-icons delete"></span>' +
+                                '</button>' +
+                            '</div>' +
+                        '</div>';
                     });
                     list.innerHTML = html;
                 }
 
-                function editSubscription(id) {
+                function addQueryRow(query) {
+                    if (query == null) {
+                        query = { query: '', fields: ['title', 'topic'] };
+                    }
+                    const container = document.getElementById('queriesContainer');
+                    const newRow = document.createElement('div');
+                    newRow.className = 'query-row';
+                    newRow.style.cssText = 'display: flex; gap: 10px; align-items: center; border: 1px solid #333; padding: 10px; border-radius: 5px;';
+
+                    const queryText = query ? query.query : '';
+                    const fields = query ? query.fields : ['title', 'topic'];
+
+                    var checkedTitle = fields.indexOf('title') > -1 ? 'checked' : '';
+                    var checkedTopic = fields.indexOf('topic') > -1 ? 'checked' : '';
+                    var checkedChannel = fields.indexOf('channel') > -1 ? 'checked' : '';
+
+                    newRow.innerHTML =
+                        '<div style="flex-grow: 1;">' +
+                            '<input is="emby-input" type="text" class="subQueryText" value="' + queryText + '" placeholder="Suchtext" required />' +
+                        '</div>' +
+                        '<div style="display: flex; gap: 15px;">' +
+                            '<label class="emby-checkbox-label"><input type="checkbox" is="emby-checkbox" class="subQueryField" value="title" ' + checkedTitle + '><span>Titel</span></label>' +
+                            '<label class="emby-checkbox-label"><input type="checkbox" is="emby-checkbox" class="subQueryField" value="topic" ' + checkedTopic + '><span>Thema</span></label>' +
+                            '<label class="emby-checkbox-label"><input type="checkbox" is="emby-checkbox" class="subQueryField" value="channel" ' + checkedChannel + '><span>Sender</span></label>' +
+                        '</div>' +
+                        '<button type="button" is="paper-icon-button-light" class="btnRemoveQuery" title="Anfrage entfernen">' +
+                            '<span class="material-icons remove_circle_outline"></span>' +
+                        '</button>';
+
+                    container.appendChild(newRow);
+
+                    newRow.querySelector('.btnRemoveQuery').addEventListener('click', function() {
+                        this.closest('.query-row').remove();
+                    });
+                }
+
+                function editSubscription(id, prefilledSub) {
                     const editor = document.getElementById('subscriptionEditor');
                     const title = document.getElementById('subEditorTitle');
+                    const queriesContainer = document.getElementById('queriesContainer');
 
                     document.getElementById('subId').value = "";
                     document.getElementById('subName').value = "";
-                    document.getElementById('subQuery').value = "";
+                    document.getElementById('subMinDuration').value = "";
+                    document.getElementById('subMaxDuration').value = "";
                     document.getElementById('subPath').value = "";
                     document.getElementById('subEnforceSeries').checked = false;
                     document.getElementById('subAllowAudioDesc').checked = false;
+                    queriesContainer.innerHTML = '';
 
+                    let subToEdit = null;
                     if (id) {
-                        const sub = currentConfig.Subscriptions.find(s => s.Id === id);
-                        if (sub) {
-                            title.innerText = "Abonnement bearbeiten";
-                            document.getElementById('subId').value = sub.Id;
-                            document.getElementById('subName').value = sub.Name;
-                            document.getElementById('subQuery').value = sub.SearchQuery;
-                            document.getElementById('subPath').value = sub.DownloadPath || "";
-                            document.getElementById('subEnforceSeries').checked = sub.EnforceSeriesParsing;
-                            document.getElementById('subAllowAudioDesc').checked = sub.AllowAudioDescription;
-                        }
+                        subToEdit = currentConfig.Subscriptions.find(function(s) { return s.Id === id; });
+                        title.innerText = "Abonnement bearbeiten";
+                    } else if (prefilledSub) {
+                        subToEdit = prefilledSub;
+                        title.innerText = "Neues Abonnement erstellen";
                     } else {
                         title.innerText = "Neues Abonnement";
+                    }
+
+                    if (subToEdit) {
+                        document.getElementById('subId').value = subToEdit.Id || "";
+                        document.getElementById('subName').value = subToEdit.Name;
+                        document.getElementById('subMinDuration').value = subToEdit.MinDurationMinutes || "";
+                        document.getElementById('subMaxDuration').value = subToEdit.MaxDurationMinutes || "";
+                        document.getElementById('subPath').value = subToEdit.DownloadPath || "";
+                        document.getElementById('subEnforceSeries').checked = subToEdit.EnforceSeriesParsing;
+                        document.getElementById('subAllowAudioDesc').checked = subToEdit.AllowAudioDescription;
+
+                        if (subToEdit.Queries && subToEdit.Queries.length > 0) {
+                            subToEdit.Queries.forEach(function(q) { addQueryRow(q); });
+                        } else {
+                            addQueryRow(null);
+                        }
+                    } else {
+                         addQueryRow(null);
                     }
 
                     editor.style.display = 'block';
@@ -402,32 +521,52 @@
                 function saveSubscription() {
                     const id = document.getElementById('subId').value;
                     const name = document.getElementById('subName').value;
-                    const query = document.getElementById('subQuery').value;
+                    const minDuration = document.getElementById('subMinDuration').value;
+                    const maxDuration = document.getElementById('subMaxDuration').value;
                     const path = document.getElementById('subPath').value;
                     const enforce = document.getElementById('subEnforceSeries').checked;
                     const allowAudio = document.getElementById('subAllowAudioDesc').checked;
 
+                    const queries = [];
+                    document.querySelectorAll('#queriesContainer .query-row').forEach(function(row) {
+                        const queryText = row.querySelector('.subQueryText').value;
+                        if (queryText) {
+                            const fields = [];
+                            row.querySelectorAll('.subQueryField:checked').forEach(function(fieldCheckbox) {
+                                fields.push(fieldCheckbox.value);
+                            });
+                            queries.push({ query: queryText, fields: fields });
+                        }
+                    });
+
+                    if (queries.length === 0) {
+                        showToast("Bitte mindestens eine Suchanfrage definieren.");
+                        return;
+                    }
+
                     if (!currentConfig.Subscriptions) currentConfig.Subscriptions = [];
 
+                    const subData = {
+                        Name: name,
+                        Queries: queries,
+                        MinDurationMinutes: minDuration ? parseInt(minDuration, 10) : null,
+                        MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
+                        DownloadPath: path,
+                        EnforceSeriesParsing: enforce,
+                        AllowAudioDescription: allowAudio
+                    };
+
                     if (id) {
-                        const idx = currentConfig.Subscriptions.findIndex(s => s.Id === id);
+                        const idx = currentConfig.Subscriptions.findIndex(function(s) { return s.Id === id; });
                         if (idx > -1) {
-                            currentConfig.Subscriptions[idx].Name = name;
-                            currentConfig.Subscriptions[idx].SearchQuery = query;
-                            currentConfig.Subscriptions[idx].DownloadPath = path;
-                            currentConfig.Subscriptions[idx].EnforceSeriesParsing = enforce;
-                            currentConfig.Subscriptions[idx].AllowAudioDescription = allowAudio;
+                            var existingId = currentConfig.Subscriptions[idx].Id;
+                            currentConfig.Subscriptions[idx] = subData;
+                            currentConfig.Subscriptions[idx].Id = existingId;
+
                         }
                     } else {
-                        const newSub = {
-                            Id: crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(),
-                            Name: name,
-                            SearchQuery: query,
-                            DownloadPath: path,
-                            EnforceSeriesParsing: enforce,
-                            AllowAudioDescription: allowAudio
-                        };
-                        currentConfig.Subscriptions.push(newSub);
+                        subData.Id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+                        currentConfig.Subscriptions.push(subData);
                     }
 
                     saveGlobalConfig();
@@ -438,7 +577,7 @@
                 function deleteSubscription(id) {
                     confirmationPopup("Soll dieses Abonnement wirklich gelöscht werden?", "Löschen bestätigen", function(confirmed) {
                         if (confirmed) {
-                            currentConfig.Subscriptions = currentConfig.Subscriptions.filter(s => s.Id !== id);
+                            currentConfig.Subscriptions = currentConfig.Subscriptions.filter(function(s) { return s.Id !== id; });
                             saveGlobalConfig();
                             renderSubscriptionsList();
                         }
@@ -448,25 +587,22 @@
                 // --- EVENT LISTENERS ---
                 return {
                     init: function() {
-                        console.log("MediathekViewDL Plugin Config started initialization.");
                         document.querySelector('#MediathekViewDLConfigPage').addEventListener('pageshow', function() {
                             loadConfig();
                         });
 
-                        console.log("Adding event listener for General Config Form submission.");
                         document.querySelector('#MediathekGeneralConfigForm').addEventListener('submit', function(e) {
                             e.preventDefault();
                             currentConfig.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
+                            currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
                             saveGlobalConfig();
                             return false;
                         });
 
-                        console.log("Adding event listener for General Config Folder Selection button.");
                         document.getElementById('btnSelectPath').addEventListener('click', function() {
                             openFolderDialog('txtDefaultDownloadPath', 'Standard Download Pfad wählen');
                         });
 
-                        console.log("Adding event listener for Subscription Config Folder Selection button.");
                         document.getElementById('btnSelectSubPath').addEventListener('click', function() {
                             openFolderDialog('subPath', 'Abo Pfad wählen');
                         });
@@ -474,6 +610,8 @@
                     switchTab: switchTab,
                     performSearch: performSearch,
                     createSubFromSearch: createSubFromSearch,
+                    downloadItem: downloadItem,
+                    addQueryRow: addQueryRow,
                     editSubscription: editSubscription,
                     closeEditor: closeEditor,
                     saveSubscription: saveSubscription,

@@ -49,8 +49,6 @@ public class MediathekViewApiClient
         int? maxDuration,
         CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Performing API search for query: {Query}, MinDuration: {MinDuration}, MaxDuration: {MaxDuration}", searchQuery, minDuration, maxDuration);
-
         var apiQuery = new ApiQuery
         {
             Queries = new Collection<QueryFields>
@@ -62,10 +60,24 @@ public class MediathekViewApiClient
             MaxDuration = maxDuration
         };
 
+        return await SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Searches for media on the MediathekViewWeb API using a specified query.
+    /// </summary>
+    /// <param name="apiQuery">The api query.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A collection of result items, or null if an error occurred.</returns>
+    public async Task<Collection<ResultItem>?> SearchAsync(
+        ApiQuery apiQuery,
+        CancellationToken cancellationToken)
+    {
         try
         {
             var httpClient = _httpClientFactory.CreateClient();
             var json = JsonSerializer.Serialize(apiQuery);
+            _logger.LogDebug("Performing API search with payload: {Json}", json);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await httpClient.PostAsync(ApiUrl, content, cancellationToken).ConfigureAwait(false);
@@ -85,7 +97,7 @@ public class MediathekViewApiClient
                 return new Collection<ResultItem>();
             }
 
-            _logger.LogInformation("API search for '{Query}' returned {Count} results", searchQuery, apiResult.Result.Results.Count);
+            _logger.LogInformation("API search returned {Count} results", apiResult.Result.Results.Count);
             return apiResult.Result.Results;
         }
         catch (Exception ex)

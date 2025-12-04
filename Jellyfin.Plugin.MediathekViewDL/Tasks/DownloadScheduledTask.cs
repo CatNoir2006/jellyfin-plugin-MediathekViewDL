@@ -100,7 +100,15 @@ public class DownloadScheduledTask : IScheduledTask
 
             _logger.LogInformation("Processing subscription: {SubscriptionName}", subscription.Name);
 
-            var results = await _apiClient.SearchAsync(subscription.SearchQuery, null, null, cancellationToken).ConfigureAwait(false);
+            var apiQuery = new ApiQuery
+            {
+                Queries = subscription.Queries,
+                Size = 50, // Get a decent number of results
+                MinDuration = subscription.MinDurationMinutes.HasValue ? subscription.MinDurationMinutes * 60 : null,
+                MaxDuration = subscription.MaxDurationMinutes.HasValue ? subscription.MaxDurationMinutes * 60 : null
+            };
+
+            var results = await _apiClient.SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
             if (results == null)
             {
                 _logger.LogWarning("Could not retrieve search results for subscription '{SubscriptionName}'.", subscription.Name);
@@ -197,7 +205,7 @@ public class DownloadScheduledTask : IScheduledTask
                 }
 
                 // --- Handle Subtitles ---
-                if (!string.IsNullOrWhiteSpace(item.UrlSubtitle))
+                if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
                 {
                     var subtitlePath = Path.Combine(seasonPath, $"{baseFileName}.{episodeInfo.Language}.ttml");
                     if (!File.Exists(subtitlePath))
