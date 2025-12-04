@@ -55,7 +55,7 @@ public class ResultItem
     /// Gets or sets the size of the video file in bytes.
     /// </summary>
     [JsonPropertyName("size")]
-    public long Size { get; set; }
+    public long? Size { get; set; }
 
     /// <summary>
     /// Gets or sets the URL for the standard quality video.
