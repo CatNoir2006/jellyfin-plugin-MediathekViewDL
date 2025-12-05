@@ -102,149 +102,169 @@ public class DownloadScheduledTask : IScheduledTask
             progress.Report(progressValue);
 
             _logger.LogInformation("Processing subscription: {SubscriptionName}", subscription.Name);
+            var currentPage = 0;
+            var hasMoreResults = true;
+            var pageSize = 50;
+            var maxPages = 20; // Limit to avoid excessive requests. Adjust as needed. Should be enough for most cases.
 
-            var apiQuery = new ApiQuery
+            // Paginate through results for the subscription
+            while (hasMoreResults && currentPage < maxPages)
             {
-                Queries = subscription.Queries,
-                Size = 150, // Get a decent number of results
-                MinDuration = subscription.MinDurationMinutes.HasValue ? subscription.MinDurationMinutes * 60 : null,
-                MaxDuration = subscription.MaxDurationMinutes.HasValue ? subscription.MaxDurationMinutes * 60 : null
-            };
-
-            var results = await _apiClient.SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
-            if (results == null)
-            {
-                _logger.LogWarning("Could not retrieve search results for subscription '{SubscriptionName}'.", subscription.Name);
-                continue;
-            }
-
-            // Filter out items already processed or not matching criteria
-            // Now using the VideoParser for language/feature detection
-            var filteredItems = new List<VideoParseResult>();
-            foreach (var item in results)
-            {
-                var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
-                if (tempVideoInfo == null)
+                var apiQuery = new ApiQuery
                 {
+                    Queries = subscription.Queries,
+                    Size = pageSize,
+                    Offset = currentPage * pageSize,
+                    MinDuration = subscription.MinDurationMinutes.HasValue ? subscription.MinDurationMinutes * 60 : null,
+                    MaxDuration = subscription.MaxDurationMinutes.HasValue ? subscription.MaxDurationMinutes * 60 : null
+                };
+
+                var result = await _apiClient.SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
+                if (result?.Total > (currentPage + 1) * pageSize)
+                {
+                    hasMoreResults = true;
+                    currentPage++;
+                }
+                else
+                {
+                    hasMoreResults = false;
+                }
+
+                var results = result?.Results;
+                if (results == null)
+                {
+                    _logger.LogWarning("Could not retrieve search results for subscription '{SubscriptionName}'.", subscription.Name);
                     continue;
                 }
 
-                // Check Audiodescription preference
-                if (!subscription.AllowAudioDescription && tempVideoInfo.HasAudiodescription)
+                // Filter out items already processed or not matching criteria
+                // Now using the VideoParser for language/feature detection
+                var filteredItems = new List<VideoParseResult>();
+                foreach (var item in results)
                 {
-                    _logger.LogDebug("Skipping item '{Title}' due to Audiodescription and subscription preference.", item.Title);
-                    continue;
-                }
-
-                // Check Sign Language preference
-                if (!subscription.AllowSignLanguage && tempVideoInfo.HasSignLanguage)
-                {
-                    _logger.LogDebug("Skipping item '{Title}' due to Sign Language and subscription preference.", item.Title);
-                    continue;
-                }
-
-                // Check if Show is required
-                if (subscription.EnforceSeriesParsing && !tempVideoInfo.IsShow)
-                {
-                    _logger.LogDebug("Skipping item '{Title}' due to EnforceSeriesParsing and parsing result.", item.Title);
-                    continue;
-                }
-
-                // Check if Season/Episode parsing is required
-                if (subscription is { EnforceSeriesParsing: true, AllowAbsoluteEpisodeNumbering: false } && tempVideoInfo is { HasSeasonEpisodeNumbering: false })
-                {
-                    _logger.LogDebug("Skipping item '{Title}' due to absolute episode numbering and subscription preference.", item.Title);
-                    continue;
-                }
-
-                filteredItems.Add(new VideoParseResult { Item = item!, VideoInfo = tempVideoInfo });
-            }
-
-            _logger.LogInformation("Found {Count} new, filtered items for '{SubscriptionName}'.", filteredItems.Count, subscription.Name);
-
-            foreach (var item in filteredItems)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                string targetPath = _fileNameBuilderService.BuildDirectoryName(item.VideoInfo, subscription);
-                if (string.IsNullOrWhiteSpace(targetPath))
-                {
-                    _logger.LogError("No download path configured for subscription '{SubscriptionName}' or globally. Skipping item '{Title}'.", subscription.Name, item.VideoInfo.Title);
-                    continue;
-                }
-
-                // Ensure target directory exists
-                if (!Directory.Exists(targetPath))
-                {
-                    Directory.CreateDirectory(targetPath);
-                }
-
-                // --- Handle Video/Audio ---
-                var subtitleFilePath = Path.Combine(targetPath, _fileNameBuilderService.BuildFileName(item.VideoInfo, true));
-                var mainFilePath = Path.Combine(targetPath, _fileNameBuilderService.BuildFileName(item.VideoInfo, false));
-                var tempVideoPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.mp4"); // Temp path for non-DE video download
-                var videoUrl = item.Item.UrlVideoHd ?? item.Item.UrlVideo ?? item.Item.UrlVideoLow;
-
-                // If German version: download full video if not exists
-                // Use "deu" for language comparison, as per VideoInfo
-                if (item.VideoInfo.Language == "deu")
-                {
-                    if (!File.Exists(mainFilePath))
+                    var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
+                    if (tempVideoInfo == null)
                     {
-                        _logger.LogInformation("Downloading master video for '{Title}' to '{Path}'", item.VideoInfo.Title, mainFilePath);
-                        if (!await _fileDownloader.DownloadFileAsync(videoUrl, mainFilePath, progress, cancellationToken).ConfigureAwait(false))
+                        continue;
+                    }
+
+                    // Check Audiodescription preference
+                    if (!subscription.AllowAudioDescription && tempVideoInfo.HasAudiodescription)
+                    {
+                        _logger.LogDebug("Skipping item '{Title}' due to Audiodescription and subscription preference.", item.Title);
+                        continue;
+                    }
+
+                    // Check Sign Language preference
+                    if (!subscription.AllowSignLanguage && tempVideoInfo.HasSignLanguage)
+                    {
+                        _logger.LogDebug("Skipping item '{Title}' due to Sign Language and subscription preference.", item.Title);
+                        continue;
+                    }
+
+                    // Check if Show is required
+                    if (subscription.EnforceSeriesParsing && !tempVideoInfo.IsShow)
+                    {
+                        _logger.LogDebug("Skipping item '{Title}' due to EnforceSeriesParsing and parsing result.", item.Title);
+                        continue;
+                    }
+
+                    // Check if Season/Episode parsing is required
+                    if (subscription is { EnforceSeriesParsing: true, AllowAbsoluteEpisodeNumbering: false } && tempVideoInfo is { HasSeasonEpisodeNumbering: false })
+                    {
+                        _logger.LogDebug("Skipping item '{Title}' due to absolute episode numbering and subscription preference.", item.Title);
+                        continue;
+                    }
+
+                    filteredItems.Add(new VideoParseResult { Item = item!, VideoInfo = tempVideoInfo });
+                }
+
+                _logger.LogInformation("Found {Count} new, filtered items for '{SubscriptionName}'.", filteredItems.Count, subscription.Name);
+
+                foreach (var item in filteredItems)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    string targetPath = _fileNameBuilderService.BuildDirectoryName(item.VideoInfo, subscription);
+                    if (string.IsNullOrWhiteSpace(targetPath))
+                    {
+                        _logger.LogError("No download path configured for subscription '{SubscriptionName}' or globally. Skipping item '{Title}'.", subscription.Name, item.VideoInfo.Title);
+                        continue;
+                    }
+
+                    // Ensure target directory exists
+                    if (!Directory.Exists(targetPath))
+                    {
+                        Directory.CreateDirectory(targetPath);
+                    }
+
+                    // --- Handle Video/Audio ---
+                    var subtitleFilePath = Path.Combine(targetPath, _fileNameBuilderService.BuildFileName(item.VideoInfo, true));
+                    var mainFilePath = Path.Combine(targetPath, _fileNameBuilderService.BuildFileName(item.VideoInfo, false));
+                    var tempVideoPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.mp4"); // Temp path for non-DE video download
+                    var videoUrl = item.Item.UrlVideoHd ?? item.Item.UrlVideo ?? item.Item.UrlVideoLow;
+
+                    // If German version: download full video if not exists
+                    // Use "deu" for language comparison, as per VideoInfo
+                    if (item.VideoInfo.Language == "deu")
+                    {
+                        if (!File.Exists(mainFilePath))
                         {
-                            _logger.LogError("Failed to download master video for '{Title}'.", item.VideoInfo.Title);
+                            _logger.LogInformation("Downloading master video for '{Title}' to '{Path}'", item.VideoInfo.Title, mainFilePath);
+                            if (!await _fileDownloader.DownloadFileAsync(videoUrl, mainFilePath, progress, cancellationToken).ConfigureAwait(false))
+                            {
+                                _logger.LogError("Failed to download master video for '{Title}'.", item.VideoInfo.Title);
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogDebug("Master video for '{Title}' already exists.", item.VideoInfo.Title);
                         }
                     }
-                    else
+                    else // Non-German version: extract audio if not exists
                     {
-                        _logger.LogDebug("Master video for '{Title}' already exists.", item.VideoInfo.Title);
-                    }
-                }
-                else // Non-German version: extract audio if not exists
-                {
-                    if (!File.Exists(mainFilePath))
-                    {
-                        _logger.LogInformation("Downloading temporary video for '{Title}' to extract '{Language}' audio.", item.VideoInfo.Title, item.VideoInfo.Language);
-                        if (!await _fileDownloader.DownloadFileAsync(videoUrl, tempVideoPath, progress, cancellationToken).ConfigureAwait(false))
+                        if (!File.Exists(mainFilePath))
                         {
-                            _logger.LogError("Failed to download temporary video for '{Title}'.", item.VideoInfo.Title);
-                            continue;
-                        }
+                            _logger.LogInformation("Downloading temporary video for '{Title}' to extract '{Language}' audio.", item.VideoInfo.Title, item.VideoInfo.Language);
+                            if (!await _fileDownloader.DownloadFileAsync(videoUrl, tempVideoPath, progress, cancellationToken).ConfigureAwait(false))
+                            {
+                                _logger.LogError("Failed to download temporary video for '{Title}'.", item.VideoInfo.Title);
+                                continue;
+                            }
 
-                        _logger.LogInformation("Extracting '{Language}' audio for '{Title}' to '{Path}'.", item.VideoInfo.Language, item.VideoInfo.Title, mainFilePath);
-                        if (!await _ffmpegService.ExtractAudioAsync(tempVideoPath, mainFilePath, item.VideoInfo.Language, cancellationToken).ConfigureAwait(false))
-                        {
-                            _logger.LogError("Failed to extract audio for '{Title}'.", item.VideoInfo.Title);
-                        }
+                            _logger.LogInformation("Extracting '{Language}' audio for '{Title}' to '{Path}'.", item.VideoInfo.Language, item.VideoInfo.Title, mainFilePath);
+                            if (!await _ffmpegService.ExtractAudioAsync(tempVideoPath, mainFilePath, item.VideoInfo.Language, cancellationToken).ConfigureAwait(false))
+                            {
+                                _logger.LogError("Failed to extract audio for '{Title}'.", item.VideoInfo.Title);
+                            }
 
-                        // Clean up temporary video file
-                        if (File.Exists(tempVideoPath))
+                            // Clean up temporary video file
+                            if (File.Exists(tempVideoPath))
+                            {
+                                File.Delete(tempVideoPath);
+                            }
+                        }
+                        else
                         {
-                            File.Delete(tempVideoPath);
+                            _logger.LogDebug("External '{Language}' audio for '{Title}' already exists.", item.VideoInfo.Language, item.VideoInfo.Title);
                         }
                     }
-                    else
-                    {
-                        _logger.LogDebug("External '{Language}' audio for '{Title}' already exists.", item.VideoInfo.Language, item.VideoInfo.Title);
-                    }
-                }
 
-                // --- Handle Subtitles ---
-                if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.Item.UrlSubtitle))
-                {
-                    if (!File.Exists(subtitleFilePath))
+                    // --- Handle Subtitles ---
+                    if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.Item.UrlSubtitle))
                     {
-                        _logger.LogInformation("Downloading '{Language}' subtitle for '{Title}' to '{Path}'.", item.VideoInfo.Language, item.VideoInfo.Title, subtitleFilePath);
-                        if (!await _fileDownloader.DownloadFileAsync(item.Item.UrlSubtitle, subtitleFilePath, progress, cancellationToken).ConfigureAwait(false))
+                        if (!File.Exists(subtitleFilePath))
                         {
-                            _logger.LogError("Failed to download subtitle for '{Title}'.", item.VideoInfo.Title);
+                            _logger.LogInformation("Downloading '{Language}' subtitle for '{Title}' to '{Path}'.", item.VideoInfo.Language, item.VideoInfo.Title, subtitleFilePath);
+                            if (!await _fileDownloader.DownloadFileAsync(item.Item.UrlSubtitle, subtitleFilePath, progress, cancellationToken).ConfigureAwait(false))
+                            {
+                                _logger.LogError("Failed to download subtitle for '{Title}'.", item.VideoInfo.Title);
+                            }
                         }
-                    }
-                    else
-                    {
-                        _logger.LogDebug("Subtitle in '{Language}' for '{Title}' already exists.", item.VideoInfo.Language, item.VideoInfo.Title);
+                        else
+                        {
+                            _logger.LogDebug("Subtitle in '{Language}' for '{Title}' already exists.", item.VideoInfo.Language, item.VideoInfo.Title);
+                        }
                     }
                 }
             }
