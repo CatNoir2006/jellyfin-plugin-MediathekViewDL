@@ -32,6 +32,26 @@ public class FileNameBuilderService
     }
 
     /// <summary>
+    /// Sanitizes a string to be used as a file name.
+    /// </summary>
+    /// <param name="fileName">The file name to sanitize.</param>
+    /// <returns>A sanitized file name.</returns>
+    public string SanitizeFileName(string fileName)
+    {
+        return string.Join("_", fileName.Split(_invalidFileNameChars));
+    }
+
+    /// <summary>
+    /// Sanitizes a string to be used as a directory name.
+    /// </summary>
+    /// <param name="directoryName">The directory name to sanitize.</param>
+    /// <returns>A sanitized directory name.</returns>
+    public string SanitizeDirectoryName(string directoryName)
+    {
+        return string.Join("_", directoryName.Split(_invalidFolderNameChars));
+    }
+
+    /// <summary>
     /// Builds a sanitized file name for the given video info and subscription.
     /// </summary>
     /// <param name="videoInfo">The video information.</param>
@@ -86,7 +106,7 @@ public class FileNameBuilderService
             fileNamePart += ".mka"; // Audio track only
         }
 
-        string sanitizedTitle = string.Join("_", fileNamePart.Split(_invalidFileNameChars));
+        string sanitizedTitle = SanitizeFileName(fileNamePart);
         return sanitizedTitle;
     }
 
@@ -103,7 +123,7 @@ public class FileNameBuilderService
         if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
         {
             string defaultPath = config?.DefaultDownloadPath ?? string.Empty;
-            string subscriptionPath = string.Join("_", subscription.Name.Split(_invalidFolderNameChars));
+            string subscriptionPath = SanitizeDirectoryName(subscription.Name);
             if (string.IsNullOrWhiteSpace(defaultPath))
             {
                 _logger.LogError("No default download path configured. Cannot build directory name for subscription '{SubscriptionName}' and item '{Title}'.", subscription.Name, videoInfo.Title);

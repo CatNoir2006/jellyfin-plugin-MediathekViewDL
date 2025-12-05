@@ -1,8 +1,11 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Services;
+using MediaBrowser.Common.Api;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -18,6 +21,7 @@ public class MediathekViewDlApiService : ControllerBase
     private readonly MediathekViewApiClient _apiClient;
     private readonly ILogger<MediathekViewDlApiService> _logger;
     private readonly FileDownloader _fileDownloader;
+    private readonly FileNameBuilderService _fileNameBuilder;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekViewDlApiService"/> class.
@@ -25,11 +29,13 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="logger">The logger.</param>
     /// <param name="apiClient">The api client.</param>
     /// <param name="fileDownloader">The file downloader.</param>
-    public MediathekViewDlApiService(ILogger<MediathekViewDlApiService> logger, MediathekViewApiClient apiClient, FileDownloader fileDownloader)
+    /// <param name="fileNameBuilder">The file name builder.</param>
+    public MediathekViewDlApiService(ILogger<MediathekViewDlApiService> logger, MediathekViewApiClient apiClient, FileDownloader fileDownloader, FileNameBuilderService fileNameBuilder)
     {
         _logger = logger;
         _apiClient = apiClient;
         _fileDownloader = fileDownloader;
+        _fileNameBuilder = fileNameBuilder;
     }
 
     /// <summary>
@@ -40,6 +46,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="maxDuration">Optional maximum duration in seconds.</param>
     /// <returns>A list of search results.</returns>
     [HttpGet("Search")]
+    [Authorize(Policy = Policies.RequiresElevation)]
     public async Task<ActionResult<List<ResultItem>>> Search(
         [FromQuery] string query,
         [FromQuery] int? minDuration,
@@ -65,6 +72,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="item">The item to download.</param>
     /// <returns>An OK result.</returns>
     [HttpPost("Download")]
+    [Authorize(Policy = Policies.RequiresElevation)]
     public IActionResult Download([FromBody] ResultItem item)
     {
         var config = Plugin.Instance?.Configuration;
@@ -92,8 +100,9 @@ public class MediathekViewDlApiService : ControllerBase
         // Fire and forget
         Task.Run(async () =>
         {
-            var sanitizedTitle = string.Join("_", item.Title.Split(Path.GetInvalidFileNameChars()));
+            var sanitizedTitle = _fileNameBuilder.SanitizeFileName(item.Title);
             var manualDownloadFolder = Path.Combine(config.DefaultDownloadPath, "manual");
+            Directory.CreateDirectory(manualDownloadFolder);
 
             // Download Video
             var videoDestinationPath = Path.Combine(manualDownloadFolder, sanitizedTitle + ".mp4");
@@ -126,5 +135,90 @@ public class MediathekViewDlApiService : ControllerBase
         });
 
         return Ok($"Download for '{item.Title}' started in the background.");
+    }
+
+    /// <summary>
+    /// Triggers an advanced download for a single item with custom options.
+    /// </summary>
+    /// <param name="options">The advanced download options.</param>
+    /// <returns>An OK result.</returns>
+    [HttpPost("AdvancedDownload")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public IActionResult AdvancedDownload([FromBody] AdvancedDownloadOptions options)
+    {
+        var config = Plugin.Instance?.Configuration;
+        if (config == null)
+        {
+            _logger.LogError("Plugin configuration is not available. Cannot start advanced download.");
+            return StatusCode(500, "Plugin configuration is not available.");
+        }
+
+        var item = options.Item;
+        var videoUrl = item.UrlVideoHd ?? item.UrlVideo ?? item.UrlVideoLow;
+
+        if (item == null || string.IsNullOrWhiteSpace(videoUrl))
+        {
+            return BadRequest("Invalid item provided for download (no video URL).");
+        }
+
+        var targetDownloadPath = string.IsNullOrWhiteSpace(options.DownloadPath)
+            ? config.DefaultDownloadPath
+            : options.DownloadPath;
+
+        if (string.IsNullOrWhiteSpace(targetDownloadPath))
+        {
+            _logger.LogError("Download path is not configured. Cannot start advanced download.");
+            return BadRequest("Download path is not configured.");
+        }
+
+        Directory.CreateDirectory(targetDownloadPath);
+
+        if (FileDownloader.GetDiskSpace(targetDownloadPath) < config.MinFreeDiskSpaceBytes)
+        {
+            _logger.LogError("Not enough free disk space to start advanced download for item: {Title}", item.Title);
+            return BadRequest("Not enough free disk space to start download.");
+        }
+
+        _logger.LogInformation("Advanced download requested for item: {Title} to path: {Path} with filename: {FileName}", item.Title, targetDownloadPath, options.FileName);
+
+        // Fire and forget
+        Task.Run(async () =>
+        {
+            // Sanitize filename provided by the user, or use a default one.
+            var fileName = string.IsNullOrWhiteSpace(options.FileName)
+                ? _fileNameBuilder.SanitizeFileName(item.Title) + ".mp4"
+                : _fileNameBuilder.SanitizeFileName(options.FileName);
+
+            var videoDestinationPath = Path.Combine(targetDownloadPath, fileName);
+            _logger.LogInformation("Starting advanced video download of '{Title}' to '{Path}'", item.Title, videoDestinationPath);
+            var videoSuccess = await _fileDownloader.DownloadFileAsync(videoUrl, videoDestinationPath, null, CancellationToken.None).ConfigureAwait(false);
+            if (videoSuccess)
+            {
+                _logger.LogInformation("Successfully finished advanced video download of '{Title}'.", item.Title);
+            }
+            else
+            {
+                _logger.LogError("Failed to advanced download video for '{Title}'.", item.Title);
+            }
+
+            // Download Subtitle
+            if (options.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
+            {
+                var subtitleFileName = Path.GetFileNameWithoutExtension(fileName) + ".ttml";
+                var subtitleDestinationPath = Path.Combine(targetDownloadPath, subtitleFileName);
+                _logger.LogInformation("Starting advanced subtitle download of '{Title}' to '{Path}'", item.Title, subtitleDestinationPath);
+                var subtitleSuccess = await _fileDownloader.DownloadFileAsync(item.UrlSubtitle, subtitleDestinationPath, null, CancellationToken.None).ConfigureAwait(false);
+                if (subtitleSuccess)
+                {
+                    _logger.LogInformation("Successfully finished advanced subtitle download of '{Title}'.", item.Title);
+                }
+                else
+                {
+                    _logger.LogError("Failed to advanced download subtitle for '{Title}'.", item.Title);
+                }
+            }
+        });
+
+        return Ok($"Advanced download for '{item.Title}' started in the background.");
     }
 }

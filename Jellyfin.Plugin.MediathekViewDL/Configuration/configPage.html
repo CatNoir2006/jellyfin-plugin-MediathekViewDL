@@ -264,6 +264,48 @@
             </div>
         </div>
 
+        <div id="advancedDownloadModal" class="dialog-host" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
+            <div class="dialog-content" style="background-color: #303030; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 5px;">
+                <h2 id="advancedDownloadTitle">Erweiterter Download</h2>
+                <form onsubmit="MediathekPluginConfig.performAdvancedDownload(); return false;">
+                    <input type="hidden" id="advancedDownloadIndex" />
+
+                    <div class="inputContainer">
+                        <div style="display: flex; align-items: center;">
+                            <div style="flex-grow: 1;">
+                                <label class="inputLabel" for="advDlPath">Download Pfad</label>
+                                <input is="emby-input" type="text" id="advDlPath" />
+                            </div>
+                            <button type="button" is="paper-icon-button-light" id="btnSelectAdvPath" title="Ordner auswählen" style="margin-left: 10px; margin-top: 15px;">
+                                <span class="material-icons folder_open"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel" for="advDlFilename">Dateiname</label>
+                        <input is="emby-input" type="text" id="advDlFilename" />
+                    </div>
+
+                    <div class="checkboxContainer">
+                        <label class="emby-checkbox-label">
+                            <input id="advDlSubtitles" type="checkbox" is="emby-checkbox" />
+                            <span>Untertitel herunterladen</span>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button is="emby-button" type="submit" class="raised button-submit">
+                            <span>Herunterladen</span>
+                        </button>
+                        <button is="emby-button" type="button" class="raised button-cancel" onclick="MediathekPluginConfig.closeAdvancedDownloadDialog()">
+                            <span>Abbrechen</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <script type="text/javascript">
             var MediathekPluginConfig = (function () {
 
@@ -271,6 +313,7 @@
                 const pluginName = "MediathekViewDL";
                 let currentConfig = null;
                 let currentSearchResults = [];
+                let currentItemForAdvancedDl = null;
 
                 // --- Helper Functions ---
                 function confirmationPopup(message, title, resultCallback) {
@@ -427,6 +470,10 @@
                             // Download-Button
                             '<button is="emby-button" type="button" class="paper-icon-button-light" title="Herunterladen" onclick="MediathekPluginConfig.downloadItem(' + index + ')">' +
                             '<span class="material-icons file_download"></span>' +
+                            '</button>' +
+                            // Advanced Download-Button
+                            '<button is="emby-button" type="button" class="paper-icon-button-light" title="Erweiterter Download" onclick="MediathekPluginConfig.openAdvancedDownloadDialog(' + index + ')">' +
+                            '<span class="material-icons settings"></span>' +
                             '</button>' +
                             // Abo erstellen Button
                             '<button is="emby-button" type="button" class="paper-icon-button-light" title="Abo erstellen" onclick="MediathekPluginConfig.createSubFromSearch(this, \'' + safeTitle + '\', \'' + safeChannel + '\', \'' + safeTopic + '\')">' +
@@ -676,6 +723,59 @@
                     });
                 }
 
+                function openAdvancedDownloadDialog(index) {
+                    currentItemForAdvancedDl = currentSearchResults[index];
+                    if (!currentItemForAdvancedDl) return;
+
+                    document.getElementById('advancedDownloadTitle').innerText = 'Erweiterter Download: ' + currentItemForAdvancedDl.title;
+                    document.getElementById('advancedDownloadIndex').value = index;
+
+                    document.getElementById('advDlPath').value = currentConfig.DefaultDownloadPath || '';
+
+                    let proposedFilename = (currentItemForAdvancedDl.topic || 'video') + " - " + (currentItemForAdvancedDl.title || 'video');
+                    proposedFilename = proposedFilename.replace(/[\/\\?%*:|"<>]/g, '-') + '.mp4';
+                    document.getElementById('advDlFilename').value = proposedFilename;
+
+
+                    document.getElementById('advDlSubtitles').checked = currentConfig.DownloadSubtitles && currentItemForAdvancedDl.url_subtitle;
+                    document.getElementById('advDlSubtitles').disabled = !currentItemForAdvancedDl.url_subtitle;
+
+
+                    document.getElementById('advancedDownloadModal').style.display = 'flex';
+                }
+
+                function closeAdvancedDownloadDialog() {
+                    document.getElementById('advancedDownloadModal').style.display = 'none';
+                }
+
+                function performAdvancedDownload() {
+                    if (!currentItemForAdvancedDl) return;
+
+                    const downloadOptions = {
+                        item: currentItemForAdvancedDl,
+                        downloadPath: document.getElementById('advDlPath').value,
+                        fileName: document.getElementById('advDlFilename').value,
+                        downloadSubtitles: document.getElementById('advDlSubtitles').checked
+                    };
+
+                    const url = ApiClient.getUrl('/' + pluginName + '/AdvancedDownload');
+
+                    Dashboard.showLoadingMsg();
+                    ApiClient.ajax({
+                        type: "POST",
+                        url: url,
+                        data: JSON.stringify(downloadOptions),
+                        contentType: 'application/json'
+                    }).then(function (result) {
+                        Dashboard.hideLoadingMsg();
+                        closeAdvancedDownloadDialog();
+                        showToast("Download für '" + currentItemForAdvancedDl.title + "' gestartet.");
+                    }).catch(function (err) {
+                        Dashboard.hideLoadingMsg();
+                        showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                    });
+                }
+
                 // --- EVENT LISTENERS ---
                 return {
                     init: function () {
@@ -701,11 +801,18 @@
                         document.getElementById('btnSelectSubPath').addEventListener('click', function () {
                             openFolderDialog('subPath', 'Abo Pfad wählen');
                         });
+
+                        document.getElementById('btnSelectAdvPath').addEventListener('click', function () {
+                            openFolderDialog('advDlPath', 'Download Pfad wählen');
+                        });
                     },
                     switchTab: switchTab,
                     performSearch: performSearch,
                     createSubFromSearch: createSubFromSearch,
                     downloadItem: downloadItem,
+                    openAdvancedDownloadDialog: openAdvancedDownloadDialog,
+                    closeAdvancedDownloadDialog: closeAdvancedDownloadDialog,
+                    performAdvancedDownload: performAdvancedDownload,
                     addQueryRow: addQueryRow,
                     editSubscription: editSubscription,
                     closeEditor: closeEditor,
