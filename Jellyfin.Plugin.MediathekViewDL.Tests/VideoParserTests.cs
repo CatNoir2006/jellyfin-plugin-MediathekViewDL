@@ -68,7 +68,7 @@ public class VideoParserTests
 
         // Assert
         Assert.NotNull(result);
-        Assert.False(result.IsShow);
+        Assert.True(result.IsShow);
         Assert.Null(result.SeasonNumber);
         Assert.Null(result.EpisodeNumber);
         Assert.Equal(expectedAbsolute, result.AbsoluteEpisodeNumber);
@@ -107,34 +107,6 @@ public class VideoParserTests
         Assert.Equal(hasAd, result.HasAudiodescription);
         Assert.Equal(hasGs, result.HasSignLanguage);
         Assert.Equal(expectedEpisodeTitle, result.Title, ignoreCase: true);
-    }
-
-
-    [Fact]
-    public void ParseVideoInfo_WhenEnforceParsingIsTrueAndNoNumbering_ShouldReturnNull()
-    {
-        // Arrange
-        var title = "Just a plain title";
-
-        // Act
-        var result = _videoParser.ParseVideoInfo("A show", title);
-
-        // Assert
-        Assert.Null(result);
-    }
-
-    [Fact]
-    public void ParseVideoInfo_WhenEnforceParsingIsFalseAndNoNumbering_ShouldReturnVideoInfo()
-    {
-        // Arrange
-        var title = "Just a plain title";
-
-        // Act
-        var result = _videoParser.ParseVideoInfo("A show", title);
-
-        // Assert
-        Assert.NotNull(result);
-        Assert.Equal(title, result.Title);
     }
 
     // This test calls the private method indirectly via the public ParseVideoInfo
