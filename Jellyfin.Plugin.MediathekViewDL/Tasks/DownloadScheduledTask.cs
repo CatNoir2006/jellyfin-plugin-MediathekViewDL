@@ -25,7 +25,7 @@ public class DownloadScheduledTask : IScheduledTask
     private readonly MediathekViewApiClient _apiClient;
     private readonly FFmpegService _ffmpegService;
     private readonly ILibraryManager _libraryManager;
-    private readonly SeriesParser _seriesParser;
+    private readonly VideoParser _videoParser;
     private readonly FileDownloader _fileDownloader;
 
     /// <summary>
@@ -36,7 +36,7 @@ public class DownloadScheduledTask : IScheduledTask
     /// <param name="apiClient">The MediathekView API client.</param>
     /// <param name="ffmpegService">The FFmpeg service.</param>
     /// <param name="libraryManager">The library manager.</param>
-    /// <param name="seriesParser">The series parser.</param>
+    /// <param name="videoParser">The video parser.</param>
     /// <param name="fileDownloader">The file downloader.</param>
     public DownloadScheduledTask(
         ILogger<DownloadScheduledTask> logger,
@@ -44,7 +44,7 @@ public class DownloadScheduledTask : IScheduledTask
         MediathekViewApiClient apiClient,
         FFmpegService ffmpegService,
         ILibraryManager libraryManager,
-        SeriesParser seriesParser,
+        VideoParser videoParser,
         FileDownloader fileDownloader)
     {
         _logger = logger;
@@ -52,7 +52,7 @@ public class DownloadScheduledTask : IScheduledTask
         _apiClient = apiClient;
         _ffmpegService = ffmpegService;
         _libraryManager = libraryManager;
-        _seriesParser = seriesParser;
+        _videoParser = videoParser;
         _fileDownloader = fileDownloader;
     }
 
@@ -115,10 +115,31 @@ public class DownloadScheduledTask : IScheduledTask
             }
 
             // Filter out items already processed or not matching criteria
-            var filteredItems = results
-                .Where(r => new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(r.Timestamp) > config.LastRun) // Todo: Rework this because new Subscriptions could miss old items or the task got canceled. Just use file existence checks?
-                .Where(r => subscription.AllowAudioDescription || (!r.Title.Contains("AD", StringComparison.OrdinalIgnoreCase) && !r.Title.Contains("Audiodeskription", StringComparison.OrdinalIgnoreCase)))
-                .ToList();
+            // Now using the VideoParser for language/feature detection
+            var filteredItems = new List<ResultItem>();
+            foreach (var item in results)
+            {
+                var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title, false);
+                if (tempVideoInfo == null)
+                {
+                    continue;
+                }
+
+                // Check against LastRun
+                if (new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(item.Timestamp) <= config.LastRun)
+                {
+                    continue;
+                }
+
+                // Check Audiodescription preference
+                if (!subscription.AllowAudioDescription && tempVideoInfo.HasAudiodescription)
+                {
+                    _logger.LogDebug("Skipping item '{Title}' due to Audiodescription and subscription preference.", item.Title);
+                    continue;
+                }
+
+                filteredItems.Add(item);
+            }
 
             _logger.LogInformation("Found {Count} new, filtered items for '{SubscriptionName}'.", filteredItems.Count, subscription.Name);
 
@@ -126,9 +147,9 @@ public class DownloadScheduledTask : IScheduledTask
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var episodeInfo = _seriesParser.ParseEpisodeInfo(subscription.Name, item.Title, subscription.EnforceSeriesParsing);
+                var videoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title, subscription.EnforceSeriesParsing);
 
-                if (episodeInfo == null)
+                if (videoInfo == null)
                 {
                     _logger.LogDebug("Skipping item '{Title}' for '{SubscriptionName}' due to parsing failure or enforced parsing.", item.Title, subscription.Name);
                     continue;
@@ -146,16 +167,42 @@ public class DownloadScheduledTask : IScheduledTask
                 }
 
                 // Construct full paths
-                var seriesPath = Path.Combine(baseDownloadPath, episodeInfo.SeriesName);
-                var seasonPath = Path.Combine(seriesPath, $"Staffel {episodeInfo.SeasonNumber:D2}"); // D2 for 0-padding
-                var baseFileName = $"{(!episodeInfo.IsParsed ? "Movie - " : string.Empty)}S{episodeInfo.SeasonNumber:D2}E{episodeInfo.EpisodeNumber:D2} - {episodeInfo.EpisodeTitle}";
+                var seriesPath = Path.Combine(baseDownloadPath, subscription.Name); // Using subscription.Name directly for series path
+
+                string targetDirectory; // This replaces seasonPath
+                string fileNamePart;
+
+                if (videoInfo.SeasonNumber.HasValue && videoInfo.EpisodeNumber.HasValue)
+                {
+                    targetDirectory = Path.Combine(seriesPath, $"Staffel {videoInfo.SeasonNumber.Value:D2}");
+                    fileNamePart = $"S{videoInfo.SeasonNumber.Value:D2}E{videoInfo.EpisodeNumber.Value:D2}";
+                }
+                else if (videoInfo.AbsoluteEpisodeNumber.HasValue)
+                {
+                    targetDirectory = seriesPath; // No specific season folder for absolute numbered items without season info
+                    fileNamePart = $"{videoInfo.AbsoluteEpisodeNumber.Value:D3}"; // Pad absolute number to 3 digits for consistency
+                }
+                else
+                {
+                    targetDirectory = seriesPath; // Treat as movie/special in series folder
+                    fileNamePart = "Movie"; // Default prefix for items without specific numbering
+                }
+
+                // Ensure target directory exists
+                if (!Directory.Exists(targetDirectory))
+                {
+                    Directory.CreateDirectory(targetDirectory);
+                }
+
+                var baseFileName = $"{fileNamePart} - {videoInfo.EpisodeTitle}";
 
                 // --- Handle Video/Audio ---
-                var masterVideoPath = Path.Combine(seasonPath, $"{baseFileName}.mkv");
+                var masterVideoPath = Path.Combine(targetDirectory, $"{baseFileName}.mkv");
                 var tempVideoPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.mp4"); // Temp path for non-DE video download
 
                 // If German version: download full video if not exists
-                if (episodeInfo.Language == "de")
+                // Use "deu" for language comparison, as per VideoInfo
+                if (videoInfo.Language == "deu")
                 {
                     if (!File.Exists(masterVideoPath))
                     {
@@ -172,18 +219,18 @@ public class DownloadScheduledTask : IScheduledTask
                 }
                 else // Non-German version: extract audio if not exists
                 {
-                    var externalAudioPath = Path.Combine(seasonPath, $"{baseFileName}.{episodeInfo.Language}.mka");
+                    var externalAudioPath = Path.Combine(targetDirectory, $"{baseFileName}.{videoInfo.Language}.mka");
                     if (!File.Exists(externalAudioPath))
                     {
-                        _logger.LogInformation("Downloading temporary video for '{Title}' to extract '{Language}' audio.", item.Title, episodeInfo.Language);
+                        _logger.LogInformation("Downloading temporary video for '{Title}' to extract '{Language}' audio.", item.Title, videoInfo.Language);
                         if (!await _fileDownloader.DownloadFileAsync(item.UrlVideo, tempVideoPath, progress, cancellationToken).ConfigureAwait(false))
                         {
                             _logger.LogError("Failed to download temporary video for '{Title}'.", item.Title);
                             continue;
                         }
 
-                        _logger.LogInformation("Extracting '{Language}' audio for '{Title}' to '{Path}'.", episodeInfo.Language, item.Title, externalAudioPath);
-                        if (!await _ffmpegService.ExtractAudioAsync(tempVideoPath, externalAudioPath, episodeInfo.Language, cancellationToken).ConfigureAwait(false))
+                        _logger.LogInformation("Extracting '{Language}' audio for '{Title}' to '{Path}'.", videoInfo.Language, item.Title, externalAudioPath);
+                        if (!await _ffmpegService.ExtractAudioAsync(tempVideoPath, externalAudioPath, videoInfo.Language, cancellationToken).ConfigureAwait(false))
                         {
                             _logger.LogError("Failed to extract audio for '{Title}'.", item.Title);
                         }
@@ -196,25 +243,25 @@ public class DownloadScheduledTask : IScheduledTask
                     }
                     else
                     {
-                        _logger.LogDebug("External '{Language}' audio for '{Title}' already exists.", episodeInfo.Language, item.Title);
+                        _logger.LogDebug("External '{Language}' audio for '{Title}' already exists.", videoInfo.Language, item.Title);
                     }
                 }
 
                 // --- Handle Subtitles ---
                 if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
                 {
-                    var subtitlePath = Path.Combine(seasonPath, $"{baseFileName}.{episodeInfo.Language}.ttml");
+                    var subtitlePath = Path.Combine(targetDirectory, $"{baseFileName}.{videoInfo.Language}.ttml");
                     if (!File.Exists(subtitlePath))
                     {
-                        _logger.LogInformation("Downloading '{Language}' subtitle for '{Title}' to '{Path}'.", episodeInfo.Language, item.Title, subtitlePath);
-                        if (!await _fileDownloader.DownloadFileAsync(item.UrlSubtitle, subtitlePath, progress, cancellationToken).ConfigureAwait(false))
+                        _logger.LogInformation("Downloading '{Language}' subtitle for '{Title}' to '{Path}'.", videoInfo.Language, item.Title, subtitlePath);
+                        if (!await _fileDownloader.DownloadFileAsync(item.UrlVideo, subtitlePath, progress, cancellationToken).ConfigureAwait(false))
                         {
                             _logger.LogError("Failed to download subtitle for '{Title}'.", item.Title);
                         }
                     }
                     else
                     {
-                        _logger.LogDebug("Subtitle for '{Title}' already exists.", item.Title);
+                        _logger.LogDebug("Subtitle in '{Language}' for '{Title}' already exists.", videoInfo.Language, item.Title);
                     }
                 }
             }

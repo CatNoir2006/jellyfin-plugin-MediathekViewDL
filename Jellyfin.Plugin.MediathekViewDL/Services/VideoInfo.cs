@@ -1,0 +1,52 @@
+namespace Jellyfin.Plugin.MediathekViewDL.Services;
+
+/// <summary>
+/// Represents parsed video information, including numbering, language, and specific features.
+/// </summary>
+public class VideoInfo
+{
+    /// <summary>
+    /// Gets or sets the season number, if available.
+    /// </summary>
+    public int? SeasonNumber { get; set; }
+
+    /// <summary>
+    /// Gets or sets the episode number, if available.
+    /// </summary>
+    public int? EpisodeNumber { get; set; }
+
+    /// <summary>
+    /// Gets or sets the absolute episode number, if available.
+    /// </summary>
+    public int? AbsoluteEpisodeNumber { get; set; }
+
+    /// <summary>
+    /// Gets or sets the title of the video, cleaned from parsing tags and language identifiers.
+    /// </summary>
+    public string EpisodeTitle { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the detected 3-letter ISO language code (e.g., 'deu', 'eng').
+    /// </summary>
+    public string Language { get; set; } = "deu";
+
+    /// <summary>
+    /// Gets or sets a value indicating whether season/episode or absolute numbering was successfully parsed.
+    /// </summary>
+    public bool IsParsed { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the content represents an episode of a show.
+    /// </summary>
+    public bool IsShow { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the video has audiodescription.
+    /// </summary>
+    public bool HasAudiodescription { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the video has sign language (Gebärdensprache).
+    /// </summary>
+    public bool HasSignLanguage { get; set; }
+}

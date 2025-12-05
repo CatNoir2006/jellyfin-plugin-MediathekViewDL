@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using MediaBrowser.Controller.MediaEncoding;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services;
@@ -11,14 +12,17 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services;
 public class FFmpegService
 {
     private readonly ILogger<FFmpegService> _logger;
+    private readonly IMediaEncoder _mediaEncoder;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FFmpegService"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
-    public FFmpegService(ILogger<FFmpegService> logger)
+    /// <param name="mediaEncoder">The MediaEncoder.</param>
+    public FFmpegService(ILogger<FFmpegService> logger, IMediaEncoder mediaEncoder)
     {
         _logger = logger;
+        _mediaEncoder = mediaEncoder;
     }
 
     /// <summary>
@@ -32,20 +36,33 @@ public class FFmpegService
     public async Task<bool> ExtractAudioAsync(string tempVideoPath, string outputAudioPath, string languageCode, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Extracting audio from '{Input}' to '{Output}' with language '{Lang}'", tempVideoPath, outputAudioPath, languageCode);
-
-        var process = new Process
+        if (string.IsNullOrWhiteSpace(_mediaEncoder.EncoderPath))
         {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "ffmpeg", // Todo: Get from jellyfin configuration
-                Arguments = $"-i \"{tempVideoPath}\" -vn -acodec copy -metadata:s:a:0 language={languageCode} -y \"{outputAudioPath}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-            }
+            _logger.LogError("FFmpeg encoder path is not configured.");
+            return false;
+        }
+
+        // Build ffmpeg arguments
+        string[] args = ["-i", tempVideoPath, "-vn", "-acodec", "copy", "-metadata:s:a:0", $"language={languageCode}", "-y", outputAudioPath];
+
+        // Set up the process start info
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = _mediaEncoder.EncoderPath,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true,
         };
 
+        // Add arguments to the process
+        foreach (var arg in args)
+        {
+            startInfo.ArgumentList.Add(arg);
+        }
+
+        using var process = new Process();
+        process.StartInfo = startInfo;
         process.Start();
         string error = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
         await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
