@@ -121,10 +121,10 @@ public class FileDownloader
             var receivedBytes = 0L;
             Memory<byte> buffer = new byte[8192];
 
-            #pragma warning disable CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
+#pragma warning disable CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
             await using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
             {
-                #pragma warning disable CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
+#pragma warning disable CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
                 await using (var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken))
                 {
                     while (true)
@@ -143,9 +143,9 @@ public class FileDownloader
                         }
                     }
                 }
-                #pragma warning restore CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
+#pragma warning restore CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
             }
-            #pragma warning restore CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
+#pragma warning restore CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
 
             _logger.LogInformation("Successfully downloaded '{DestinationPath}'.", destinationPath);
             return true;
@@ -187,43 +187,62 @@ public class FileDownloader
     {
         string directory = path;
 
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            return 0;
+        }
+
+#pragma warning disable CA3003 // The path is provieded by the Admin. Also there should be no issue with directory traversal. As we only check disk space, this is acceptable.
         if (!Directory.Exists(directory))
         {
             directory = Path.GetDirectoryName(path)!;
+            if (string.IsNullOrWhiteSpace(directory))
+            {
+                return 0;
+            }
         }
+#pragma warning restore CA3003
 
         directory = Path.GetFullPath(directory);
 
-        var drive = new DriveInfo(directory);
-        return drive.AvailableFreeSpace;
+        try
+        {
+            var drive = new DriveInfo(directory);
+            return drive.AvailableFreeSpace;
+        }
+        catch (ArgumentException)
+        {
+            // This can happen for UNC paths, etc.
+            return 0;
+        }
     }
 
     private bool CheckDomainAllowed(string fileUrl, PluginConfiguration pluginConfig, bool isWarningOnly = false)
     {
-            if (!Uri.TryCreate(fileUrl, UriKind.Absolute, out var uriResult))
-            {
-                _logger.Log(isWarningOnly ? LogLevel.Warning : LogLevel.Error, "Invalid URL: {FileUrl}", fileUrl);
-                return false;
-            }
+        if (!Uri.TryCreate(fileUrl, UriKind.Absolute, out var uriResult))
+        {
+            _logger.Log(isWarningOnly ? LogLevel.Warning : LogLevel.Error, "Invalid URL: {FileUrl}", fileUrl);
+            return false;
+        }
 
-            var host = uriResult.Host;
+        var host = uriResult.Host;
 
-            // Extract the top-level domain for validation
-            var hostParts = host.Split('.');
-            if (hostParts.Length < 2)
-            {
-                _logger.Log(isWarningOnly ? LogLevel.Warning : LogLevel.Error, "Invalid host in URL: {Host}", host);
-                return false;
-            }
+        // Extract the top-level domain for validation
+        var hostParts = host.Split('.');
+        if (hostParts.Length < 2)
+        {
+            _logger.Log(isWarningOnly ? LogLevel.Warning : LogLevel.Error, "Invalid host in URL: {Host}", host);
+            return false;
+        }
 
-            var topDomain = string.Join('.', hostParts[^2..]);
+        var topDomain = string.Join('.', hostParts[^2..]);
 
-            if (!pluginConfig.AllowedDomains.Contains(topDomain))
-            {
-                _logger.Log(isWarningOnly ? LogLevel.Warning : LogLevel.Error, "Domain '{Domain}' is not allowed.", topDomain);
-                return false;
-            }
+        if (!pluginConfig.AllowedDomains.Contains(topDomain))
+        {
+            _logger.Log(isWarningOnly ? LogLevel.Warning : LogLevel.Error, "Domain '{Domain}' is not allowed.", topDomain);
+            return false;
+        }
 
-            return true;
+        return true;
     }
 }
