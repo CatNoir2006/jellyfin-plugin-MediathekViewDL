@@ -206,7 +206,19 @@ public class DownloadScheduledTask : IScheduledTask
 
                     // If German version: download full video if not exists
                     // Use "deu" for language comparison, as per VideoInfo
-                    if (item.VideoInfo.Language == "deu")
+                    if (subscription.UseStreamingUrlFiles)
+                    {
+                        var strmFilePath = Path.Combine(targetPath, _fileNameBuilderService.BuildFileName(item.VideoInfo, false, true));
+                        if (!File.Exists(strmFilePath))
+                        {
+                            _logger.LogInformation(
+                                "Creating streaming URL file for '{Title}' at '{Path}'",
+                                item.VideoInfo.Title,
+                                strmFilePath);
+                            await _fileDownloader.GenerateStreamingUrlFileAsync(videoUrl, strmFilePath, cancellationToken).ConfigureAwait(false);
+                        }
+                    }
+                    else if (item.VideoInfo.Language == "deu")
                     {
                         if (!File.Exists(mainFilePath))
                         {

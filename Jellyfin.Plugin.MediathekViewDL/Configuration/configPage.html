@@ -212,6 +212,16 @@
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
+                                    <input id="subUseStreamingUrlFiles" type="checkbox" is="emby-checkbox" />
+                                    <span>Streaming-URL-Dateien (.strm) verwenden</span>
+                                </label>
+                                <div class="fieldDescription">Verwendet Streaming-URL-Dateien (.strm) anstelle des
+                                    Herunterladens der tatsächlichen Videodateien. Es werden keine Videodateien
+                                    gespeichert, die Videos werden von ARD/ZDF direkt gestreamt. Untertitel sind hiervon nicht betroffen.</div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
                                     <input id="subTreatNonEpisodesAsExtras" type="checkbox" is="emby-checkbox" />
                                     <span>Nicht Episoden als Extras behandeln</span>
                                 </label>
@@ -264,8 +274,10 @@
             </div>
         </div>
 
-        <div id="advancedDownloadModal" class="dialog-host" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
-            <div class="dialog-content" style="background-color: #303030; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 5px;">
+        <div id="advancedDownloadModal" class="dialog-host"
+            style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
+            <div class="dialog-content"
+                style="background-color: #303030; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 5px;">
                 <h2 id="advancedDownloadTitle">Erweiterter Download</h2>
                 <form onsubmit="MediathekPluginConfig.performAdvancedDownload(); return false;">
                     <input type="hidden" id="advancedDownloadIndex" />
@@ -276,7 +288,8 @@
                                 <label class="inputLabel" for="advDlPath">Download Pfad</label>
                                 <input is="emby-input" type="text" id="advDlPath" />
                             </div>
-                            <button type="button" is="paper-icon-button-light" id="btnSelectAdvPath" title="Ordner auswählen" style="margin-left: 10px; margin-top: 15px;">
+                            <button type="button" is="paper-icon-button-light" id="btnSelectAdvPath"
+                                title="Ordner auswählen" style="margin-left: 10px; margin-top: 15px;">
                                 <span class="material-icons folder_open"></span>
                             </button>
                         </div>
@@ -298,7 +311,8 @@
                         <button is="emby-button" type="submit" class="raised button-submit">
                             <span>Herunterladen</span>
                         </button>
-                        <button is="emby-button" type="button" class="raised button-cancel" onclick="MediathekPluginConfig.closeAdvancedDownloadDialog()">
+                        <button is="emby-button" type="button" class="raised button-cancel"
+                            onclick="MediathekPluginConfig.closeAdvancedDownloadDialog()">
                             <span>Abbrechen</span>
                         </button>
                     </div>
@@ -610,6 +624,7 @@
                     document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = false;
                     document.getElementById('subAllowSignLanguage').checked = false;
                     document.getElementById('subTreatNonEpisodesAsExtras').checked = false;
+                    document.getElementById('subUseStreamingUrlFiles').checked = false;
                     queriesContainer.innerHTML = '';
 
                     let subToEdit = null;
@@ -634,6 +649,7 @@
                         document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = subToEdit.AllowAbsoluteEpisodeNumbering;
                         document.getElementById('subAllowSignLanguage').checked = subToEdit.AllowSignLanguage;
                         document.getElementById('subTreatNonEpisodesAsExtras').checked = subToEdit.TreatNonEpisodesAsExtras;
+                        document.getElementById('subUseStreamingUrlFiles').checked = subToEdit.UseStreamingUrlFiles;
 
                         if (subToEdit.Queries && subToEdit.Queries.length > 0) {
                             subToEdit.Queries.forEach(function (q) { addQueryRow(q); });
@@ -663,6 +679,7 @@
                     const allowAbsolute = document.getElementById('subAllowAbsoluteEpisodeNumbering').checked;
                     const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
                     const treatNonEpisodesAsExtras = document.getElementById('subTreatNonEpisodesAsExtras').checked;
+                    const useStreamingUrlFiles = document.getElementById('subUseStreamingUrlFiles').checked;
 
                     const queries = [];
                     document.querySelectorAll('#queriesContainer .query-row').forEach(function (row) {
@@ -692,7 +709,9 @@
                         EnforceSeriesParsing: enforce,
                         AllowAudioDescription: allowAudio,
                         AllowAbsoluteEpisodeNumbering: allowAbsolute,
-                        AllowSignLanguage: allowSignLanguage
+                        AllowSignLanguage: allowSignLanguage,
+                        TreatNonEpisodesAsExtras: treatNonEpisodesAsExtras,
+                        UseStreamingUrlFiles: useStreamingUrlFiles
                     };
 
                     if (id) {

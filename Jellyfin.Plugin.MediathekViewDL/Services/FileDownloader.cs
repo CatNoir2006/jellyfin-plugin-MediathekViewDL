@@ -179,6 +179,51 @@ public class FileDownloader
     }
 
     /// <summary>
+    /// Generates a streaming URL file (.strm) at the specified destination path.
+    /// </summary>
+    /// <param name="fileUrl">The URL to be written into the streaming URL file.</param>
+    /// <param name="destinationPath">The file path where the streaming URL file will be created.</param>
+    /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+    /// <returns>True if the streaming URL file was successfully created, otherwise false.</returns>
+    public async Task<bool> GenerateStreamingUrlFileAsync(string fileUrl, string destinationPath, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(destinationPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            await File.WriteAllTextAsync(destinationPath, fileUrl, cancellationToken).ConfigureAwait(false);
+
+            _logger.LogInformation("Successfully created streaming URL file at '{DestinationPath}'.", destinationPath);
+            return true;
+        }
+        catch (IOException ex)
+        {
+            _logger.LogError(ex, "File system error during creation of streaming URL file at '{DestinationPath}': {Message}", destinationPath, ex.Message);
+            return false;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("Creation of streaming URL file at '{DestinationPath}' was cancelled.", destinationPath);
+            // Clean up partially created file
+            if (File.Exists(destinationPath))
+            {
+                File.Delete(destinationPath);
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred during creation of streaming URL file at '{DestinationPath}': {Message}", destinationPath, ex.Message);
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Gets the available free disk space in bytes for the drive containing the specified path.
     /// </summary>
     /// <param name="path">The path to check disk space for.</param>

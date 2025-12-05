@@ -56,8 +56,9 @@ public class FileNameBuilderService
     /// </summary>
     /// <param name="videoInfo">The video information.</param>
     /// <param name="isSubtitle">Whether the file is a subtitle.</param>
+    /// <param name="useStreamingUrlFile">Whether to generate a streaming URL file name.</param>
     /// <returns>The sanitized file name.</returns>
-    public string BuildFileName(VideoInfo videoInfo, bool isSubtitle)
+    public string BuildFileName(VideoInfo videoInfo, bool isSubtitle, bool useStreamingUrlFile = false)
     {
         string fileNamePart;
         if (videoInfo.IsShow && videoInfo.HasSeasonEpisodeNumbering)
@@ -96,6 +97,10 @@ public class FileNameBuilderService
         if (isSubtitle)
         {
             fileNamePart += ".ttml"; // Subtitle file extension
+        }
+        else if (useStreamingUrlFile)
+        {
+            fileNamePart += ".strm"; // Streaming URL file extension
         }
         else if (videoInfo.Language == "deu")
         {
