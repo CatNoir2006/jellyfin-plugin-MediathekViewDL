@@ -23,7 +23,7 @@ public class VideoInfo
     /// <summary>
     /// Gets or sets the title of the video, cleaned from parsing tags and language identifiers.
     /// </summary>
-    public string EpisodeTitle { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the detected 3-letter ISO language code (e.g., 'deu', 'eng').
@@ -31,14 +31,19 @@ public class VideoInfo
     public string Language { get; set; } = "deu";
 
     /// <summary>
-    /// Gets or sets a value indicating whether season/episode or absolute numbering was successfully parsed.
-    /// </summary>
-    public bool IsParsed { get; set; }
-
-    /// <summary>
     /// Gets or sets a value indicating whether the content represents an episode of a show.
     /// </summary>
     public bool IsShow { get; set; }
+
+    /// <summary>
+    /// Gets a value indicating whether the video has absolute numbering.
+    /// </summary>
+    public bool HasAbsoluteNumbering => AbsoluteEpisodeNumber.HasValue;
+
+    /// <summary>
+    /// Gets a value indicating whether the video has season and episode numbering.
+    /// </summary>
+    public bool HasSeasonEpisodeNumbering => SeasonNumber.HasValue && EpisodeNumber.HasValue;
 
     /// <summary>
     /// Gets or sets a value indicating whether the video has audiodescription.
@@ -49,4 +54,9 @@ public class VideoInfo
     /// Gets or sets a value indicating whether the video has sign language (Gebärdensprache).
     /// </summary>
     public bool HasSignLanguage { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the video is a trailer.
+    /// </summary>
+    public bool IsTrailer { get; set; }
 }

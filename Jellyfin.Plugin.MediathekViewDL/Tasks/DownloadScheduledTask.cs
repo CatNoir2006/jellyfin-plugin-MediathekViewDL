@@ -102,7 +102,7 @@ public class DownloadScheduledTask : IScheduledTask
             var apiQuery = new ApiQuery
             {
                 Queries = subscription.Queries,
-                Size = 50, // Get a decent number of results
+                Size = 150, // Get a decent number of results
                 MinDuration = subscription.MinDurationMinutes.HasValue ? subscription.MinDurationMinutes * 60 : null,
                 MaxDuration = subscription.MaxDurationMinutes.HasValue ? subscription.MaxDurationMinutes * 60 : null
             };
@@ -119,7 +119,7 @@ public class DownloadScheduledTask : IScheduledTask
             var filteredItems = new List<ResultItem>();
             foreach (var item in results)
             {
-                var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title, false);
+                var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
                 if (tempVideoInfo == null)
                 {
                     continue;
@@ -147,11 +147,11 @@ public class DownloadScheduledTask : IScheduledTask
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var videoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title, subscription.EnforceSeriesParsing);
+                var videoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
 
-                if (videoInfo == null)
+                if (videoInfo is null || (subscription.EnforceSeriesParsing && !videoInfo.IsShow))
                 {
-                    _logger.LogDebug("Skipping item '{Title}' for '{SubscriptionName}' due to parsing failure or enforced parsing.", item.Title, subscription.Name);
+                    _logger.LogDebug("Skipping item '{Title}' for '{SubscriptionName}' due to parsing failure.", item.Title, subscription.Name);
                     continue;
                 }
 
@@ -194,7 +194,7 @@ public class DownloadScheduledTask : IScheduledTask
                     Directory.CreateDirectory(targetDirectory);
                 }
 
-                var baseFileName = $"{fileNamePart} - {videoInfo.EpisodeTitle}";
+                var baseFileName = $"{fileNamePart} - {videoInfo.Title}";
 
                 // --- Handle Video/Audio ---
                 var masterVideoPath = Path.Combine(targetDirectory, $"{baseFileName}.mkv");

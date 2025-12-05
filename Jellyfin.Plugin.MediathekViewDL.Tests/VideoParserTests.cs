@@ -41,15 +41,14 @@ public class VideoParserTests
     public void ParseVideoInfo_ShouldParseNormalNumbering(string title, string expectedEpisodeTitle, int expectedSeason, int expectedEpisode, string? subscriptionName)
     {
         // Act
-        var result = _videoParser.ParseVideoInfo(subscriptionName, title, false);
+        var result = _videoParser.ParseVideoInfo(subscriptionName, title);
 
         // Assert
         Assert.NotNull(result);
         Assert.True(result.IsShow);
         Assert.Equal(expectedSeason, result.SeasonNumber);
         Assert.Equal(expectedEpisode, result.EpisodeNumber);
-        Assert.Equal(expectedEpisodeTitle, result.EpisodeTitle, ignoreCase: true);
-        Assert.True(result.IsParsed);
+        Assert.Equal(expectedEpisodeTitle, result.Title, ignoreCase: true);
     }
 
     [Theory]
@@ -65,7 +64,7 @@ public class VideoParserTests
     public void ParseVideoInfo_ShouldParseAbsoluteNumbering(string title, string? subscriptionName, int expectedAbsolute, string expectedEpisodeTitle)
     {
         // Act
-        var result = _videoParser.ParseVideoInfo(subscriptionName, title, false);
+        var result = _videoParser.ParseVideoInfo(subscriptionName, title);
 
         // Assert
         Assert.NotNull(result);
@@ -73,8 +72,7 @@ public class VideoParserTests
         Assert.Null(result.SeasonNumber);
         Assert.Null(result.EpisodeNumber);
         Assert.Equal(expectedAbsolute, result.AbsoluteEpisodeNumber);
-        Assert.Equal(expectedEpisodeTitle, result.EpisodeTitle, ignoreCase: true);
-        Assert.True(result.IsParsed);
+        Assert.Equal(expectedEpisodeTitle, result.Title, ignoreCase: true);
     }
 
     [Theory]
@@ -102,13 +100,13 @@ public class VideoParserTests
     public void ParseVideoInfo_ShouldDetectFeaturesAndCleanTitle(string title, string? subscriptionName, bool hasAd, bool hasGs, string expectedEpisodeTitle)
     {
         // Act
-        var result = _videoParser.ParseVideoInfo(subscriptionName, title, false);
+        var result = _videoParser.ParseVideoInfo(subscriptionName, title);
 
         // Assert
         Assert.NotNull(result);
         Assert.Equal(hasAd, result.HasAudiodescription);
         Assert.Equal(hasGs, result.HasSignLanguage);
-        Assert.Equal(expectedEpisodeTitle, result.EpisodeTitle, ignoreCase: true);
+        Assert.Equal(expectedEpisodeTitle, result.Title, ignoreCase: true);
     }
 
 
@@ -119,7 +117,7 @@ public class VideoParserTests
         var title = "Just a plain title";
 
         // Act
-        var result = _videoParser.ParseVideoInfo("A show", title, true);
+        var result = _videoParser.ParseVideoInfo("A show", title);
 
         // Assert
         Assert.Null(result);
@@ -132,12 +130,11 @@ public class VideoParserTests
         var title = "Just a plain title";
 
         // Act
-        var result = _videoParser.ParseVideoInfo("A show", title, false);
+        var result = _videoParser.ParseVideoInfo("A show", title);
 
         // Assert
         Assert.NotNull(result);
-        Assert.False(result.IsParsed);
-        Assert.Equal(title, result.EpisodeTitle);
+        Assert.Equal(title, result.Title);
     }
 
     // This test calls the private method indirectly via the public ParseVideoInfo

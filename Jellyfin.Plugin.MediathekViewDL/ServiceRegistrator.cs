@@ -17,11 +17,11 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddHttpClient(); // Required for FileDownloader
 
             serviceCollection.AddSingleton<LanguageDetectionService>();
+            serviceCollection.AddSingleton<VideoParser>();
             serviceCollection.AddTransient<MediathekViewApiClient>();
             serviceCollection.AddTransient<MediathekViewDlApiService>();
             serviceCollection.AddTransient<FFmpegService>();
             serviceCollection.AddTransient<FileDownloader>();
-            serviceCollection.AddTransient<VideoParser>();
         }
     }
 }

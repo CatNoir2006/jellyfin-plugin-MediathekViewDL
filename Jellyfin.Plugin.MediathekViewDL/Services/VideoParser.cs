@@ -16,9 +16,10 @@ public class VideoParser
     // Regex for Audiodescription and Sign Language
     private readonly Regex _adRegex;
     private readonly Regex _gsRegex;
+    private readonly Regex _trailerRegex;
 
     // Regex for Number Parsing
-    private readonly Regex _normalNumberingRegex;
+    private readonly Regex _seasonEpisodeRegex;
     private readonly Regex _absoluteNumberingRegex;
 
     /// <summary>
@@ -43,8 +44,14 @@ public class VideoParser
             RegexOptions.IgnoreCase | RegexOptions.Compiled,
             TimeSpan.FromSeconds(1));
 
+        // Compile regex for Trailer
+        _trailerRegex = new Regex(
+            @"(?:\bTrailer\b)|^(?:Darum geht's)|(?:Darum geht's)$",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled,
+            TimeSpan.FromSeconds(1));
+
         // Compile regex for Normal Numbering (SXXEXX, SXX/EXX, Staffel X Episode Y, XxY, (SXX/EXX), (Staffel X, Folge Y))
-        _normalNumberingRegex = new Regex(
+        _seasonEpisodeRegex = new Regex(
             @"(?:s|staffel)\s*(?<season_n1>\d+)\s*(?:e|episode|/)\s*(?<episode_n1>\d+)|(?<season_x1>\d+)\s*[xX]\s*(?<episode_x1>\d+)|[\(\[]s?\s*(?<season_n2>\d+)\s*(?:e|/)\s*(?<episode_n2>\d+)[\)\]]|\s*(?:[\(\[]?Staffel\s*(?<season_s1>\d+),\s*Folge\s*(?<episode_f1>\d+)[\)\]]?|[\(\[]?S(?<season_s2>\d+)(?:[\s\/]*E|Episode\s*)(?<episode_e2>\d+)[\)\]]?)",
             RegexOptions.IgnoreCase | RegexOptions.Compiled,
             TimeSpan.FromSeconds(1));
@@ -59,15 +66,14 @@ public class VideoParser
     /// <summary>
     /// Parses video information (season, episode, title, language, features) from a given media title.
     /// </summary>
-    /// <param name="subscriptionName">The name of the subscription, used as a hint for series name.</param>
+    /// <param name="topic">The name of the topic the Video belongs to.</param>
     /// <param name="mediaTitle">The title of the media item from the API.</param>
-    /// <param name="enforceParsing">If true, returns null if no numbering (season/episode or absolute) can be parsed.</param>
     /// <returns>An <see cref="VideoInfo"/> object if parsing is successful, otherwise null.</returns>
-    public VideoInfo? ParseVideoInfo(string subscriptionName, string mediaTitle, bool enforceParsing)
+    public VideoInfo? ParseVideoInfo(string topic, string mediaTitle)
     {
         var videoInfo = new VideoInfo
         {
-            EpisodeTitle = mediaTitle, // Initialize with original title as fallback
+            Title = mediaTitle, // Initialize with original title as fallback
         };
         string processedMediaTitle = mediaTitle;
 
@@ -92,80 +98,81 @@ public class VideoParser
             processedMediaTitle = CleanTagFromTitle(processedMediaTitle, gsMatch.Value);
         }
 
-        // 4. Number Parsing (Normal Season/Episode)
-        var normalMatch = _normalNumberingRegex.Match(processedMediaTitle);
-        if (normalMatch.Success)
+        // 4. Season Episode Parsing (Normal Season/Episode)
+        var seasonEpisodeMatch = _seasonEpisodeRegex.Match(processedMediaTitle);
+        if (seasonEpisodeMatch.Success)
         {
             // Try to parse from the first successful group.
-            if (normalMatch.Groups["season_n1"].Success && normalMatch.Groups["episode_n1"].Success)
+            if (seasonEpisodeMatch.Groups["season_n1"].Success && seasonEpisodeMatch.Groups["episode_n1"].Success)
             {
-                videoInfo.SeasonNumber = int.Parse(normalMatch.Groups["season_n1"].Value, CultureInfo.InvariantCulture);
-                videoInfo.EpisodeNumber = int.Parse(normalMatch.Groups["episode_n1"].Value, CultureInfo.InvariantCulture);
+                videoInfo.SeasonNumber = int.Parse(seasonEpisodeMatch.Groups["season_n1"].Value, CultureInfo.InvariantCulture);
+                videoInfo.EpisodeNumber = int.Parse(seasonEpisodeMatch.Groups["episode_n1"].Value, CultureInfo.InvariantCulture);
             }
-            else if (normalMatch.Groups["season_x1"].Success && normalMatch.Groups["episode_x1"].Success)
+            else if (seasonEpisodeMatch.Groups["season_x1"].Success && seasonEpisodeMatch.Groups["episode_x1"].Success)
             {
-                videoInfo.SeasonNumber = int.Parse(normalMatch.Groups["season_x1"].Value, CultureInfo.InvariantCulture);
-                videoInfo.EpisodeNumber = int.Parse(normalMatch.Groups["episode_x1"].Value, CultureInfo.InvariantCulture);
+                videoInfo.SeasonNumber = int.Parse(seasonEpisodeMatch.Groups["season_x1"].Value, CultureInfo.InvariantCulture);
+                videoInfo.EpisodeNumber = int.Parse(seasonEpisodeMatch.Groups["episode_x1"].Value, CultureInfo.InvariantCulture);
             }
-            else if (normalMatch.Groups["season_n2"].Success && normalMatch.Groups["episode_n2"].Success)
+            else if (seasonEpisodeMatch.Groups["season_n2"].Success && seasonEpisodeMatch.Groups["episode_n2"].Success)
             {
-                videoInfo.SeasonNumber = int.Parse(normalMatch.Groups["season_n2"].Value, CultureInfo.InvariantCulture);
-                videoInfo.EpisodeNumber = int.Parse(normalMatch.Groups["episode_n2"].Value, CultureInfo.InvariantCulture);
+                videoInfo.SeasonNumber = int.Parse(seasonEpisodeMatch.Groups["season_n2"].Value, CultureInfo.InvariantCulture);
+                videoInfo.EpisodeNumber = int.Parse(seasonEpisodeMatch.Groups["episode_n2"].Value, CultureInfo.InvariantCulture);
             }
-            else if (normalMatch.Groups["season_s1"].Success && normalMatch.Groups["episode_f1"].Success) // New pattern: Staffel X, Folge Y
+            else if (seasonEpisodeMatch.Groups["season_s1"].Success && seasonEpisodeMatch.Groups["episode_f1"].Success)
             {
-                videoInfo.SeasonNumber = int.Parse(normalMatch.Groups["season_s1"].Value, CultureInfo.InvariantCulture);
-                videoInfo.EpisodeNumber = int.Parse(normalMatch.Groups["episode_f1"].Value, CultureInfo.InvariantCulture);
+                videoInfo.SeasonNumber = int.Parse(seasonEpisodeMatch.Groups["season_s1"].Value, CultureInfo.InvariantCulture);
+                videoInfo.EpisodeNumber = int.Parse(seasonEpisodeMatch.Groups["episode_f1"].Value, CultureInfo.InvariantCulture);
             }
-            else if (normalMatch.Groups["season_s2"].Success && normalMatch.Groups["episode_e2"].Success) // New pattern: SXXEXX, SXX/EXX
+            else if (seasonEpisodeMatch.Groups["season_s2"].Success && seasonEpisodeMatch.Groups["episode_e2"].Success)
             {
-                videoInfo.SeasonNumber = int.Parse(normalMatch.Groups["season_s2"].Value, CultureInfo.InvariantCulture);
-                videoInfo.EpisodeNumber = int.Parse(normalMatch.Groups["episode_e2"].Value, CultureInfo.InvariantCulture);
+                videoInfo.SeasonNumber = int.Parse(seasonEpisodeMatch.Groups["season_s2"].Value, CultureInfo.InvariantCulture);
+                videoInfo.EpisodeNumber = int.Parse(seasonEpisodeMatch.Groups["episode_e2"].Value, CultureInfo.InvariantCulture);
             }
 
             if (videoInfo.SeasonNumber.HasValue && videoInfo.EpisodeNumber.HasValue)
             {
                 videoInfo.IsShow = true; // If S/E numbers are found, it's a show.
-                videoInfo.IsParsed = true;
-                processedMediaTitle = CleanTagFromTitle(processedMediaTitle, normalMatch.Value);
+                processedMediaTitle = CleanTagFromTitle(processedMediaTitle, seasonEpisodeMatch.Value);
             }
         }
 
-        // 5. Absolute Numbering (only if normal S/E was not found)
-        if (!videoInfo.IsParsed)
+        // 5. Absolute Episode Numbering Parsing
+        var absoluteMatch = _absoluteNumberingRegex.Match(processedMediaTitle);
+        if (absoluteMatch.Success)
         {
-            var absoluteMatch = _absoluteNumberingRegex.Match(processedMediaTitle);
-            if (absoluteMatch.Success)
+            // Try to parse from the first successful group.
+            if (absoluteMatch.Groups["abs1"].Success)
             {
-                // Try to parse from the first successful group.
-                int? absoluteNum = null;
-                if (absoluteMatch.Groups["abs1"].Success)
-                {
-                    absoluteNum = int.Parse(absoluteMatch.Groups["abs1"].Value, CultureInfo.InvariantCulture);
-                }
-                else if (absoluteMatch.Groups["abs2"].Success)
-                {
-                    absoluteNum = int.Parse(absoluteMatch.Groups["abs2"].Value, CultureInfo.InvariantCulture);
-                }
-                else if (absoluteMatch.Groups["abs3"].Success)
-                {
-                    absoluteNum = int.Parse(absoluteMatch.Groups["abs3"].Value, CultureInfo.InvariantCulture);
-                }
+                videoInfo.AbsoluteEpisodeNumber = int.Parse(absoluteMatch.Groups["abs1"].Value, CultureInfo.InvariantCulture);
+            }
+            else if (absoluteMatch.Groups["abs2"].Success)
+            {
+                videoInfo.AbsoluteEpisodeNumber = int.Parse(absoluteMatch.Groups["abs2"].Value, CultureInfo.InvariantCulture);
+            }
+            else if (absoluteMatch.Groups["abs3"].Success)
+            {
+                videoInfo.AbsoluteEpisodeNumber = int.Parse(absoluteMatch.Groups["abs3"].Value, CultureInfo.InvariantCulture);
+            }
 
-                if (absoluteNum.HasValue)
-                {
-                    videoInfo.AbsoluteEpisodeNumber = absoluteNum;
-                    videoInfo.IsParsed = true;
-                    processedMediaTitle = CleanTagFromTitle(processedMediaTitle, absoluteMatch.Value);
-                }
+            if (videoInfo.AbsoluteEpisodeNumber.HasValue)
+            {
+                videoInfo.IsShow = true; // If absolute number is found its probably a show.
+                processedMediaTitle = CleanTagFromTitle(processedMediaTitle, absoluteMatch.Value);
             }
         }
 
-        // Final title cleanup (subscription name removal, general cleanup)
-        // Try to remove common series names/prefixes that might still be in the title
-        if (!string.IsNullOrWhiteSpace(subscriptionName))
+        // 6. Trailer Detection
+        var trailerMatch = _trailerRegex.Match(processedMediaTitle);
+        if (trailerMatch.Success)
         {
-            var nameWithoutPrefix = Regex.Replace(processedMediaTitle, $"^" + Regex.Escape(subscriptionName) + @"[\s:_-]*", string.Empty, RegexOptions.IgnoreCase).Trim();
+            videoInfo.IsTrailer = true;
+        }
+
+        // Final title cleanup (topic removal, general cleanup)
+        // Try to remove common series names/prefixes that might still be in the title
+        if (!string.IsNullOrWhiteSpace(topic))
+        {
+            var nameWithoutPrefix = Regex.Replace(processedMediaTitle, $"^" + Regex.Escape(topic) + @"[\s:_-]*", string.Empty, RegexOptions.IgnoreCase).Trim();
             if (!string.IsNullOrWhiteSpace(nameWithoutPrefix))
             {
                 processedMediaTitle = nameWithoutPrefix;
@@ -186,14 +193,7 @@ public class VideoParser
         // Collapse multiple spaces
         processedMediaTitle = Regex.Replace(processedMediaTitle, @"\s{2,}", " ").Trim();
 
-        // If parsing enforced and failed (no numbering found)
-        if (enforceParsing && !videoInfo.IsParsed)
-        {
-            _logger.LogWarning("Enforced parsing failed for '{Title}' from subscription '{SubName}'. Skipping item.", mediaTitle, subscriptionName);
-            return null;
-        }
-
-        videoInfo.EpisodeTitle = string.IsNullOrWhiteSpace(processedMediaTitle) ? mediaTitle : processedMediaTitle;
+        videoInfo.Title = string.IsNullOrWhiteSpace(processedMediaTitle) ? mediaTitle : processedMediaTitle;
 
         return videoInfo;
     }
