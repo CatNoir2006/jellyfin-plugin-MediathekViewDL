@@ -84,7 +84,7 @@ public class LanguageDetectionService
     /// <param name="title">The title string to analyze.</param>
     /// <param name="defaultLanguage">The default 3-letter ISO language code to return if no language is detected.</param>
     /// <returns>A <see cref="LanguageDetectionResult"/> object with the detected language and cleaned title.</returns>
-    public LanguageDetectionResult DetectLanguage(string title, string defaultLanguage = "deu")
+    public virtual LanguageDetectionResult DetectLanguage(string title, string defaultLanguage = "deu")
     {
         if (string.IsNullOrWhiteSpace(title))
         {

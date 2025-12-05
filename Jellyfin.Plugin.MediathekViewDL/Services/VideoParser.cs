@@ -43,15 +43,15 @@ public class VideoParser
             RegexOptions.IgnoreCase | RegexOptions.Compiled,
             TimeSpan.FromSeconds(1));
 
-        // Compile regex for Normal Numbering (SXXEXX, SXX/EXX, Staffel X Episode Y, XxY, (SXX/EXX))
+        // Compile regex for Normal Numbering (SXXEXX, SXX/EXX, Staffel X Episode Y, XxY, (SXX/EXX), (Staffel X, Folge Y))
         _normalNumberingRegex = new Regex(
-            @"(?:s|staffel)\s*(?<season_n1>\d+)\s*(?:e|episode|/)\s*(?<episode_n1>\d+)|(?<season_x1>\d+)\s*[xX]\s*(?<episode_x1>\d+)|[\(\[]s\s*(?<season_n2>\d+)\s*(?:e|/)\s*(?<episode_n2>\d+)[\)\]]",
+            @"(?:s|staffel)\s*(?<season_n1>\d+)\s*(?:e|episode|/)\s*(?<episode_n1>\d+)|(?<season_x1>\d+)\s*[xX]\s*(?<episode_x1>\d+)|[\(\[]s?\s*(?<season_n2>\d+)\s*(?:e|/)\s*(?<episode_n2>\d+)[\)\]]|\s*(?:[\(\[]?Staffel\s*(?<season_s1>\d+),\s*Folge\s*(?<episode_f1>\d+)[\)\]]?|[\(\[]?S(?<season_s2>\d+)(?:[\s\/]*E|Episode\s*)(?<episode_e2>\d+)[\)\]]?)",
             RegexOptions.IgnoreCase | RegexOptions.Compiled,
             TimeSpan.FromSeconds(1));
 
         // Compile regex for Absolute Numbering (Folge ZZZ, (ZZZ), ZZZ.)
         _absoluteNumberingRegex = new Regex(
-            @"(?:Folge\s*(?<abs1>\d+))|(?<=\()\s*(?<abs2>\d+)\s*(?=\))|^(?<abs3>\d+)\.",
+            @"(?:Folge\s*(?<abs1>\d+)\b)|(?<=\()\s*(?<abs2>\d+)\s*(?=\))|^\s*(?<abs3>\d+)\.\s*",
             RegexOptions.IgnoreCase | RegexOptions.Compiled,
             TimeSpan.FromSeconds(1));
     }
@@ -112,6 +112,16 @@ public class VideoParser
                 videoInfo.SeasonNumber = int.Parse(normalMatch.Groups["season_n2"].Value, CultureInfo.InvariantCulture);
                 videoInfo.EpisodeNumber = int.Parse(normalMatch.Groups["episode_n2"].Value, CultureInfo.InvariantCulture);
             }
+            else if (normalMatch.Groups["season_s1"].Success && normalMatch.Groups["episode_f1"].Success) // New pattern: Staffel X, Folge Y
+            {
+                videoInfo.SeasonNumber = int.Parse(normalMatch.Groups["season_s1"].Value, CultureInfo.InvariantCulture);
+                videoInfo.EpisodeNumber = int.Parse(normalMatch.Groups["episode_f1"].Value, CultureInfo.InvariantCulture);
+            }
+            else if (normalMatch.Groups["season_s2"].Success && normalMatch.Groups["episode_e2"].Success) // New pattern: SXXEXX, SXX/EXX
+            {
+                videoInfo.SeasonNumber = int.Parse(normalMatch.Groups["season_s2"].Value, CultureInfo.InvariantCulture);
+                videoInfo.EpisodeNumber = int.Parse(normalMatch.Groups["episode_e2"].Value, CultureInfo.InvariantCulture);
+            }
 
             if (videoInfo.SeasonNumber.HasValue && videoInfo.EpisodeNumber.HasValue)
             {
@@ -153,16 +163,28 @@ public class VideoParser
 
         // Final title cleanup (subscription name removal, general cleanup)
         // Try to remove common series names/prefixes that might still be in the title
-        var nameWithoutPrefix = Regex.Replace(processedMediaTitle, $"^" + Regex.Escape(subscriptionName) + @"[\s:_-]*", string.Empty, RegexOptions.IgnoreCase).Trim();
-        if (!string.IsNullOrWhiteSpace(nameWithoutPrefix))
+        if (!string.IsNullOrWhiteSpace(subscriptionName))
         {
-            processedMediaTitle = nameWithoutPrefix;
+            var nameWithoutPrefix = Regex.Replace(processedMediaTitle, $"^" + Regex.Escape(subscriptionName) + @"[\s:_-]*", string.Empty, RegexOptions.IgnoreCase).Trim();
+            if (!string.IsNullOrWhiteSpace(nameWithoutPrefix))
+            {
+                processedMediaTitle = nameWithoutPrefix;
+            }
         }
 
         // General cleanup for episode title
-        processedMediaTitle = processedMediaTitle.Replace(":", string.Empty, StringComparison.Ordinal)
-            .Replace(" - ", " ", StringComparison.Ordinal)
-            .Replace("_", " ", StringComparison.Ordinal).Trim();
+        // Remove "u.a. " prefix
+        processedMediaTitle = Regex.Replace(processedMediaTitle, @"^u\.a\.\s*", string.Empty, RegexOptions.IgnoreCase).Trim();
+        // Remove date patterns like "· 13.06.13 |"
+        processedMediaTitle = Regex.Replace(processedMediaTitle, @"\s*[\·\|\-]\s*\d{2}\.\d{2}\.\d{2,4}\s*[\·\|\-]?\s*", " ", RegexOptions.IgnoreCase).Trim();
+        // Remove "Folge NNN: " prefix for normal numbering and similar prefixes
+        processedMediaTitle = Regex.Replace(processedMediaTitle, @"^(?:Folge\s*\d+:\s*)", string.Empty, RegexOptions.IgnoreCase).Trim();
+        // Less aggressive period/underscore replacement
+        processedMediaTitle = Regex.Replace(processedMediaTitle, @"(?<!\d)\.(?!\d)|_", " ").Trim();
+        // Remove trailing dashes and colons, and leading/trailing spaces
+        processedMediaTitle = Regex.Replace(processedMediaTitle, @"^[\s\-:–]+|[\s\-:–]+$", string.Empty).Trim();
+        // Collapse multiple spaces
+        processedMediaTitle = Regex.Replace(processedMediaTitle, @"\s{2,}", " ").Trim();
 
         // If parsing enforced and failed (no numbering found)
         if (enforceParsing && !videoInfo.IsParsed)
