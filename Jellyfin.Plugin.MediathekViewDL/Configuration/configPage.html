@@ -88,6 +88,14 @@
                                 <div class="fieldDescription">Lädt eine separate VTT- oder TTML-Datei für Untertitel herunter, falls vom Sender bereitgestellt.</div>
                             </div>
 
+                            <div class="checkboxContainer checkboxContainer-withDescription" style="margin-top: 20px;">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkAllowUnknownDomains" type="checkbox" is="emby-checkbox" />
+                                    <span>Downloads von unbekannten Domains erlauben</span>
+                                </label>
+                                <div class="fieldDescription">Ermöglicht das Herunterladen von Inhalten von Domains, die nicht auf der Whitelist stehen. Dies kann nützlich sein, wenn ARD oder ZDF neue CDNs hinzufügen, die noch nicht berücksichtigt werden. Dies kann jedoch ein Sicherheitsrisiko darstellen, daher mit Vorsicht verwenden. Falls dadurch manche Inhalte nicht gefunden werden wäre es schon wenn auf GitHub ein Issue erstellt wird, das ich die Whitelist ggf. erweitern kann.</div>
+                            </div>
+
                             <div class="inputContainer">
                                 <label class="inputLabel" for="txtMinFreeDiskSpaceMiB">Mindestfreier Speicherplatz (MiB)</label>
                                 <input is="emby-input" type="number" id="txtMinFreeDiskSpaceMiB" />
@@ -293,6 +301,7 @@
 
                         document.querySelector('#txtDefaultDownloadPath').value = config.DefaultDownloadPath || "";
                         document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
+                        document.querySelector('#chkAllowUnknownDomains').checked = config.AllowUnknownDomains;
                         document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
                         document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
 
@@ -634,6 +643,7 @@
                             e.preventDefault();
                             currentConfig.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
                             currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
+                            currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
                             const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
                             currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
                             saveGlobalConfig();
