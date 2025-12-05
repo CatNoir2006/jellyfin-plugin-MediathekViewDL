@@ -180,9 +180,15 @@
                             </div>
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
-                                <label class="emby-checkbox-label">
-                                    <input id="subEnforceSeries" type="checkbox" is="emby-checkbox" />
-                                    <span>Nur Videos herunterladen, die als Serie erkannt werden</span>
+                                <label class="emby-checkbox-label" for="subEnforceSeries">Nur Serien herunterladen</label>
+                                <input id="subEnforceSeries" type="checkbox" is="emby-checkbox" />
+                                <div class="fieldDescription">Nur Videos herunterladen, die als Serie erkannt werden</div>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label" for="subTreatNonEpisodesAsExtras">
+                                    <input id="subTreatNonEpisodesAsExtras" type="checkbox" is="emby-checkbox" />
+                                    <span>Nicht als Episoden erkannte Videos als Extras behandeln. Wird ignoriert, wenn "Nur Serien herunterladen" aktiviert ist.</span>
                                 </label>
                             </div>
 
@@ -191,7 +197,7 @@
                                     <input id="subAllowAbsoluteEpisodeNumbering" type="checkbox" is="emby-checkbox" />
                                     <span>Absolute Episodennummerierung erlauben</span>
                                 </label>
-                                <div class="fieldDescription">Erlaubt das Herunterladen von Inhalten mit absoluter Episodennummerierung (z.B. "Episode 5" statt "Staffel 1, Episode 5"). Wird nur berücksichtigt, wenn "Nur Videos herunterladen, die als Serie erkannt werden" aktiviert ist.</div>
+                                <div class="fieldDescription">Episoden auch herunterladen wenn nur Absolute Episodennummerierung vorliegt (z.B. "Episode 5" statt "Staffel 1, Episode 5"). Wird nur berücksichtigt, wenn "Nur Videos herunterladen, die als Serie erkannt werden" aktiviert ist.</div>
                             </div>
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
@@ -521,6 +527,7 @@
                     document.getElementById('subAllowAudioDesc').checked = false;
                     document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = false;
                     document.getElementById('subAllowSignLanguage').checked = false;
+                    document.getElementById('subTreatNonEpisodesAsExtras').checked = false;
                     queriesContainer.innerHTML = '';
 
                     let subToEdit = null;
@@ -544,6 +551,7 @@
                         document.getElementById('subAllowAudioDesc').checked = subToEdit.AllowAudioDescription;
                         document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = subToEdit.AllowAbsoluteEpisodeNumbering;
                         document.getElementById('subAllowSignLanguage').checked = subToEdit.AllowSignLanguage;
+                        document.getElementById('subTreatNonEpisodesAsExtras').checked = subToEdit.TreatNonEpisodesAsExtras;
 
                         if (subToEdit.Queries && subToEdit.Queries.length > 0) {
                             subToEdit.Queries.forEach(function(q) { addQueryRow(q); });
@@ -572,6 +580,7 @@
                     const allowAudio = document.getElementById('subAllowAudioDesc').checked;
                     const allowAbsolute = document.getElementById('subAllowAbsoluteEpisodeNumbering').checked;
                     const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
+                    const treatNonEpisodesAsExtras = document.getElementById('subTreatNonEpisodesAsExtras').checked;
 
                     const queries = [];
                     document.querySelectorAll('#queriesContainer .query-row').forEach(function(row) {

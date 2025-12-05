@@ -40,6 +40,18 @@ public class Subscription
     public string DownloadPath { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether this subscription is enabled.
+    /// If false, it will be skipped during scheduled downloads.
+    /// </summary>
+    public bool IsEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to treat videos that are not recognized as episodes as extras.
+    /// This Option is ignored if EnforceSeriesParsing is true.
+    /// </summary>
+    public bool TreatNonEpisodesAsExtras { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether to only download content where season and episode can be parsed from the title.
     /// </summary>
     public bool EnforceSeriesParsing { get; set; }
