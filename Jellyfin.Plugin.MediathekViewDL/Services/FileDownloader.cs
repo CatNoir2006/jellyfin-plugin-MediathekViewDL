@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services;
@@ -36,15 +37,34 @@ public class FileDownloader
     /// <returns>True if the download was successful, otherwise false.</returns>
     public async Task<bool> DownloadFileAsync(string fileUrl, string destinationPath, IProgress<double>? progress, CancellationToken cancellationToken)
     {
+        var pluginConfig = Plugin.Instance?.Configuration;
+
+        // Validate file URL
         if (string.IsNullOrWhiteSpace(fileUrl))
         {
             _logger.LogError("File URL cannot be null or empty.");
             return false;
         }
 
+        // Validate destination path
         if (string.IsNullOrWhiteSpace(destinationPath))
         {
             _logger.LogError("Destination path cannot be null or empty for URL: {FileUrl}", fileUrl);
+            return false;
+        }
+
+        // Validate plugin configuration
+        if (pluginConfig is null)
+        {
+            _logger.LogError("Plugin configuration is not available.");
+            return false;
+        }
+
+        // Check if the domain is allowed
+        var domainAllowed = CheckDomainAllowed(fileUrl, pluginConfig, pluginConfig.AllowUnknownDomains);
+        if (!pluginConfig.AllowUnknownDomains && !domainAllowed)
+        {
+            _logger.LogError("Download from unknown domain is not allowed: {FileUrl}", fileUrl);
             return false;
         }
 
@@ -58,11 +78,46 @@ public class FileDownloader
                 Directory.CreateDirectory(directory);
             }
 
+            var diskSpace = GetDiskSpace(destinationPath);
+            // Check if there is enough disk space before starting the download
+            if (diskSpace < pluginConfig.MinFreeDiskSpaceBytes)
+            {
+                _logger.LogError(
+                    "Insufficient disk space to download '{FileUrl}' to '{DestinationPath}'. Required: {RequiredBytes} bytes, Available: {AvailableBytes} bytes.",
+                    fileUrl,
+                    destinationPath,
+                    pluginConfig?.MinFreeDiskSpaceBytes,
+                    diskSpace);
+                return false;
+            }
+
             var httpClient = _httpClientFactory.CreateClient();
             using var response = await httpClient.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
+            // Check disk space again considering the file size
+            if (totalBytes != -1)
+            {
+                long requiredSpace = totalBytes + pluginConfig.MinFreeDiskSpaceBytes;
+
+                if (diskSpace < requiredSpace)
+                {
+                    _logger.LogError(
+                        "Not enough disk space to download '{FileUrl}' to '{DestinationPath}'. " +
+                        "Required: {RequiredBytes} bytes (File: {FileSize} + MinFree: {MinFree}), " +
+                        "Available: {AvailableBytes}.",
+                        fileUrl,
+                        destinationPath,
+                        requiredSpace,
+                        totalBytes,
+                        pluginConfig.MinFreeDiskSpaceBytes,
+                        diskSpace);
+
+                    return false;
+                }
+            }
+
             var receivedBytes = 0L;
             Memory<byte> buffer = new byte[8192];
 
@@ -121,5 +176,54 @@ public class FileDownloader
             _logger.LogError(ex, "An unexpected error occurred during download of '{FileUrl}': {Message}", fileUrl, ex.Message);
             return false;
         }
+    }
+
+    /// <summary>
+    /// Gets the available free disk space in bytes for the drive containing the specified path.
+    /// </summary>
+    /// <param name="path">The path to check disk space for.</param>
+    /// <returns>The available free disk space in bytes.</returns>
+    public static long GetDiskSpace(string path)
+    {
+        string directory = path;
+
+        if (!Directory.Exists(directory))
+        {
+            directory = Path.GetDirectoryName(path)!;
+        }
+
+        directory = Path.GetFullPath(directory);
+
+        var drive = new DriveInfo(directory);
+        return drive.AvailableFreeSpace;
+    }
+
+    private bool CheckDomainAllowed(string fileUrl, PluginConfiguration pluginConfig, bool isWarningOnly = false)
+    {
+            if (!Uri.TryCreate(fileUrl, UriKind.Absolute, out var uriResult))
+            {
+                _logger.Log(isWarningOnly ? LogLevel.Warning : LogLevel.Error, "Invalid URL: {FileUrl}", fileUrl);
+                return false;
+            }
+
+            var host = uriResult.Host;
+
+            // Extract the top-level domain for validation
+            var hostParts = host.Split('.');
+            if (hostParts.Length < 2)
+            {
+                _logger.Log(isWarningOnly ? LogLevel.Warning : LogLevel.Error, "Invalid host in URL: {Host}", host);
+                return false;
+            }
+
+            var topDomain = string.Join('.', hostParts[^2..]);
+
+            if (!pluginConfig.AllowedDomains.Contains(topDomain))
+            {
+                _logger.Log(isWarningOnly ? LogLevel.Warning : LogLevel.Error, "Domain '{Domain}' is not allowed.", topDomain);
+                return false;
+            }
+
+            return true;
     }
 }

@@ -32,6 +32,18 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool DownloadSubtitles { get; set; }
 
     /// <summary>
+    /// Gets or sets the minimum free disk space in bytes required to start a new download.
+    /// </summary>
+    public long MinFreeDiskSpaceBytes { get; set; } = (long)(1.5 * 1024 * 1024 * 1024); // Default to 1.5 GiB
+
+    /// <summary>
+    /// Gets or sets a value indicating whether downloads from unknown domains are allowed.
+    /// This may be usefull if ARD or ZDF adds new CDNs that are not yet whitelisted.
+    /// This may pose a security risk, so use with caution.
+    /// </summary>
+    public bool AllowUnknownDomains { get; set; } = false;
+
+    /// <summary>
     /// Gets the list of download subscriptions.
     /// </summary>
     public Collection<Subscription> Subscriptions { get; init; }
@@ -40,4 +52,24 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets the timestamp of the last job run.
     /// </summary>
     public DateTime LastRun { get; set; }
+
+    /// <summary>
+    /// Gets the list of allowed download domains.
+    /// This covers the known CDNs used by ARD and ZDF.
+    /// The list does only contain top-level domains subdomains may be added at some point.
+    /// </summary>
+    public HashSet<string> AllowedDomains => new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    {
+        "akamaihd.net",
+        "akamaized.net",
+        "apa.at",
+        "ard-mcdn.de",
+        "ard.de",
+        "ardmediathek.de",
+        "br.de",
+        "daserste.de",
+        "orf.at",
+        "srf.ch",
+        "zdf.de"
+    };
 }

@@ -45,9 +45,20 @@ public class Subscription
     public bool EnforceSeriesParsing { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to allow downloading content with absolute episode numbering.
+    /// This is ignored if EnforceSeriesParsing is false.
+    /// </summary>
+    public bool AllowAbsoluteEpisodeNumbering { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether to allow downloading versions with audio descriptions.
     /// </summary>
     public bool AllowAudioDescription { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to allow downloading versions with sign language (Gebärdensprache).
+    /// </summary>
+    public bool AllowSignLanguage { get; set; }
 
     /// <summary>
     /// Gets or sets the minimum duration in minutes for search results.

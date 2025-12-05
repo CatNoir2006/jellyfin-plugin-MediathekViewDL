@@ -88,6 +88,12 @@
                                 <div class="fieldDescription">Lädt eine separate VTT- oder TTML-Datei für Untertitel herunter, falls vom Sender bereitgestellt.</div>
                             </div>
 
+                            <div class="inputContainer">
+                                <label class="inputLabel" for="txtMinFreeDiskSpaceMiB">Mindestfreier Speicherplatz (MiB)</label>
+                                <input is="emby-input" type="number" id="txtMinFreeDiskSpaceMiB" />
+                                <div class="fieldDescription">Legt den minimalen freien Speicherplatz fest, der erforderlich ist, um einen neuen Download zu starten.</div>
+                            </div>
+
                             <!-- Anzeige des letzten Laufs (Read Only) -->
                             <div class="inputContainer">
                                 <label class="inputLabel">Letzter Lauf</label>
@@ -168,14 +174,29 @@
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
                                     <input id="subEnforceSeries" type="checkbox" is="emby-checkbox" />
-                                    <span>Nur Episoden mit Staffel/Folgen-Nummer herunterladen</span>
+                                    <span>Nur Videos herunterladen, die als Serie erkannt werden</span>
                                 </label>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="subAllowAbsoluteEpisodeNumbering" type="checkbox" is="emby-checkbox" />
+                                    <span>Absolute Episodennummerierung erlauben</span>
+                                </label>
+                                <div class="fieldDescription">Erlaubt das Herunterladen von Inhalten mit absoluter Episodennummerierung (z.B. "Episode 5" statt "Staffel 1, Episode 5"). Wird nur berücksichtigt, wenn "Nur Videos herunterladen, die als Serie erkannt werden" aktiviert ist.</div>
                             </div>
 
                             <div class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
                                     <input id="subAllowAudioDesc" type="checkbox" is="emby-checkbox" />
                                     <span>Versionen mit Audiodeskription erlauben</span>
+                                </label>
+                            </div>
+
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="subAllowSignLanguage" type="checkbox" is="emby-checkbox" />
+                                    <span>Versionen mit Gebärdensprache erlauben</span>
                                 </label>
                             </div>
 
@@ -251,9 +272,20 @@
                         }
                     }
                 }
-
+                function genUUID() {
+                    try {
+                        return crypto.randomUUID();
+                    } catch (e) {
+                        console.error('Error generating UUID using crypto.randomUUID():', e);
+                    }
+                    console.warn('Falling back to manual UUID generation.');
+                    // Fallback method, this is not cryptographically secure but sufficient for our use case
+                    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
+                }
                 // --- Core Logic ---
-
                 function loadConfig() {
                     Dashboard.showLoadingMsg();
                     ApiClient.getPluginConfiguration(pluginId).then(function (config) {
@@ -261,6 +293,7 @@
 
                         document.querySelector('#txtDefaultDownloadPath').value = config.DefaultDownloadPath || "";
                         document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
+                        document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
                         document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
 
                         renderSubscriptionsList();
@@ -291,7 +324,6 @@
                 }
 
                 // --- SEARCH LOGIC ---
-
                 function performSearch() {
                     const query = document.getElementById('txtSearchQuery').value;
                     const minD = document.getElementById('numMinDuration').value;
@@ -399,7 +431,6 @@
 
 
                 // --- SUBSCRIPTION LOGIC ---
-
                 function renderSubscriptionsList() {
                     const list = document.getElementById('subscriptionList');
                     list.innerHTML = "";
@@ -479,6 +510,8 @@
                     document.getElementById('subPath').value = "";
                     document.getElementById('subEnforceSeries').checked = false;
                     document.getElementById('subAllowAudioDesc').checked = false;
+                    document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = false;
+                    document.getElementById('subAllowSignLanguage').checked = false;
                     queriesContainer.innerHTML = '';
 
                     let subToEdit = null;
@@ -500,6 +533,8 @@
                         document.getElementById('subPath').value = subToEdit.DownloadPath || "";
                         document.getElementById('subEnforceSeries').checked = subToEdit.EnforceSeriesParsing;
                         document.getElementById('subAllowAudioDesc').checked = subToEdit.AllowAudioDescription;
+                        document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = subToEdit.AllowAbsoluteEpisodeNumbering;
+                        document.getElementById('subAllowSignLanguage').checked = subToEdit.AllowSignLanguage;
 
                         if (subToEdit.Queries && subToEdit.Queries.length > 0) {
                             subToEdit.Queries.forEach(function(q) { addQueryRow(q); });
@@ -526,6 +561,8 @@
                     const path = document.getElementById('subPath').value;
                     const enforce = document.getElementById('subEnforceSeries').checked;
                     const allowAudio = document.getElementById('subAllowAudioDesc').checked;
+                    const allowAbsolute = document.getElementById('subAllowAbsoluteEpisodeNumbering').checked;
+                    const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
 
                     const queries = [];
                     document.querySelectorAll('#queriesContainer .query-row').forEach(function(row) {
@@ -553,7 +590,9 @@
                         MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
                         DownloadPath: path,
                         EnforceSeriesParsing: enforce,
-                        AllowAudioDescription: allowAudio
+                        AllowAudioDescription: allowAudio,
+                        AllowAbsoluteEpisodeNumbering: allowAbsolute,
+                        AllowSignLanguage: allowSignLanguage
                     };
 
                     if (id) {
@@ -565,7 +604,7 @@
 
                         }
                     } else {
-                        subData.Id = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+                        subData.Id = genUUID();
                         currentConfig.Subscriptions.push(subData);
                     }
 
@@ -595,6 +634,8 @@
                             e.preventDefault();
                             currentConfig.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
                             currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
+                            const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
+                            currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
                             saveGlobalConfig();
                             return false;
                         });
