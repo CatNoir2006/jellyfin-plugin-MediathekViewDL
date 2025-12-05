@@ -59,8 +59,8 @@ public class MediathekViewApiClient
             MinDuration = minDuration,
             MaxDuration = maxDuration
         };
-
-        return await SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
+        var res = await SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
+        return res?.Results;
     }
 
     /// <summary>
@@ -68,8 +68,8 @@ public class MediathekViewApiClient
     /// </summary>
     /// <param name="apiQuery">The api query.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A collection of result items, or null if an error occurred.</returns>
-    public async Task<Collection<ResultItem>?> SearchAsync(
+    /// <returns>An API result, or null if an error occurred.</returns>
+    public async Task<ResultChannels?> SearchAsync(
         ApiQuery apiQuery,
         CancellationToken cancellationToken)
     {
@@ -91,14 +91,8 @@ public class MediathekViewApiClient
             var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             var apiResult = await JsonSerializer.DeserializeAsync<ApiResult>(responseStream, _jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
 
-            if (apiResult?.Result?.Results == null)
-            {
-                _logger.LogWarning("API response did not contain any results.");
-                return new Collection<ResultItem>();
-            }
-
-            _logger.LogInformation("API search returned {Count} results", apiResult.Result.Results.Count);
-            return apiResult.Result.Results;
+            _logger.LogInformation("API search returned {Count} results", apiResult?.Result.Results.Count);
+            return apiResult?.Result;
         }
         catch (Exception ex)
         {
