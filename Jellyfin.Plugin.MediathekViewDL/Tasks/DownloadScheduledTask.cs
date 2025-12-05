@@ -27,6 +27,7 @@ public class DownloadScheduledTask : IScheduledTask
     private readonly ILibraryManager _libraryManager;
     private readonly VideoParser _videoParser;
     private readonly FileDownloader _fileDownloader;
+    private readonly FileNameBuilderService _fileNameBuilderService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DownloadScheduledTask"/> class.
@@ -38,6 +39,7 @@ public class DownloadScheduledTask : IScheduledTask
     /// <param name="libraryManager">The library manager.</param>
     /// <param name="videoParser">The video parser.</param>
     /// <param name="fileDownloader">The file downloader.</param>
+    /// <param name="fileNameBuilderService">The file name builder service.</param>
     public DownloadScheduledTask(
         ILogger<DownloadScheduledTask> logger,
         IServerConfigurationManager configurationManager,
@@ -45,7 +47,8 @@ public class DownloadScheduledTask : IScheduledTask
         FFmpegService ffmpegService,
         ILibraryManager libraryManager,
         VideoParser videoParser,
-        FileDownloader fileDownloader)
+        FileDownloader fileDownloader,
+        FileNameBuilderService fileNameBuilderService)
     {
         _logger = logger;
         _configurationManager = configurationManager;
@@ -54,6 +57,7 @@ public class DownloadScheduledTask : IScheduledTask
         _libraryManager = libraryManager;
         _videoParser = videoParser;
         _fileDownloader = fileDownloader;
+        _fileNameBuilderService = fileNameBuilderService;
     }
 
     /// <inheritdoc />
@@ -94,7 +98,7 @@ public class DownloadScheduledTask : IScheduledTask
         for (int i = 0; i < subscriptions.Count; i++)
         {
             var subscription = subscriptions[i];
-            var progressValue = (double)i / subscriptions.Count * 100;
+            var progressValue = (double)(i + 1) / subscriptions.Count * 100;
             progress.Report(progressValue);
 
             _logger.LogInformation("Processing subscription: {SubscriptionName}", subscription.Name);
@@ -121,12 +125,6 @@ public class DownloadScheduledTask : IScheduledTask
             {
                 var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
                 if (tempVideoInfo == null)
-                {
-                    continue;
-                }
-
-                // Check against LastRun
-                if (new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(item.Timestamp) <= config.LastRun)
                 {
                     continue;
                 }
@@ -168,52 +166,22 @@ public class DownloadScheduledTask : IScheduledTask
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                // Determine base download path
-                var baseDownloadPath = string.IsNullOrWhiteSpace(subscription.DownloadPath)
-                    ? Path.Combine(config.DefaultDownloadPath, subscription.Name)
-                    : subscription.DownloadPath;
-
-                if (string.IsNullOrWhiteSpace(baseDownloadPath))
+                string targetPath = _fileNameBuilderService.BuildDirectoryName(item.VideoInfo, subscription);
+                if (string.IsNullOrWhiteSpace(targetPath))
                 {
                     _logger.LogError("No download path configured for subscription '{SubscriptionName}' or globally. Skipping item '{Title}'.", subscription.Name, item.VideoInfo.Title);
                     continue;
                 }
 
-                string targetDirectory;
-                string fileNamePart;
-
-                if (item.VideoInfo.IsShow && item.VideoInfo.HasSeasonEpisodeNumbering)
-                {
-                    targetDirectory = Path.Combine(baseDownloadPath, $"Staffel {item.VideoInfo.SeasonNumber!.Value}");
-                    fileNamePart = $"S{item.VideoInfo.SeasonNumber.Value:D2}E{item.VideoInfo.EpisodeNumber!.Value:D2}";
-                }
-                else if (item.VideoInfo.IsShow && item.VideoInfo.HasAbsoluteNumbering)
-                {
-                    targetDirectory = baseDownloadPath; // No specific season folder for absolute numbered items without season info
-                    fileNamePart = $"{item.VideoInfo.AbsoluteEpisodeNumber!.Value:D3}"; // Pad absolute number to 3 digits for consistency
-                }
-                else if (subscription.TreatNonEpisodesAsExtras)
-                {
-                    targetDirectory = Path.Combine(baseDownloadPath, "Extras");
-                    fileNamePart = string.Empty; // No season/episode prefix for extras
-                }
-                else
-                {
-                    targetDirectory = baseDownloadPath;
-                    fileNamePart = string.Empty; // No season/episode prefix for non-show items
-                }
-
                 // Ensure target directory exists
-                if (!Directory.Exists(targetDirectory))
+                if (!Directory.Exists(targetPath))
                 {
-                    Directory.CreateDirectory(targetDirectory);
+                    Directory.CreateDirectory(targetPath);
                 }
-
-                var baseFileName = string.IsNullOrWhiteSpace(fileNamePart) ? item.VideoInfo.Title : $"{fileNamePart} - {item.VideoInfo.Title}";
 
                 // --- Handle Video/Audio ---
-                var masterVideoPath = Path.Combine(targetDirectory, $"{baseFileName}.mkv"); // Master video file path, this will contain German audio and video
-                var languageSpecificAudioPath = Path.Combine(targetDirectory, $"{baseFileName}.{item.VideoInfo.Language}.mka"); // Language-specific audio file path for non-German audio
+                var subtitleFilePath = Path.Combine(targetPath, _fileNameBuilderService.BuildFileName(item.VideoInfo, true));
+                var mainFilePath = Path.Combine(targetPath, _fileNameBuilderService.BuildFileName(item.VideoInfo, false));
                 var tempVideoPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.mp4"); // Temp path for non-DE video download
                 var videoUrl = item.Item.UrlVideoHd ?? item.Item.UrlVideo ?? item.Item.UrlVideoLow;
 
@@ -221,10 +189,10 @@ public class DownloadScheduledTask : IScheduledTask
                 // Use "deu" for language comparison, as per VideoInfo
                 if (item.VideoInfo.Language == "deu")
                 {
-                    if (!File.Exists(masterVideoPath))
+                    if (!File.Exists(mainFilePath))
                     {
-                        _logger.LogInformation("Downloading master video for '{Title}' to '{Path}'", item.VideoInfo.Title, masterVideoPath);
-                        if (!await _fileDownloader.DownloadFileAsync(videoUrl, masterVideoPath, progress, cancellationToken).ConfigureAwait(false))
+                        _logger.LogInformation("Downloading master video for '{Title}' to '{Path}'", item.VideoInfo.Title, mainFilePath);
+                        if (!await _fileDownloader.DownloadFileAsync(videoUrl, mainFilePath, progress, cancellationToken).ConfigureAwait(false))
                         {
                             _logger.LogError("Failed to download master video for '{Title}'.", item.VideoInfo.Title);
                         }
@@ -236,7 +204,7 @@ public class DownloadScheduledTask : IScheduledTask
                 }
                 else // Non-German version: extract audio if not exists
                 {
-                    if (!File.Exists(languageSpecificAudioPath))
+                    if (!File.Exists(mainFilePath))
                     {
                         _logger.LogInformation("Downloading temporary video for '{Title}' to extract '{Language}' audio.", item.VideoInfo.Title, item.VideoInfo.Language);
                         if (!await _fileDownloader.DownloadFileAsync(videoUrl, tempVideoPath, progress, cancellationToken).ConfigureAwait(false))
@@ -245,8 +213,8 @@ public class DownloadScheduledTask : IScheduledTask
                             continue;
                         }
 
-                        _logger.LogInformation("Extracting '{Language}' audio for '{Title}' to '{Path}'.", item.VideoInfo.Language, item.VideoInfo.Title, languageSpecificAudioPath);
-                        if (!await _ffmpegService.ExtractAudioAsync(tempVideoPath, languageSpecificAudioPath, item.VideoInfo.Language, cancellationToken).ConfigureAwait(false))
+                        _logger.LogInformation("Extracting '{Language}' audio for '{Title}' to '{Path}'.", item.VideoInfo.Language, item.VideoInfo.Title, mainFilePath);
+                        if (!await _ffmpegService.ExtractAudioAsync(tempVideoPath, mainFilePath, item.VideoInfo.Language, cancellationToken).ConfigureAwait(false))
                         {
                             _logger.LogError("Failed to extract audio for '{Title}'.", item.VideoInfo.Title);
                         }
@@ -266,11 +234,10 @@ public class DownloadScheduledTask : IScheduledTask
                 // --- Handle Subtitles ---
                 if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.Item.UrlSubtitle))
                 {
-                    var subtitlePath = Path.Combine(targetDirectory, $"{baseFileName}.{item.VideoInfo.Language}.ttml");
-                    if (!File.Exists(subtitlePath))
+                    if (!File.Exists(subtitleFilePath))
                     {
-                        _logger.LogInformation("Downloading '{Language}' subtitle for '{Title}' to '{Path}'.", item.VideoInfo.Language, item.VideoInfo.Title, subtitlePath);
-                        if (!await _fileDownloader.DownloadFileAsync(item.Item.UrlSubtitle, subtitlePath, progress, cancellationToken).ConfigureAwait(false))
+                        _logger.LogInformation("Downloading '{Language}' subtitle for '{Title}' to '{Path}'.", item.VideoInfo.Language, item.VideoInfo.Title, subtitleFilePath);
+                        if (!await _fileDownloader.DownloadFileAsync(item.Item.UrlSubtitle, subtitleFilePath, progress, cancellationToken).ConfigureAwait(false))
                         {
                             _logger.LogError("Failed to download subtitle for '{Title}'.", item.VideoInfo.Title);
                         }

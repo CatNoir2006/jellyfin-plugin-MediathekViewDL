@@ -81,6 +81,12 @@ public class MediathekViewDlApiService : ControllerBase
             return BadRequest("Invalid item provided for download (no video URL).");
         }
 
+        if (FileDownloader.GetDiskSpace(config.DefaultDownloadPath) < config.MinFreeDiskSpaceBytes)
+        {
+            _logger.LogError("Not enough free disk space to start download for item: {Title}", item.Title);
+            return BadRequest("Not enough free disk space to start download.");
+        }
+
         _logger.LogInformation("Manual download requested for item: {Title}", item.Title);
 
         // Fire and forget
