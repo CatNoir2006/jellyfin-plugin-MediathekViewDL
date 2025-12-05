@@ -89,7 +89,6 @@ public class DownloadScheduledTask : IScheduledTask
         }
 
         var newLastRun = DateTime.UtcNow;
-        var downloadedPaths = new HashSet<string>(); // To trigger library scans only once per path
 
         var subscriptions = config.Subscriptions.ToList();
         for (int i = 0; i < subscriptions.Count; i++)
@@ -150,9 +149,6 @@ public class DownloadScheduledTask : IScheduledTask
                 var seriesPath = Path.Combine(baseDownloadPath, episodeInfo.SeriesName);
                 var seasonPath = Path.Combine(seriesPath, $"Staffel {episodeInfo.SeasonNumber:D2}"); // D2 for 0-padding
                 var baseFileName = $"{(!episodeInfo.IsParsed ? "Movie - " : string.Empty)}S{episodeInfo.SeasonNumber:D2}E{episodeInfo.EpisodeNumber:D2} - {episodeInfo.EpisodeTitle}";
-
-                // Track path for later library scan
-                downloadedPaths.Add(seriesPath);
 
                 // --- Handle Video/Audio ---
                 var masterVideoPath = Path.Combine(seasonPath, $"{baseFileName}.mkv");
