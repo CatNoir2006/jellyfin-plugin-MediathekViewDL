@@ -1,11 +1,7 @@
-using System.Diagnostics;
+using System;
 using System.IO;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
-using MediaBrowser.Controller.Entities;
-using MediaBrowser.Controller.MediaEncoding;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services;
@@ -29,6 +25,31 @@ public class FileNameBuilderService
     public FileNameBuilderService(ILogger<FileNameBuilderService> logger)
     {
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Generates all necessary download paths for a given video and subscription.
+    /// </summary>
+    /// <param name="videoInfo">The video information.</param>
+    /// <param name="subscription">The subscription settings.</param>
+    /// <returns>A <see cref="DownloadPaths"/> object containing all generated paths.</returns>
+    public DownloadPaths GenerateDownloadPaths(VideoInfo videoInfo, Subscription subscription)
+    {
+        var paths = new DownloadPaths();
+
+        string targetDirectory = BuildDirectoryName(videoInfo, subscription);
+        if (string.IsNullOrWhiteSpace(targetDirectory))
+        {
+            // Error already logged in BuildDirectoryName
+            return paths; // Return empty paths object
+        }
+
+        paths.DirectoryPath = targetDirectory;
+        paths.MainFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, false));
+        paths.SubtitleFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, true));
+        paths.StrmFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, false, true));
+
+        return paths;
     }
 
     /// <summary>
@@ -58,7 +79,7 @@ public class FileNameBuilderService
     /// <param name="isSubtitle">Whether the file is a subtitle.</param>
     /// <param name="useStreamingUrlFile">Whether to generate a streaming URL file name.</param>
     /// <returns>The sanitized file name.</returns>
-    public string BuildFileName(VideoInfo videoInfo, bool isSubtitle, bool useStreamingUrlFile = false)
+    private string BuildFileName(VideoInfo videoInfo, bool isSubtitle, bool useStreamingUrlFile = false)
     {
         string fileNamePart;
         if (videoInfo.IsShow && videoInfo.HasSeasonEpisodeNumbering)
@@ -121,7 +142,7 @@ public class FileNameBuilderService
     /// <param name="videoInfo">The video information.</param>
     /// <param name="subscription">The subscription settings.</param>
     /// <returns>The target directory name. Returns an empty string if no valid path is configured.</returns>
-    public string BuildDirectoryName(VideoInfo videoInfo, Subscription subscription)
+    private string BuildDirectoryName(VideoInfo videoInfo, Subscription subscription)
     {
         var config = Plugin.Instance?.Configuration;
         string targetPath = string.Empty;
