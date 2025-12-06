@@ -220,7 +220,7 @@
                                     gespeichert, die Videos werden von ARD/ZDF direkt gestreamt. Untertitel sind hiervon nicht betroffen.</div>
                             </div>
 
-                            <div class="checkboxContainer checkboxContainer-withDescription">
+                            <div id="subTreatNonEpisodesAsExtrasContainer" class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
                                     <input id="subTreatNonEpisodesAsExtras" type="checkbox" is="emby-checkbox" />
                                     <span>Nicht Episoden als Extras behandeln</span>
@@ -229,7 +229,7 @@
                                     Wird ignoriert, wenn "Nur Serien herunterladen" aktiviert ist.</div>
                             </div>
 
-                            <div class="checkboxContainer checkboxContainer-withDescription">
+                            <div id="subAllowAbsoluteEpisodeNumberingContainer" class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
                                     <input id="subAllowAbsoluteEpisodeNumbering" type="checkbox" is="emby-checkbox" />
                                     <span>Absolute Episodennummerierung erlauben</span>
@@ -329,6 +329,22 @@
                 let currentSearchResults = [];
                 let currentItemForAdvancedDl = null;
 
+                // --- Dependency Rules --- Disable/hide certain fields based on other field values of subscriptions
+                const subscriptionDependencyRules = [
+                    {
+                        controllerId: 'subEnforceSeries',
+                        dependentId: 'subTreatNonEpisodesAsExtrasContainer',
+                        showWhen: false,
+                        disableWhenHidden: true
+                    },
+                    {
+                        controllerId: 'subEnforceSeries',
+                        dependentId: 'subAllowAbsoluteEpisodeNumberingContainer',
+                        showWhen: true,
+                        disableWhenHidden: true
+                    }
+                ];
+
                 // --- Helper Functions ---
                 function confirmationPopup(message, title, resultCallback) {
                     if (typeof Dashboard !== 'undefined' && typeof Dashboard.confirm === 'function') {
@@ -378,6 +394,7 @@
                         }
                     }
                 }
+
                 function genUUID() {
                     try {
                         return crypto.randomUUID();
@@ -391,6 +408,26 @@
                         return v.toString(16);
                     });
                 }
+
+                function applySubscriptionDependencies() {
+                    subscriptionDependencyRules.forEach(rule => {
+                        const controller = document.getElementById(rule.controllerId);
+                        const dependentContainer = document.getElementById(rule.dependentId);
+
+                        if (controller && dependentContainer) {
+                            const shouldShow = controller.checked === rule.showWhen;
+                            dependentContainer.style.display = shouldShow ? 'block' : 'none';
+
+                            if (rule.disableWhenHidden && !shouldShow) {
+                                const dependentInput = dependentContainer.querySelector('input[type="checkbox"]');
+                                if (dependentInput) {
+                                    dependentInput.checked = false;
+                                }
+                            }
+                        }
+                    });
+                }
+
                 // --- Core Logic ---
                 function loadConfig() {
                     Dashboard.showLoadingMsg();
@@ -660,6 +697,8 @@
                         addQueryRow(null);
                     }
 
+                    applySubscriptionDependencies();
+
                     editor.style.display = 'block';
                     editor.scrollIntoView({ behavior: 'smooth' });
                 }
@@ -823,6 +862,14 @@
 
                         document.getElementById('btnSelectAdvPath').addEventListener('click', function () {
                             openFolderDialog('advDlPath', 'Download Pfad wählen');
+                        });
+
+                        const controllerIds = [...new Set(subscriptionDependencyRules.map(rule => rule.controllerId))];
+                        controllerIds.forEach(id => {
+                            const controller = document.getElementById(id);
+                            if (controller) {
+                                controller.addEventListener('change', applySubscriptionDependencies);
+                            }
                         });
                     },
                     switchTab: switchTab,
