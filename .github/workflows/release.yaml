@@ -150,10 +150,9 @@ jobs:
               build_config = yaml.safe_load(f)
 
           # --- Info from release event and previous job ---
-          tag_name = os.environ['GITHUB_REF_NAME']
-          version_str = tag_name.lstrip('v')
-          release_body = os.environ.get('RELEASE_BODY', 'See release notes.')
-          repo_slug = os.environ['GITHUB_REPOSITORY']
+                        tag_name = os.environ['GITHUB_REF_NAME']
+                        version_str = build_config.get('version', tag_name.lstrip('v')) # Use version from build.yaml
+                        release_body = os.environ.get('RELEASE_BODY', 'See release notes.')          repo_slug = os.environ['GITHUB_REPOSITORY']
           artifact_name = os.environ['ARTIFACT_NAME']
 
           # Read checksum from file
@@ -214,6 +213,11 @@ jobs:
           # Write the updated data back to the manifest file
           with open(manifest_file, 'w') as f:
               json.dump(manifest_data, f, indent=4)
+          
+          # Set output for the version used in the manifest
+          print(f"manifest_version={version_str}")
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+            f.write(f"manifest_version={version_str}\n")
 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -227,6 +231,4 @@ jobs:
           commit_user_name: 'github-actions[bot]'
           commit_user_email: 'github-actions[bot]@users.noreply.github.com'
           repository: 'manifest-repo'
-        env:
-          PLUGIN_NAME: 'Test Plugin'
 
