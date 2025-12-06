@@ -131,7 +131,7 @@ jobs:
 
       - name: 'Update Manifest JSON'
         id: update_json
-        shell: python # <-- Added this
+        shell: python
         run: |
           import json
           import os
@@ -148,18 +148,12 @@ jobs:
           # --- Read build.yaml for plugin metadata ---
           with open(build_file, 'r') as f:
               build_config = yaml.safe_load(f)
-
-                    # --- Info from release event and previous job ---
-
-                    tag_name = os.environ['GITHUB_REF_NAME']
-
-                    version_str = build_config.get('version', tag_name.lstrip('v')) # Use version from build.yaml
-
-                    release_body = os.environ.get('RELEASE_BODY', 'See release notes.')
-
-                    repo_slug = os.environ['GITHUB_REPOSITORY']
-
-                    artifact_name = os.environ['ARTIFACT_NAME']
+                  # --- Info from release event and previous job ---
+                  tag_name = os.environ['GITHUB_REF_NAME']
+                  version_str = build_config.get('version', tag_name.lstrip('v')) # Use version from build.yaml
+                  release_body = os.environ.get('RELEASE_BODY', 'See release notes.')
+                  repo_slug = os.environ['GITHUB_REPOSITORY']
+                  artifact_name = os.environ['ARTIFACT_NAME']
 
           # Read checksum from file
           with open('checksum.txt') as f:
@@ -219,7 +213,7 @@ jobs:
           # Write the updated data back to the manifest file
           with open(manifest_file, 'w') as f:
               json.dump(manifest_data, f, indent=4)
-          
+
           # Set output for the version used in the manifest
           print(f"manifest_version={version_str}")
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
