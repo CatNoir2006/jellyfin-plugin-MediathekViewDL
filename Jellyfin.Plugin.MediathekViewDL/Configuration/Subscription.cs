@@ -86,4 +86,10 @@ public class Subscription
     /// Gets or sets a value indicating whether to use streaming URL files (.strm) instead of downloading the actual video files.
     /// </summary>
     public bool UseStreamingUrlFiles { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to download the full video for secondary audio languages.
+    /// If false, only the audio track will be extracted for secondary languages.
+    /// </summary>
+    public bool DownloadFullVideoForSecondaryAudio { get; set; } = false;
 }

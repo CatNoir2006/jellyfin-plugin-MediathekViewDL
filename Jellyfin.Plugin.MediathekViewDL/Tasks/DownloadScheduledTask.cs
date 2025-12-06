@@ -250,33 +250,51 @@ public class DownloadScheduledTask : IScheduledTask
                         _logger.LogDebug("Master video for '{Title}' already exists.", item.VideoInfo.Title);
                     }
                 }
-                else // Non-German version: extract audio if not exists
+                else // Non-German version: handle based on subscription setting
                 {
-                    if (!File.Exists(paths.MainFilePath))
+                    if (subscription.DownloadFullVideoForSecondaryAudio)
                     {
-                        var tempVideoPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.mp4"); // Temp path for non-DE video download
-                        _logger.LogInformation("Downloading temporary video for '{Title}' to extract '{Language}' audio.", item.VideoInfo.Title, item.VideoInfo.Language);
-                        if (!await _fileDownloader.DownloadFileAsync(videoUrl, tempVideoPath, downloadProgress, cancellationToken).ConfigureAwait(false))
+                        if (!File.Exists(paths.MainFilePath))
                         {
-                            _logger.LogError("Failed to download temporary video for '{Title}'.", item.VideoInfo.Title);
-                            continue;
+                            _logger.LogInformation("Downloading full video for '{Title}' ({Language}) to '{Path}' based on subscription setting.", item.VideoInfo.Title, item.VideoInfo.Language, paths.MainFilePath);
+                            if (!await _fileDownloader.DownloadFileAsync(videoUrl, paths.MainFilePath, downloadProgress, cancellationToken).ConfigureAwait(false))
+                            {
+                                _logger.LogError("Failed to download full video for '{Title}'.", item.VideoInfo.Title);
+                            }
                         }
-
-                        _logger.LogInformation("Extracting '{Language}' audio for '{Title}' to '{Path}'.", item.VideoInfo.Language, item.VideoInfo.Title, paths.MainFilePath);
-                        if (!await _ffmpegService.ExtractAudioAsync(tempVideoPath, paths.MainFilePath, item.VideoInfo.Language, cancellationToken).ConfigureAwait(false))
+                        else
                         {
-                            _logger.LogError("Failed to extract audio for '{Title}'.", item.VideoInfo.Title);
-                        }
-
-                        // Clean up temporary video file
-                        if (File.Exists(tempVideoPath))
-                        {
-                            File.Delete(tempVideoPath);
+                            _logger.LogDebug("Full video for '{Title}' ({Language}) already exists.", item.VideoInfo.Title, item.VideoInfo.Language);
                         }
                     }
-                    else
+                    else // Existing logic: extract audio if not exists
                     {
-                        _logger.LogDebug("External '{Language}' audio for '{Title}' already exists.", item.VideoInfo.Language, item.VideoInfo.Title);
+                        if (!File.Exists(paths.MainFilePath))
+                        {
+                            var tempVideoPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.mp4"); // Temp path for non-DE video download
+                            _logger.LogInformation("Downloading temporary video for '{Title}' to extract '{Language}' audio.", item.VideoInfo.Title, item.VideoInfo.Language);
+                            if (!await _fileDownloader.DownloadFileAsync(videoUrl, tempVideoPath, downloadProgress, cancellationToken).ConfigureAwait(false))
+                            {
+                                _logger.LogError("Failed to download temporary video for '{Title}'.", item.VideoInfo.Title);
+                                continue;
+                            }
+
+                            _logger.LogInformation("Extracting '{Language}' audio for '{Title}' to '{Path}'.", item.VideoInfo.Language, item.VideoInfo.Title, paths.MainFilePath);
+                            if (!await _ffmpegService.ExtractAudioAsync(tempVideoPath, paths.MainFilePath, item.VideoInfo.Language, cancellationToken).ConfigureAwait(false))
+                            {
+                                _logger.LogError("Failed to extract audio for '{Title}'.", item.VideoInfo.Title);
+                            }
+
+                            // Clean up temporary video file
+                            if (File.Exists(tempVideoPath))
+                            {
+                                File.Delete(tempVideoPath);
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogDebug("External '{Language}' audio for '{Title}' already exists.", item.VideoInfo.Language, item.VideoInfo.Title);
+                        }
                     }
                 }
 

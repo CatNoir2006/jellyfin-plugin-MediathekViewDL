@@ -45,9 +45,9 @@ public class FileNameBuilderService
         }
 
         paths.DirectoryPath = targetDirectory;
-        paths.MainFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, false));
-        paths.SubtitleFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, true));
-        paths.StrmFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, false, true));
+        paths.MainFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, subscription, false));
+        paths.SubtitleFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, subscription, true));
+        paths.StrmFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, subscription, false, true));
 
         return paths;
     }
@@ -76,10 +76,11 @@ public class FileNameBuilderService
     /// Builds a sanitized file name for the given video info and subscription.
     /// </summary>
     /// <param name="videoInfo">The video information.</param>
+    /// <param name="subscription">The subscription settings.</param>
     /// <param name="isSubtitle">Whether the file is a subtitle.</param>
     /// <param name="useStreamingUrlFile">Whether to generate a streaming URL file name.</param>
     /// <returns>The sanitized file name.</returns>
-    private string BuildFileName(VideoInfo videoInfo, bool isSubtitle, bool useStreamingUrlFile = false)
+    private string BuildFileName(VideoInfo videoInfo, Subscription subscription, bool isSubtitle, bool useStreamingUrlFile = false)
     {
         string fileNamePart;
         if (videoInfo.IsShow && videoInfo.HasSeasonEpisodeNumbering)
@@ -123,9 +124,9 @@ public class FileNameBuilderService
         {
             fileNamePart += ".strm"; // Streaming URL file extension
         }
-        else if (videoInfo.Language == "deu")
+        else if (videoInfo.Language == "deu" || subscription.DownloadFullVideoForSecondaryAudio)
         {
-            fileNamePart += ".mkv"; // Main video with German audio
+            fileNamePart += ".mkv"; // Main video with German audio or full video download for secondary languages
         }
         else
         {

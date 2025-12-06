@@ -220,6 +220,14 @@
                                     gespeichert, die Videos werden von ARD/ZDF direkt gestreamt. Untertitel sind hiervon nicht betroffen.</div>
                             </div>
 
+                            <div id="subDownloadFullVideoForSecondaryAudioContainer" class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="subDownloadFullVideoForSecondaryAudio" type="checkbox" is="emby-checkbox" />
+                                    <span>Vollständiges Video für sekundäre Audiosprachen herunterladen</span>
+                                </label>
+                                <div class="fieldDescription">Wenn aktiviert, wird das vollständige Video heruntergeladen, auch wenn es eine andere Audiosprache als Deutsch enthält. Andernfalls wird nur die Audiospur dieser Sprache extrahiert.</div>
+                            </div>
+
                             <div id="subTreatNonEpisodesAsExtrasContainer" class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
                                     <input id="subTreatNonEpisodesAsExtras" type="checkbox" is="emby-checkbox" />
@@ -341,6 +349,12 @@
                         controllerId: 'subEnforceSeries',
                         dependentId: 'subAllowAbsoluteEpisodeNumberingContainer',
                         showWhen: true,
+                        disableWhenHidden: true
+                    },
+                    {
+                        controllerId: 'subUseStreamingUrlFiles',
+                        dependentId: 'subDownloadFullVideoForSecondaryAudioContainer',
+                        showWhen: false,
                         disableWhenHidden: true
                     }
                 ];
@@ -662,6 +676,7 @@
                     document.getElementById('subAllowSignLanguage').checked = false;
                     document.getElementById('subTreatNonEpisodesAsExtras').checked = false;
                     document.getElementById('subUseStreamingUrlFiles').checked = false;
+                    document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = false;
                     queriesContainer.innerHTML = '';
 
                     let subToEdit = null;
@@ -687,6 +702,7 @@
                         document.getElementById('subAllowSignLanguage').checked = subToEdit.AllowSignLanguage;
                         document.getElementById('subTreatNonEpisodesAsExtras').checked = subToEdit.TreatNonEpisodesAsExtras;
                         document.getElementById('subUseStreamingUrlFiles').checked = subToEdit.UseStreamingUrlFiles;
+                        document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = subToEdit.DownloadFullVideoForSecondaryAudio;
 
                         if (subToEdit.Queries && subToEdit.Queries.length > 0) {
                             subToEdit.Queries.forEach(function (q) { addQueryRow(q); });
@@ -719,6 +735,7 @@
                     const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
                     const treatNonEpisodesAsExtras = document.getElementById('subTreatNonEpisodesAsExtras').checked;
                     const useStreamingUrlFiles = document.getElementById('subUseStreamingUrlFiles').checked;
+                    const downloadFullVideoForSecondaryAudio = document.getElementById('subDownloadFullVideoForSecondaryAudio').checked;
 
                     const queries = [];
                     document.querySelectorAll('#queriesContainer .query-row').forEach(function (row) {
@@ -750,7 +767,8 @@
                         AllowAbsoluteEpisodeNumbering: allowAbsolute,
                         AllowSignLanguage: allowSignLanguage,
                         TreatNonEpisodesAsExtras: treatNonEpisodesAsExtras,
-                        UseStreamingUrlFiles: useStreamingUrlFiles
+                        UseStreamingUrlFiles: useStreamingUrlFiles,
+                        DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio
                     };
 
                     if (id) {
