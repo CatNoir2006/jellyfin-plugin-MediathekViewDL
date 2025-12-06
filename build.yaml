@@ -10,7 +10,7 @@ description: >
   Für die suche wird die MediathekViewWeb-API verwendet. Der Videos werden direkt über die Original-URLs der Sender heruntergeladen.
   Es können Abos anglegt werden um z.B. Serien automatisch herunterzuladen.
 category: "General"
-owner: "jellyfin"
+owner: "CatNoir2006"
 artifacts:
 - "Jellyfin.Plugin.MediathekViewDL.dll"
 changelog: >
