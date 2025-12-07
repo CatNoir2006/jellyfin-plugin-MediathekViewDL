@@ -53,7 +53,7 @@ public class MediathekViewApiClient
         {
             Queries = new Collection<QueryFields>
             {
-                new() { Query = searchQuery }
+                new() { Query = searchQuery, Fields = new Collection<string> { "title", "topic" } }
             },
             Size = 50, // Get a decent number of results
             MinDuration = minDuration,

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Jellyfin.Plugin.MediathekViewDL.Api;
 
@@ -86,4 +87,22 @@ public class Subscription
     /// Gets or sets a value indicating whether to use streaming URL files (.strm) instead of downloading the actual video files.
     /// </summary>
     public bool UseStreamingUrlFiles { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to download the full video for secondary audio languages.
+    /// If false, only the audio track will be extracted for secondary languages.
+    /// </summary>
+    public bool DownloadFullVideoForSecondaryAudio { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the UTC timestamp of the last successful download for this subscription.
+    /// This is purely for debugging and informational purposes.
+    /// </summary>
+    public DateTime? LastDownloadedTimestamp { get; set; }
+
+    /// <summary>
+    /// Gets a set of unique identifiers for items that have already been processed for this subscription.
+    /// This is used to avoid re-processing or re-downloading content.
+    /// </summary>
+    public HashSet<string> ProcessedItemIds { get; init; } = new();
 }

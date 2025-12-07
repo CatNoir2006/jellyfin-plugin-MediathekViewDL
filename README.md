@@ -18,10 +18,17 @@ Ein Plugin für Jellyfin, das Inhalte aus den öffentlich-rechtlichen Mediatheke
 - **Sicherheit**:
   - Eine Prüfung des freien Speicherplatzes verhindert, dass die Festplatte vollläuft.
   - Downloads sind auf eine Liste bekannter und vertrauenswürdiger Domains (CDNs von ARD, ZDF, etc.) beschränkt, um die Sicherheit zu erhöhen.
+## Installation
+### Normal
 
-## Installation (Manuell)
+- Für die Installation muss mein Jellyfin Plugin Repository zu Jellyfin hinzugefügt werden:
+- In Jellyfin: Administration -> Plugins -> Repositories verwalten -> Neues Repository
+- Es kann dan ein Belibiger Name angebeben werden un folgende URL:
+    ```
+    https://raw.githubusercontent.com/CatNoir2006/jellyfin-plugin-manifest/main/    manifest.json
+    ```
 
-Da es noch keine fertigen Releases gibt, muss das Plugin manuell gebaut werden.
+### Manuell - Selber Bauen
 
 1.  **Repository klonen**:
     ```bash

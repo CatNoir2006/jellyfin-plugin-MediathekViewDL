@@ -13,7 +13,7 @@ public class QueryFields
     /// Gets the fields to search in.
     /// </summary>
     [JsonPropertyName("fields")]
-    public Collection<string> Fields { get; init; } = new() { "title", "topic" };
+    public Collection<string> Fields { get; init; } = new() { };
 
     /// <summary>
     /// Gets or sets the search query.

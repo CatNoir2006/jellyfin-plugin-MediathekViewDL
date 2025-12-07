@@ -220,7 +220,15 @@
                                     gespeichert, die Videos werden von ARD/ZDF direkt gestreamt. Untertitel sind hiervon nicht betroffen.</div>
                             </div>
 
-                            <div class="checkboxContainer checkboxContainer-withDescription">
+                            <div id="subDownloadFullVideoForSecondaryAudioContainer" class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="subDownloadFullVideoForSecondaryAudio" type="checkbox" is="emby-checkbox" />
+                                    <span>Vollständiges Video für sekundäre Audiosprachen herunterladen</span>
+                                </label>
+                                <div class="fieldDescription">Wenn aktiviert, wird das vollständige Video heruntergeladen, auch wenn es eine andere Audiosprache als Deutsch enthält. Andernfalls wird nur die Audiospur dieser Sprache extrahiert.</div>
+                            </div>
+
+                            <div id="subTreatNonEpisodesAsExtrasContainer" class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
                                     <input id="subTreatNonEpisodesAsExtras" type="checkbox" is="emby-checkbox" />
                                     <span>Nicht Episoden als Extras behandeln</span>
@@ -229,7 +237,7 @@
                                     Wird ignoriert, wenn "Nur Serien herunterladen" aktiviert ist.</div>
                             </div>
 
-                            <div class="checkboxContainer checkboxContainer-withDescription">
+                            <div id="subAllowAbsoluteEpisodeNumberingContainer" class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
                                     <input id="subAllowAbsoluteEpisodeNumbering" type="checkbox" is="emby-checkbox" />
                                     <span>Absolute Episodennummerierung erlauben</span>
@@ -329,6 +337,28 @@
                 let currentSearchResults = [];
                 let currentItemForAdvancedDl = null;
 
+                // --- Dependency Rules --- Disable/hide certain fields based on other field values of subscriptions
+                const subscriptionDependencyRules = [
+                    {
+                        controllerId: 'subEnforceSeries',
+                        dependentId: 'subTreatNonEpisodesAsExtrasContainer',
+                        showWhen: false,
+                        disableWhenHidden: true
+                    },
+                    {
+                        controllerId: 'subEnforceSeries',
+                        dependentId: 'subAllowAbsoluteEpisodeNumberingContainer',
+                        showWhen: true,
+                        disableWhenHidden: true
+                    },
+                    {
+                        controllerId: 'subUseStreamingUrlFiles',
+                        dependentId: 'subDownloadFullVideoForSecondaryAudioContainer',
+                        showWhen: false,
+                        disableWhenHidden: true
+                    }
+                ];
+
                 // --- Helper Functions ---
                 function confirmationPopup(message, title, resultCallback) {
                     if (typeof Dashboard !== 'undefined' && typeof Dashboard.confirm === 'function') {
@@ -378,6 +408,7 @@
                         }
                     }
                 }
+
                 function genUUID() {
                     try {
                         return crypto.randomUUID();
@@ -391,6 +422,26 @@
                         return v.toString(16);
                     });
                 }
+
+                function applySubscriptionDependencies() {
+                    subscriptionDependencyRules.forEach(rule => {
+                        const controller = document.getElementById(rule.controllerId);
+                        const dependentContainer = document.getElementById(rule.dependentId);
+
+                        if (controller && dependentContainer) {
+                            const shouldShow = controller.checked === rule.showWhen;
+                            dependentContainer.style.display = shouldShow ? 'block' : 'none';
+
+                            if (rule.disableWhenHidden && !shouldShow) {
+                                const dependentInput = dependentContainer.querySelector('input[type="checkbox"]');
+                                if (dependentInput) {
+                                    dependentInput.checked = false;
+                                }
+                            }
+                        }
+                    });
+                }
+
                 // --- Core Logic ---
                 function loadConfig() {
                     Dashboard.showLoadingMsg();
@@ -554,13 +605,18 @@
                     let html = '';
                     currentConfig.Subscriptions.forEach(function (sub) {
                         const queriesSummary = (sub.Queries || []).map(function (q) { return q.query; }).join(', ');
+                        const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
                         html +=
                             '<div class="listItem listItem-border">' +
                             '<div class="listItemBody two-line">' +
                             '<h3 class="listItemBodyText">' + sub.Name + '</h3>' +
                             '<div class="listItemBodyText secondary">Queries: ' + queriesSummary + '</div>' +
+                            '<div class="listItemBodyText secondary">Letzter Download: ' + lastDownloadText + '</div>' +
                             '</div>' +
                             '<div style="display:flex; gap:5px;">' +
+                            '<button type="button" class="paper-icon-button-light" onclick="MediathekPluginConfig.resetProcessedItems(\'' + sub.Id + '\')" title="Verarbeitete Items zurücksetzen">' +
+                            '<span class="material-icons refresh"></span>' +
+                            '</button>' +
                             '<button type="button" class="paper-icon-button-light" onclick="MediathekPluginConfig.editSubscription(\'' + sub.Id + '\', null)" title="Bearbeiten">' +
                             '<span class="material-icons edit"></span>' +
                             '</button>' +
@@ -571,6 +627,25 @@
                             '</div>';
                     });
                     list.innerHTML = html;
+                }
+
+                function resetProcessedItems(id) {
+                    confirmationPopup("Dies wird die Liste der bereits verarbeiteten Items für dieses Abonnement zurücksetzen. Es kann dazu führen, dass bereits heruntergeladene Inhalte erneut heruntergeladen werden, wenn sie noch in den Suchergebnissen der MediathekView API erscheinen. Fortfahren?", "Verarbeitete Items zurücksetzen", function (confirmed) {
+                        if (confirmed) {
+                            Dashboard.showLoadingMsg();
+                            ApiClient.ajax({
+                                type: "POST",
+                                url: ApiClient.getUrl('/' + pluginName + '/ResetProcessedItems?subscriptionId=' + id),
+                            }).then(function (result) {
+                                Dashboard.hideLoadingMsg();
+                                showToast("Verarbeitete Items für Abonnement zurückgesetzt.");
+                                loadConfig(); // Refresh the configuration to update the UI
+                            }).catch(function (err) {
+                                Dashboard.hideLoadingMsg();
+                                showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                            });
+                        }
+                    });
                 }
 
                 function addQueryRow(query) {
@@ -625,6 +700,7 @@
                     document.getElementById('subAllowSignLanguage').checked = false;
                     document.getElementById('subTreatNonEpisodesAsExtras').checked = false;
                     document.getElementById('subUseStreamingUrlFiles').checked = false;
+                    document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = false;
                     queriesContainer.innerHTML = '';
 
                     let subToEdit = null;
@@ -650,6 +726,7 @@
                         document.getElementById('subAllowSignLanguage').checked = subToEdit.AllowSignLanguage;
                         document.getElementById('subTreatNonEpisodesAsExtras').checked = subToEdit.TreatNonEpisodesAsExtras;
                         document.getElementById('subUseStreamingUrlFiles').checked = subToEdit.UseStreamingUrlFiles;
+                        document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = subToEdit.DownloadFullVideoForSecondaryAudio;
 
                         if (subToEdit.Queries && subToEdit.Queries.length > 0) {
                             subToEdit.Queries.forEach(function (q) { addQueryRow(q); });
@@ -659,6 +736,8 @@
                     } else {
                         addQueryRow(null);
                     }
+
+                    applySubscriptionDependencies();
 
                     editor.style.display = 'block';
                     editor.scrollIntoView({ behavior: 'smooth' });
@@ -680,6 +759,7 @@
                     const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
                     const treatNonEpisodesAsExtras = document.getElementById('subTreatNonEpisodesAsExtras').checked;
                     const useStreamingUrlFiles = document.getElementById('subUseStreamingUrlFiles').checked;
+                    const downloadFullVideoForSecondaryAudio = document.getElementById('subDownloadFullVideoForSecondaryAudio').checked;
 
                     const queries = [];
                     document.querySelectorAll('#queriesContainer .query-row').forEach(function (row) {
@@ -711,7 +791,8 @@
                         AllowAbsoluteEpisodeNumbering: allowAbsolute,
                         AllowSignLanguage: allowSignLanguage,
                         TreatNonEpisodesAsExtras: treatNonEpisodesAsExtras,
-                        UseStreamingUrlFiles: useStreamingUrlFiles
+                        UseStreamingUrlFiles: useStreamingUrlFiles,
+                        DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio,
                     };
 
                     if (id) {
@@ -824,6 +905,14 @@
                         document.getElementById('btnSelectAdvPath').addEventListener('click', function () {
                             openFolderDialog('advDlPath', 'Download Pfad wählen');
                         });
+
+                        const controllerIds = [...new Set(subscriptionDependencyRules.map(rule => rule.controllerId))];
+                        controllerIds.forEach(id => {
+                            const controller = document.getElementById(id);
+                            if (controller) {
+                                controller.addEventListener('change', applySubscriptionDependencies);
+                            }
+                        });
                     },
                     switchTab: switchTab,
                     performSearch: performSearch,
@@ -837,7 +926,8 @@
                     closeEditor: closeEditor,
                     saveSubscription: saveSubscription,
                     deleteSubscription: deleteSubscription,
-                    openFolderDialog: openFolderDialog
+                    openFolderDialog: openFolderDialog,
+                    resetProcessedItems: resetProcessedItems
                 };
             })();
 
