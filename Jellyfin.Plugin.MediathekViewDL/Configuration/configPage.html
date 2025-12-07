@@ -16,17 +16,17 @@
                 <!-- Tab Navigation -->
                 <div class="sectionTabs tabs-spacer">
                     <button type="button" class="paper-icon-button-light selected"
-                        onclick="MediathekPluginConfig.switchTab('search')">
+                        onclick="mediathekConfig.switchTab('search')">
                         <span class="material-icons search" aria-hidden="true"></span>
                         <span>Manuelle Suche</span>
                     </button>
                     <button type="button" class="paper-icon-button-light"
-                        onclick="MediathekPluginConfig.switchTab('settings')">
+                        onclick="mediathekConfig.switchTab('settings')">
                         <span class="material-icons settings" aria-hidden="true"></span>
                         <span>Einstellungen</span>
                     </button>
                     <button type="button" class="paper-icon-button-light"
-                        onclick="MediathekPluginConfig.switchTab('subscriptions')">
+                        onclick="mediathekConfig.switchTab('subscriptions')">
                         <span class="material-icons subscriptions" aria-hidden="true"></span>
                         <span>Abo Verwaltung</span>
                     </button>
@@ -39,7 +39,7 @@
                         <p class="sectionDescription">Suche nach Inhalten, um diese direkt herunterzuladen oder ein Abo
                             zu erstellen.</p>
 
-                        <form onsubmit="MediathekPluginConfig.performSearch(); return false;">
+                        <form onsubmit="mediathekConfig.performSearch(); return false;">
                             <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
                                 <div class="inputContainer" style="flex-grow: 1;">
                                     <label class="inputLabel" for="txtSearchQuery">Suchbegriff</label>
@@ -140,7 +140,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div class="sectionTitleLabel">Aktive Abonnements</div>
                             <button is="emby-button" type="button" class="raised"
-                                onclick="MediathekPluginConfig.editSubscription(null)">
+                                onclick="mediathekConfig.editSubscription(null)">
                                 <span class="material-icons add"></span>
                                 <span>Neues Abo</span>
                             </button>
@@ -154,7 +154,7 @@
                     <div id="subscriptionEditor"
                         style="display: none; border-top: 1px solid #444; margin-top: 20px; padding-top: 20px;">
                         <h3 id="subEditorTitle">Abonnement bearbeiten</h3>
-                        <form onsubmit="MediathekPluginConfig.saveSubscription(); return false;">
+                        <form onsubmit="mediathekConfig.saveSubscription(); return false;">
                             <input type="hidden" id="subId" />
 
                             <div class="inputContainer">
@@ -170,7 +170,7 @@
                                     <!-- Query-Zeilen werden hier dynamisch eingefügt -->
                                 </div>
                                 <button is="emby-button" type="button" class="raised"
-                                    onclick="MediathekPluginConfig.addQueryRow()" style="margin-top: 10px;">
+                                    onclick="mediathekConfig.addQueryRow()" style="margin-top: 10px;">
                                     <span class="material-icons add"></span>
                                     <span>Anfrage hinzufügen</span>
                                 </button>
@@ -279,7 +279,7 @@
                                     <span>Abo Speichern</span>
                                 </button>
                                 <button is="emby-button" type="button" class="raised button-cancel"
-                                    onclick="MediathekPluginConfig.closeEditor()">
+                                    onclick="mediathekConfig.closeEditor()">
                                     <span>Abbrechen</span>
                                 </button>
                             </div>
@@ -295,7 +295,7 @@
             <div class="dialog-content"
                 style="background-color: #303030; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 5px;">
                 <h2 id="advancedDownloadTitle">Erweiterter Download</h2>
-                <form onsubmit="MediathekPluginConfig.performAdvancedDownload(); return false;">
+                <form onsubmit="mediathekConfig.performAdvancedDownload(); return false;">
                     <input type="hidden" id="advancedDownloadIndex" />
 
                     <div class="inputContainer">
@@ -328,7 +328,7 @@
                             <span>Herunterladen</span>
                         </button>
                         <button is="emby-button" type="button" class="raised button-cancel"
-                            onclick="MediathekPluginConfig.closeAdvancedDownloadDialog()">
+                            onclick="mediathekConfig.closeAdvancedDownloadDialog()">
                             <span>Abbrechen</span>
                         </button>
                     </div>
@@ -337,38 +337,39 @@
         </div>
 
         <script type="text/javascript">
-            var MediathekPluginConfig = (function () {
+            class MediathekPluginConfig {
+                constructor() {
+                    this.pluginId = "a31b415a-5264-419d-b152-8c8192a54994";
+                    this.pluginName = "MediathekViewDL";
+                    this.currentConfig = null;
+                    this.currentSearchResults = [];
+                    this.currentItemForAdvancedDl = null;
 
-                const pluginId = "a31b415a-5264-419d-b152-8c8192a54994";
-                const pluginName = "MediathekViewDL";
-                let currentConfig = null;
-                let currentSearchResults = [];
-                let currentItemForAdvancedDl = null;
-
-                // --- Dependency Rules --- Disable/hide certain fields based on other field values of subscriptions
-                const subscriptionDependencyRules = [
-                    {
-                        controllerId: 'subEnforceSeries',
-                        dependentId: 'subTreatNonEpisodesAsExtrasContainer',
-                        showWhen: false,
-                        disableWhenHidden: true
-                    },
-                    {
-                        controllerId: 'subEnforceSeries',
-                        dependentId: 'subAllowAbsoluteEpisodeNumberingContainer',
-                        showWhen: true,
-                        disableWhenHidden: true
-                    },
-                    {
-                        controllerId: 'subUseStreamingUrlFiles',
-                        dependentId: 'subDownloadFullVideoForSecondaryAudioContainer',
-                        showWhen: false,
-                        disableWhenHidden: true
-                    }
-                ];
+                    // --- Dependency Rules --- Disable/hide certain fields based on other field values of subscriptions
+                    this.subscriptionDependencyRules = [
+                        {
+                            controllerId: 'subEnforceSeries',
+                            dependentId: 'subTreatNonEpisodesAsExtrasContainer',
+                            showWhen: false,
+                            disableWhenHidden: true
+                        },
+                        {
+                            controllerId: 'subEnforceSeries',
+                            dependentId: 'subAllowAbsoluteEpisodeNumberingContainer',
+                            showWhen: true,
+                            disableWhenHidden: true
+                        },
+                        {
+                            controllerId: 'subUseStreamingUrlFiles',
+                            dependentId: 'subDownloadFullVideoForSecondaryAudioContainer',
+                            showWhen: false,
+                            disableWhenHidden: true
+                        }
+                    ];
+                }
 
                 // --- Helper Functions ---
-                function confirmationPopup(message, title, resultCallback) {
+                confirmationPopup(message, title, resultCallback) {
                     if (typeof Dashboard !== 'undefined' && typeof Dashboard.confirm === 'function') {
                         Dashboard.confirm(message, title, resultCallback);
                     } else {
@@ -377,7 +378,7 @@
                     }
                 }
 
-                function showToast(message) {
+                showToast(message) {
                     if (typeof Dashboard !== 'undefined' && typeof Dashboard.alert === 'function') {
                         Dashboard.alert(message);
                     } else {
@@ -385,7 +386,7 @@
                     }
                 }
 
-                function openFolderDialog(inputId, headerText) {
+                openFolderDialog(inputId, headerText) {
                     try {
                         if (typeof Dashboard !== 'undefined' && Dashboard.DirectoryBrowser) {
                             const picker = new Dashboard.DirectoryBrowser();
@@ -393,7 +394,7 @@
                                 header: headerText,
                                 includeDirectories: true,
                                 includeFiles: false,
-                                callback: function (path) {
+                                callback: (path) => {
                                     if (path) {
                                         document.getElementById(inputId).value = path;
                                     }
@@ -417,7 +418,7 @@
                     }
                 }
 
-                function genUUID() {
+                genUUID() {
                     try {
                         return crypto.randomUUID();
                     } catch (e) {
@@ -431,8 +432,8 @@
                     });
                 }
 
-                function applySubscriptionDependencies() {
-                    subscriptionDependencyRules.forEach(rule => {
+                applySubscriptionDependencies() {
+                    this.subscriptionDependencyRules.forEach(rule => {
                         const controller = document.getElementById(rule.controllerId);
                         const dependentContainer = document.getElementById(rule.dependentId);
 
@@ -451,10 +452,10 @@
                 }
 
                 // --- Core Logic ---
-                function loadConfig() {
+                loadConfig() {
                     Dashboard.showLoadingMsg();
-                    ApiClient.getPluginConfiguration(pluginId).then(function (config) {
-                        currentConfig = config;
+                    ApiClient.getPluginConfiguration(this.pluginId).then((config) => {
+                        this.currentConfig = config;
 
                         document.querySelector('#txtDefaultDownloadPath').value = config.DefaultDownloadPath || "";
                         document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
@@ -462,22 +463,22 @@
                         document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
                         document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
 
-                        renderSubscriptionsList();
+                        this.renderSubscriptionsList();
 
                         Dashboard.hideLoadingMsg();
                     });
                 }
 
-                function saveGlobalConfig() {
+                saveGlobalConfig() {
                     Dashboard.showLoadingMsg();
-                    ApiClient.updatePluginConfiguration(pluginId, currentConfig).then(function (result) {
+                    ApiClient.updatePluginConfiguration(this.pluginId, this.currentConfig).then((result) => {
                         Dashboard.processPluginConfigurationUpdateResult(result);
-                        showToast("Einstellungen gespeichert.");
-                        loadConfig();
+                        this.showToast("Einstellungen gespeichert.");
+                        this.loadConfig();
                     });
                 }
 
-                function switchTab(tabId) {
+                switchTab(tabId) {
                     document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
                     document.getElementById('tab-' + tabId).style.display = 'block';
 
@@ -490,43 +491,43 @@
                 }
 
                 // --- SEARCH LOGIC ---
-                function performSearch() {
+                performSearch() {
                     const query = document.getElementById('txtSearchQuery').value;
                     const minD = document.getElementById('numMinDuration').value;
                     const maxD = document.getElementById('numMaxDuration').value;
 
                     if (!query) {
-                        showToast("Bitte Suchbegriff eingeben");
+                        this.showToast("Bitte Suchbegriff eingeben");
                         return;
                     }
 
                     Dashboard.showLoadingMsg();
-                    let url = ApiClient.getUrl('/' + pluginName + '/Search');
+                    let url = ApiClient.getUrl('/' + this.pluginName + '/Search');
                     url += '?query=' + encodeURIComponent(query);
                     if (minD) url += '&minDuration=' + minD;
                     if (maxD) url += '&maxDuration=' + maxD;
 
-                    ApiClient.getJSON(url).then(function (results) {
-                        currentSearchResults = results; // Store results
-                        renderSearchResults();
+                    ApiClient.getJSON(url).then((results) => {
+                        this.currentSearchResults = results; // Store results
+                        this.renderSearchResults();
                         Dashboard.hideLoadingMsg();
-                    }).catch(function (err) {
+                    }).catch((err) => {
                         Dashboard.hideLoadingMsg();
-                        showToast("Fehler bei der Suche: " + err);
+                        this.showToast("Fehler bei der Suche: " + err);
                     });
                 }
 
-                function renderSearchResults() {
+                renderSearchResults() {
                     const container = document.getElementById('searchResults');
                     container.innerHTML = "";
 
-                    if (!currentSearchResults || currentSearchResults.length === 0) {
+                    if (!this.currentSearchResults || this.currentSearchResults.length === 0) {
                         container.innerHTML = "<p>Keine Ergebnisse gefunden.</p>";
                         return;
                     }
 
                     let html = '<div class="paperList">';
-                    currentSearchResults.forEach(function (item, index) {
+                    this.currentSearchResults.forEach((item, index) => {
                         const durationStr = Math.floor(item.duration / 60) + " Min";
                         const safeTitle = item.title.replace(/"/g, '&quot;');
                         const safeChannel = item.channel.replace(/"/g, '&quot;');
@@ -541,15 +542,15 @@
                             '</div>' +
                             '<div style="display:flex; gap: 10px;">' +
                             // Download-Button
-                            '<button is="emby-button" type="button" class="paper-icon-button-light" title="Herunterladen" onclick="MediathekPluginConfig.downloadItem(' + index + ')">' +
+                            '<button is="emby-button" type="button" class="paper-icon-button-light" title="Herunterladen" onclick="mediathekConfig.downloadItem(' + index + ')">' +
                             '<span class="material-icons file_download"></span>' +
                             '</button>' +
                             // Advanced Download-Button
-                            '<button is="emby-button" type="button" class="paper-icon-button-light" title="Erweiterter Download" onclick="MediathekPluginConfig.openAdvancedDownloadDialog(' + index + ')">' +
+                            '<button is="emby-button" type="button" class="paper-icon-button-light" title="Erweiterter Download" onclick="mediathekConfig.openAdvancedDownloadDialog(' + index + ')">' +
                             '<span class="material-icons settings"></span>' +
                             '</button>' +
                             // Abo erstellen Button
-                            '<button is="emby-button" type="button" class="paper-icon-button-light" title="Abo erstellen" onclick="MediathekPluginConfig.createSubFromSearch(this, \'' + safeTitle + '\', \'' + safeChannel + '\', \'' + safeTopic + '\')">' +
+                            '<button is="emby-button" type="button" class="paper-icon-button-light" title="Abo erstellen" onclick="mediathekConfig.createSubFromSearch(this, \'' + safeTitle + '\', \'' + safeChannel + '\', \'' + safeTopic + '\')">' +
                             '<span class="material-icons add"></span>' +
                             '</button>' +
                             '</div>' +
@@ -559,11 +560,11 @@
                     container.innerHTML = html;
                 }
 
-                function downloadItem(index) {
-                    const item = currentSearchResults[index];
+                downloadItem(index) {
+                    const item = this.currentSearchResults[index];
                     if (!item) return;
 
-                    const url = ApiClient.getUrl('/' + pluginName + '/Download');
+                    const url = ApiClient.getUrl('/' + this.pluginName + '/Download');
 
                     Dashboard.showLoadingMsg();
                     ApiClient.ajax({
@@ -571,17 +572,17 @@
                         url: url,
                         data: JSON.stringify(item),
                         contentType: 'application/json'
-                    }).then(function (result) {
+                    }).then((result) => {
                         Dashboard.hideLoadingMsg();
-                        showToast("Download für '" + item.title + "' gestartet.");
-                    }).catch(function (err) {
+                        this.showToast("Download für '" + item.title + "' gestartet.");
+                    }).catch((err) => {
                         Dashboard.hideLoadingMsg();
-                        showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                        this.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
                     });
                 }
 
-                function createSubFromSearch(btn, title, channel, topic) {
-                    switchTab('subscriptions');
+                createSubFromSearch(btn, title, channel, topic) {
+                    this.switchTab('subscriptions');
                     const newSub = {
                         Id: null,
                         Name: topic,
@@ -596,22 +597,22 @@
                         EnforceSeriesParsing: false,
                         AllowAudioDescription: false
                     };
-                    editSubscription(null, newSub);
+                    this.editSubscription(null, newSub);
                 }
 
 
                 // --- SUBSCRIPTION LOGIC ---
-                function renderSubscriptionsList() {
+                renderSubscriptionsList() {
                     const list = document.getElementById('subscriptionList');
                     list.innerHTML = "";
 
-                    if (!currentConfig.Subscriptions || currentConfig.Subscriptions.length === 0) {
+                    if (!this.currentConfig.Subscriptions || this.currentConfig.Subscriptions.length === 0) {
                         list.innerHTML = "<p>Keine aktiven Abonnements.</p>";
                         return;
                     }
 
                     let html = '';
-                    currentConfig.Subscriptions.forEach(function (sub) {
+                    this.currentConfig.Subscriptions.forEach((sub) => {
                         const queriesSummary = (sub.Queries || []).map(function (q) { return q.query; }).join(', ');
                         const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
                         html +=
@@ -622,13 +623,13 @@
                             '<div class="listItemBodyText secondary">Letzter Download: ' + lastDownloadText + '</div>' +
                             '</div>' +
                             '<div style="display:flex; gap:5px;">' +
-                            '<button type="button" class="paper-icon-button-light" onclick="MediathekPluginConfig.resetProcessedItems(\'' + sub.Id + '\')" title="Verarbeitete Items zurücksetzen">' +
+                            '<button type="button" class="paper-icon-button-light" onclick="mediathekConfig.resetProcessedItems(\'' + sub.Id + '\')" title="Verarbeitete Items zurücksetzen">' +
                             '<span class="material-icons refresh"></span>' +
                             '</button>' +
-                            '<button type="button" class="paper-icon-button-light" onclick="MediathekPluginConfig.editSubscription(\'' + sub.Id + '\', null)" title="Bearbeiten">' +
+                            '<button type="button" class="paper-icon-button-light" onclick="mediathekConfig.editSubscription(\'' + sub.Id + '\', null)" title="Bearbeiten">' +
                             '<span class="material-icons edit"></span>' +
                             '</button>' +
-                            '<button type="button" class="paper-icon-button-light" onclick="MediathekPluginConfig.deleteSubscription(\'' + sub.Id + '\')" title="Löschen">' +
+                            '<button type="button" class="paper-icon-button-light" onclick="mediathekConfig.deleteSubscription(\'' + sub.Id + '\')" title="Löschen">' +
                             '<span class="material-icons delete"></span>' +
                             '</button>' +
                             '</div>' +
@@ -637,26 +638,26 @@
                     list.innerHTML = html;
                 }
 
-                function resetProcessedItems(id) {
-                    confirmationPopup("Dies wird die Liste der bereits verarbeiteten Items für dieses Abonnement zurücksetzen. Es kann dazu führen, dass bereits heruntergeladene Inhalte erneut heruntergeladen werden, wenn sie noch in den Suchergebnissen der MediathekView API erscheinen. Fortfahren?", "Verarbeitete Items zurücksetzen", function (confirmed) {
+                resetProcessedItems(id) {
+                    this.confirmationPopup("Dies wird die Liste der bereits verarbeiteten Items für dieses Abonnement zurücksetzen. Es kann dazu führen, dass bereits heruntergeladene Inhalte erneut heruntergeladen werden, wenn sie noch in den Suchergebnissen der MediathekView API erscheinen. Fortfahren?", "Verarbeitete Items zurücksetzen", (confirmed) => {
                         if (confirmed) {
                             Dashboard.showLoadingMsg();
                             ApiClient.ajax({
                                 type: "POST",
-                                url: ApiClient.getUrl('/' + pluginName + '/ResetProcessedItems?subscriptionId=' + id),
-                            }).then(function (result) {
+                                url: ApiClient.getUrl('/' + this.pluginName + '/ResetProcessedItems?subscriptionId=' + id),
+                            }).then((result) => {
                                 Dashboard.hideLoadingMsg();
-                                showToast("Verarbeitete Items für Abonnement zurückgesetzt.");
-                                loadConfig(); // Refresh the configuration to update the UI
-                            }).catch(function (err) {
+                                this.showToast("Verarbeitete Items für Abonnement zurückgesetzt.");
+                                this.loadConfig(); // Refresh the configuration to update the UI
+                            }).catch((err) => {
                                 Dashboard.hideLoadingMsg();
-                                showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                                this.showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
                             });
                         }
                     });
                 }
 
-                function addQueryRow(query) {
+                addQueryRow(query) {
                     if (query == null) {
                         query = { query: '', fields: ['title', 'topic'] };
                     }
@@ -692,7 +693,7 @@
                     });
                 }
 
-                function editSubscription(id, prefilledSub) {
+                editSubscription(id, prefilledSub) {
                     const editor = document.getElementById('subscriptionEditor');
                     const title = document.getElementById('subEditorTitle');
                     const queriesContainer = document.getElementById('queriesContainer');
@@ -713,7 +714,7 @@
 
                     let subToEdit = null;
                     if (id) {
-                        subToEdit = currentConfig.Subscriptions.find(function (s) { return s.Id === id; });
+                        subToEdit = this.currentConfig.Subscriptions.find(function (s) { return s.Id === id; });
                         title.innerText = "Abonnement bearbeiten";
                     } else if (prefilledSub) {
                         subToEdit = prefilledSub;
@@ -738,25 +739,25 @@
                         document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = subToEdit.DownloadFullVideoForSecondaryAudio;
 
                         if (subToEdit.Queries && subToEdit.Queries.length > 0) {
-                            subToEdit.Queries.forEach(function (q) { addQueryRow(q); });
+                            subToEdit.Queries.forEach((q) => { this.addQueryRow(q); });
                         } else {
-                            addQueryRow(null);
+                            this.addQueryRow(null);
                         }
                     } else {
-                        addQueryRow(null);
+                        this.addQueryRow(null);
                     }
 
-                    applySubscriptionDependencies();
+                    this.applySubscriptionDependencies();
 
                     editor.style.display = 'block';
                     editor.scrollIntoView({ behavior: 'smooth' });
                 }
 
-                function closeEditor() {
+                closeEditor() {
                     document.getElementById('subscriptionEditor').style.display = 'none';
                 }
 
-                function saveSubscription() {
+                saveSubscription() {
                     const id = document.getElementById('subId').value;
                     const name = document.getElementById('subName').value;
                     const minDuration = document.getElementById('subMinDuration').value;
@@ -784,11 +785,11 @@
                     });
 
                     if (queries.length === 0) {
-                        showToast("Bitte mindestens eine Suchanfrage definieren.");
+                        this.showToast("Bitte mindestens eine Suchanfrage definieren.");
                         return;
                     }
 
-                    if (!currentConfig.Subscriptions) currentConfig.Subscriptions = [];
+                    if (!this.currentConfig.Subscriptions) this.currentConfig.Subscriptions = [];
 
                     const subData = {
                         Name: name,
@@ -807,69 +808,69 @@
                     };
 
                     if (id) {
-                        const idx = currentConfig.Subscriptions.findIndex(function (s) { return s.Id === id; });
+                        const idx = this.currentConfig.Subscriptions.findIndex(function (s) { return s.Id === id; });
                         if (idx > -1) {
-                            var existingId = currentConfig.Subscriptions[idx].Id;
-                            currentConfig.Subscriptions[idx] = subData;
-                            currentConfig.Subscriptions[idx].Id = existingId;
+                            var existingId = this.currentConfig.Subscriptions[idx].Id;
+                            this.currentConfig.Subscriptions[idx] = subData;
+                            this.currentConfig.Subscriptions[idx].Id = existingId;
 
                         }
                     } else {
-                        subData.Id = genUUID();
-                        currentConfig.Subscriptions.push(subData);
+                        subData.Id = this.genUUID();
+                        this.currentConfig.Subscriptions.push(subData);
                     }
 
-                    saveGlobalConfig();
-                    closeEditor();
-                    renderSubscriptionsList();
+                    this.saveGlobalConfig();
+                    this.closeEditor();
+                    this.renderSubscriptionsList();
                 }
 
-                function deleteSubscription(id) {
-                    confirmationPopup("Soll dieses Abonnement wirklich gelöscht werden?", "Löschen bestätigen", function (confirmed) {
+                deleteSubscription(id) {
+                    this.confirmationPopup("Soll dieses Abonnement wirklich gelöscht werden?", "Löschen bestätigen", (confirmed) => {
                         if (confirmed) {
-                            currentConfig.Subscriptions = currentConfig.Subscriptions.filter(function (s) { return s.Id !== id; });
-                            saveGlobalConfig();
-                            renderSubscriptionsList();
+                            this.currentConfig.Subscriptions = this.currentConfig.Subscriptions.filter(function (s) { return s.Id !== id; });
+                            this.saveGlobalConfig();
+                            this.renderSubscriptionsList();
                         }
                     });
                 }
 
-                function openAdvancedDownloadDialog(index) {
-                    currentItemForAdvancedDl = currentSearchResults[index];
-                    if (!currentItemForAdvancedDl) return;
+                openAdvancedDownloadDialog(index) {
+                    this.currentItemForAdvancedDl = this.currentSearchResults[index];
+                    if (!this.currentItemForAdvancedDl) return;
 
-                    document.getElementById('advancedDownloadTitle').innerText = 'Erweiterter Download: ' + currentItemForAdvancedDl.title;
+                    document.getElementById('advancedDownloadTitle').innerText = 'Erweiterter Download: ' + this.currentItemForAdvancedDl.title;
                     document.getElementById('advancedDownloadIndex').value = index;
 
-                    document.getElementById('advDlPath').value = currentConfig.DefaultDownloadPath || '';
+                    document.getElementById('advDlPath').value = this.currentConfig.DefaultDownloadPath || '';
 
-                    let proposedFilename = (currentItemForAdvancedDl.topic || 'video') + " - " + (currentItemForAdvancedDl.title || 'video');
-                    proposedFilename = proposedFilename.replace(/[\/\\?%*:|"<>]/g, '-') + '.mp4';
+                    let proposedFilename = (this.currentItemForAdvancedDl.topic || 'video') + " - " + (this.currentItemForAdvancedDl.title || 'video');
+                    proposedFilename = proposedFilename.replace(/["\/\\?%*:|"<>]/g, '-') + '.mp4';
                     document.getElementById('advDlFilename').value = proposedFilename;
 
 
-                    document.getElementById('advDlSubtitles').checked = currentConfig.DownloadSubtitles && currentItemForAdvancedDl.url_subtitle;
-                    document.getElementById('advDlSubtitles').disabled = !currentItemForAdvancedDl.url_subtitle;
+                    document.getElementById('advDlSubtitles').checked = this.currentConfig.DownloadSubtitles && this.currentItemForAdvancedDl.url_subtitle;
+                    document.getElementById('advDlSubtitles').disabled = !this.currentItemForAdvancedDl.url_subtitle;
 
 
                     document.getElementById('advancedDownloadModal').style.display = 'flex';
                 }
 
-                function closeAdvancedDownloadDialog() {
+                closeAdvancedDownloadDialog() {
                     document.getElementById('advancedDownloadModal').style.display = 'none';
                 }
 
-                function performAdvancedDownload() {
-                    if (!currentItemForAdvancedDl) return;
+                performAdvancedDownload() {
+                    if (!this.currentItemForAdvancedDl) return;
 
                     const downloadOptions = {
-                        item: currentItemForAdvancedDl,
+                        item: this.currentItemForAdvancedDl,
                         downloadPath: document.getElementById('advDlPath').value,
                         fileName: document.getElementById('advDlFilename').value,
                         downloadSubtitles: document.getElementById('advDlSubtitles').checked
                     };
 
-                    const url = ApiClient.getUrl('/' + pluginName + '/AdvancedDownload');
+                    const url = ApiClient.getUrl('/' + this.pluginName + '/AdvancedDownload');
 
                     Dashboard.showLoadingMsg();
                     ApiClient.ajax({
@@ -877,72 +878,56 @@
                         url: url,
                         data: JSON.stringify(downloadOptions),
                         contentType: 'application/json'
-                    }).then(function (result) {
+                    }).then((result) => {
                         Dashboard.hideLoadingMsg();
-                        closeAdvancedDownloadDialog();
-                        showToast("Download für '" + currentItemForAdvancedDl.title + "' gestartet.");
-                    }).catch(function (err) {
+                        this.closeAdvancedDownloadDialog();
+                        this.showToast("Download für '" + this.currentItemForAdvancedDl.title + "' gestartet.");
+                    }).catch((err) => {
                         Dashboard.hideLoadingMsg();
-                        showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                        this.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
                     });
                 }
 
-                // --- EVENT LISTENERS ---
-                return {
-                    init: function () {
-                        document.querySelector('#MediathekViewDLConfigPage').addEventListener('pageshow', function () {
-                            loadConfig();
-                        });
+                init() {
+                    document.querySelector('#MediathekViewDLConfigPage').addEventListener('pageshow', () => {
+                        this.loadConfig();
+                    });
 
-                        document.querySelector('#MediathekGeneralConfigForm').addEventListener('submit', function (e) {
-                            e.preventDefault();
-                            currentConfig.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
-                            currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
-                            currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
-                            const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
-                            currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
-                            saveGlobalConfig();
-                            return false;
-                        });
+                    document.querySelector('#MediathekGeneralConfigForm').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.currentConfig.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
+                        this.currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
+                        this.currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
+                        const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
+                        this.currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
+                        this.saveGlobalConfig();
+                        return false;
+                    });
 
-                        document.getElementById('btnSelectPath').addEventListener('click', function () {
-                            openFolderDialog('txtDefaultDownloadPath', 'Standard Download Pfad wählen');
-                        });
+                    document.getElementById('btnSelectPath').addEventListener('click', () => {
+                        this.openFolderDialog('txtDefaultDownloadPath', 'Standard Download Pfad wählen');
+                    });
 
-                        document.getElementById('btnSelectSubPath').addEventListener('click', function () {
-                            openFolderDialog('subPath', 'Abo Pfad wählen');
-                        });
+                    document.getElementById('btnSelectSubPath').addEventListener('click', () => {
+                        this.openFolderDialog('subPath', 'Abo Pfad wählen');
+                    });
 
-                        document.getElementById('btnSelectAdvPath').addEventListener('click', function () {
-                            openFolderDialog('advDlPath', 'Download Pfad wählen');
-                        });
+                    document.getElementById('btnSelectAdvPath').addEventListener('click', () => {
+                        this.openFolderDialog('advDlPath', 'Download Pfad wählen');
+                    });
 
-                        const controllerIds = [...new Set(subscriptionDependencyRules.map(rule => rule.controllerId))];
-                        controllerIds.forEach(id => {
-                            const controller = document.getElementById(id);
-                            if (controller) {
-                                controller.addEventListener('change', applySubscriptionDependencies);
-                            }
-                        });
-                    },
-                    switchTab: switchTab,
-                    performSearch: performSearch,
-                    createSubFromSearch: createSubFromSearch,
-                    downloadItem: downloadItem,
-                    openAdvancedDownloadDialog: openAdvancedDownloadDialog,
-                    closeAdvancedDownloadDialog: closeAdvancedDownloadDialog,
-                    performAdvancedDownload: performAdvancedDownload,
-                    addQueryRow: addQueryRow,
-                    editSubscription: editSubscription,
-                    closeEditor: closeEditor,
-                    saveSubscription: saveSubscription,
-                    deleteSubscription: deleteSubscription,
-                    openFolderDialog: openFolderDialog,
-                    resetProcessedItems: resetProcessedItems
-                };
-            })();
+                    const controllerIds = [...new Set(this.subscriptionDependencyRules.map(rule => rule.controllerId))];
+                    controllerIds.forEach(id => {
+                        const controller = document.getElementById(id);
+                        if (controller) {
+                            controller.addEventListener('change', () => this.applySubscriptionDependencies());
+                        }
+                    });
+                }
+            }
 
-            MediathekPluginConfig.init();
+            const mediathekConfig = new MediathekPluginConfig();
+            mediathekConfig.init();
         </script>
 
         <style>
