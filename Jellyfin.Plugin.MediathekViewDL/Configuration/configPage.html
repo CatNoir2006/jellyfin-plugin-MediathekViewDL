@@ -828,18 +828,29 @@
                     }
 
                     this.currentConfig.Subscriptions.forEach((sub) => {
+                        // Handle IsEnabled default true if undefined
+                        if (sub.IsEnabled === undefined) sub.IsEnabled = true;
+
                         const queriesSummary = (sub.Queries || []).map(function (q) { return q.query; }).join(', ');
                         const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
 
                         const listItem = document.createElement('div');
                         listItem.classList.add('listItem', 'listItem-border');
 
+                        // Visual cue for disabled state
+                        if (!sub.IsEnabled) {
+                            listItem.style.opacity = '0.6';
+                        }
+
                         const body = document.createElement('div');
                         body.classList.add('listItemBody', 'two-line');
 
                         const title = document.createElement('h3');
                         title.classList.add('listItemBodyText');
-                        title.textContent = sub.Name;
+                        
+                        // Add Status to title
+                        const statusText = sub.IsEnabled ? "" : " (Deaktiviert)";
+                        title.textContent = sub.Name + statusText;
 
                         const queries = document.createElement('div');
                         queries.classList.add('listItemBodyText', 'secondary');
@@ -857,6 +868,11 @@
                         actions.style.display = 'flex';
                         actions.style.gap = '5px';
 
+                        // Toggle Button
+                        const toggleIcon = sub.IsEnabled ? 'pause_circle_outline' : 'play_circle_outline';
+                        const toggleTitle = sub.IsEnabled ? 'Deaktivieren' : 'Aktivieren';
+                        actions.appendChild(this.createIconButton(toggleIcon, toggleTitle, () => this.toggleSubscription(sub.Id)));
+
                         actions.appendChild(this.createIconButton('refresh', 'Verarbeitete Items zurücksetzen', () => this.resetProcessedItems(sub.Id)));
                         actions.appendChild(this.createIconButton('edit', 'Bearbeiten', () => subscriptionEditor.show(sub)));
                         actions.appendChild(this.createIconButton('delete', 'Löschen', () => this.deleteSubscription(sub.Id)));
@@ -865,6 +881,20 @@
                         listItem.appendChild(actions);
                         list.appendChild(listItem);
                     });
+                }
+
+                toggleSubscription(id) {
+                    const idx = this.currentConfig.Subscriptions.findIndex(function (s) { return s.Id === id; });
+                    if (idx > -1) {
+                        // Toggle
+                        if (this.currentConfig.Subscriptions[idx].IsEnabled === undefined) {
+                            this.currentConfig.Subscriptions[idx].IsEnabled = false; // Was true (implicit), now false
+                        } else {
+                            this.currentConfig.Subscriptions[idx].IsEnabled = !this.currentConfig.Subscriptions[idx].IsEnabled;
+                        }
+
+                        this.saveGlobalConfig();
+                    }
                 }
 
                 resetProcessedItems(id) {
@@ -952,11 +982,18 @@
                         if (idx > -1) {
                             // Keep existing ID logic if needed, but here subData already has ID from hidden input if set
                             var existingId = this.currentConfig.Subscriptions[idx].Id;
+                            
+                            // Preserve IsEnabled state
+                            var existingIsEnabled = this.currentConfig.Subscriptions[idx].IsEnabled;
+                            if (existingIsEnabled === undefined) existingIsEnabled = true;
+
                             this.currentConfig.Subscriptions[idx] = subData;
                             this.currentConfig.Subscriptions[idx].Id = existingId; // Ensure ID consistency
+                            this.currentConfig.Subscriptions[idx].IsEnabled = existingIsEnabled;
                         }
                     } else {
                         subData.Id = this.genUUID();
+                        subData.IsEnabled = true; // Default enabled for new subs
                         this.currentConfig.Subscriptions.push(subData);
                     }
 
