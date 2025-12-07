@@ -4,7 +4,7 @@
 
 This project is a plugin for the Jellyfin media server. Its purpose is to search and download media content from the public broadcasting services in Germany (Öffentlich-rechtliche Mediatheken), such as ARD and ZDF.
 
-The plugin integrates with Jellyfin's scheduled task system to automatically download new episodes of subscribed shows ("Abos"). It uses the [MediathekViewWeb API](https://mediathekviewweb.de/) to find content and then downloads the media files directly from the broadcasters' CDNs.
+The plugin integrates with Jellyfin's scheduled task system to automatically download new episodes of subscribed shows ("Abos"). It uses the [MediathekViewWeb API](https://mediathekviewweb.de/) to find content and then downloads the media files directly from the broadcasters' CDNs. The project's GitHub repository can be found here: [CatNoir2006/jellyfin-plugin-MediathekViewDL](https://github.com/CatNoir2006/jellyfin-plugin-MediathekViewDL)
 
 **Key Technologies:**
 *   **Language:** C#
@@ -46,6 +46,8 @@ The project is built using the standard .NET CLI.
 ## Development Conventions
 
 *   **File Structure:** Each class must be in its own separate file, except for classes that are nested within another class.
+*   **Scope of Changes:** Strictly limit changes to the task at hand. Do not modify unrelated code, variable names, comments, or any other elements that are not directly required to fulfill the current request.
+*   **Coding Style:** Always adhere to the existing coding style, formatting, and conventions prevalent in the project.
 *   **Verification:** Before considering a task complete, I **must** run `dotnet build Jellyfin.Plugin.MediathekViewDL.sln`. The main plugin project (`Jellyfin.Plugin.MediathekViewDL`) treats warnings as errors, so the build must pass without any warnings to be considered successful.
 *   **HTML (configPage.html) Conventions:** When editing `configPage.html`, **do not use string templates** like `` `S${season}E${Episode}` ``. Instead, use string concatenation like `'S'+season+'E'+Episode`. Jellyfin treats string templates as translation keys, which can lead to unexpected behavior.
 *   **Coding Style:** The project uses standard C# and .NET conventions (e.g., `PascalCase` for classes, methods, and properties). It enforces a strict code style using analyzers like StyleCop (`StyleCop.Analyzers`).
