@@ -140,7 +140,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div class="sectionTitleLabel">Aktive Abonnements</div>
                             <button is="emby-button" type="button" class="raised"
-                                onclick="mediathekConfig.editSubscription(null)">
+                                onclick="subscriptionEditor.show(null)">
                                 <span class="material-icons add"></span>
                                 <span>Neues Abo</span>
                             </button>
@@ -279,7 +279,7 @@
                                     <span>Abo Speichern</span>
                                 </button>
                                 <button is="emby-button" type="button" class="raised button-cancel"
-                                    onclick="mediathekConfig.closeEditor()">
+                                    onclick="subscriptionEditor.close()">
                                     <span>Abbrechen</span>
                                 </button>
                             </div>
@@ -431,6 +431,27 @@
                         UseStreamingUrlFiles: useStreamingUrlFiles,
                         DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio,
                     };
+                }
+
+                show(sub, titleText) {
+                    const editor = document.getElementById('subscriptionEditor');
+                    const title = document.getElementById('subEditorTitle');
+
+                    if (titleText) {
+                        title.innerText = titleText;
+                    } else {
+                        title.innerText = sub ? "Abonnement bearbeiten" : "Neues Abonnement erstellen";
+                    }
+
+                    this.setEditorValues(sub);
+                    this.config.applySubscriptionDependencies();
+
+                    editor.style.display = 'block';
+                    editor.scrollIntoView({ behavior: 'smooth' });
+                }
+
+                close() {
+                    document.getElementById('subscriptionEditor').style.display = 'none';
                 }
             }
 
@@ -790,7 +811,7 @@
                         EnforceSeriesParsing: false,
                         AllowAudioDescription: false
                     };
-                    this.editSubscription(null, newSub);
+                    subscriptionEditor.show(newSub);
                 }
 
 
@@ -837,7 +858,7 @@
                         actions.style.gap = '5px';
 
                         actions.appendChild(this.createIconButton('refresh', 'Verarbeitete Items zurücksetzen', () => this.resetProcessedItems(sub.Id)));
-                        actions.appendChild(this.createIconButton('edit', 'Bearbeiten', () => this.editSubscription(sub.Id, null)));
+                        actions.appendChild(this.createIconButton('edit', 'Bearbeiten', () => subscriptionEditor.show(sub)));
                         actions.appendChild(this.createIconButton('delete', 'Löschen', () => this.deleteSubscription(sub.Id)));
 
                         listItem.appendChild(body);
@@ -916,33 +937,6 @@
                     container.appendChild(newRow);
                 }
 
-                editSubscription(id, prefilledSub) {
-                    const editor = document.getElementById('subscriptionEditor');
-                    const title = document.getElementById('subEditorTitle');
-
-                    let subToEdit = null;
-                    if (id) {
-                        subToEdit = this.currentConfig.Subscriptions.find(function (s) { return s.Id === id; });
-                        title.innerText = "Abonnement bearbeiten";
-                    } else if (prefilledSub) {
-                        subToEdit = prefilledSub;
-                        title.innerText = "Neues Abonnement erstellen";
-                    } else {
-                        title.innerText = "Neues Abonnement";
-                    }
-
-                    this.subscriptionEditor.setEditorValues(subToEdit);
-
-                    this.applySubscriptionDependencies();
-
-                    editor.style.display = 'block';
-                    editor.scrollIntoView({ behavior: 'smooth' });
-                }
-
-                closeEditor() {
-                    document.getElementById('subscriptionEditor').style.display = 'none';
-                }
-
                 saveSubscription() {
                     const subData = this.subscriptionEditor.getEditorValues();
 
@@ -967,7 +961,7 @@
                     }
 
                     this.saveGlobalConfig();
-                    this.closeEditor();
+                    subscriptionEditor.close();
                     this.renderSubscriptionsList();
                 }
 
@@ -1075,7 +1069,6 @@
             const mediathekConfig = new MediathekPluginConfig();
             mediathekConfig.init();
         </script>
-
         <style>
             .tabs-spacer {
                 margin-bottom: 20px;
@@ -1093,5 +1086,4 @@
         </style>
     </div>
 </body>
-
 </html>
