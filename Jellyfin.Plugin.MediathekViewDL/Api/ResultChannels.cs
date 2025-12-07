@@ -18,8 +18,8 @@ public class ResultChannels
     public Collection<ResultItem> Results { get; init; }
 
     /// <summary>
-    /// Gets or sets the total number of results.
+    /// Gets or sets the query info.
     /// </summary>
-    [JsonPropertyName("total")]
-    public int Total { get; set; }
+    [JsonPropertyName("queryInfo")]
+    public QueryInfo QueryInfo { get; set; }
 }
