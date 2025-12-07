@@ -21,10 +21,16 @@ public class VideoParserTests
 
         // Setup default behavior for the language detection mock
         _mockLanguageDetectionService.Setup(s => s.DetectLanguage(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns((string title, string _) => new LanguageDetectionResult { LanguageCode = "de", CleanedTitle = title });
+            .Returns((string title, string _) => 
+            {
+                var cleaned = title.Replace("(Englisch)", "").Trim();
+                return new LanguageDetectionResult { LanguageCode = "de", CleanedTitle = cleaned };
+            });
     }
 
     [Theory]
+    [InlineData("Am Limit (S02/E03)", "Am Limit", 2, 3, null)]
+    [InlineData("Am Limit (S02/E03) (Englisch)", "Am Limit", 2, 3, null)]
     [InlineData("Folge 168: Lehrer sind auch nur Menschen (S11/E04)", "Lehrer sind auch nur Menschen", 11, 4, null)]
     [InlineData("Folge 178: Im Auftrag des Teufels (S12/E02)", "Im Auftrag des Teufels", 12, 2, null)]
     [InlineData("Folge 8: Score Null (S02/E08)", "Score Null", 2, 8, null)]
