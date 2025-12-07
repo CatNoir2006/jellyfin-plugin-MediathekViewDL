@@ -592,62 +592,67 @@
                     paperList.classList.add('paperList');
 
                     this.currentSearchResults.forEach((item, index) => {
-                        const durationStr = Math.floor(item.duration / 60) + " Min";
-
-                        const listItem = document.createElement('div');
-                        listItem.classList.add('listItem', 'listItem-border');
-
-                        const body = document.createElement('div');
-                        body.classList.add('listItemBody', 'two-line');
-
-                        const title = document.createElement('h3');
-                        title.classList.add('listItemBodyText');
-                        title.textContent = item.title;
-
-                        const details = document.createElement('div');
-                        details.classList.add('listItemBodyText', 'secondary');
-                        details.style.display = 'inline-flex';
-                        details.style.alignItems = 'center';
-                        details.style.gap = '8px';
-
-                        const detailsText = document.createElement('span');
-                        detailsText.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
-                        details.appendChild(detailsText);
-
-                        if (item.url_subtitle) {
-                            const sep = document.createElement('span');
-                            sep.textContent = ' | ';
-                            details.appendChild(sep);
-
-                            const icon = document.createElement('span');
-                            icon.classList.add('material-icons', 'closed_caption');
-                            icon.title = 'Untertitel verfügbar';
-                            details.appendChild(icon);
-                        }
-
-                        const desc = document.createElement('div');
-                        desc.classList.add('listItemBodyText', 'secondary');
-                        desc.style.fontSize = '0.9em';
-                        desc.style.opacity = '0.7';
-                        desc.textContent = item.description || '';
-
-                        body.appendChild(title);
-                        body.appendChild(details);
-                        body.appendChild(desc);
-
-                        const actions = document.createElement('div');
-                        actions.style.display = 'flex';
-                        actions.style.gap = '10px';
-
-                        actions.appendChild(this.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
-                        actions.appendChild(this.createIconButton('settings', 'Erweiterter Download', () => this.openAdvancedDownloadDialog(index)));
-                        actions.appendChild(this.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.title, item.channel, item.topic)));
-
-                        listItem.appendChild(body);
-                        listItem.appendChild(actions);
-                        paperList.appendChild(listItem);
+                        paperList.appendChild(this.createSearchResultItem(item, index));
                     });
                     container.appendChild(paperList);
+                }
+
+                createSearchResultItem(item, index) {
+                    const durationStr = Math.floor(item.duration / 60) + " Min";
+
+                    const listItem = document.createElement('div');
+                    listItem.classList.add('listItem', 'listItem-border');
+
+                    const body = document.createElement('div');
+                    body.classList.add('listItemBody', 'two-line');
+
+                    const title = document.createElement('h3');
+                    title.classList.add('listItemBodyText');
+                    title.textContent = item.title;
+
+                    const details = document.createElement('div');
+                    details.classList.add('listItemBodyText', 'secondary');
+                    details.style.display = 'inline-flex';
+                    details.style.alignItems = 'center';
+                    details.style.gap = '8px';
+
+                    const detailsText = document.createElement('span');
+                    detailsText.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
+                    details.appendChild(detailsText);
+
+                    if (item.url_subtitle) {
+                        const sep = document.createElement('span');
+                        sep.textContent = ' | ';
+                        details.appendChild(sep);
+
+                        const icon = document.createElement('span');
+                        icon.classList.add('material-icons', 'closed_caption');
+                        icon.title = 'Untertitel verfügbar';
+                        details.appendChild(icon);
+                    }
+
+                    const desc = document.createElement('div');
+                    desc.classList.add('listItemBodyText', 'secondary');
+                    desc.style.fontSize = '0.9em';
+                    desc.style.opacity = '0.7';
+                    desc.textContent = item.description || '';
+
+                    body.appendChild(title);
+                    body.appendChild(details);
+                    body.appendChild(desc);
+
+                    const actions = document.createElement('div');
+                    actions.style.display = 'flex';
+                    actions.style.gap = '10px';
+
+                    actions.appendChild(this.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
+                    actions.appendChild(this.createIconButton('settings', 'Erweiterter Download', () => this.openAdvancedDownloadDialog(index)));
+                    actions.appendChild(this.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.title, item.channel, item.topic)));
+
+                    listItem.appendChild(body);
+                    listItem.appendChild(actions);
+
+                    return listItem;
                 }
 
                 downloadItem(index) {
