@@ -73,6 +73,36 @@ public class FileNameBuilderService
     }
 
     /// <summary>
+    /// Gets the base directory for a subscription.
+    /// </summary>
+    /// <param name="subscription">The subscription.</param>
+    /// <returns>The base directory path.</returns>
+    public string GetSubscriptionBaseDirectory(Subscription subscription)
+    {
+        var config = Plugin.Instance?.Configuration;
+        string targetPath;
+
+        if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
+        {
+            string defaultPath = config?.DefaultDownloadPath ?? string.Empty;
+            string subscriptionPath = SanitizeDirectoryName(subscription.Name);
+            if (string.IsNullOrWhiteSpace(defaultPath))
+            {
+                // This will be logged later if we try to use it for an actual item, but for scanning it's fine to return empty.
+                return string.Empty;
+            }
+
+            targetPath = Path.Combine(defaultPath, subscriptionPath);
+        }
+        else
+        {
+            targetPath = subscription.DownloadPath;
+        }
+
+        return targetPath;
+    }
+
+    /// <summary>
     /// Builds a sanitized file name for the given video info and subscription.
     /// </summary>
     /// <param name="videoInfo">The video information.</param>

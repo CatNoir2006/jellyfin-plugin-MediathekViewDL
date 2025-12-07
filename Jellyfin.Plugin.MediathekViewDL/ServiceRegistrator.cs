@@ -19,6 +19,7 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddSingleton<LanguageDetectionService>();
             serviceCollection.AddSingleton<VideoParser>();
             serviceCollection.AddSingleton<FileNameBuilderService>();
+            serviceCollection.AddSingleton<LocalMediaScanner>();
             serviceCollection.AddTransient<MediathekViewApiClient>();
             serviceCollection.AddTransient<MediathekViewDlApiService>();
             serviceCollection.AddTransient<FFmpegService>();

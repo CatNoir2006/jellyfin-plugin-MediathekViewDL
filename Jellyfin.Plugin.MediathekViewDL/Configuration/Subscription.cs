@@ -74,6 +74,12 @@ public class Subscription
     public bool AllowSignLanguage { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to enable enhanced duplicate detection.
+    /// If enabled, the target directory is scanned for existing files matching the season/episode pattern.
+    /// </summary>
+    public bool EnhancedDuplicateDetection { get; set; }
+
+    /// <summary>
     /// Gets or sets the minimum duration in minutes for search results.
     /// </summary>
     public int? MinDurationMinutes { get; set; }
