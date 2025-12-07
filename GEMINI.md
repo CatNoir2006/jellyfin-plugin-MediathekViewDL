@@ -4,7 +4,7 @@
 
 This project is a plugin for the Jellyfin media server. Its purpose is to search and download media content from the public broadcasting services in Germany (Öffentlich-rechtliche Mediatheken), such as ARD and ZDF.
 
-The plugin integrates with Jellyfin's scheduled task system to automatically download new episodes of subscribed shows ("Abos"). It uses the [MediathekViewWeb API](https://mediathekviewweb.de/) to find content and then downloads the media files directly from the broadcasters' CDNs. The project's GitHub repository can be found here: [CatNoir2006/jellyfin-plugin-MediathekViewDL](https://github.com/CatNoir2006/jellyfin-plugin-MediathekViewDL)
+The plugin integrates with Jellyfin's scheduled task system to automatically download new episodes of subscribed shows ("Abos"). It uses the [MediathekViewWeb API](https://mediathekviewweb.de/) to find content and then downloads the media files directly from the broadcasters' CDNs. The project's GitHub repository can be found here: [CatNoir2006/jellyfin-plugin-MediathekViewDL](https://github.com/CatNoir2006/jellyfin-plugin-MediathekViewDL). When working on this project, the agent should always refer to this specific repository and not attempt to search for other repositories.
 
 **Key Technologies:**
 *   **Language:** C#

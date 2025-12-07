@@ -266,6 +266,14 @@
                                     Gebärdensprache (sofern verfügbar).</div>
                             </div>
 
+                            <div class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="subEnhancedDuplicateDetection" type="checkbox" is="emby-checkbox" />
+                                    <span>Erweiterte Duplikaterkennung</span>
+                                </label>
+                                <div class="fieldDescription">Scannt das Zielverzeichnis nach vorhandenen Dateien mit passenden SxxExx-Mustern (oder absoluter Nummerierung), um doppelte Downloads zu vermeiden (auch bei abweichenden Dateinamen).</div>
+                            </div>
+
                             <div style="display: flex; gap: 10px;">
                                 <button is="emby-button" type="submit" class="raised button-submit">
                                     <span>Abo Speichern</span>
@@ -724,6 +732,7 @@
                         document.getElementById('subAllowAudioDesc').checked = subToEdit.AllowAudioDescription;
                         document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = subToEdit.AllowAbsoluteEpisodeNumbering;
                         document.getElementById('subAllowSignLanguage').checked = subToEdit.AllowSignLanguage;
+                        document.getElementById('subEnhancedDuplicateDetection').checked = subToEdit.EnhancedDuplicateDetection;
                         document.getElementById('subTreatNonEpisodesAsExtras').checked = subToEdit.TreatNonEpisodesAsExtras;
                         document.getElementById('subUseStreamingUrlFiles').checked = subToEdit.UseStreamingUrlFiles;
                         document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = subToEdit.DownloadFullVideoForSecondaryAudio;
@@ -757,6 +766,7 @@
                     const allowAudio = document.getElementById('subAllowAudioDesc').checked;
                     const allowAbsolute = document.getElementById('subAllowAbsoluteEpisodeNumbering').checked;
                     const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
+                    const enhancedDuplicateDetection = document.getElementById('subEnhancedDuplicateDetection').checked;
                     const treatNonEpisodesAsExtras = document.getElementById('subTreatNonEpisodesAsExtras').checked;
                     const useStreamingUrlFiles = document.getElementById('subUseStreamingUrlFiles').checked;
                     const downloadFullVideoForSecondaryAudio = document.getElementById('subDownloadFullVideoForSecondaryAudio').checked;
@@ -790,6 +800,7 @@
                         AllowAudioDescription: allowAudio,
                         AllowAbsoluteEpisodeNumbering: allowAbsolute,
                         AllowSignLanguage: allowSignLanguage,
+                        EnhancedDuplicateDetection: enhancedDuplicateDetection,
                         TreatNonEpisodesAsExtras: treatNonEpisodesAsExtras,
                         UseStreamingUrlFiles: useStreamingUrlFiles,
                         DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio,

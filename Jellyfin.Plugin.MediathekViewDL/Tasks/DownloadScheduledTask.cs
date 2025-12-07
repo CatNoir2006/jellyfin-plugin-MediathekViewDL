@@ -27,6 +27,7 @@ public class DownloadScheduledTask : IScheduledTask
     private readonly VideoParser _videoParser;
     private readonly FileDownloader _fileDownloader;
     private readonly FileNameBuilderService _fileNameBuilderService;
+    private readonly LocalMediaScanner _localMediaScanner;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DownloadScheduledTask"/> class.
@@ -39,6 +40,7 @@ public class DownloadScheduledTask : IScheduledTask
     /// <param name="videoParser">The video parser.</param>
     /// <param name="fileDownloader">The file downloader.</param>
     /// <param name="fileNameBuilderService">The file name builder service.</param>
+    /// <param name="localMediaScanner">The local media scanner.</param>
     public DownloadScheduledTask(
         ILogger<DownloadScheduledTask> logger,
         IServerConfigurationManager configurationManager,
@@ -47,7 +49,8 @@ public class DownloadScheduledTask : IScheduledTask
         ILibraryManager libraryManager,
         VideoParser videoParser,
         FileDownloader fileDownloader,
-        FileNameBuilderService fileNameBuilderService)
+        FileNameBuilderService fileNameBuilderService,
+        LocalMediaScanner localMediaScanner)
     {
         _logger = logger;
         _configurationManager = configurationManager;
@@ -57,6 +60,7 @@ public class DownloadScheduledTask : IScheduledTask
         _videoParser = videoParser;
         _fileDownloader = fileDownloader;
         _fileNameBuilderService = fileNameBuilderService;
+        _localMediaScanner = localMediaScanner;
     }
 
     /// <inheritdoc />
@@ -103,6 +107,16 @@ public class DownloadScheduledTask : IScheduledTask
             progress.Report(baseProgressForSubscription);
 
             _logger.LogInformation("Processing subscription: {SubscriptionName}", subscription.Name);
+
+            LocalEpisodeCache? localEpisodeCache = null;
+            if (subscription.EnhancedDuplicateDetection)
+            {
+                var subscriptionBaseDir = _fileNameBuilderService.GetSubscriptionBaseDirectory(subscription);
+                if (!string.IsNullOrWhiteSpace(subscriptionBaseDir))
+                {
+                    localEpisodeCache = _localMediaScanner.ScanDirectory(subscriptionBaseDir, subscription.Name);
+                }
+            }
 
             // Stage 1: Collect all items for the current subscription
             var allItemsToDownload = new List<VideoParseResult>();
@@ -154,6 +168,22 @@ public class DownloadScheduledTask : IScheduledTask
                     if (tempVideoInfo == null)
                     {
                         _logger.LogDebug("Skipping item '{Title}' due to video info parsing failure.", item.Title);
+                        continue;
+                    }
+
+                    // Enhanced Duplicate Detection Check
+                    if (localEpisodeCache != null &&
+                        localEpisodeCache.Contains(tempVideoInfo))
+                    {
+                        _logger.LogInformation(
+                            "Skipping item '{Title}' (S{Season}E{Episode} / Abs: {Abs}) as it was found locally via enhanced duplicate detection.",
+                            item.Title,
+                            tempVideoInfo.SeasonNumber,
+                            tempVideoInfo.EpisodeNumber,
+                            tempVideoInfo.AbsoluteEpisodeNumber);
+
+                        // Mark as processed so we don't scan it again in future runs (optional, but good for performance)
+                        subscription.ProcessedItemIds.Add(item.Id);
                         continue;
                     }
 
