@@ -138,7 +138,7 @@ public class DownloadScheduledTask : IScheduledTask
                 };
 
                 var result = await _apiClient.SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
-                if (result?.Total > (currentPage + 1) * pageSize)
+                if (result?.QueryInfo?.TotalResults > (currentPage + 1) * pageSize)
                 {
                     hasMoreResults = true;
                     currentPage++;

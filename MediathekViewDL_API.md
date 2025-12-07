@@ -66,8 +66,12 @@ Die Antwort ist ein JSON-Objekt, das die Suchergebnisse enthält.
       }
     ],
     "queryInfo": {
-      "resultCount": 1,
-      "totalResults": 100
+      "filmlisteTimestamp" : 1765124760,
+      "searchEngineTime" : "4.67",
+      "resultCount" : 100,
+      "totalResults" : 1,
+      "totalRelation" : "eq",
+      "totalEntries" : 689777
     }
   },
   "err": null
