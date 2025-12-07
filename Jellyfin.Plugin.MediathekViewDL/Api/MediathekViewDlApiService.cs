@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -220,5 +221,36 @@ public class MediathekViewDlApiService : ControllerBase
         });
 
         return Ok($"Advanced download for '{item.Title}' started in the background.");
+    }
+
+    /// <summary>
+    /// Resets the list of processed item IDs for a specific subscription.
+    /// </summary>
+    /// <param name="subscriptionId">The ID of the subscription to reset.</param>
+    /// <returns>An OK result if successful, or BadRequest/NotFound if an error occurs.</returns>
+    [HttpPost("ResetProcessedItems")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public ActionResult ResetProcessedItems([FromQuery] Guid subscriptionId)
+    {
+        var config = Plugin.Instance?.Configuration;
+        if (config == null)
+        {
+            _logger.LogError("Plugin configuration is not available. Cannot reset processed items.");
+            return StatusCode(500, "Plugin configuration is not available.");
+        }
+
+        var subscription = config.Subscriptions.FirstOrDefault(s => s.Id == subscriptionId);
+        if (subscription == null)
+        {
+            _logger.LogWarning("Subscription with ID '{SubscriptionId}' not found. Cannot reset processed items.", subscriptionId);
+            return NotFound($"Subscription with ID '{subscriptionId}' not found.");
+        }
+
+        subscription.ProcessedItemIds.Clear();
+        subscription.LastDownloadedTimestamp = null; // Also reset the timestamp for consistency
+        Plugin.Instance?.UpdateConfiguration(config);
+
+        _logger.LogInformation("Processed items list reset for subscription '{SubscriptionName}' (ID: {SubscriptionId}).", subscription.Name, subscriptionId);
+        return Ok($"Processed items list reset for subscription '{subscription.Name}'.");
     }
 }

@@ -141,13 +141,19 @@ public class DownloadScheduledTask : IScheduledTask
                     continue;
                 }
 
-                // Filter out items already processed or not matching criteria
-                // Now using the VideoParser for language/feature detection
                 foreach (var item in results)
                 {
+                    // Skip if already processed for this subscription
+                    if (subscription.ProcessedItemIds.Contains(item.Id))
+                    {
+                        _logger.LogDebug("Skipping item '{Title}' (ID: {Id}) as it was already processed for subscription '{SubscriptionName}'.", item.Title, item.Id, subscription.Name);
+                        continue;
+                    }
+
                     var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
                     if (tempVideoInfo == null)
                     {
+                        _logger.LogDebug("Skipping item '{Title}' due to video info parsing failure.", item.Title);
                         continue;
                     }
 
@@ -184,6 +190,8 @@ public class DownloadScheduledTask : IScheduledTask
             }
 
             _logger.LogInformation("Found {Count} new, filtered items for '{SubscriptionName}'.", allItemsToDownload.Count, subscription.Name);
+
+            var hasDownloadedAnyItem = false;
 
             // Stage 2: Download collected items and report progress
             var numItemsToDownload = allItemsToDownload.Count;
@@ -233,6 +241,14 @@ public class DownloadScheduledTask : IScheduledTask
                             item.VideoInfo.Title,
                             paths.StrmFilePath);
                         await _fileDownloader.GenerateStreamingUrlFileAsync(videoUrl, paths.StrmFilePath, cancellationToken).ConfigureAwait(false);
+                        subscription.ProcessedItemIds.Add(item.Item.Id);
+                        hasDownloadedAnyItem = true;
+                    }
+                    else
+                    {
+                        _logger.LogDebug("Streaming URL file for '{Title}' already exists.", item.VideoInfo.Title);
+                        subscription.ProcessedItemIds.Add(item.Item.Id);
+                        hasDownloadedAnyItem = true;
                     }
                 }
                 else if (item.VideoInfo.Language == "deu")
@@ -240,14 +256,23 @@ public class DownloadScheduledTask : IScheduledTask
                     if (!File.Exists(paths.MainFilePath))
                     {
                         _logger.LogInformation("Downloading master video for '{Title}' to '{Path}'", item.VideoInfo.Title, paths.MainFilePath);
-                        if (!await _fileDownloader.DownloadFileAsync(videoUrl, paths.MainFilePath, downloadProgress, cancellationToken).ConfigureAwait(false))
+                        if (await _fileDownloader.DownloadFileAsync(videoUrl, paths.MainFilePath, downloadProgress, cancellationToken).ConfigureAwait(false))
+                        {
+                            _logger.LogInformation("Successfully finished master video download of '{Title}'.", item.VideoInfo.Title);
+                            subscription.ProcessedItemIds.Add(item.Item.Id);
+                            hasDownloadedAnyItem = true;
+                        }
+                        else
                         {
                             _logger.LogError("Failed to download master video for '{Title}'.", item.VideoInfo.Title);
+                            // Do not add to ProcessedItemIds if download failed to retry later
                         }
                     }
                     else
                     {
                         _logger.LogDebug("Master video for '{Title}' already exists.", item.VideoInfo.Title);
+                        subscription.ProcessedItemIds.Add(item.Item.Id);
+                        hasDownloadedAnyItem = true;
                     }
                 }
                 else // Non-German version: handle based on subscription setting
@@ -257,14 +282,23 @@ public class DownloadScheduledTask : IScheduledTask
                         if (!File.Exists(paths.MainFilePath))
                         {
                             _logger.LogInformation("Downloading full video for '{Title}' ({Language}) to '{Path}' based on subscription setting.", item.VideoInfo.Title, item.VideoInfo.Language, paths.MainFilePath);
-                            if (!await _fileDownloader.DownloadFileAsync(videoUrl, paths.MainFilePath, downloadProgress, cancellationToken).ConfigureAwait(false))
+                            if (await _fileDownloader.DownloadFileAsync(videoUrl, paths.MainFilePath, downloadProgress, cancellationToken).ConfigureAwait(false))
+                            {
+                                _logger.LogInformation("Successfully finished full video download of '{Title}'.", item.VideoInfo.Title);
+                                subscription.ProcessedItemIds.Add(item.Item.Id);
+                                hasDownloadedAnyItem = true;
+                            }
+                            else
                             {
                                 _logger.LogError("Failed to download full video for '{Title}'.", item.VideoInfo.Title);
+                                // Do not add to ProcessedItemIds if download failed to retry later
                             }
                         }
                         else
                         {
                             _logger.LogDebug("Full video for '{Title}' ({Language}) already exists.", item.VideoInfo.Title, item.VideoInfo.Language);
+                            subscription.ProcessedItemIds.Add(item.Item.Id);
+                            hasDownloadedAnyItem = true;
                         }
                     }
                     else // Existing logic: extract audio if not exists
@@ -276,13 +310,21 @@ public class DownloadScheduledTask : IScheduledTask
                             if (!await _fileDownloader.DownloadFileAsync(videoUrl, tempVideoPath, downloadProgress, cancellationToken).ConfigureAwait(false))
                             {
                                 _logger.LogError("Failed to download temporary video for '{Title}'.", item.VideoInfo.Title);
+                                // Do not add to ProcessedItemIds if download failed to retry later
                                 continue;
                             }
 
                             _logger.LogInformation("Extracting '{Language}' audio for '{Title}' to '{Path}'.", item.VideoInfo.Language, item.VideoInfo.Title, paths.MainFilePath);
-                            if (!await _ffmpegService.ExtractAudioAsync(tempVideoPath, paths.MainFilePath, item.VideoInfo.Language, cancellationToken).ConfigureAwait(false))
+                            if (await _ffmpegService.ExtractAudioAsync(tempVideoPath, paths.MainFilePath, item.VideoInfo.Language, cancellationToken).ConfigureAwait(false))
+                            {
+                                _logger.LogInformation("Successfully extracted '{Language}' audio for '{Title}'.", item.VideoInfo.Language, item.VideoInfo.Title);
+                                subscription.ProcessedItemIds.Add(item.Item.Id);
+                                hasDownloadedAnyItem = true;
+                            }
+                            else
                             {
                                 _logger.LogError("Failed to extract audio for '{Title}'.", item.VideoInfo.Title);
+                                // Do not add to ProcessedItemIds if extraction failed to retry later
                             }
 
                             // Clean up temporary video file
@@ -294,6 +336,8 @@ public class DownloadScheduledTask : IScheduledTask
                         else
                         {
                             _logger.LogDebug("External '{Language}' audio for '{Title}' already exists.", item.VideoInfo.Language, item.VideoInfo.Title);
+                            subscription.ProcessedItemIds.Add(item.Item.Id);
+                            hasDownloadedAnyItem = true;
                         }
                     }
                 }
@@ -304,18 +348,32 @@ public class DownloadScheduledTask : IScheduledTask
                     if (!File.Exists(paths.SubtitleFilePath))
                     {
                         _logger.LogInformation("Downloading '{Language}' subtitle for '{Title}' to '{Path}'.", item.VideoInfo.Language, item.VideoInfo.Title, paths.SubtitleFilePath);
-                        if (!await _fileDownloader.DownloadFileAsync(item.Item.UrlSubtitle, paths.SubtitleFilePath, new Progress<double>(), cancellationToken).ConfigureAwait(false))
+                        if (await _fileDownloader.DownloadFileAsync(item.Item.UrlSubtitle, paths.SubtitleFilePath, new Progress<double>(), cancellationToken).ConfigureAwait(false))
+                        {
+                            _logger.LogInformation("Successfully finished subtitle download of '{Title}'.", item.VideoInfo.Title);
+                            subscription.ProcessedItemIds.Add(item.Item.Id);
+                            hasDownloadedAnyItem = true;
+                        }
+                        else
                         {
                             _logger.LogError("Failed to download subtitle for '{Title}'.", item.VideoInfo.Title);
+                            // Do not add to ProcessedItemIds if download failed to retry later
                         }
                     }
                     else
                     {
                         _logger.LogDebug("Subtitle in '{Language}' for '{Title}' already exists.", item.VideoInfo.Language, item.VideoInfo.Title);
+                        subscription.ProcessedItemIds.Add(item.Item.Id);
+                        hasDownloadedAnyItem = true;
                     }
                 }
 
                 progress.Report(baseProgressForItem + progressPerItem);
+            }
+
+            if (hasDownloadedAnyItem)
+            {
+                subscription.LastDownloadedTimestamp = DateTime.UtcNow;
             }
         }
 

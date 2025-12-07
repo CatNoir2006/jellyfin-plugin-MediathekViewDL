@@ -605,13 +605,18 @@
                     let html = '';
                     currentConfig.Subscriptions.forEach(function (sub) {
                         const queriesSummary = (sub.Queries || []).map(function (q) { return q.query; }).join(', ');
+                        const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
                         html +=
                             '<div class="listItem listItem-border">' +
                             '<div class="listItemBody two-line">' +
                             '<h3 class="listItemBodyText">' + sub.Name + '</h3>' +
                             '<div class="listItemBodyText secondary">Queries: ' + queriesSummary + '</div>' +
+                            '<div class="listItemBodyText secondary">Letzter Download: ' + lastDownloadText + '</div>' +
                             '</div>' +
                             '<div style="display:flex; gap:5px;">' +
+                            '<button type="button" class="paper-icon-button-light" onclick="MediathekPluginConfig.resetProcessedItems(\'' + sub.Id + '\')" title="Verarbeitete Items zurücksetzen">' +
+                            '<span class="material-icons refresh"></span>' +
+                            '</button>' +
                             '<button type="button" class="paper-icon-button-light" onclick="MediathekPluginConfig.editSubscription(\'' + sub.Id + '\', null)" title="Bearbeiten">' +
                             '<span class="material-icons edit"></span>' +
                             '</button>' +
@@ -622,6 +627,25 @@
                             '</div>';
                     });
                     list.innerHTML = html;
+                }
+
+                function resetProcessedItems(id) {
+                    confirmationPopup("Dies wird die Liste der bereits verarbeiteten Items für dieses Abonnement zurücksetzen. Es kann dazu führen, dass bereits heruntergeladene Inhalte erneut heruntergeladen werden, wenn sie noch in den Suchergebnissen der MediathekView API erscheinen. Fortfahren?", "Verarbeitete Items zurücksetzen", function (confirmed) {
+                        if (confirmed) {
+                            Dashboard.showLoadingMsg();
+                            ApiClient.ajax({
+                                type: "POST",
+                                url: ApiClient.getUrl('/' + pluginName + '/ResetProcessedItems?subscriptionId=' + id),
+                            }).then(function (result) {
+                                Dashboard.hideLoadingMsg();
+                                showToast("Verarbeitete Items für Abonnement zurückgesetzt.");
+                                loadConfig(); // Refresh the configuration to update the UI
+                            }).catch(function (err) {
+                                Dashboard.hideLoadingMsg();
+                                showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                            });
+                        }
+                    });
                 }
 
                 function addQueryRow(query) {
@@ -768,7 +792,7 @@
                         AllowSignLanguage: allowSignLanguage,
                         TreatNonEpisodesAsExtras: treatNonEpisodesAsExtras,
                         UseStreamingUrlFiles: useStreamingUrlFiles,
-                        DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio
+                        DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio,
                     };
 
                     if (id) {
@@ -902,7 +926,8 @@
                     closeEditor: closeEditor,
                     saveSubscription: saveSubscription,
                     deleteSubscription: deleteSubscription,
-                    openFolderDialog: openFolderDialog
+                    openFolderDialog: openFolderDialog,
+                    resetProcessedItems: resetProcessedItems
                 };
             })();
 
