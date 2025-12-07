@@ -24,6 +24,8 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddTransient<MediathekViewDlApiService>();
             serviceCollection.AddTransient<FFmpegService>();
             serviceCollection.AddTransient<FileDownloader>();
+            serviceCollection.AddTransient<SubscriptionProcessor>();
+            serviceCollection.AddTransient<DownloadManager>();
         }
     }
 }
