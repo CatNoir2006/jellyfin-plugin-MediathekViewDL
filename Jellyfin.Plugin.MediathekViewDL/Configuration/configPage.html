@@ -369,6 +369,66 @@
                 }
 
                 // --- Helper Functions ---
+                createIconButton(icon, title, onClick, id) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.classList.add('paper-icon-button-light');
+                    btn.setAttribute('is', 'emby-button');
+                    btn.title = title;
+                    if (id) btn.id = id;
+
+                    if (typeof onClick === 'function') {
+                        btn.onclick = onClick;
+                    } else if (onClick) {
+                        btn.setAttribute('onclick', onClick);
+                    }
+
+                    const iconSpan = document.createElement('span');
+                    iconSpan.classList.add('material-icons', icon);
+                    iconSpan.setAttribute('aria-hidden', 'true');
+
+                    btn.appendChild(iconSpan);
+                    return btn;
+                }
+
+                createCheckbox(label, checked, options = {}) {
+                    const { id, value, description, className, onChange } = options;
+
+                    const labelEl = document.createElement('label');
+                    labelEl.classList.add('emby-checkbox-label');
+
+                    const input = document.createElement('input');
+                    input.type = 'checkbox';
+                    input.setAttribute('is', 'emby-checkbox');
+
+                    if (id) input.id = id;
+                    if (value) input.value = value;
+                    if (checked) input.checked = true;
+                    if (className) input.classList.add(className);
+                    if (onChange) input.addEventListener('change', onChange);
+
+                    const span = document.createElement('span');
+                    span.textContent = label;
+
+                    labelEl.appendChild(input);
+                    labelEl.appendChild(span);
+
+                    if (description) {
+                        const container = document.createElement('div');
+                        container.classList.add('checkboxContainer', 'checkboxContainer-withDescription');
+                        container.appendChild(labelEl);
+
+                        const descEl = document.createElement('div');
+                        descEl.classList.add('fieldDescription');
+                        descEl.textContent = description;
+                        container.appendChild(descEl);
+
+                        return container;
+                    }
+
+                    return labelEl;
+                }
+
                 confirmationPopup(message, title, resultCallback) {
                     if (typeof Dashboard !== 'undefined' && typeof Dashboard.confirm === 'function') {
                         Dashboard.confirm(message, title, resultCallback);
@@ -519,45 +579,75 @@
 
                 renderSearchResults() {
                     const container = document.getElementById('searchResults');
-                    container.innerHTML = "";
+                    container.textContent = "";
 
                     if (!this.currentSearchResults || this.currentSearchResults.length === 0) {
-                        container.innerHTML = "<p>Keine Ergebnisse gefunden.</p>";
+                        const noRes = document.createElement('p');
+                        noRes.textContent = "Keine Ergebnisse gefunden.";
+                        container.appendChild(noRes);
                         return;
                     }
 
-                    let html = '<div class="paperList">';
+                    const paperList = document.createElement('div');
+                    paperList.classList.add('paperList');
+
                     this.currentSearchResults.forEach((item, index) => {
                         const durationStr = Math.floor(item.duration / 60) + " Min";
-                        const safeTitle = item.title.replace(/"/g, '&quot;');
-                        const safeChannel = item.channel.replace(/"/g, '&quot;');
-                        const safeTopic = item.topic.replace(/"/g, '&quot;');
 
-                        html +=
-                            '<div class="listItem listItem-border">' +
-                            '<div class="listItemBody two-line">' +
-                            '<h3 class="listItemBodyText">' + item.title + '</h3>' +
-                            '<div class="listItemBodyText secondary" style="display: inline-flex; align-items: center; gap: 8px;"><span>' + item.channel + ' | ' + item.topic + ' | ' + durationStr + (item.url_subtitle ? ' | </span><span class="material-icons closed_caption" title="Untertitel verfügbar"></span>' : '</span>') + '</div>' +
-                            '<div class="listItemBodyText secondary" style="font-size:0.9em; opacity:0.7;">' + (item.description ? item.description : '') + '</div>' +
-                            '</div>' +
-                            '<div style="display:flex; gap: 10px;">' +
-                            // Download-Button
-                            '<button is="emby-button" type="button" class="paper-icon-button-light" title="Herunterladen" onclick="mediathekConfig.downloadItem(' + index + ')">' +
-                            '<span class="material-icons file_download"></span>' +
-                            '</button>' +
-                            // Advanced Download-Button
-                            '<button is="emby-button" type="button" class="paper-icon-button-light" title="Erweiterter Download" onclick="mediathekConfig.openAdvancedDownloadDialog(' + index + ')">' +
-                            '<span class="material-icons settings"></span>' +
-                            '</button>' +
-                            // Abo erstellen Button
-                            '<button is="emby-button" type="button" class="paper-icon-button-light" title="Abo erstellen" onclick="mediathekConfig.createSubFromSearch(this, \'' + safeTitle + '\', \'' + safeChannel + '\', \'' + safeTopic + '\')">' +
-                            '<span class="material-icons add"></span>' +
-                            '</button>' +
-                            '</div>' +
-                            '</div>';
+                        const listItem = document.createElement('div');
+                        listItem.classList.add('listItem', 'listItem-border');
+
+                        const body = document.createElement('div');
+                        body.classList.add('listItemBody', 'two-line');
+
+                        const title = document.createElement('h3');
+                        title.classList.add('listItemBodyText');
+                        title.textContent = item.title;
+
+                        const details = document.createElement('div');
+                        details.classList.add('listItemBodyText', 'secondary');
+                        details.style.display = 'inline-flex';
+                        details.style.alignItems = 'center';
+                        details.style.gap = '8px';
+
+                        const detailsText = document.createElement('span');
+                        detailsText.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
+                        details.appendChild(detailsText);
+
+                        if (item.url_subtitle) {
+                            const sep = document.createElement('span');
+                            sep.textContent = ' | ';
+                            details.appendChild(sep);
+
+                            const icon = document.createElement('span');
+                            icon.classList.add('material-icons', 'closed_caption');
+                            icon.title = 'Untertitel verfügbar';
+                            details.appendChild(icon);
+                        }
+
+                        const desc = document.createElement('div');
+                        desc.classList.add('listItemBodyText', 'secondary');
+                        desc.style.fontSize = '0.9em';
+                        desc.style.opacity = '0.7';
+                        desc.textContent = item.description || '';
+
+                        body.appendChild(title);
+                        body.appendChild(details);
+                        body.appendChild(desc);
+
+                        const actions = document.createElement('div');
+                        actions.style.display = 'flex';
+                        actions.style.gap = '10px';
+
+                        actions.appendChild(this.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
+                        actions.appendChild(this.createIconButton('settings', 'Erweiterter Download', () => this.openAdvancedDownloadDialog(index)));
+                        actions.appendChild(this.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.title, item.channel, item.topic)));
+
+                        listItem.appendChild(body);
+                        listItem.appendChild(actions);
+                        paperList.appendChild(listItem);
                     });
-                    html += '</div>';
-                    container.innerHTML = html;
+                    container.appendChild(paperList);
                 }
 
                 downloadItem(index) {
@@ -604,38 +694,53 @@
                 // --- SUBSCRIPTION LOGIC ---
                 renderSubscriptionsList() {
                     const list = document.getElementById('subscriptionList');
-                    list.innerHTML = "";
+                    list.textContent = "";
 
                     if (!this.currentConfig.Subscriptions || this.currentConfig.Subscriptions.length === 0) {
-                        list.innerHTML = "<p>Keine aktiven Abonnements.</p>";
+                        const noSubs = document.createElement('p');
+                        noSubs.textContent = "Keine aktiven Abonnements.";
+                        list.appendChild(noSubs);
                         return;
                     }
 
-                    let html = '';
                     this.currentConfig.Subscriptions.forEach((sub) => {
                         const queriesSummary = (sub.Queries || []).map(function (q) { return q.query; }).join(', ');
                         const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
-                        html +=
-                            '<div class="listItem listItem-border">' +
-                            '<div class="listItemBody two-line">' +
-                            '<h3 class="listItemBodyText">' + sub.Name + '</h3>' +
-                            '<div class="listItemBodyText secondary">Queries: ' + queriesSummary + '</div>' +
-                            '<div class="listItemBodyText secondary">Letzter Download: ' + lastDownloadText + '</div>' +
-                            '</div>' +
-                            '<div style="display:flex; gap:5px;">' +
-                            '<button type="button" class="paper-icon-button-light" onclick="mediathekConfig.resetProcessedItems(\'' + sub.Id + '\')" title="Verarbeitete Items zurücksetzen">' +
-                            '<span class="material-icons refresh"></span>' +
-                            '</button>' +
-                            '<button type="button" class="paper-icon-button-light" onclick="mediathekConfig.editSubscription(\'' + sub.Id + '\', null)" title="Bearbeiten">' +
-                            '<span class="material-icons edit"></span>' +
-                            '</button>' +
-                            '<button type="button" class="paper-icon-button-light" onclick="mediathekConfig.deleteSubscription(\'' + sub.Id + '\')" title="Löschen">' +
-                            '<span class="material-icons delete"></span>' +
-                            '</button>' +
-                            '</div>' +
-                            '</div>';
+
+                        const listItem = document.createElement('div');
+                        listItem.classList.add('listItem', 'listItem-border');
+
+                        const body = document.createElement('div');
+                        body.classList.add('listItemBody', 'two-line');
+
+                        const title = document.createElement('h3');
+                        title.classList.add('listItemBodyText');
+                        title.textContent = sub.Name;
+
+                        const queries = document.createElement('div');
+                        queries.classList.add('listItemBodyText', 'secondary');
+                        queries.textContent = 'Queries: ' + queriesSummary;
+
+                        const lastDl = document.createElement('div');
+                        lastDl.classList.add('listItemBodyText', 'secondary');
+                        lastDl.textContent = 'Letzter Download: ' + lastDownloadText;
+
+                        body.appendChild(title);
+                        body.appendChild(queries);
+                        body.appendChild(lastDl);
+
+                        const actions = document.createElement('div');
+                        actions.style.display = 'flex';
+                        actions.style.gap = '5px';
+
+                        actions.appendChild(this.createIconButton('refresh', 'Verarbeitete Items zurücksetzen', () => this.resetProcessedItems(sub.Id)));
+                        actions.appendChild(this.createIconButton('edit', 'Bearbeiten', () => this.editSubscription(sub.Id, null)));
+                        actions.appendChild(this.createIconButton('delete', 'Löschen', () => this.deleteSubscription(sub.Id)));
+
+                        listItem.appendChild(body);
+                        listItem.appendChild(actions);
+                        list.appendChild(listItem);
                     });
-                    list.innerHTML = html;
                 }
 
                 resetProcessedItems(id) {
@@ -669,28 +774,43 @@
                     const queryText = query ? query.query : '';
                     const fields = query ? query.fields : ['title', 'topic'];
 
-                    var checkedTitle = fields.indexOf('title') > -1 ? 'checked' : '';
-                    var checkedTopic = fields.indexOf('topic') > -1 ? 'checked' : '';
-                    var checkedChannel = fields.indexOf('channel') > -1 ? 'checked' : '';
+                    // Input Container
+                    const inputDiv = document.createElement('div');
+                    inputDiv.style.flexGrow = '1';
 
-                    newRow.innerHTML =
-                        '<div style="flex-grow: 1;">' +
-                        '<input is="emby-input" type="text" class="subQueryText" value="' + queryText + '" placeholder="Suchtext" required />' +
-                        '</div>' +
-                        '<div style="display: flex; gap: 15px;">' +
-                        '<label class="emby-checkbox-label"><input type="checkbox" is="emby-checkbox" class="subQueryField" value="title" ' + checkedTitle + '><span>Titel</span></label>' +
-                        '<label class="emby-checkbox-label"><input type="checkbox" is="emby-checkbox" class="subQueryField" value="topic" ' + checkedTopic + '><span>Thema</span></label>' +
-                        '<label class="emby-checkbox-label"><input type="checkbox" is="emby-checkbox" class="subQueryField" value="channel" ' + checkedChannel + '><span>Sender</span></label>' +
-                        '</div>' +
-                        '<button type="button" is="paper-icon-button-light" class="btnRemoveQuery" title="Anfrage entfernen">' +
-                        '<span class="material-icons remove_circle_outline"></span>' +
-                        '</button>';
+                    const input = document.createElement('input');
+                    input.setAttribute('is', 'emby-input');
+                    input.type = 'text';
+                    input.className = 'subQueryText';
+                    input.value = queryText;
+                    input.placeholder = 'Suchtext';
+                    input.required = true;
+
+                    inputDiv.appendChild(input);
+                    newRow.appendChild(inputDiv);
+
+                    // Checkboxes
+                    const checkboxesDiv = document.createElement('div');
+                    checkboxesDiv.style.display = 'flex';
+                    checkboxesDiv.style.gap = '15px';
+
+                    const cbTitle = this.createCheckbox('Titel', fields.includes('title'), { value: 'title', className: 'subQueryField' });
+                    const cbTopic = this.createCheckbox('Thema', fields.includes('topic'), { value: 'topic', className: 'subQueryField' });
+                    const cbChannel = this.createCheckbox('Sender', fields.includes('channel'), { value: 'channel', className: 'subQueryField' });
+
+                    checkboxesDiv.appendChild(cbTitle);
+                    checkboxesDiv.appendChild(cbTopic);
+                    checkboxesDiv.appendChild(cbChannel);
+                    newRow.appendChild(checkboxesDiv);
+
+                    // Remove Button
+                    const removeBtn = this.createIconButton('remove_circle_outline', 'Anfrage entfernen', () => {
+                        newRow.remove();
+                    });
+                    removeBtn.classList.add('btnRemoveQuery');
+                    newRow.appendChild(removeBtn);
 
                     container.appendChild(newRow);
-
-                    newRow.querySelector('.btnRemoveQuery').addEventListener('click', function () {
-                        this.closest('.query-row').remove();
-                    });
                 }
 
                 editSubscription(id, prefilledSub) {
