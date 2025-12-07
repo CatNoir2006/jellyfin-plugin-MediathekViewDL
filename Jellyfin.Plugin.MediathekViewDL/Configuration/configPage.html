@@ -337,6 +337,103 @@
         </div>
 
         <script type="text/javascript">
+            class SubscriptionEditor {
+                constructor(configInstance) {
+                    this.config = configInstance;
+                }
+
+                setEditorValues(sub) {
+                    if (!sub) {
+                        // Reset values
+                        document.getElementById('subId').value = "";
+                        document.getElementById('subName').value = "";
+                        document.getElementById('subMinDuration').value = "";
+                        document.getElementById('subMaxDuration').value = "";
+                        document.getElementById('subPath').value = "";
+
+                        document.getElementById('subEnforceSeries').checked = false;
+                        document.getElementById('subAllowAudioDesc').checked = false;
+                        document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = false;
+                        document.getElementById('subAllowSignLanguage').checked = false;
+                        document.getElementById('subTreatNonEpisodesAsExtras').checked = false;
+                        document.getElementById('subUseStreamingUrlFiles').checked = false;
+                        document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = false;
+                        document.getElementById('subEnhancedDuplicateDetection').checked = false;
+
+                        document.getElementById('queriesContainer').textContent = '';
+                        this.config.addQueryRow(null);
+                        return;
+                    }
+
+                    document.getElementById('subId').value = sub.Id || "";
+                    document.getElementById('subName').value = sub.Name;
+                    document.getElementById('subMinDuration').value = sub.MinDurationMinutes || "";
+                    document.getElementById('subMaxDuration').value = sub.MaxDurationMinutes || "";
+                    document.getElementById('subPath').value = sub.DownloadPath || "";
+                    document.getElementById('subEnforceSeries').checked = sub.EnforceSeriesParsing;
+                    document.getElementById('subAllowAudioDesc').checked = sub.AllowAudioDescription;
+                    document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = sub.AllowAbsoluteEpisodeNumbering;
+                    document.getElementById('subAllowSignLanguage').checked = sub.AllowSignLanguage;
+                    document.getElementById('subEnhancedDuplicateDetection').checked = sub.EnhancedDuplicateDetection;
+                    document.getElementById('subTreatNonEpisodesAsExtras').checked = sub.TreatNonEpisodesAsExtras;
+                    document.getElementById('subUseStreamingUrlFiles').checked = sub.UseStreamingUrlFiles;
+                    document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = sub.DownloadFullVideoForSecondaryAudio;
+
+                    const queriesContainer = document.getElementById('queriesContainer');
+                    queriesContainer.textContent = '';
+                    if (sub.Queries && sub.Queries.length > 0) {
+                        sub.Queries.forEach((q) => { this.config.addQueryRow(q); });
+                    } else {
+                        this.config.addQueryRow(null);
+                    }
+                }
+
+                getEditorValues() {
+                    const id = document.getElementById('subId').value;
+                    const name = document.getElementById('subName').value;
+                    const minDuration = document.getElementById('subMinDuration').value;
+                    const maxDuration = document.getElementById('subMaxDuration').value;
+                    const path = document.getElementById('subPath').value;
+                    const enforce = document.getElementById('subEnforceSeries').checked;
+                    const allowAudio = document.getElementById('subAllowAudioDesc').checked;
+                    const allowAbsolute = document.getElementById('subAllowAbsoluteEpisodeNumbering').checked;
+                    const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
+                    const enhancedDuplicateDetection = document.getElementById('subEnhancedDuplicateDetection').checked;
+                    const treatNonEpisodesAsExtras = document.getElementById('subTreatNonEpisodesAsExtras').checked;
+                    const useStreamingUrlFiles = document.getElementById('subUseStreamingUrlFiles').checked;
+                    const downloadFullVideoForSecondaryAudio = document.getElementById('subDownloadFullVideoForSecondaryAudio').checked;
+
+                    const queries = [];
+                    document.querySelectorAll('#queriesContainer .query-row').forEach(function (row) {
+                        const queryText = row.querySelector('.subQueryText').value;
+                        if (queryText) {
+                            const fields = [];
+                            row.querySelectorAll('.subQueryField:checked').forEach(function (fieldCheckbox) {
+                                fields.push(fieldCheckbox.value);
+                            });
+                            queries.push({ query: queryText, fields: fields });
+                        }
+                    });
+
+                    return {
+                        Id: id,
+                        Name: name,
+                        Queries: queries,
+                        MinDurationMinutes: minDuration ? parseInt(minDuration, 10) : null,
+                        MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
+                        DownloadPath: path,
+                        EnforceSeriesParsing: enforce,
+                        AllowAudioDescription: allowAudio,
+                        AllowAbsoluteEpisodeNumbering: allowAbsolute,
+                        AllowSignLanguage: allowSignLanguage,
+                        EnhancedDuplicateDetection: enhancedDuplicateDetection,
+                        TreatNonEpisodesAsExtras: treatNonEpisodesAsExtras,
+                        UseStreamingUrlFiles: useStreamingUrlFiles,
+                        DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio,
+                    };
+                }
+            }
+
             class MediathekPluginConfig {
                 constructor() {
                     this.pluginId = "a31b415a-5264-419d-b152-8c8192a54994";
@@ -344,6 +441,7 @@
                     this.currentConfig = null;
                     this.currentSearchResults = [];
                     this.currentItemForAdvancedDl = null;
+                    this.subscriptionEditor = new SubscriptionEditor(this);
 
                     // --- Dependency Rules --- Disable/hide certain fields based on other field values of subscriptions
                     this.subscriptionDependencyRules = [
@@ -821,21 +919,6 @@
                 editSubscription(id, prefilledSub) {
                     const editor = document.getElementById('subscriptionEditor');
                     const title = document.getElementById('subEditorTitle');
-                    const queriesContainer = document.getElementById('queriesContainer');
-
-                    document.getElementById('subId').value = "";
-                    document.getElementById('subName').value = "";
-                    document.getElementById('subMinDuration').value = "";
-                    document.getElementById('subMaxDuration').value = "";
-                    document.getElementById('subPath').value = "";
-                    document.getElementById('subEnforceSeries').checked = false;
-                    document.getElementById('subAllowAudioDesc').checked = false;
-                    document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = false;
-                    document.getElementById('subAllowSignLanguage').checked = false;
-                    document.getElementById('subTreatNonEpisodesAsExtras').checked = false;
-                    document.getElementById('subUseStreamingUrlFiles').checked = false;
-                    document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = false;
-                    queriesContainer.innerHTML = '';
 
                     let subToEdit = null;
                     if (id) {
@@ -848,29 +931,7 @@
                         title.innerText = "Neues Abonnement";
                     }
 
-                    if (subToEdit) {
-                        document.getElementById('subId').value = subToEdit.Id || "";
-                        document.getElementById('subName').value = subToEdit.Name;
-                        document.getElementById('subMinDuration').value = subToEdit.MinDurationMinutes || "";
-                        document.getElementById('subMaxDuration').value = subToEdit.MaxDurationMinutes || "";
-                        document.getElementById('subPath').value = subToEdit.DownloadPath || "";
-                        document.getElementById('subEnforceSeries').checked = subToEdit.EnforceSeriesParsing;
-                        document.getElementById('subAllowAudioDesc').checked = subToEdit.AllowAudioDescription;
-                        document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = subToEdit.AllowAbsoluteEpisodeNumbering;
-                        document.getElementById('subAllowSignLanguage').checked = subToEdit.AllowSignLanguage;
-                        document.getElementById('subEnhancedDuplicateDetection').checked = subToEdit.EnhancedDuplicateDetection;
-                        document.getElementById('subTreatNonEpisodesAsExtras').checked = subToEdit.TreatNonEpisodesAsExtras;
-                        document.getElementById('subUseStreamingUrlFiles').checked = subToEdit.UseStreamingUrlFiles;
-                        document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = subToEdit.DownloadFullVideoForSecondaryAudio;
-
-                        if (subToEdit.Queries && subToEdit.Queries.length > 0) {
-                            subToEdit.Queries.forEach((q) => { this.addQueryRow(q); });
-                        } else {
-                            this.addQueryRow(null);
-                        }
-                    } else {
-                        this.addQueryRow(null);
-                    }
+                    this.subscriptionEditor.setEditorValues(subToEdit);
 
                     this.applySubscriptionDependencies();
 
@@ -883,62 +944,22 @@
                 }
 
                 saveSubscription() {
-                    const id = document.getElementById('subId').value;
-                    const name = document.getElementById('subName').value;
-                    const minDuration = document.getElementById('subMinDuration').value;
-                    const maxDuration = document.getElementById('subMaxDuration').value;
-                    const path = document.getElementById('subPath').value;
-                    const enforce = document.getElementById('subEnforceSeries').checked;
-                    const allowAudio = document.getElementById('subAllowAudioDesc').checked;
-                    const allowAbsolute = document.getElementById('subAllowAbsoluteEpisodeNumbering').checked;
-                    const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
-                    const enhancedDuplicateDetection = document.getElementById('subEnhancedDuplicateDetection').checked;
-                    const treatNonEpisodesAsExtras = document.getElementById('subTreatNonEpisodesAsExtras').checked;
-                    const useStreamingUrlFiles = document.getElementById('subUseStreamingUrlFiles').checked;
-                    const downloadFullVideoForSecondaryAudio = document.getElementById('subDownloadFullVideoForSecondaryAudio').checked;
+                    const subData = this.subscriptionEditor.getEditorValues();
 
-                    const queries = [];
-                    document.querySelectorAll('#queriesContainer .query-row').forEach(function (row) {
-                        const queryText = row.querySelector('.subQueryText').value;
-                        if (queryText) {
-                            const fields = [];
-                            row.querySelectorAll('.subQueryField:checked').forEach(function (fieldCheckbox) {
-                                fields.push(fieldCheckbox.value);
-                            });
-                            queries.push({ query: queryText, fields: fields });
-                        }
-                    });
-
-                    if (queries.length === 0) {
+                    if (subData.Queries.length === 0) {
                         this.showToast("Bitte mindestens eine Suchanfrage definieren.");
                         return;
                     }
 
                     if (!this.currentConfig.Subscriptions) this.currentConfig.Subscriptions = [];
 
-                    const subData = {
-                        Name: name,
-                        Queries: queries,
-                        MinDurationMinutes: minDuration ? parseInt(minDuration, 10) : null,
-                        MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
-                        DownloadPath: path,
-                        EnforceSeriesParsing: enforce,
-                        AllowAudioDescription: allowAudio,
-                        AllowAbsoluteEpisodeNumbering: allowAbsolute,
-                        AllowSignLanguage: allowSignLanguage,
-                        EnhancedDuplicateDetection: enhancedDuplicateDetection,
-                        TreatNonEpisodesAsExtras: treatNonEpisodesAsExtras,
-                        UseStreamingUrlFiles: useStreamingUrlFiles,
-                        DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio,
-                    };
-
-                    if (id) {
-                        const idx = this.currentConfig.Subscriptions.findIndex(function (s) { return s.Id === id; });
+                    if (subData.Id) {
+                        const idx = this.currentConfig.Subscriptions.findIndex(function (s) { return s.Id === subData.Id; });
                         if (idx > -1) {
+                            // Keep existing ID logic if needed, but here subData already has ID from hidden input if set
                             var existingId = this.currentConfig.Subscriptions[idx].Id;
                             this.currentConfig.Subscriptions[idx] = subData;
-                            this.currentConfig.Subscriptions[idx].Id = existingId;
-
+                            this.currentConfig.Subscriptions[idx].Id = existingId; // Ensure ID consistency
                         }
                     } else {
                         subData.Id = this.genUUID();
