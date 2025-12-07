@@ -103,6 +103,14 @@ public class DownloadScheduledTask : IScheduledTask
         for (int i = 0; i < subscriptions.Count; i++)
         {
             var subscription = subscriptions[i];
+
+            if (!subscription.IsEnabled)
+            {
+                _logger.LogDebug("Skipping disabled subscription '{SubscriptionName}'.", subscription.Name);
+                progress.Report((double)(i + 1) * subscriptionProgressShare);
+                continue;
+            }
+
             var baseProgressForSubscription = (double)i * subscriptionProgressShare;
             progress.Report(baseProgressForSubscription);
 
