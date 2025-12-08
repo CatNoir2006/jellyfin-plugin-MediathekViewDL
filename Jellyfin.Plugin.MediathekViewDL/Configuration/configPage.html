@@ -111,6 +111,14 @@
                                     das ich die Whitelist ggf. erweitern kann.</div>
                             </div>
 
+                            <div class="checkboxContainer checkboxContainer-withDescription" style="margin-top: 20px;">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkScanLibraryAfterDownload" type="checkbox" is="emby-checkbox" />
+                                    <span>Bibliotheksscan nach Download</span>
+                                </label>
+                                <div class="fieldDescription">Startet automatisch einen Scan der Medienbibliothek, nachdem neue Inhalte heruntergeladen wurden. Wenn deaktiviert, erscheinen neue Inhalte erst nach dem nächsten regulären Scan.</div>
+                            </div>
+
                             <div class="inputContainer">
                                 <label class="inputLabel" for="txtMinFreeDiskSpaceMiB">Mindestfreier Speicherplatz
                                     (MiB)</label>
@@ -706,6 +714,7 @@
                         document.querySelector('#txtDefaultDownloadPath').value = config.DefaultDownloadPath || "";
                         document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
                         document.querySelector('#chkAllowUnknownDomains').checked = config.AllowUnknownDomains;
+                        document.querySelector('#chkScanLibraryAfterDownload').checked = config.ScanLibraryAfterDownload;
                         document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
                         document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
 
@@ -1142,6 +1151,7 @@
                         this.currentConfig.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
                         this.currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
                         this.currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
+                        this.currentConfig.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
                         const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
                         this.currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
                         this.saveGlobalConfig();

@@ -144,8 +144,15 @@ public class DownloadScheduledTask : IScheduledTask
         Plugin.Instance?.UpdateConfiguration(config);
 
         // Trigger library scans
-        _logger.LogInformation("Triggering library scan");
-        _libraryManager.QueueLibraryScan();
+        if (config.ScanLibraryAfterDownload)
+        {
+            _logger.LogInformation("Triggering library scan");
+            _libraryManager.QueueLibraryScan();
+        }
+        else
+        {
+            _logger.LogInformation("Library scan skipped (configured in settings).");
+        }
 
         progress.Report(100);
         _logger.LogInformation("Mediathek subscription download task finished.");
