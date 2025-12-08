@@ -45,88 +45,93 @@ public class DownloadManager
     /// <returns>True if the job was successful (or file already existed), otherwise false.</returns>
     public async Task<bool> ExecuteJobAsync(DownloadJob job, IProgress<double> progress, CancellationToken cancellationToken)
     {
-        if (File.Exists(job.DestinationPath))
-        {
-            _logger.LogDebug("File '{Path}' already exists. Skipping download.", job.DestinationPath);
-            progress.Report(100);
-            return true;
-        }
+        _logger.LogInformation("Starting download job for '{Title}'.", job.Title);
+        var success = true;
 
-        var directory = Path.GetDirectoryName(job.DestinationPath);
-        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        foreach (var item in job.DownloadItems)
         {
-            try
+            _logger.LogInformation("Processing download item: {Type} -> {Path}", item.JobType, item.DestinationPath);
+            if (File.Exists(item.DestinationPath))
             {
-                Directory.CreateDirectory(directory);
+                _logger.LogDebug("File '{Path}' already exists. Skipping download.", item.DestinationPath);
+                progress.Report(100);
+                return true;
             }
-            catch (Exception ex)
+
+            var directory = Path.GetDirectoryName(item.DestinationPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             {
-                _logger.LogError(ex, "Failed to create directory '{Directory}'.", directory);
-                return false;
-            }
-        }
-
-        bool success = false;
-
-        switch (job.JobType)
-        {
-            case DownloadType.StreamingUrl:
-                _logger.LogInformation("Creating streaming URL file for '{Title}' at '{Path}'.", job.Title, job.DestinationPath);
-                success = await _fileDownloader.GenerateStreamingUrlFileAsync(job.SourceUrl, job.DestinationPath, cancellationToken).ConfigureAwait(false);
-                break;
-
-            case DownloadType.DirectDownload:
-                _logger.LogInformation("Downloading '{Title}' to '{Path}'.", job.Title, job.DestinationPath);
-                success = await _fileDownloader.DownloadFileAsync(job.SourceUrl, job.DestinationPath, progress, cancellationToken).ConfigureAwait(false);
-                break;
-
-            case DownloadType.AudioExtraction:
-                var tempVideoPath = Path.Combine(_appPaths.TempDirectory, $"{Guid.NewGuid()}.mp4");
-                _logger.LogInformation("Downloading temporary video for '{Title}' to extract '{Language}' audio.", job.Title, job.AudioLanguage);
-
-                // Track progress for the download part (0-80%)
-                var downloadProgress = new Progress<double>(p => progress.Report(p * 0.8));
-
-                if (await _fileDownloader.DownloadFileAsync(job.SourceUrl, tempVideoPath, downloadProgress, cancellationToken).ConfigureAwait(false))
+                try
                 {
-                    _logger.LogInformation("Extracting '{Language}' audio for '{Title}' to '{Path}'.", job.AudioLanguage, job.Title, job.DestinationPath);
-                    progress.Report(85);
-                    success = await _ffmpegService.ExtractAudioAsync(tempVideoPath, job.DestinationPath, job.AudioLanguage ?? "und", cancellationToken).ConfigureAwait(false);
+                    Directory.CreateDirectory(directory);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to create directory '{Directory}'.", directory);
+                    return false;
+                }
+            }
 
-                    if (success)
+            switch (item.JobType)
+            {
+                case DownloadType.StreamingUrl:
+                    _logger.LogInformation("Creating streaming URL file for '{Title}' at '{Path}'.", job.Title, item.DestinationPath);
+                    success &= await _fileDownloader.GenerateStreamingUrlFileAsync(item.SourceUrl, item.DestinationPath, cancellationToken).ConfigureAwait(false);
+                    break;
+
+                case DownloadType.DirectDownload:
+                    _logger.LogInformation("Downloading '{Title}' to '{Path}'.", job.Title, item.DestinationPath);
+                    success &= await _fileDownloader.DownloadFileAsync(item.SourceUrl, item.DestinationPath, progress, cancellationToken).ConfigureAwait(false);
+                    break;
+
+                case DownloadType.AudioExtraction:
+                    var tempVideoPath = Path.Combine(_appPaths.TempDirectory, $"{Guid.NewGuid()}.mp4");
+                    _logger.LogInformation("Downloading temporary video for '{Title}' to extract '{Language}' audio.", job.Title, job.AudioLanguage);
+
+                    // Track progress for the download part (0-80%)
+                    var downloadProgress = new Progress<double>(p => progress.Report(p * 0.8));
+
+                    if (await _fileDownloader.DownloadFileAsync(item.SourceUrl, tempVideoPath, downloadProgress, cancellationToken).ConfigureAwait(false))
                     {
-                        _logger.LogInformation("Successfully extracted '{Language}' audio for '{Title}'.", job.AudioLanguage, job.Title);
+                        _logger.LogInformation("Extracting '{Language}' audio for '{Title}' to '{Path}'.", job.AudioLanguage, job.Title, item.DestinationPath);
+                        progress.Report(85);
+                        success &= await _ffmpegService.ExtractAudioAsync(tempVideoPath, item.DestinationPath, job.AudioLanguage ?? "und", cancellationToken).ConfigureAwait(false);
+
+                        if (success)
+                        {
+                            _logger.LogInformation("Successfully extracted '{Language}' audio for '{Title}'.", job.AudioLanguage, job.Title);
+                        }
+                        else
+                        {
+                            _logger.LogError("Failed to extract audio for '{Title}'.", job.Title);
+                        }
+
+                        // Clean up
+                        try
+                        {
+                            if (File.Exists(tempVideoPath))
+                            {
+                                File.Delete(tempVideoPath);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to delete temporary file '{TempPath}'.", tempVideoPath);
+                        }
                     }
                     else
                     {
-                        _logger.LogError("Failed to extract audio for '{Title}'.", job.Title);
+                        _logger.LogError("Failed to download temporary video for '{Title}'.", job.Title);
+                        success = false;
                     }
 
-                    // Clean up
-                    try
-                    {
-                        if (File.Exists(tempVideoPath))
-                        {
-                            File.Delete(tempVideoPath);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                         _logger.LogWarning(ex, "Failed to delete temporary file '{TempPath}'.", tempVideoPath);
-                    }
-                }
-                else
-                {
-                    _logger.LogError("Failed to download temporary video for '{Title}'.", job.Title);
+                    break;
+
+                default:
+                    _logger.LogError("Unknown download type: {Type}", item.JobType);
                     success = false;
-                }
-
-                break;
-
-            default:
-                _logger.LogError("Unknown download type: {Type}", job.JobType);
-                success = false;
-                break;
+                    break;
+            }
         }
 
         if (success)

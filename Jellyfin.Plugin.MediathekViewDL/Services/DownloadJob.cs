@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Jellyfin.Plugin.MediathekViewDL.Services;
 
 /// <summary>
@@ -12,23 +14,13 @@ public class DownloadJob
     public string ItemId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the source URL (Video URL, Subtitle URL, etc.).
+    /// Gets the collection of download items associated with this job.
     /// </summary>
-    public string SourceUrl { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the full local path where the result should be saved.
-    /// </summary>
-    public string DestinationPath { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Gets or sets the type of operation to perform.
-    /// </summary>
-    public DownloadType JobType { get; set; }
+    public HashSet<DownloadItem> DownloadItems { get; } = new();
 
     /// <summary>
     /// Gets or sets the language code for audio extraction (e.g., "deu", "eng").
-    /// Required only if <see cref="JobType"/> is <see cref="DownloadType.AudioExtraction"/>.
+    /// Requierd only if DownloadItems contains an audio extraction job.
     /// </summary>
     public string? AudioLanguage { get; set; }
 

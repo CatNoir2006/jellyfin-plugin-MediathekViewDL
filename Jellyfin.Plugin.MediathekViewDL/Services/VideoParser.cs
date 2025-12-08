@@ -69,7 +69,7 @@ public class VideoParser
     /// <param name="topic">The name of the topic the Video belongs to.</param>
     /// <param name="mediaTitle">The title of the media item from the API.</param>
     /// <returns>An <see cref="VideoInfo"/> object if parsing is successful, otherwise null.</returns>
-    public VideoInfo? ParseVideoInfo(string topic, string mediaTitle)
+    public VideoInfo? ParseVideoInfo(string? topic, string mediaTitle)
     {
         var videoInfo = new VideoInfo
         {
