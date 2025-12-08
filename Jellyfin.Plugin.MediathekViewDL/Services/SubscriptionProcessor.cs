@@ -99,7 +99,9 @@ public class SubscriptionProcessor
             // Video/Main Job
             var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo.Title, };
 
-            if (subscription.UseStreamingUrlFiles)
+            bool useStrmForThisItem = subscription.UseStreamingUrlFiles || (subscription.SaveExtrasAsStrm && subscription.TreatNonEpisodesAsExtras && !tempVideoInfo.IsShow);
+
+            if (useStrmForThisItem)
             {
                 downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.StrmFilePath, JobType = DownloadType.StreamingUrl });
             }
@@ -161,16 +163,37 @@ public class SubscriptionProcessor
             return false;
         }
 
-        if (subscription.EnforceSeriesParsing && !tempVideoInfo.IsShow)
+        if (subscription.EnforceSeriesParsing && !tempVideoInfo.IsShow && !subscription.TreatNonEpisodesAsExtras)
         {
             _logger.LogDebug("Skipping item '{Title}' due to EnforceSeriesParsing and parsing result.", item.Title);
             return false;
         }
 
-        if (subscription is { EnforceSeriesParsing: true, AllowAbsoluteEpisodeNumbering: false } && tempVideoInfo is { HasSeasonEpisodeNumbering: false })
+        if ((subscription is { EnforceSeriesParsing: true, AllowAbsoluteEpisodeNumbering: false } && tempVideoInfo is { HasSeasonEpisodeNumbering: false }) && (!subscription.TreatNonEpisodesAsExtras && !tempVideoInfo.IsShow))
         {
             _logger.LogDebug("Skipping item '{Title}' due to absolute episode numbering and subscription preference.", item.Title);
             return false;
+        }
+
+        if (subscription.TreatNonEpisodesAsExtras)
+        {
+            if (tempVideoInfo.IsTrailer && !subscription.SaveTrailers)
+            {
+                _logger.LogDebug("Skipping item '{Title}' because it is a trailer and SaveTrailers is disabled.", item.Title);
+                return false;
+            }
+
+            if (tempVideoInfo.IsInterview && !subscription.SaveInterviews)
+            {
+                _logger.LogDebug("Skipping item '{Title}' because it is an interview and SaveInterviews is disabled.", item.Title);
+                return false;
+            }
+
+            if (!tempVideoInfo.IsTrailer && !tempVideoInfo.IsInterview && !tempVideoInfo.IsShow && !subscription.SaveGenericExtras)
+            {
+                _logger.LogDebug("Skipping item '{Title}' because it is a generic extra and SaveGenericExtras is disabled.", item.Title);
+                return false;
+            }
         }
 
         return true;

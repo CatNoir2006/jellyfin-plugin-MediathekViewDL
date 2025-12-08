@@ -200,13 +200,25 @@ public class FileNameBuilderService
             return string.Empty;
         }
 
-        if (videoInfo.IsShow && videoInfo.HasSeasonEpisodeNumbering)
+        if ((videoInfo.IsShow && videoInfo.HasSeasonEpisodeNumbering) || (subscription.TreatNonEpisodesAsExtras && videoInfo.SeasonNumber.HasValue))
         {
             targetPath = Path.Combine(targetPath, $"Staffel {videoInfo.SeasonNumber!.Value}");
         }
-        else if (subscription.TreatNonEpisodesAsExtras)
+
+        if (subscription.TreatNonEpisodesAsExtras && !videoInfo.IsShow)
         {
-            targetPath = Path.Combine(targetPath, "Extras");
+            if (videoInfo.IsTrailer)
+            {
+                targetPath = Path.Combine(targetPath, "trailers");
+            }
+            else if (videoInfo.IsInterview)
+            {
+                targetPath = Path.Combine(targetPath, "interviews");
+            }
+            else
+            {
+                targetPath = Path.Combine(targetPath, "extras");
+            }
         }
 
         return targetPath;

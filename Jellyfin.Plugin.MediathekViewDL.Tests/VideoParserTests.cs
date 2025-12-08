@@ -21,7 +21,7 @@ public class VideoParserTests
 
         // Setup default behavior for the language detection mock
         _mockLanguageDetectionService.Setup(s => s.DetectLanguage(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns((string title, string _) => 
+            .Returns((string title, string _) =>
             {
                 var cleaned = title.Replace("(Englisch)", "").Trim();
                 return new LanguageDetectionResult { LanguageCode = "de", CleanedTitle = cleaned };
@@ -44,6 +44,13 @@ public class VideoParserTests
     [InlineData("Von der Metzgerei zum Märchenschloss – (Staffel 9, Folge 3)", "Von der Metzgerei zum Märchenschloss", 9, 3, null)]
     [InlineData("Märchenprinz (S13/E04)", "Märchenprinz", 13, 4, null)]
     [InlineData("Nutella: Das grüne Märchen von Ferrero - Greenwashed? (S2025/E02)", "Nutella: Das grüne Märchen von Ferrero - Greenwashed?", 2025, 2, null)]
+    // Additional supported formats (X-Notation, Verbose, etc.)
+    [InlineData("My Episode 1x05", "My Episode", 1, 5, null)]
+    [InlineData("My Episode 1X05", "My Episode", 1, 5, null)]
+    [InlineData("My Episode S01 E05", "My Episode", 1, 5, null)]
+    [InlineData("My Episode s01 e05", "My Episode", 1, 5, null)]
+    [InlineData("My Episode Staffel 1, Folge 5", "My Episode", 1, 5, null)]
+    [InlineData("My Episode (Staffel 1, Folge 5)", "My Episode", 1, 5, null)]
     public void ParseVideoInfo_ShouldParseNormalNumbering(string title, string expectedEpisodeTitle, int expectedSeason, int expectedEpisode, string? subscriptionName)
     {
         // Act
@@ -118,4 +125,20 @@ public class VideoParserTests
     // This test calls the private method indirectly via the public ParseVideoInfo
     // to ensure the tag cleaning happens as expected within the overall flow.
 
+    [Theory]
+    [InlineData("Cooler Film (Trailer)", true, false, "Cooler Film (Trailer)")]
+    [InlineData("Trailer: Neuer Film", true, false, "Trailer: Neuer Film")]
+    [InlineData("Spannendes Interview", false, true, "Spannendes Interview")]
+    [InlineData("Interview: Ein Star packt aus", false, true, "Interview: Ein Star packt aus")]
+    public void ParseVideoInfo_ShouldDetectTypeAndKeepTag(string title, bool isTrailer, bool isInterview, string expectedTitle)
+    {
+        // Act
+        var result = _videoParser.ParseVideoInfo(null, title);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(isTrailer, result.IsTrailer);
+        Assert.Equal(isInterview, result.IsInterview);
+        Assert.Equal(expectedTitle, result.Title, ignoreCase: true);
+    }
 }
