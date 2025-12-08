@@ -44,6 +44,13 @@ public class VideoParserTests
     [InlineData("Von der Metzgerei zum Märchenschloss – (Staffel 9, Folge 3)", "Von der Metzgerei zum Märchenschloss", 9, 3, null)]
     [InlineData("Märchenprinz (S13/E04)", "Märchenprinz", 13, 4, null)]
     [InlineData("Nutella: Das grüne Märchen von Ferrero - Greenwashed? (S2025/E02)", "Nutella: Das grüne Märchen von Ferrero - Greenwashed?", 2025, 2, null)]
+    // Additional supported formats (X-Notation, Verbose, etc.)
+    [InlineData("My Episode 1x05", "My Episode", 1, 5, null)]
+    [InlineData("My Episode 1X05", "My Episode", 1, 5, null)]
+    [InlineData("My Episode S01 E05", "My Episode", 1, 5, null)]
+    [InlineData("My Episode s01 e05", "My Episode", 1, 5, null)]
+    [InlineData("My Episode Staffel 1, Folge 5", "My Episode", 1, 5, null)]
+    [InlineData("My Episode (Staffel 1, Folge 5)", "My Episode", 1, 5, null)]
     public void ParseVideoInfo_ShouldParseNormalNumbering(string title, string expectedEpisodeTitle, int expectedSeason, int expectedEpisode, string? subscriptionName)
     {
         // Act
