@@ -44,6 +44,11 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool AllowUnknownDomains { get; set; } = false;
 
     /// <summary>
+    /// Gets or sets a value indicating whether a library scan should be triggered after a download finishes.
+    /// </summary>
+    public bool ScanLibraryAfterDownload { get; set; } = true;
+
+    /// <summary>
     /// Gets the list of download subscriptions.
     /// </summary>
     public Collection<Subscription> Subscriptions { get; init; }
