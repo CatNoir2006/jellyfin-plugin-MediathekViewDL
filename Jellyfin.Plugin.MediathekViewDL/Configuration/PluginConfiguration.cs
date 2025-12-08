@@ -49,6 +49,11 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool ScanLibraryAfterDownload { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets a value indicating whether to enable the automated cleanup of invalid .strm files.
+    /// </summary>
+    public bool EnableStrmCleanup { get; set; } = false;
+
+    /// <summary>
     /// Gets the list of download subscriptions.
     /// </summary>
     public Collection<Subscription> Subscriptions { get; init; }
