@@ -173,6 +173,21 @@ public class SubscriptionProcessor
             return false;
         }
 
+        if (subscription.TreatNonEpisodesAsExtras)
+        {
+            if (tempVideoInfo.IsTrailer && !subscription.SaveTrailers)
+            {
+                _logger.LogDebug("Skipping item '{Title}' because it is a trailer and SaveTrailers is disabled.", item.Title);
+                return false;
+            }
+
+            if (tempVideoInfo.IsInterview && !subscription.SaveInterviews)
+            {
+                _logger.LogDebug("Skipping item '{Title}' because it is an interview and SaveInterviews is disabled.", item.Title);
+                return false;
+            }
+        }
+
         return true;
     }
 

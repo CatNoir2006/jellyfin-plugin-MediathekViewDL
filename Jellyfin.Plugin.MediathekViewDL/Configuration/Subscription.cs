@@ -53,6 +53,16 @@ public class Subscription
     public bool TreatNonEpisodesAsExtras { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether trailers should be saved (only if TreatNonEpisodesAsExtras is true).
+    /// </summary>
+    public bool SaveTrailers { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether interviews should be saved (only if TreatNonEpisodesAsExtras is true).
+    /// </summary>
+    public bool SaveInterviews { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets a value indicating whether to only download content where season and episode can be parsed from the title.
     /// </summary>
     public bool EnforceSeriesParsing { get; set; }

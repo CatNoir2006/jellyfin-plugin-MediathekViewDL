@@ -46,7 +46,7 @@ public class VideoInfo
     public bool HasSeasonEpisodeNumbering => SeasonNumber.HasValue && EpisodeNumber.HasValue;
 
     /// <summary>
-    /// Gets or sets a value indicating whether the video has audiodescription.
+    /// Gets or sets a value indicating whether the video has audio description.
     /// </summary>
     public bool HasAudiodescription { get; set; }
 
@@ -59,4 +59,9 @@ public class VideoInfo
     /// Gets or sets a value indicating whether the video is a trailer.
     /// </summary>
     public bool IsTrailer { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the video is an interview.
+    /// </summary>
+    public bool IsInterview { get; set; }
 }

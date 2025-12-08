@@ -21,7 +21,7 @@ public class VideoParserTests
 
         // Setup default behavior for the language detection mock
         _mockLanguageDetectionService.Setup(s => s.DetectLanguage(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns((string title, string _) => 
+            .Returns((string title, string _) =>
             {
                 var cleaned = title.Replace("(Englisch)", "").Trim();
                 return new LanguageDetectionResult { LanguageCode = "de", CleanedTitle = cleaned };
@@ -125,4 +125,20 @@ public class VideoParserTests
     // This test calls the private method indirectly via the public ParseVideoInfo
     // to ensure the tag cleaning happens as expected within the overall flow.
 
+    [Theory]
+    [InlineData("Cooler Film (Trailer)", true, false, "Cooler Film (Trailer)")]
+    [InlineData("Trailer: Neuer Film", true, false, "Trailer: Neuer Film")]
+    [InlineData("Spannendes Interview", false, true, "Spannendes Interview")]
+    [InlineData("Interview: Ein Star packt aus", false, true, "Interview: Ein Star packt aus")]
+    public void ParseVideoInfo_ShouldDetectTypeAndKeepTag(string title, bool isTrailer, bool isInterview, string expectedTitle)
+    {
+        // Act
+        var result = _videoParser.ParseVideoInfo(null, title);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(isTrailer, result.IsTrailer);
+        Assert.Equal(isInterview, result.IsInterview);
+        Assert.Equal(expectedTitle, result.Title, ignoreCase: true);
+    }
 }

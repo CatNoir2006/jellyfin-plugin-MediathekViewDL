@@ -18,10 +18,12 @@ public class VideoParser
     private readonly Regex _adRegex;
     private readonly Regex _gsRegex;
     private readonly Regex _trailerRegex;
+    private readonly Regex _interviewRegex;
 
     // Regex for Number Parsing
     private readonly List<Regex> _seasonEpisodePatterns;
     private readonly List<Regex> _absoluteNumberingPatterns;
+    private readonly List<Regex> _seasonOnlyPatterns;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VideoParser"/> class.
@@ -48,6 +50,12 @@ public class VideoParser
         // Compile regex for Trailer
         _trailerRegex = new Regex(
             @"(?:\bTrailer\b)|^(?:Darum geht's)|(?:Darum geht's)$",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled,
+            TimeSpan.FromSeconds(1));
+
+        // Compile regex for Interview
+        _interviewRegex = new Regex(
+            @"\b(Interview)\b",
             RegexOptions.IgnoreCase | RegexOptions.Compiled,
             TimeSpan.FromSeconds(1));
 
@@ -80,6 +88,17 @@ public class VideoParser
 
             // "123. " - Number at start
             new Regex(@"^\s*(?<absolute>\d+)\.\s*", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1))
+        };
+
+        // Compile regex patterns for Season Only Numbering
+        _seasonOnlyPatterns = new List<Regex>
+        {
+            // "Staffel 1"
+            new Regex(@"(?:^|\s)Staffel\s*(?<season>\d+)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
+            // "Season 1"
+            new Regex(@"(?:^|\s)Season\s*(?<season>\d+)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
+             // "(S1)"
+            new Regex(@"[\(\[]S(?<season>\d+)[\)\]]", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1))
         };
     }
 
@@ -119,7 +138,6 @@ public class VideoParser
         }
 
         // 4. Season Episode Parsing (Normal Season/Episode)
-        bool seasonEpisodeFound = false;
         foreach (var pattern in _seasonEpisodePatterns)
         {
             var match = pattern.Match(processedMediaTitle);
@@ -132,27 +150,23 @@ public class VideoParser
                     videoInfo.EpisodeNumber = episode;
                     videoInfo.IsShow = true;
                     processedMediaTitle = CleanTagFromTitle(processedMediaTitle, match.Value);
-                    seasonEpisodeFound = true;
                     break; // Stop after first match
                 }
             }
         }
 
-        // 5. Absolute Episode Numbering Parsing (only if not already found)
-        if (!seasonEpisodeFound)
+        // 5. Absolute Episode Numbering Parsing
+        foreach (var pattern in _absoluteNumberingPatterns)
         {
-            foreach (var pattern in _absoluteNumberingPatterns)
+            var match = pattern.Match(processedMediaTitle);
+            if (match.Success)
             {
-                var match = pattern.Match(processedMediaTitle);
-                if (match.Success)
+                if (int.TryParse(match.Groups["absolute"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int absolute))
                 {
-                    if (int.TryParse(match.Groups["absolute"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int absolute))
-                    {
-                        videoInfo.AbsoluteEpisodeNumber = absolute;
-                        videoInfo.IsShow = true;
-                        processedMediaTitle = CleanTagFromTitle(processedMediaTitle, match.Value);
-                        break; // Stop after first match
-                    }
+                    videoInfo.AbsoluteEpisodeNumber = absolute;
+                    videoInfo.IsShow = true;
+                    processedMediaTitle = CleanTagFromTitle(processedMediaTitle, match.Value);
+                    break; // Stop after first match
                 }
             }
         }
@@ -162,6 +176,32 @@ public class VideoParser
         if (trailerMatch.Success)
         {
             videoInfo.IsTrailer = true;
+        }
+
+        // 7. Interview Detection
+        var interviewMatch = _interviewRegex.Match(processedMediaTitle);
+        if (interviewMatch.Success)
+        {
+            videoInfo.IsInterview = true;
+        }
+
+        // 8. Season Only Detection (if not already found)
+        if (!videoInfo.SeasonNumber.HasValue)
+        {
+            foreach (var pattern in _seasonOnlyPatterns)
+            {
+                var match = pattern.Match(processedMediaTitle);
+                if (match.Success)
+                {
+                    if (int.TryParse(match.Groups["season"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int season))
+                    {
+                        videoInfo.SeasonNumber = season;
+                        videoInfo.IsShow = true; // Implies it belongs to a show structure
+                        processedMediaTitle = CleanTagFromTitle(processedMediaTitle, match.Value);
+                        break; // Stop after first match
+                    }
+                }
+            }
         }
 
         // Final title cleanup (topic removal, general cleanup)
