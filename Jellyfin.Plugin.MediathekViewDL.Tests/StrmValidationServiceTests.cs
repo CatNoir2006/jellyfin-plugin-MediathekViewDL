@@ -125,17 +125,14 @@ public class StrmValidationServiceTests
     }
 
     [Fact]
-    public async Task ValidateUrlAsync_InvalidDomain_ReturnsFalse()
+    public async Task ValidateUrlAsync_InvalidDomain_ThrowsException()
     {
         // Arrange
         var url = "https://malicious-site.com/video.mp4";
         _testConfig.AllowUnknownDomains = false;
 
-        // Act
-        var result = await _service.ValidateUrlAsync(url, CancellationToken.None);
-
-        // Assert
-        Assert.False(result);
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() => _service.ValidateUrlAsync(url, CancellationToken.None));
         
         // Ensure no HTTP call was made
         _httpMessageHandlerMock.Protected().Verify(
@@ -147,10 +144,61 @@ public class StrmValidationServiceTests
     }
 
     [Fact]
-    public async Task ValidateUrlAsync_NotHttps_ReturnsFalse()
+    public async Task ValidateUrlAsync_NotHttps_ThrowsException()
     {
         // Arrange
         var url = "http://ard.de/video.mp4";
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() => _service.ValidateUrlAsync(url, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ValidateUrlAsync_ServerError_ThrowsHttpRequestException()
+    {
+        // Arrange
+        var url = "https://ard.de/video.mp4";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Head && req.RequestUri == new Uri(url)),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.InternalServerError));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<HttpRequestException>(() => _service.ValidateUrlAsync(url, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ValidateUrlAsync_EmptyUrl_ThrowsArgumentException()
+    {
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() => _service.ValidateUrlAsync("", CancellationToken.None));
+        await Assert.ThrowsAsync<ArgumentException>(() => _service.ValidateUrlAsync("   ", CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ValidateUrlAsync_InvalidUrlFormat_ThrowsArgumentException()
+    {
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentException>(() => _service.ValidateUrlAsync("not_a_url", CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task ValidateUrlAsync_Gone_ReturnsFalse()
+    {
+        // Arrange
+        var url = "https://ard.de/gone.mp4";
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.Is<HttpRequestMessage>(req => req.Method == HttpMethod.Head && req.RequestUri == new Uri(url)),
+                ItExpr.IsAny<CancellationToken>()
+            )
+            .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.Gone));
 
         // Act
         var result = await _service.ValidateUrlAsync(url, CancellationToken.None);

@@ -45,8 +45,6 @@ public class StrmCleanupTask : IScheduledTask
     /// <inheritdoc />
     public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
     {
-        // Run once a week by default, or maybe daily? Daily seems appropriate for "stream links expiring".
-        // Let's go with daily.
         yield return new TaskTriggerInfo { Type = TaskTriggerInfo.TriggerInterval, IntervalTicks = TimeSpan.FromHours(24).Ticks };
     }
 

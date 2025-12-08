@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,27 +43,24 @@ public class StrmValidationService
     {
         if (string.IsNullOrWhiteSpace(url))
         {
-            return false;
+            throw new ArgumentException("URL cannot be null or whitespace.", nameof(url));
         }
 
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
         {
-            _logger.LogWarning("Invalid URL format: {Url}", url);
-            return false;
+            throw new ArgumentException($"Invalid URL format: {url}", nameof(url));
         }
 
         // Security check: Only allow HTTPS
         if (uri.Scheme != Uri.UriSchemeHttps)
         {
-            _logger.LogWarning("Insecure URL scheme (not HTTPS): {Url}", url);
-            return false;
+            throw new ArgumentException($"Insecure URL scheme (not HTTPS): {url}", nameof(url));
         }
 
         var config = Configuration;
         if (config == null)
         {
-            _logger.LogError("Plugin configuration not available.");
-            return false; // Fail safe
+            throw new InvalidOperationException("Plugin configuration not available.");
         }
 
         // Domain check (reuse logic/list from configuration)
@@ -75,55 +73,53 @@ public class StrmValidationService
                 var topDomain = string.Join('.', hostParts[^2..]);
                 if (!config.AllowedDomains.Contains(topDomain))
                 {
-                    _logger.LogWarning("Domain '{Domain}' is not in the allowed list. URL: {Url}", topDomain, url);
-                    return false;
+                    throw new InvalidOperationException($"Domain '{topDomain}' is not in the allowed list. URL: {url}");
                 }
             }
             else
             {
-                _logger.LogWarning("Invalid host format: {Host}", host);
-                return false;
+                throw new ArgumentException($"Invalid host format: {host}", nameof(url));
             }
         }
 
-        try
-        {
-            var client = _httpClientFactory.CreateClient();
-            // Use HEAD request to check if the file exists without downloading it
-            using var request = new HttpRequestMessage(HttpMethod.Head, url);
-            using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        var client = _httpClientFactory.CreateClient();
+        // Use HEAD request to check if the file exists without downloading it
+        using var request = new HttpRequestMessage(HttpMethod.Head, url);
+        using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
 
-            if (response.IsSuccessStatusCode)
+        if (response.IsSuccessStatusCode)
+        {
+            return true;
+        }
+
+        // If HEAD fails (some servers might not support it), try a Range request for the first byte
+        if (response.StatusCode == HttpStatusCode.MethodNotAllowed)
+        {
+            _logger.LogDebug("HEAD request not allowed for {Url}, trying GET with Range header.", url);
+            using var getRequest = new HttpRequestMessage(HttpMethod.Get, url);
+            getRequest.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, 0);
+            using var getResponse = await client.SendAsync(getRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+
+            if (getResponse.IsSuccessStatusCode)
             {
                 return true;
             }
 
-            // If HEAD fails (some servers might not support it), try a Range request for the first byte
-            if (response.StatusCode == System.Net.HttpStatusCode.MethodNotAllowed)
+            if (getResponse.StatusCode == HttpStatusCode.NotFound || getResponse.StatusCode == HttpStatusCode.Gone)
             {
-                 _logger.LogDebug("HEAD request not allowed for {Url}, trying GET with Range header.", url);
-                 using var getRequest = new HttpRequestMessage(HttpMethod.Get, url);
-                 getRequest.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, 0);
-                 using var getResponse = await client.SendAsync(getRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-                 return getResponse.IsSuccessStatusCode;
+                _logger.LogInformation("URL validation confirmed invalid (404/410) for {Url}. Status Code: {StatusCode}", url, getResponse.StatusCode);
+                return false;
             }
 
-            _logger.LogDebug("URL validation failed for {Url}. Status Code: {StatusCode}", url, response.StatusCode);
+            throw new HttpRequestException($"Validation failed with status code {getResponse.StatusCode} for URL {url}");
+        }
+
+        if (response.StatusCode == HttpStatusCode.NotFound || response.StatusCode == HttpStatusCode.Gone)
+        {
+            _logger.LogInformation("URL validation confirmed invalid (404/410) for {Url}. Status Code: {StatusCode}", url, response.StatusCode);
             return false;
         }
-        catch (HttpRequestException ex)
-        {
-             _logger.LogDebug(ex, "HTTP request error validating URL {Url}", url);
-             return false;
-        }
-        catch (TaskCanceledException)
-        {
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Unexpected error validating URL {Url}", url);
-            return false;
-        }
+
+        throw new HttpRequestException($"Validation failed with status code {response.StatusCode} for URL {url}");
     }
 }
