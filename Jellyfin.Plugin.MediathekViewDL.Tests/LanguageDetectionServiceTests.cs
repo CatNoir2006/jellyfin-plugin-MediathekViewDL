@@ -28,6 +28,14 @@ public class LanguageDetectionServiceTests
 
     // Explicit Language
     [InlineData("Am Limit (S02/E03) (Englisch)", "eng", "Am Limit (S02/E03)")]
+    [InlineData("Heinz (S01/E08) (Französisch)", "fra", "Heinz (S01/E08)")]
+    [InlineData("Durrieux (S01/E07) (Französisch)", "fra", "Durrieux (S01/E07)")]
+    [InlineData("Prudence (S01/E06) (Französisch)", "fra", "Prudence (S01/E06)")]
+    [InlineData("Gwen (S01/E05) (Französisch)", "fra", "Gwen (S01/E05)")]
+    [InlineData("Quentin (S01/E04) (Französisch)", "fra", "Quentin (S01/E04)")]
+    [InlineData("S02E14 - Opfer.eng.strm", "eng", "S02E14 - Opfer.strm")]
+    [InlineData("S02E04 - Krieger und Hüter.eng.strm", "eng", "S02E04 - Krieger und Hüter.strm")]
+
 
     // Absolute Numbering (No explicit language)
     [InlineData("Nix für die Katz · 13.06.13 | Folge 1135", "deu", "Nix für die Katz · 13.06.13 | Folge 1135")]
@@ -59,11 +67,6 @@ public class LanguageDetectionServiceTests
     [InlineData("Folge 5: Die Lawine (S02/E05) (Originalversion)", "und", "Folge 5: Die Lawine (S02/E05)")]
     [InlineData("Film Title (OV)", "und", "Film Title")]
     [InlineData("Another Movie (OmU)", "und", "Another Movie")]
-    [InlineData("Heinz (S01/E08) (Französisch)", "fra", "Heinz (S01/E08)")]
-    [InlineData("Durrieux (S01/E07) (Französisch)", "fra", "Durrieux (S01/E07)")]
-    [InlineData("Prudence (S01/E06) (Französisch)", "fra", "Prudence (S01/E06)")]
-    [InlineData("Gwen (S01/E05) (Französisch)", "fra", "Gwen (S01/E05)")]
-    [InlineData("Quentin (S01/E04) (Französisch)", "fra", "Quentin (S01/E04)")]
 
     public void DetectLanguage_ShouldDetectAndClean(string inputTitle, string expectedLanguage, string expectedCleanedTitle)
     {
