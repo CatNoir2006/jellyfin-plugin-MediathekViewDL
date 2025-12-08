@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -14,25 +15,20 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services;
 public class LanguageDetectionService
 {
     private readonly List<LanguageData> _languageDataList;
-    private readonly Regex _ovDetectionRegex;
-    private readonly Regex _ovCleaningRegex;
+    private readonly HashSet<string> _ovIdentifiers = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "OV", "OmU", "OmeU", "Originalversion", "Originalversion mit Untertitel"
+    };
+
+    private readonly Regex _parenthesesRegex;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LanguageDetectionService"/> class.
     /// </summary>
     public LanguageDetectionService()
     {
-        // 1. Compile regex for "Original Version" (OV) identifiers.
-        // As per your feedback, this list can be expanded.
-        var ovIdentifiers = new List<string> { "OV", "OmU", "OmeU", "Originalversion", "Originalversion mit Untertitel" };
-
-        // Regex for simple detection.
-        var ovDetectionPattern = $@"\b({string.Join("|", ovIdentifiers.Select(Regex.Escape))})\b";
-        _ovDetectionRegex = new Regex(ovDetectionPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1));
-
-        // A more complex regex for cleaning all occurrences of OV tags, including surrounding brackets and spaces.
-        var ovCleaningPattern = $@"[\s\(\[]*({string.Join("|", ovIdentifiers.Select(Regex.Escape))})[\s\)\]]*";
-        _ovCleaningRegex = new Regex(ovCleaningPattern, RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+        var parenthesesPattern = @"\((?<content>[^)]*)\)";
+        _parenthesesRegex = new Regex(parenthesesPattern, RegexOptions.Compiled);
 
         // 2. Build and compile regex for all neutral cultures.
         _languageDataList = new List<LanguageData>();
@@ -51,7 +47,6 @@ public class LanguageDetectionService
 
                 var identifiers = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
                 {
-                    culture.TwoLetterISOLanguageName, culture.ThreeLetterISOLanguageName,
                     culture.EnglishName, culture.DisplayName, culture.NativeName
                 };
                 identifiers.RemoveWhere(string.IsNullOrWhiteSpace);
@@ -60,11 +55,11 @@ public class LanguageDetectionService
                     continue;
                 }
 
-                var pattern = $@"\b({string.Join("|", identifiers.Select(Regex.Escape))})\b";
                 _languageDataList.Add(new LanguageData
                 {
                     ThreeLetterIsoName = culture.ThreeLetterISOLanguageName,
-                    CompiledRegex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1))
+                    TwoLetterISOLanguageName = culture.TwoLetterISOLanguageName,
+                    LanguageNames = identifiers,
                 });
             }
         }
@@ -72,10 +67,6 @@ public class LanguageDetectionService
         {
             Thread.CurrentThread.CurrentUICulture = originalUiCulture;
         }
-
-        _languageDataList = _languageDataList
-            .OrderByDescending(ld => ld.CompiledRegex.ToString().Length)
-            .ToList();
     }
 
     /// <summary>
@@ -91,40 +82,133 @@ public class LanguageDetectionService
             return new LanguageDetectionResult { LanguageCode = defaultLanguage, CleanedTitle = title ?? string.Empty };
         }
 
-        // First, check for any "Original Version" tags.
-        var ovMatch = _ovDetectionRegex.Match(title);
-        if (ovMatch.Success)
+        var matches = _parenthesesRegex.Matches(title);
+        foreach (Match match in matches)
         {
-            // Per your feedback, remove all occurrences of any OV tag.
-            string cleanedTitle = _ovCleaningRegex.Replace(title, " ");
-            cleanedTitle = Regex.Replace(cleanedTitle, @"\s{2,}", " ").Trim(); // Collapse spaces.
-
-            // "Instantly return" with "und" code if an OV tag was found.
-            return new LanguageDetectionResult { LanguageCode = "und", MatchedIdentifier = ovMatch.Value, CleanedTitle = cleanedTitle };
-        }
-
-        // If not an OV title, proceed with specific language detection.
-        foreach (var langData in _languageDataList)
-        {
-            var match = langData.CompiledRegex.Match(title);
-            if (match.Success)
+            string content = match.Groups["content"].Value.Trim();
+            // If any parentheses content is empty, return default.
+            if (string.IsNullOrWhiteSpace(content))
             {
-                // A language tag was found. Build a specific cleaning regex for it and its surroundings.
-                string cleaningPattern = $@"\s*[\(\[]?\s*{Regex.Escape(match.Value)}\s*[)\]]?\s*";
-                string cleanedTitle = Regex.Replace(title, cleaningPattern, " ", RegexOptions.IgnoreCase);
-                cleanedTitle = Regex.Replace(cleanedTitle, @"\s{2,}", " ").Trim();
+                continue;
+            }
+
+            if (_ovIdentifiers.Contains(content))
+            {
+                string cleanedTitle = GetCleandRegexMatch(title, match);
+
+                // "Instantly return" with "und" code if an OV tag was found.
+                return new LanguageDetectionResult { LanguageCode = "und", MatchedIdentifier = content, CleanedTitle = cleanedTitle };
+            }
+            else if (_languageDataList.Any(ld => ld.LanguageNames.Contains(content)))
+            {
+                var langData = _languageDataList.First(ld => ld.LanguageNames.Contains(content));
+                string cleanedTitle = GetCleandRegexMatch(title, match);
 
                 return new LanguageDetectionResult
                 {
                     LanguageCode = langData.ThreeLetterIsoName,
-                    MatchedIdentifier = match.Value,
+                    MatchedIdentifier = content,
                     CleanedTitle = cleanedTitle
                 };
             }
         }
 
+        // Next, check for a language extension in the filename (if its an filename).
+        string langExtension = GetLanguageExtension(title);
+        if (!string.IsNullOrEmpty(langExtension) && _languageDataList.Any(id => id.TwoLetterISOLanguageName.Equals(langExtension, StringComparison.OrdinalIgnoreCase) ||
+                                           id.ThreeLetterIsoName.Equals(langExtension, StringComparison.OrdinalIgnoreCase)))
+        {
+            string cleanedTitle = GetCleanedLanguageExtensionTitle(title, langExtension);
+            return new LanguageDetectionResult
+            {
+                LanguageCode = langExtension,
+                MatchedIdentifier = langExtension,
+                CleanedTitle = cleanedTitle
+            };
+        }
+
         // Return the default if no language was detected.
         return new LanguageDetectionResult { LanguageCode = defaultLanguage, CleanedTitle = title };
+    }
+
+    /// <summary>
+    /// Extracts a potential language extension from the title.
+    /// This method does assume that the language extension is the second last dot-separated segment in the filename.
+    /// </summary>
+    /// <param name="title">The title string to analyze.</param>
+    /// <returns>Returns the language extension if found; otherwise, an empty string.</returns>
+    private string GetLanguageExtension(string title)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return string.Empty;
+        }
+
+        var filename = Path.GetFileName(title);
+        ReadOnlySpan<char> span = filename.AsSpan();
+
+        int lastDot = span.LastIndexOf('.');
+        if (lastDot <= 0 || (filename.Length - lastDot - 1) > 5) // 0 = leading dot (".hidden") or no dot, or extension too long
+        {
+            return string.Empty;
+        }
+
+        int prevDot = span.Slice(0, lastDot).LastIndexOf('.');
+        if (prevDot < 0 || (lastDot - prevDot - 1) is > 3 or < 2) // no previous dot or segment too long, lang codes are 2 or 3 letters
+        {
+            return string.Empty;
+        }
+
+        var langSpan = span.Slice(prevDot + 1, lastDot - prevDot - 1);
+        return langSpan.ToString(); // nur hier wird ein string alloziert
+    }
+
+    /// <summary>
+    /// Cleans the title by removing the specified language extension segment.
+    /// </summary>
+    /// <param name="title">The original title string.</param>
+    /// <param name="langExtension">The language extension segment to remove.</param>
+    /// <returns>The cleaned title string with the language extension removed.</returns>
+    private string GetCleanedLanguageExtensionTitle(string title, string langExtension)
+    {
+        if (string.IsNullOrWhiteSpace(title) || string.IsNullOrWhiteSpace(langExtension))
+        {
+            return title;
+        }
+
+        var filename = Path.GetFileName(title);
+        ReadOnlySpan<char> span = filename.AsSpan();
+
+        int lastDot = span.LastIndexOf('.');
+        if (lastDot <= 0) // 0 = leading dot (".hidden") or no dot
+        {
+            return title;
+        }
+
+        int prevDot = span.Slice(0, lastDot).LastIndexOf('.');
+        if (prevDot < 0)
+        {
+            return title;
+        }
+
+        var langSpan = span.Slice(prevDot + 1, lastDot - prevDot - 1);
+        if (!langSpan.Equals(langExtension, StringComparison.OrdinalIgnoreCase))
+        {
+            return title;
+        }
+
+        // Build cleaned title by removing the language extension segment.
+        string cleanedTitle = string.Concat(span.Slice(0, prevDot), span.Slice(lastDot));
+        return cleanedTitle.ToString();
+    }
+
+    private string GetCleandRegexMatch(string title, Match match)
+    {
+        var start = title.Substring(0, match.Index);
+        var end = title.Substring(match.Index + match.Length);
+        string cleanedTitle = start + end;
+        cleanedTitle = Regex.Replace(cleanedTitle, @"\s{2,}", " ").Trim(); // Collapse spaces.
+        return cleanedTitle;
     }
 
     /// <summary>
@@ -134,6 +218,8 @@ public class LanguageDetectionService
     {
         public required string ThreeLetterIsoName { get; init; }
 
-        public required Regex CompiledRegex { get; init; }
+        public required string TwoLetterISOLanguageName { get; init; }
+
+        public required HashSet<string> LanguageNames { get; init; } = new(StringComparer.OrdinalIgnoreCase);
     }
 }
