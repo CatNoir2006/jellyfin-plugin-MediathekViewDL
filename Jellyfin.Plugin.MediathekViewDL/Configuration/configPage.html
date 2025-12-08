@@ -119,6 +119,14 @@
                                 <div class="fieldDescription">Startet automatisch einen Scan der Medienbibliothek, nachdem neue Inhalte heruntergeladen wurden. Wenn deaktiviert, erscheinen neue Inhalte erst nach dem nächsten regulären Scan.</div>
                             </div>
 
+                            <div class="checkboxContainer checkboxContainer-withDescription" style="margin-top: 20px;">
+                                <label class="emby-checkbox-label">
+                                    <input id="chkEnableStrmCleanup" type="checkbox" is="emby-checkbox" />
+                                    <span>Bereinigung ungültiger Streaming-Dateien (.strm) aktivieren</span>
+                                </label>
+                                <div class="fieldDescription">Überprüft regelmäßig (via geplantem Task) alle erstellten .strm Dateien auf Gültigkeit der Links. Wenn ein Link nicht mehr erreichbar ist (z.B. 404), wird die Datei gelöscht, damit ggf. eine aktualisierte Version heruntergeladen werden kann. Beachtet die Einstellung "Downloads von unbekannten Domains erlauben".</div>
+                            </div>
+
                             <div class="inputContainer">
                                 <label class="inputLabel" for="txtMinFreeDiskSpaceMiB">Mindestfreier Speicherplatz
                                     (MiB)</label>
@@ -715,6 +723,7 @@
                         document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
                         document.querySelector('#chkAllowUnknownDomains').checked = config.AllowUnknownDomains;
                         document.querySelector('#chkScanLibraryAfterDownload').checked = config.ScanLibraryAfterDownload;
+                        document.querySelector('#chkEnableStrmCleanup').checked = config.EnableStrmCleanup;
                         document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
                         document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
 
@@ -1152,6 +1161,7 @@
                         this.currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
                         this.currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
                         this.currentConfig.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
+                        this.currentConfig.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
                         const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
                         this.currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
                         this.saveGlobalConfig();
