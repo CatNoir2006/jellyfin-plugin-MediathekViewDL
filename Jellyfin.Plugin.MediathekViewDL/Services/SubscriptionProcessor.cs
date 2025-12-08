@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api;
@@ -65,10 +68,126 @@ public class SubscriptionProcessor
             }
         }
 
+        await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            if (subscription.ProcessedItemIds.Contains(item.Id))
+            {
+                _logger.LogDebug("Skipping item '{Title}' (ID: {Id}) as it was already processed for subscription '{SubscriptionName}'.", item.Title, item.Id, subscription.Name);
+                continue;
+            }
+
+            var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
+
+            if (!ApplyFilters(tempVideoInfo, subscription, item, localEpisodeCache))
+            {
+                continue;
+            }
+
+            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo, subscription);
+            if (!paths.IsValid)
+            {
+                continue;
+            }
+
+            var videoUrl = item.UrlVideoHd ?? item.UrlVideo ?? item.UrlVideoLow;
+            if (string.IsNullOrWhiteSpace(videoUrl))
+            {
+                _logger.LogWarning("No video URL found for item '{Title}'.", item.Title);
+                continue;
+            }
+
+            // Video/Main Job
+            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo.Title, };
+
+            if (subscription.UseStreamingUrlFiles)
+            {
+                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.StrmFilePath, JobType = DownloadType.StreamingUrl });
+            }
+            else if (tempVideoInfo.Language == "deu" || subscription.DownloadFullVideoForSecondaryAudio)
+            {
+                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.DirectDownload });
+            }
+            else
+            {
+                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.DirectDownload });
+            }
+
+            jobs.Add(downloadJob);
+
+            // Subtitle Job
+            if (downloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
+            {
+                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = item.UrlSubtitle, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
+            }
+        }
+
+        return jobs;
+    }
+
+    /// <summary>
+    /// Applies filtering rules to determine if the item should be processed.
+    /// </summary>
+    /// <returns>True if the item passes all filters; otherwise, false.</returns>
+    private bool ApplyFilters([NotNullWhen(true)]VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
+    {
+        if (tempVideoInfo == null)
+        {
+            _logger.LogDebug("Skipping item '{Title}' due to video info parsing failure.", item.Title);
+            return false;
+        }
+
+        if (localEpisodeCache != null && localEpisodeCache.Contains(tempVideoInfo))
+        {
+            _logger.LogInformation(
+                "Skipping item '{Title}' (S{Season}E{Episode} / Abs: {Abs}) as it was found locally via enhanced duplicate detection.",
+                item.Title,
+                tempVideoInfo.SeasonNumber,
+                tempVideoInfo.EpisodeNumber,
+                tempVideoInfo.AbsoluteEpisodeNumber);
+
+            subscription.ProcessedItemIds.Add(item.Id);
+            return false;
+        }
+
+        if (!subscription.AllowAudioDescription && tempVideoInfo.HasAudiodescription)
+        {
+            _logger.LogDebug("Skipping item '{Title}' due to Audiodescription and subscription preference.", item.Title);
+            return false;
+        }
+
+        if (!subscription.AllowSignLanguage && tempVideoInfo.HasSignLanguage)
+        {
+            _logger.LogDebug("Skipping item '{Title}' due to Sign Language and subscription preference.", item.Title);
+            return false;
+        }
+
+        if (subscription.EnforceSeriesParsing && !tempVideoInfo.IsShow)
+        {
+            _logger.LogDebug("Skipping item '{Title}' due to EnforceSeriesParsing and parsing result.", item.Title);
+            return false;
+        }
+
+        if (subscription is { EnforceSeriesParsing: true, AllowAbsoluteEpisodeNumbering: false } && tempVideoInfo is { HasSeasonEpisodeNumbering: false })
+        {
+            _logger.LogDebug("Skipping item '{Title}' due to absolute episode numbering and subscription preference.", item.Title);
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Queries the MediathekView API for results matching the subscription.
+    /// </summary>
+    /// <param name="subscription">The subscription to query for.</param>
+    /// <param name="pageSize">The number of results per page.</param>
+    /// <param name="maxPages">The maximum number of pages to retrieve.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The collection of result items retrieved from the API.</returns>
+    private async IAsyncEnumerable<ResultItem> QueryApiAsync(Subscription subscription, int pageSize = 50, int maxPages = 20, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
         var currentPage = 0;
         var hasMoreResults = true;
-        var pageSize = 50;
-        var maxPages = 20;
 
         while (hasMoreResults && currentPage < maxPages)
         {
@@ -92,120 +211,16 @@ public class SubscriptionProcessor
                 hasMoreResults = false;
             }
 
-            var results = result?.Results;
-            if (results == null)
+            if (result?.Results == null)
             {
                 _logger.LogWarning("Could not retrieve search results for subscription '{SubscriptionName}'.", subscription.Name);
-                continue;
+                yield break;
             }
 
-            foreach (var item in results)
+            foreach (var item in result.Results)
             {
-                if (subscription.ProcessedItemIds.Contains(item.Id))
-                {
-                    _logger.LogDebug("Skipping item '{Title}' (ID: {Id}) as it was already processed for subscription '{SubscriptionName}'.", item.Title, item.Id, subscription.Name);
-                    continue;
-                }
-
-                var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
-                if (tempVideoInfo == null)
-                {
-                    _logger.LogDebug("Skipping item '{Title}' due to video info parsing failure.", item.Title);
-                    continue;
-                }
-
-                if (localEpisodeCache != null && localEpisodeCache.Contains(tempVideoInfo))
-                {
-                    _logger.LogInformation(
-                        "Skipping item '{Title}' (S{Season}E{Episode} / Abs: {Abs}) as it was found locally via enhanced duplicate detection.",
-                        item.Title,
-                        tempVideoInfo.SeasonNumber,
-                        tempVideoInfo.EpisodeNumber,
-                        tempVideoInfo.AbsoluteEpisodeNumber);
-
-                    subscription.ProcessedItemIds.Add(item.Id);
-                    continue;
-                }
-
-                if (!subscription.AllowAudioDescription && tempVideoInfo.HasAudiodescription)
-                {
-                    _logger.LogDebug("Skipping item '{Title}' due to Audiodescription and subscription preference.", item.Title);
-                    continue;
-                }
-
-                if (!subscription.AllowSignLanguage && tempVideoInfo.HasSignLanguage)
-                {
-                    _logger.LogDebug("Skipping item '{Title}' due to Sign Language and subscription preference.", item.Title);
-                    continue;
-                }
-
-                if (subscription.EnforceSeriesParsing && !tempVideoInfo.IsShow)
-                {
-                    _logger.LogDebug("Skipping item '{Title}' due to EnforceSeriesParsing and parsing result.", item.Title);
-                    continue;
-                }
-
-                if (subscription is { EnforceSeriesParsing: true, AllowAbsoluteEpisodeNumbering: false } && tempVideoInfo is { HasSeasonEpisodeNumbering: false })
-                {
-                    _logger.LogDebug("Skipping item '{Title}' due to absolute episode numbering and subscription preference.", item.Title);
-                    continue;
-                }
-
-                var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo, subscription);
-                if (!paths.IsValid)
-                {
-                    continue;
-                }
-
-                var videoUrl = item.UrlVideoHd ?? item.UrlVideo ?? item.UrlVideoLow;
-                if (string.IsNullOrWhiteSpace(videoUrl))
-                {
-                    _logger.LogWarning("No video URL found for item '{Title}'.", item.Title);
-                    continue;
-                }
-
-                // Video/Main Job
-                var mainJob = new DownloadJob
-                {
-                    ItemId = item.Id,
-                    Title = tempVideoInfo.Title,
-                    SourceUrl = videoUrl
-                };
-
-                if (subscription.UseStreamingUrlFiles)
-                {
-                    mainJob.JobType = DownloadType.StreamingUrl;
-                    mainJob.DestinationPath = paths.StrmFilePath;
-                }
-                else if (tempVideoInfo.Language == "deu" || subscription.DownloadFullVideoForSecondaryAudio)
-                {
-                    mainJob.JobType = DownloadType.DirectDownload;
-                    mainJob.DestinationPath = paths.MainFilePath;
-                }
-                else
-                {
-                    mainJob.JobType = DownloadType.AudioExtraction;
-                    mainJob.DestinationPath = paths.MainFilePath;
-                    mainJob.AudioLanguage = tempVideoInfo.Language;
-                }
-
-                jobs.Add(mainJob);
-
-                // Subtitle Job
-                if (downloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
-                {
-                    jobs.Add(new DownloadJob
-                    {
-                        ItemId = item.Id,
-                        Title = $"{tempVideoInfo.Title} (Subtitle)",
-                        SourceUrl = item.UrlSubtitle,
-                        DestinationPath = paths.SubtitleFilePath,
-                        JobType = DownloadType.DirectDownload
-                    });
-                }
+                yield return item;
             }
         }
-
-        return jobs;
     }
 }
