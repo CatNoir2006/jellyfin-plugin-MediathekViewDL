@@ -236,6 +236,14 @@
                                 <div class="fieldDescription">Nicht als Episoden erkannte Videos als Extras behandeln.
                                     Wird ignoriert, wenn "Nur Serien herunterladen" aktiviert ist.</div>
                             </div>
+                            
+                            <div id="subSaveExtrasAsStrmContainer" class="checkboxContainer checkboxContainer-withDescription" style="margin-left: 20px;">
+                                <label class="emby-checkbox-label">
+                                    <input id="subSaveExtrasAsStrm" type="checkbox" is="emby-checkbox" />
+                                    <span>Extras als Stream (.strm) speichern</span>
+                                </label>
+                                <div class="fieldDescription">Extras werden als .strm Dateien gespeichert (spart Speicherplatz).</div>
+                            </div>
 
                             <div id="subSaveTrailersContainer" class="checkboxContainer checkboxContainer-withDescription" style="margin-left: 20px;">
                                 <label class="emby-checkbox-label">
@@ -251,6 +259,14 @@
                                     <span>Interviews speichern</span>
                                 </label>
                                 <div class="fieldDescription">Interviews werden gespeichert.</div>
+                            </div>
+
+                            <div id="subSaveGenericExtrasContainer" class="checkboxContainer checkboxContainer-withDescription" style="margin-left: 20px;">
+                                <label class="emby-checkbox-label">
+                                    <input id="subSaveGenericExtras" type="checkbox" is="emby-checkbox" />
+                                    <span>Generische Extras speichern</span>
+                                </label>
+                                <div class="fieldDescription">Alle anderen Extras (nicht Trailer/Interviews) werden gespeichert.</div>
                             </div>
 
                             <div id="subAllowAbsoluteEpisodeNumberingContainer" class="checkboxContainer checkboxContainer-withDescription">
@@ -374,6 +390,8 @@
                         document.getElementById('subTreatNonEpisodesAsExtras').checked = false;
                         document.getElementById('subSaveTrailers').checked = true;
                         document.getElementById('subSaveInterviews').checked = true;
+                        document.getElementById('subSaveGenericExtras').checked = true;
+                        document.getElementById('subSaveExtrasAsStrm').checked = false;
                         document.getElementById('subUseStreamingUrlFiles').checked = false;
                         document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = false;
                         document.getElementById('subEnhancedDuplicateDetection').checked = false;
@@ -396,6 +414,8 @@
                     document.getElementById('subTreatNonEpisodesAsExtras').checked = sub.TreatNonEpisodesAsExtras;
                     document.getElementById('subSaveTrailers').checked = sub.SaveTrailers;
                     document.getElementById('subSaveInterviews').checked = sub.SaveInterviews;
+                    document.getElementById('subSaveGenericExtras').checked = sub.SaveGenericExtras;
+                    document.getElementById('subSaveExtrasAsStrm').checked = sub.SaveExtrasAsStrm;
                     document.getElementById('subUseStreamingUrlFiles').checked = sub.UseStreamingUrlFiles;
                     document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = sub.DownloadFullVideoForSecondaryAudio;
 
@@ -422,6 +442,8 @@
                     const treatNonEpisodesAsExtras = document.getElementById('subTreatNonEpisodesAsExtras').checked;
                     const saveTrailers = document.getElementById('subSaveTrailers').checked;
                     const saveInterviews = document.getElementById('subSaveInterviews').checked;
+                    const saveGenericExtras = document.getElementById('subSaveGenericExtras').checked;
+                    const saveExtrasAsStrm = document.getElementById('subSaveExtrasAsStrm').checked;
                     const useStreamingUrlFiles = document.getElementById('subUseStreamingUrlFiles').checked;
                     const downloadFullVideoForSecondaryAudio = document.getElementById('subDownloadFullVideoForSecondaryAudio').checked;
 
@@ -452,6 +474,8 @@
                         TreatNonEpisodesAsExtras: treatNonEpisodesAsExtras,
                         SaveTrailers: saveTrailers,
                         SaveInterviews: saveInterviews,
+                        SaveGenericExtras: saveGenericExtras,
+                        SaveExtrasAsStrm: saveExtrasAsStrm,
                         UseStreamingUrlFiles: useStreamingUrlFiles,
                         DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio,
                     };
@@ -505,6 +529,18 @@
                         {
                             controllerId: 'subTreatNonEpisodesAsExtras',
                             dependentId: 'subSaveInterviewsContainer',
+                            showWhen: true,
+                            disableWhenHidden: true
+                        },
+                        {
+                            controllerId: 'subTreatNonEpisodesAsExtras',
+                            dependentId: 'subSaveGenericExtrasContainer',
+                            showWhen: true,
+                            disableWhenHidden: true
+                        },
+                        {
+                            controllerId: 'subTreatNonEpisodesAsExtras',
+                            dependentId: 'subSaveExtrasAsStrmContainer',
                             showWhen: true,
                             disableWhenHidden: true
                         },

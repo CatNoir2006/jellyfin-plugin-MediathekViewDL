@@ -99,7 +99,9 @@ public class SubscriptionProcessor
             // Video/Main Job
             var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo.Title, };
 
-            if (subscription.UseStreamingUrlFiles)
+            bool useStrmForThisItem = subscription.UseStreamingUrlFiles || (subscription.SaveExtrasAsStrm && subscription.TreatNonEpisodesAsExtras && !tempVideoInfo.IsShow);
+
+            if (useStrmForThisItem)
             {
                 downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.StrmFilePath, JobType = DownloadType.StreamingUrl });
             }
@@ -184,6 +186,12 @@ public class SubscriptionProcessor
             if (tempVideoInfo.IsInterview && !subscription.SaveInterviews)
             {
                 _logger.LogDebug("Skipping item '{Title}' because it is an interview and SaveInterviews is disabled.", item.Title);
+                return false;
+            }
+
+            if (!tempVideoInfo.IsTrailer && !tempVideoInfo.IsInterview && !tempVideoInfo.IsShow && !subscription.SaveGenericExtras)
+            {
+                _logger.LogDebug("Skipping item '{Title}' because it is a generic extra and SaveGenericExtras is disabled.", item.Title);
                 return false;
             }
         }

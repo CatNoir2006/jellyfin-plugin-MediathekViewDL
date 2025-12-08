@@ -63,6 +63,16 @@ public class Subscription
     public bool SaveInterviews { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets a value indicating whether generic extras (not trailers/interviews) should be saved (only if TreatNonEpisodesAsExtras is true).
+    /// </summary>
+    public bool SaveGenericExtras { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether extras should be saved as .strm files.
+    /// </summary>
+    public bool SaveExtrasAsStrm { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether to only download content where season and episode can be parsed from the title.
     /// </summary>
     public bool EnforceSeriesParsing { get; set; }
