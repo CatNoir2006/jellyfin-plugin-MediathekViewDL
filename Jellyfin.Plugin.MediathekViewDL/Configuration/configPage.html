@@ -514,12 +514,7 @@
 
                     // --- Dependency Rules --- Disable/hide certain fields based on other field values of subscriptions
                     this.subscriptionDependencyRules = [
-                        {
-                            controllerId: 'subEnforceSeries',
-                            dependentId: 'subTreatNonEpisodesAsExtrasContainer',
-                            showWhen: false,
-                            disableWhenHidden: true
-                        },
+
                         {
                             controllerId: 'subTreatNonEpisodesAsExtras',
                             dependentId: 'subSaveTrailersContainer',

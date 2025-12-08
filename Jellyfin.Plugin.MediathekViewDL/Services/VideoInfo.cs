@@ -64,4 +64,11 @@ public class VideoInfo
     /// Gets or sets a value indicating whether the video is an interview.
     /// </summary>
     public bool IsInterview { get; set; }
+
+    /// <summary>
+    /// Gets a value indicating whether the video is considered an extra.
+    /// This is only true if the Subscription is configured to treat non-episodes as extras.
+    /// This should be ignored if non-episodes-as-extras treatment is disabled.
+    /// </summary>
+    public bool IsExtra => IsInterview || IsTrailer || (!IsShow);
 }

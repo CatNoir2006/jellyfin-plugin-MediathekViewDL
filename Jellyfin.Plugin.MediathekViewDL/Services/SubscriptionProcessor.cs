@@ -163,13 +163,13 @@ public class SubscriptionProcessor
             return false;
         }
 
-        if (subscription.EnforceSeriesParsing && !tempVideoInfo.IsShow)
+        if (subscription.EnforceSeriesParsing && !tempVideoInfo.IsShow && !subscription.TreatNonEpisodesAsExtras)
         {
             _logger.LogDebug("Skipping item '{Title}' due to EnforceSeriesParsing and parsing result.", item.Title);
             return false;
         }
 
-        if (subscription is { EnforceSeriesParsing: true, AllowAbsoluteEpisodeNumbering: false } && tempVideoInfo is { HasSeasonEpisodeNumbering: false })
+        if ((subscription is { EnforceSeriesParsing: true, AllowAbsoluteEpisodeNumbering: false } && tempVideoInfo is { HasSeasonEpisodeNumbering: false }) && (!subscription.TreatNonEpisodesAsExtras && !tempVideoInfo.IsShow))
         {
             _logger.LogDebug("Skipping item '{Title}' due to absolute episode numbering and subscription preference.", item.Title);
             return false;
