@@ -16,17 +16,17 @@
                 <!-- Tab Navigation -->
                 <div class="sectionTabs tabs-spacer">
                     <button type="button" class="paper-icon-button-light selected"
-                        onclick="mediathekConfig.switchTab('search')">
+                        onclick="MediathekViewDL.config.switchTab('search')">
                         <span class="material-icons search" aria-hidden="true"></span>
                         <span>Manuelle Suche</span>
                     </button>
                     <button type="button" class="paper-icon-button-light"
-                        onclick="mediathekConfig.switchTab('settings')">
+                        onclick="MediathekViewDL.config.switchTab('settings')">
                         <span class="material-icons settings" aria-hidden="true"></span>
                         <span>Einstellungen</span>
                     </button>
                     <button type="button" class="paper-icon-button-light"
-                        onclick="mediathekConfig.switchTab('subscriptions')">
+                        onclick="MediathekViewDL.config.switchTab('subscriptions')">
                         <span class="material-icons subscriptions" aria-hidden="true"></span>
                         <span>Abo Verwaltung</span>
                     </button>
@@ -39,7 +39,7 @@
                         <p class="sectionDescription">Suche nach Inhalten, um diese direkt herunterzuladen oder ein Abo
                             zu erstellen.</p>
 
-                        <form onsubmit="mediathekConfig.performSearch(); return false;">
+                        <form onsubmit="MediathekViewDL.config.performSearch(); return false;">
                             <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
                                 <div class="inputContainer" style="flex-grow: 1;">
                                     <label class="inputLabel" for="txtSearchQuery">Suchbegriff</label>
@@ -156,7 +156,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div class="sectionTitleLabel">Aktive Abonnements</div>
                             <button is="emby-button" type="button" class="raised"
-                                onclick="subscriptionEditor.show(null)">
+                                onclick="MediathekViewDL.editor.show(null)">
                                 <span class="material-icons add"></span>
                                 <span>Neues Abo</span>
                             </button>
@@ -170,7 +170,7 @@
                     <div id="subscriptionEditor"
                         style="display: none; border-top: 1px solid #444; margin-top: 20px; padding-top: 20px;">
                         <h3 id="subEditorTitle">Abonnement bearbeiten</h3>
-                        <form onsubmit="mediathekConfig.saveSubscription(); return false;">
+                        <form onsubmit="MediathekViewDL.config.saveSubscription(); return false;">
                             <input type="hidden" id="subId" />
 
                             <div class="inputContainer">
@@ -186,7 +186,7 @@
                                     <!-- Query-Zeilen werden hier dynamisch eingefügt -->
                                 </div>
                                 <button is="emby-button" type="button" class="raised"
-                                    onclick="mediathekConfig.addQueryRow()" style="margin-top: 10px;">
+                                    onclick="MediathekViewDL.config.addQueryRow()" style="margin-top: 10px;">
                                     <span class="material-icons add"></span>
                                     <span>Anfrage hinzufügen</span>
                                 </button>
@@ -327,7 +327,7 @@
                                     <span>Abo Speichern</span>
                                 </button>
                                 <button is="emby-button" type="button" class="raised button-cancel"
-                                    onclick="subscriptionEditor.close()">
+                                    onclick="MediathekViewDL.editor.close()">
                                     <span>Abbrechen</span>
                                 </button>
                             </div>
@@ -343,7 +343,7 @@
             <div class="dialog-content"
                 style="background-color: #303030; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 5px;">
                 <h2 id="advancedDownloadTitle">Erweiterter Download</h2>
-                <form onsubmit="mediathekConfig.performAdvancedDownload(); return false;">
+                <form onsubmit="MediathekViewDL.config.performAdvancedDownload(); return false;">
                     <input type="hidden" id="advancedDownloadIndex" />
 
                     <div class="inputContainer">
@@ -376,7 +376,7 @@
                             <span>Herunterladen</span>
                         </button>
                         <button is="emby-button" type="button" class="raised button-cancel"
-                            onclick="mediathekConfig.closeAdvancedDownloadDialog()">
+                            onclick="MediathekViewDL.config.closeAdvancedDownloadDialog()">
                             <span>Abbrechen</span>
                         </button>
                     </div>
@@ -385,6 +385,7 @@
         </div>
 
         <script type="text/javascript">
+            (function() {
             class SubscriptionEditor {
                 constructor(configInstance) {
                     this.config = configInstance;
@@ -896,7 +897,7 @@
                         EnforceSeriesParsing: false,
                         AllowAudioDescription: false
                     };
-                    subscriptionEditor.show(newSub);
+                    this.subscriptionEditor.show(newSub);
                 }
 
 
@@ -959,7 +960,7 @@
                         actions.appendChild(this.createIconButton(toggleIcon, toggleTitle, () => this.toggleSubscription(sub.Id)));
 
                         actions.appendChild(this.createIconButton('refresh', 'Verarbeitete Items zurücksetzen', () => this.resetProcessedItems(sub.Id)));
-                        actions.appendChild(this.createIconButton('edit', 'Bearbeiten', () => subscriptionEditor.show(sub)));
+                        actions.appendChild(this.createIconButton('edit', 'Bearbeiten', () => this.subscriptionEditor.show(sub)));
                         actions.appendChild(this.createIconButton('delete', 'Löschen', () => this.deleteSubscription(sub.Id)));
 
                         listItem.appendChild(body);
@@ -1083,7 +1084,7 @@
                     }
 
                     this.saveGlobalConfig();
-                    subscriptionEditor.close();
+                    this.subscriptionEditor.close();
                     this.renderSubscriptionsList();
                 }
 
@@ -1191,8 +1192,12 @@
             }
 
             const mediathekConfig = new MediathekPluginConfig();
-            const subscriptionEditor = mediathekConfig.subscriptionEditor;
+            window.MediathekViewDL = {
+                config: mediathekConfig,
+                editor: mediathekConfig.subscriptionEditor
+            };
             mediathekConfig.init();
+            })();
         </script>
         <style>
             .tabs-spacer {
