@@ -420,6 +420,7 @@
         </div>
     </div>
 
+    <!--suppress JSUnusedGlobalSymbols -->
     <script type="text/javascript">
         (function () {
             class SubscriptionEditor {
@@ -859,47 +860,36 @@
                     container.appendChild(paperList);
                 }
 
-                createGenericResultItem(item, actions) {
-                    const durationStr = Math.floor(item.duration / 60) + " Min";
-
+                createListItem(title, bodyText1, bodyText2, actions) {
                     const listItem = document.createElement('div');
                     listItem.classList.add('listItem', 'listItem-border');
 
                     const body = document.createElement('div');
                     body.classList.add('listItemBody', 'two-line');
 
-                    const title = document.createElement('h3');
-                    title.classList.add('listItemBodyText');
-                    title.textContent = item.title;
+                    const titleEl = document.createElement('h3');
+                    titleEl.classList.add('listItemBodyText');
+                    titleEl.textContent = title;
 
-                    const details = document.createElement('div');
-                    details.classList.add('listItemBodyText', 'secondary', 'flex-align-center');
-                    details.style.gap = '8px';
-
-                    const detailsText = document.createElement('span');
-                    detailsText.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
-                    details.appendChild(detailsText);
-
-                    if (item.url_subtitle) {
-                        const sep = document.createElement('span');
-                        sep.textContent = ' | ';
-                        details.appendChild(sep);
-
-                        const icon = document.createElement('span');
-                        icon.classList.add('material-icons', 'closed_caption');
-                        icon.title = 'Untertitel verfügbar';
-                        details.appendChild(icon);
+                    const text1El = document.createElement('div');
+                    text1El.classList.add('listItemBodyText', 'secondary');
+                    if (typeof bodyText1 === 'string') {
+                        text1El.textContent = bodyText1;
+                    } else if (bodyText1 instanceof Node) {
+                        text1El.appendChild(bodyText1);
                     }
 
-                    const desc = document.createElement('div');
-                    desc.classList.add('listItemBodyText', 'secondary');
-                    desc.style.fontSize = '0.9em';
-                    desc.style.opacity = '0.7';
-                    desc.textContent = item.description || '';
+                    const text2El = document.createElement('div');
+                    text2El.classList.add('listItemBodyText', 'secondary');
+                    if (typeof bodyText2 === 'string') {
+                        text2El.textContent = bodyText2;
+                    } else if (bodyText2 instanceof Node) {
+                        text2El.appendChild(bodyText2);
+                    }
 
-                    body.appendChild(title);
-                    body.appendChild(details);
-                    body.appendChild(desc);
+                    body.appendChild(titleEl);
+                    body.appendChild(text1El);
+                    body.appendChild(text2El);
 
                     listItem.appendChild(body);
 
@@ -911,6 +901,7 @@
                 }
 
                 createSearchResultItem(item, index) {
+                    const durationStr = Math.floor(item.duration / 60) + " Min";
                     const actions = document.createElement('div');
                     actions.classList.add('flex-gap-10');
 
@@ -918,7 +909,27 @@
                     actions.appendChild(this.createIconButton('settings', 'Erweiterter Download', () => this.openAdvancedDownloadDialog(index)));
                     actions.appendChild(this.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.title, item.channel, item.topic)));
 
-                    return this.createGenericResultItem(item, actions);
+                    // Build BodyText1
+                    const body1 = document.createElement('div');
+                    body1.classList.add('flex-align-center');
+                    body1.style.gap = '8px';
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
+                    body1.appendChild(textSpan);
+
+                    if (item.url_subtitle) {
+                        const sep = document.createElement('span');
+                        sep.textContent = ' | ';
+                        body1.appendChild(sep);
+                        const icon = document.createElement('span');
+                        icon.classList.add('material-icons', 'closed_caption');
+                        icon.title = 'Untertitel verfügbar';
+                        body1.appendChild(icon);
+                    }
+
+                    const bodyText2 = item.description || '';
+
+                    return this.createListItem(item.title, body1, bodyText2, actions);
                 }
 
                 downloadItem(index) {
@@ -986,36 +997,6 @@
                         }).join(', ');
                         const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
 
-                        const listItem = document.createElement('div');
-                        listItem.classList.add('listItem', 'listItem-border');
-
-                        // Visual cue for disabled state
-                        if (!sub.IsEnabled) {
-                            listItem.classList.add('sub-disabled');
-                        }
-
-                        const body = document.createElement('div');
-                        body.classList.add('listItemBody', 'two-line');
-
-                        const title = document.createElement('h3');
-                        title.classList.add('listItemBodyText');
-
-                        // Add Status to title
-                        const statusText = sub.IsEnabled ? "" : " (Deaktiviert)";
-                        title.textContent = sub.Name + statusText;
-
-                        const queries = document.createElement('div');
-                        queries.classList.add('listItemBodyText', 'secondary');
-                        queries.textContent = 'Queries: ' + queriesSummary;
-
-                        const lastDl = document.createElement('div');
-                        lastDl.classList.add('listItemBodyText', 'secondary');
-                        lastDl.textContent = 'Letzter Download: ' + lastDownloadText;
-
-                        body.appendChild(title);
-                        body.appendChild(queries);
-                        body.appendChild(lastDl);
-
                         const actions = document.createElement('div');
                         actions.classList.add('flex-gap-5');
 
@@ -1028,8 +1009,19 @@
                         actions.appendChild(this.createIconButton('edit', 'Bearbeiten', () => this.subscriptionEditor.show(sub)));
                         actions.appendChild(this.createIconButton('delete', 'Löschen', () => this.deleteSubscription(sub.Id)));
 
-                        listItem.appendChild(body);
-                        listItem.appendChild(actions);
+                        // Add Status to title
+                        const statusText = sub.IsEnabled ? "" : " (Deaktiviert)";
+                        const title = sub.Name + statusText;
+                        const bodyText1 = 'Queries: ' + queriesSummary;
+                        const bodyText2 = 'Letzter Download: ' + lastDownloadText;
+
+                        const listItem = this.createListItem(title, bodyText1, bodyText2, actions);
+
+                        // Visual cue for disabled state
+                        if (!sub.IsEnabled) {
+                            listItem.classList.add('sub-disabled');
+                        }
+
                         list.appendChild(listItem);
                     });
                 }
@@ -1281,7 +1273,12 @@
                     paperList.classList.add('paperList');
 
                     results.forEach((item) => {
-                        paperList.appendChild(this.createGenericResultItem(item, null));
+                        const durationStr = Math.floor(item.duration / 60) + " Min";
+                        const title = item.title;
+                        const bodyText1 = item.channel + ' | ' + item.topic + ' | ' + durationStr;
+                        const bodyText2 = item.description || '';
+                        
+                        paperList.appendChild(this.createListItem(title, bodyText1, bodyText2, null));
                     });
                     container.appendChild(paperList);
                 }
@@ -1407,7 +1404,7 @@
         .margin-top-10 {
             margin-top: 10px;
         }
-
+        
         .margin-top-20 {
             margin-top: 20px;
         }
@@ -1450,7 +1447,7 @@
             gap: 15px;
             margin-top: 10px;
         }
-
+        
         .query-row {
             display: flex;
             gap: 10px;
@@ -1459,7 +1456,7 @@
             padding: 10px;
             border-radius: 5px;
         }
-
+        
         .query-checkboxes {
              display: flex;
              gap: 15px;
@@ -1474,7 +1471,7 @@
         .indented-block {
             margin-left: 20px;
         }
-
+        
         .sub-disabled {
             opacity: 0.6;
         }
