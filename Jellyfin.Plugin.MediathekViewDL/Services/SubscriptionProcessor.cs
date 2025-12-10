@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -99,7 +97,7 @@ public class SubscriptionProcessor
             // Video/Main Job
             var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo.Title, };
 
-            bool useStrmForThisItem = subscription.UseStreamingUrlFiles || (subscription.SaveExtrasAsStrm && subscription.TreatNonEpisodesAsExtras && !tempVideoInfo.IsShow);
+            bool useStrmForThisItem = subscription.UseStreamingUrlFiles || (subscription is { SaveExtrasAsStrm: true, TreatNonEpisodesAsExtras: true } && !tempVideoInfo.IsShow);
 
             if (useStrmForThisItem)
             {
@@ -124,6 +122,50 @@ public class SubscriptionProcessor
         }
 
         return jobs;
+    }
+
+    /// <summary>
+    /// Tests a subscription query and filters without creating download jobs.
+    /// </summary>
+    /// <param name="subscription">The subscription to test.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A list of items that would be downloaded.</returns>
+    public async IAsyncEnumerable<ResultItem> TestSubscriptionAsync(
+        Subscription subscription,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        // For dry-run/test, we do not scan the disk for duplicate detection to avoid security risks (CA3003)
+        // and because we want to test the query logic primarily.
+        // We only pass null for the cache, effectively disabling the disk check part of ApplyFilters.
+
+        await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
+        {
+            // Note: For test/dry-run, we might want to ignore the "already processed" check
+            // if we assume the user wants to see what the query *covers*,
+            // but strictly speaking, "what would be downloaded" implies filtering processed ones.
+            // Since the subscription object coming from the UI might not have the full history
+            // (unless we merge it or the UI sends it), this check depends on what the UI sends.
+            // Usually, the UI sends the full object including IDs.
+            if (subscription.ProcessedItemIds.Contains(item.Id))
+            {
+                continue;
+            }
+
+            var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
+
+            if (!ApplyFilters(tempVideoInfo, subscription, item, null))
+            {
+                continue;
+            }
+
+            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo, subscription);
+            if (!paths.IsValid)
+            {
+                continue;
+            }
+
+            yield return item;
+        }
     }
 
     /// <summary>
@@ -189,7 +231,7 @@ public class SubscriptionProcessor
                 return false;
             }
 
-            if (!tempVideoInfo.IsTrailer && !tempVideoInfo.IsInterview && !tempVideoInfo.IsShow && !subscription.SaveGenericExtras)
+            if (tempVideoInfo is { IsTrailer: false, IsInterview: false, IsShow: false } && !subscription.SaveGenericExtras)
             {
                 _logger.LogDebug("Skipping item '{Title}' because it is a generic extra and SaveGenericExtras is disabled.", item.Title);
                 return false;

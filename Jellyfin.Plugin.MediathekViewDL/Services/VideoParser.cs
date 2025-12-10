@@ -208,10 +208,11 @@ public class VideoParser
         // Try to remove common series names/prefixes that might still be in the title
         if (!string.IsNullOrWhiteSpace(topic))
         {
-            var nameWithoutPrefix = Regex.Replace(processedMediaTitle, $"^" + Regex.Escape(topic) + @"[\s:_-]*", string.Empty, RegexOptions.IgnoreCase).Trim();
-            if (!string.IsNullOrWhiteSpace(nameWithoutPrefix))
+            if (processedMediaTitle.StartsWith(topic, StringComparison.OrdinalIgnoreCase))
             {
-                processedMediaTitle = nameWithoutPrefix;
+                var remaining = processedMediaTitle.Substring(topic.Length);
+                // Manually trim start chars that match [\s:_-]
+                processedMediaTitle = remaining.TrimStart(' ', '\t', ':', '_', '-');
             }
         }
 

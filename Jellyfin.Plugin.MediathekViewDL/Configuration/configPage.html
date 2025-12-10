@@ -326,6 +326,10 @@
                                 <button is="emby-button" type="submit" class="raised button-submit">
                                     <span>Abo Speichern</span>
                                 </button>
+                                <button is="emby-button" type="button" class="raised"
+                                    onclick="MediathekViewDL.config.testSubscription()">
+                                    <span>Abo prüfen (Dry Run)</span>
+                                </button>
                                 <button is="emby-button" type="button" class="raised button-cancel"
                                     onclick="MediathekViewDL.editor.close()">
                                     <span>Abbrechen</span>
@@ -335,6 +339,24 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+
+        <div id="testSubscriptionModal" class="dialog-host"
+            style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; flex-direction: column;">
+            <div class="dialog-content"
+                style="background-color: #303030; padding: 20px; border: 1px solid #888; width: 80%; max-width: 800px; border-radius: 5px; max-height: 80vh; display: flex; flex-direction: column;">
+                <h2 id="testSubscriptionTitle" style="margin-top: 0;">Test Ergebnisse</h2>
+                <div id="testSubscriptionCount" style="margin-bottom: 10px; font-weight: bold;"></div>
+                <div id="testSubscriptionResults" style="overflow-y: auto; flex-grow: 1; margin-bottom: 20px;">
+                    <!-- Ergebnisse werden hier gerendert -->
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                    <button is="emby-button" type="button" class="raised button-cancel"
+                        onclick="MediathekViewDL.config.closeTestSubscriptionDialog()">
+                        <span>Schließen</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -1149,6 +1171,86 @@
                         Dashboard.hideLoadingMsg();
                         this.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
                     });
+                }
+
+                testSubscription() {
+                    const subData = this.subscriptionEditor.getEditorValues();
+                    if (subData.Queries.length === 0) {
+                        this.showToast("Bitte mindestens eine Suchanfrage definieren.");
+                        return;
+                    }
+
+                    const url = ApiClient.getUrl('/' + this.pluginName + '/TestSubscription');
+
+                    Dashboard.showLoadingMsg();
+                    ApiClient.ajax({
+                        type: "POST",
+                        url: url,
+                        data: JSON.stringify(subData),
+                        contentType: 'application/json',
+                        dataType: 'json'
+                    }).then((results) => {
+                        Dashboard.hideLoadingMsg();
+                        if (typeof results === 'string') {
+                            try {
+                                results = JSON.parse(results);
+                            } catch (e) {
+                                console.error("Failed to parse JSON results", e);
+                            }
+                        }
+                        this.renderTestResults(results);
+                        document.getElementById('testSubscriptionModal').style.display = 'flex';
+                    }).catch((err) => {
+                        Dashboard.hideLoadingMsg();
+                        console.error("Test subscription error:", err);
+                        this.showToast("Fehler beim Testen des Abos: " + (err.responseJSON ? err.responseJSON.detail : (err.message || "Unbekannter Fehler")));
+                    });
+                }
+
+                closeTestSubscriptionDialog() {
+                    document.getElementById('testSubscriptionModal').style.display = 'none';
+                }
+
+                renderTestResults(results) {
+                    const container = document.getElementById('testSubscriptionResults');
+                    const countContainer = document.getElementById('testSubscriptionCount');
+                    container.textContent = "";
+                    countContainer.textContent = "";
+
+                    if (!results || results.length === 0) {
+                        const noRes = document.createElement('p');
+                        noRes.textContent = "Keine Treffer für diese Konfiguration.";
+                        container.appendChild(noRes);
+                        return;
+                    }
+
+                    countContainer.textContent = results.length + " Einträge gefunden, die heruntergeladen würden:";
+
+                    const paperList = document.createElement('div');
+                    paperList.classList.add('paperList');
+
+                    results.forEach((item) => {
+                        const durationStr = Math.floor(item.duration / 60) + " Min";
+                        const listItem = document.createElement('div');
+                        listItem.classList.add('listItem', 'listItem-border');
+                        
+                        const body = document.createElement('div');
+                        body.classList.add('listItemBody', 'two-line');
+
+                        const title = document.createElement('h3');
+                        title.classList.add('listItemBodyText');
+                        title.textContent = item.title;
+
+                        const details = document.createElement('div');
+                        details.classList.add('listItemBodyText', 'secondary');
+                        details.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
+
+                        body.appendChild(title);
+                        body.appendChild(details);
+                        listItem.appendChild(body);
+                        paperList.appendChild(listItem);
+                    });
+                    container.appendChild(paperList);
                 }
 
                 init() {
