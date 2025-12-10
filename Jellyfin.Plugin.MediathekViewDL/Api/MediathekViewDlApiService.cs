@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services;
 using MediaBrowser.Common.Api;
 using Microsoft.AspNetCore.Authorization;
@@ -23,6 +24,7 @@ public class MediathekViewDlApiService : ControllerBase
     private readonly ILogger<MediathekViewDlApiService> _logger;
     private readonly FileDownloader _fileDownloader;
     private readonly FileNameBuilderService _fileNameBuilder;
+    private readonly SubscriptionProcessor _subscriptionProcessor;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekViewDlApiService"/> class.
@@ -31,12 +33,44 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="apiClient">The api client.</param>
     /// <param name="fileDownloader">The file downloader.</param>
     /// <param name="fileNameBuilder">The file name builder.</param>
-    public MediathekViewDlApiService(ILogger<MediathekViewDlApiService> logger, MediathekViewApiClient apiClient, FileDownloader fileDownloader, FileNameBuilderService fileNameBuilder)
+    /// <param name="subscriptionProcessor">The subscription processor.</param>
+    public MediathekViewDlApiService(
+        ILogger<MediathekViewDlApiService> logger,
+        MediathekViewApiClient apiClient,
+        FileDownloader fileDownloader,
+        FileNameBuilderService fileNameBuilder,
+        SubscriptionProcessor subscriptionProcessor)
     {
         _logger = logger;
         _apiClient = apiClient;
         _fileDownloader = fileDownloader;
         _fileNameBuilder = fileNameBuilder;
+        _subscriptionProcessor = subscriptionProcessor;
+    }
+
+    /// <summary>
+    /// Tests a subscription to see what items would be downloaded.
+    /// </summary>
+    /// <param name="subscription">The subscription configuration to test.</param>
+    /// <returns>A list of items that would be downloaded.</returns>
+    [HttpPost("TestSubscription")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public async Task<ActionResult<List<ResultItem>>> TestSubscription([FromBody] Subscription subscription)
+    {
+        if (subscription == null)
+        {
+            return BadRequest("Subscription configuration is required.");
+        }
+
+        _logger.LogInformation("Testing subscription '{Name}' with {QueryCount} queries.", subscription.Name, subscription.Queries.Count);
+
+        var results = new List<ResultItem>();
+        await foreach (var item in _subscriptionProcessor.TestSubscriptionAsync(subscription, CancellationToken.None).ConfigureAwait(false))
+        {
+            results.Add(item);
+        }
+
+        return Ok(results);
     }
 
     /// <summary>

@@ -7,390 +7,430 @@
 </head>
 
 <body>
-    <div id="MediathekViewDLConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
-        data-require="emby-input,emby-button,emby-select,emby-checkbox,emby-linkbutton">
+<div id="MediathekViewDLConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
+     data-require="emby-input,emby-button,emby-select,emby-checkbox,emby-linkbutton">
 
-        <div data-role="content">
-            <div class="content-primary">
+    <div data-role="content">
+        <div class="content-primary">
+            <h1>MediathekViewDL</h1>
+            <!-- Tab Navigation -->
+            <div class="mvpl-tabs-spacer" role="tablist">
+                <button type="button" class="paper-icon-button-light selected" id="mvpl-btn-tab-search" role="tab" aria-selected="true" aria-controls="tab-search">
+                    <span class="material-icons search" aria-hidden="true"></span>
+                    <span>Manuelle Suche</span>
+                </button>
+                <button type="button" class="paper-icon-button-light" id="mvpl-btn-tab-settings" role="tab" aria-selected="false" aria-controls="tab-settings">
+                    <span class="material-icons settings" aria-hidden="true"></span>
+                    <span>Einstellungen</span>
+                </button>
+                <button type="button" class="paper-icon-button-light" id="mvpl-btn-tab-subscriptions" role="tab" aria-selected="false" aria-controls="tab-subscriptions">
+                    <span class="material-icons subscriptions" aria-hidden="true"></span>
+                    <span>Abo Verwaltung</span>
+                </button>
+            </div>
 
-                <!-- Tab Navigation -->
-                <div class="sectionTabs tabs-spacer">
-                    <button type="button" class="paper-icon-button-light selected"
-                        onclick="MediathekViewDL.config.switchTab('search')">
-                        <span class="material-icons search" aria-hidden="true"></span>
-                        <span>Manuelle Suche</span>
-                    </button>
-                    <button type="button" class="paper-icon-button-light"
-                        onclick="MediathekViewDL.config.switchTab('settings')">
-                        <span class="material-icons settings" aria-hidden="true"></span>
-                        <span>Einstellungen</span>
-                    </button>
-                    <button type="button" class="paper-icon-button-light"
-                        onclick="MediathekViewDL.config.switchTab('subscriptions')">
-                        <span class="material-icons subscriptions" aria-hidden="true"></span>
-                        <span>Abo Verwaltung</span>
-                    </button>
-                </div>
+            <!-- TAB 1: Search -->
+            <div id="tab-search" class="mvpl-tab-content" role="tabpanel" aria-labelledby="mvpl-btn-tab-search" style="display:block;">
+                <div class="verticalSection">
+                    <div class="sectionTitleLabel">Mediathek durchsuchen</div>
+                    <p class="sectionDescription">Suche nach Inhalten, um diese direkt herunterzuladen oder ein Abo
+                        zu erstellen.</p>
 
-                <!-- TAB 1: SUCHE -->
-                <div id="tab-search" class="tab-content" style="display:block;">
-                    <div class="verticalSection">
-                        <div class="sectionTitleLabel">Mediathek durchsuchen</div>
-                        <p class="sectionDescription">Suche nach Inhalten, um diese direkt herunterzuladen oder ein Abo
-                            zu erstellen.</p>
-
-                        <form onsubmit="MediathekViewDL.config.performSearch(); return false;">
-                            <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
-                                <div class="inputContainer" style="flex-grow: 1;">
-                                    <label class="inputLabel" for="txtSearchQuery">Suchbegriff</label>
-                                    <input is="emby-input" type="text" id="txtSearchQuery" required />
-                                </div>
-                                <div class="inputContainer" style="width: 150px;">
-                                    <label class="inputLabel" for="numMinDuration">Min. Dauer (Sek)</label>
-                                    <input is="emby-input" type="number" id="numMinDuration" />
-                                </div>
-                                <div class="inputContainer" style="width: 150px;">
-                                    <label class="inputLabel" for="numMaxDuration">Max. Dauer (Sek)</label>
-                                    <input is="emby-input" type="number" id="numMaxDuration" />
-                                </div>
-                                <div class="inputContainer">
-                                    <button is="emby-button" type="submit" class="raised button-submit block">
-                                        <span>Suchen</span>
-                                    </button>
-                                </div>
+                    <form id="mvpl-form-search">
+                        <div class="mvpl-search-form-row">
+                            <div class="inputContainer flex-grow">
+                                <label class="inputLabel" for="txtSearchQuery">Suchbegriff</label>
+                                <input is="emby-input" type="text" id="txtSearchQuery" required/>
                             </div>
-                        </form>
-
-                        <div id="searchResults" style="margin-top: 20px;">
-                            <!-- Ergebnisse werden hier gerendert -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 2: EINSTELLUNGEN -->
-                <div id="tab-settings" class="tab-content" style="display:none;">
-                    <div class="verticalSection">
-                        <div class="sectionTitleLabel">Allgemeine Einstellungen</div>
-                        <form id="MediathekGeneralConfigForm">
-
+                            <div class="inputContainer mvpl-input-short">
+                                <label class="inputLabel" for="numMinDuration">Min. Dauer (Sek)</label>
+                                <input is="emby-input" type="number" id="numMinDuration"/>
+                            </div>
+                            <div class="inputContainer mvpl-input-short">
+                                <label class="inputLabel" for="numMaxDuration">Max. Dauer (Sek)</label>
+                                <input is="emby-input" type="number" id="numMaxDuration"/>
+                            </div>
                             <div class="inputContainer">
-                                <div style="display: flex; align-items: center;">
-                                    <div style="flex-grow: 1;">
-                                        <label class="inputLabel" for="txtDefaultDownloadPath">Standard Download
-                                            Pfad</label>
-                                        <input is="emby-input" type="text" id="txtDefaultDownloadPath" />
-                                        <div class="fieldDescription">Der Standard-Ordner für alle Downloads, sofern im
-                                            Abo nichts anderes definiert ist.</div>
-                                    </div>
-                                    <button type="button" is="paper-icon-button-light" id="btnSelectPath"
-                                        title="Ordner auswählen" style="margin-left: 10px; margin-top: 15px;">
-                                        <span class="material-icons folder_open"></span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="checkboxContainer checkboxContainer-withDescription" style="margin-top: 20px;">
-                                <label class="emby-checkbox-label">
-                                    <input id="chkDownloadSubtitles" type="checkbox" is="emby-checkbox" />
-                                    <span>Untertitel herunterladen (wenn verfügbar)</span>
-                                </label>
-                                <div class="fieldDescription">Lädt eine separate VTT- oder TTML-Datei für Untertitel
-                                    herunter, falls vom Sender bereitgestellt.</div>
-                            </div>
-
-                            <div class="checkboxContainer checkboxContainer-withDescription" style="margin-top: 20px;">
-                                <label class="emby-checkbox-label">
-                                    <input id="chkAllowUnknownDomains" type="checkbox" is="emby-checkbox" />
-                                    <span>Downloads von unbekannten Domains erlauben</span>
-                                </label>
-                                <div class="fieldDescription">Ermöglicht das Herunterladen von Inhalten von Domains, die
-                                    nicht auf der Whitelist stehen. Dies kann nützlich sein, wenn ARD oder ZDF neue CDNs
-                                    hinzufügen, die noch nicht berücksichtigt werden. Dies kann jedoch ein
-                                    Sicherheitsrisiko darstellen, daher mit Vorsicht verwenden. Falls dadurch manche
-                                    Inhalte nicht gefunden werden wäre es schon wenn auf GitHub ein Issue erstellt wird,
-                                    das ich die Whitelist ggf. erweitern kann.</div>
-                            </div>
-
-                            <div class="checkboxContainer checkboxContainer-withDescription" style="margin-top: 20px;">
-                                <label class="emby-checkbox-label">
-                                    <input id="chkScanLibraryAfterDownload" type="checkbox" is="emby-checkbox" />
-                                    <span>Bibliotheksscan nach Download</span>
-                                </label>
-                                <div class="fieldDescription">Startet automatisch einen Scan der Medienbibliothek, nachdem neue Inhalte heruntergeladen wurden. Wenn deaktiviert, erscheinen neue Inhalte erst nach dem nächsten regulären Scan.</div>
-                            </div>
-
-                            <div class="checkboxContainer checkboxContainer-withDescription" style="margin-top: 20px;">
-                                <label class="emby-checkbox-label">
-                                    <input id="chkEnableStrmCleanup" type="checkbox" is="emby-checkbox" />
-                                    <span>Bereinigung ungültiger Streaming-Dateien (.strm) aktivieren</span>
-                                </label>
-                                <div class="fieldDescription">Überprüft regelmäßig (via geplantem Task) alle erstellten .strm Dateien auf Gültigkeit der Links. Wenn ein Link nicht mehr erreichbar ist (z.B. 404), wird die Datei gelöscht, damit ggf. eine aktualisierte Version heruntergeladen werden kann. Beachtet die Einstellung "Downloads von unbekannten Domains erlauben".</div>
-                            </div>
-
-                            <div class="inputContainer">
-                                <label class="inputLabel" for="txtMinFreeDiskSpaceMiB">Mindestfreier Speicherplatz
-                                    (MiB)</label>
-                                <input is="emby-input" type="number" id="txtMinFreeDiskSpaceMiB" />
-                                <div class="fieldDescription">Legt den minimalen freien Speicherplatz fest, der
-                                    erforderlich ist, um einen neuen Download zu starten.</div>
-                            </div>
-
-                            <!-- Anzeige des letzten Laufs (Read Only) -->
-                            <div class="inputContainer">
-                                <label class="inputLabel">Letzter Lauf</label>
-                                <div id="lblLastRun" style="padding: 10px 0;">Noch nie</div>
-                            </div>
-
-                            <div>
                                 <button is="emby-button" type="submit" class="raised button-submit block">
-                                    <span>Speichern</span>
+                                    <span>Suchen</span>
                                 </button>
                             </div>
-                        </form>
+                        </div>
+                    </form>
+
+                    <div id="searchResults" class="mvpl-results-container">
+                        <!-- Ergebnisse werden hier gerendert -->
                     </div>
                 </div>
+            </div>
 
-                <!-- TAB 3: ABO VERWALTUNG -->
-                <div id="tab-subscriptions" class="tab-content" style="display:none;">
-                    <div class="verticalSection">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div class="sectionTitleLabel">Aktive Abonnements</div>
-                            <button is="emby-button" type="button" class="raised"
-                                onclick="MediathekViewDL.editor.show(null)">
-                                <span class="material-icons add"></span>
-                                <span>Neues Abo</span>
+            <!-- TAB 2: Settings -->
+            <div id="tab-settings" class="mvpl-tab-content" role="tabpanel" aria-labelledby="mvpl-btn-tab-settings" style="display:none;">
+                <div class="verticalSection">
+                    <div class="sectionTitleLabel">Allgemeine Einstellungen</div>
+                    <form id="MediathekGeneralConfigForm">
+
+                        <div class="inputContainer">
+                            <div class="flex-align-center">
+                                <div class="flex-grow">
+                                    <label class="inputLabel" for="txtDefaultDownloadPath">Standard Download Pfad</label>
+                                    <input is="emby-input" type="text" id="txtDefaultDownloadPath"/>
+                                    <div class="fieldDescription">Der Standard-Ordner für alle Downloads, sofern im
+                                        Abo nichts anderes definiert ist.
+                                    </div>
+                                </div>
+                                <button type="button" is="paper-icon-button-light" id="btnSelectPath"
+                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                    <span class="material-icons folder_open"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkDownloadSubtitles" type="checkbox" is="emby-checkbox"/>
+                                <span>Untertitel herunterladen (wenn verfügbar)</span>
+                            </label>
+                            <div class="fieldDescription">Lädt eine separate VTT- oder TTML-Datei für Untertitel
+                                herunter, falls vom Sender bereitgestellt.
+                            </div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkAllowUnknownDomains" type="checkbox" is="emby-checkbox"/>
+                                <span>Downloads von unbekannten Domains erlauben</span>
+                            </label>
+                            <div class="fieldDescription">Ermöglicht das Herunterladen von Inhalten von Domains,
+                                die
+                                nicht auf der Whitelist stehen. Dies kann nützlich sein, wenn ARD oder ZDF neue CDNs
+                                hinzufügen, die noch nicht berücksichtigt werden. Dies kann jedoch ein
+                                Sicherheitsrisiko darstellen, daher mit Vorsicht verwenden. Falls dadurch manche
+                                Inhalte nicht gefunden werden wäre es schön, wenn auf GitHub ein Issue erstellt wird,
+                                das ich die Whitelist ggf. erweitern kann.
+                            </div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkScanLibraryAfterDownload" type="checkbox" is="emby-checkbox"/>
+                                <span>Bibliotheks-Scan nach Download</span>
+                            </label>
+                            <div class="fieldDescription">Startet automatisch einen Scan der Medienbibliothek, nachdem neue Inhalte heruntergeladen wurden. Wenn deaktiviert, erscheinen neue Inhalte erst nach dem nächsten regulären Scan.</div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkEnableStrmCleanup" type="checkbox" is="emby-checkbox"/>
+                                <span>Bereinigung ungültiger Streaming-Dateien (.strm) aktivieren</span>
+                            </label>
+                            <div class="fieldDescription">Überprüft regelmäßig (via geplanten Task) alle erstellten .strm Dateien auf Gültigkeit der Links. Wenn ein Link nicht mehr erreichbar ist (z.B. 404), wird die Datei gelöscht, damit ggf. eine aktualisierte Version heruntergeladen werden kann. Beachtet die Einstellung "Downloads von unbekannten Domains erlauben".</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="txtMinFreeDiskSpaceMiB">Mindestfreier Speicherplatz
+                                (MiB)</label>
+                            <input is="emby-input" type="number" id="txtMinFreeDiskSpaceMiB"/>
+                            <div class="fieldDescription">Legt den minimalen freien Speicherplatz fest, der erforderlich ist, um einen neuen Download zu starten.</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel">Letzter Lauf</label>
+                            <div id="lblLastRun" class="mvpl-last-run-label">Noch nie</div>
+                        </div>
+
+                        <div>
+                            <button is="emby-button" type="submit" class="raised button-submit block">
+                                <span>Speichern</span>
                             </button>
                         </div>
-                        <div id="subscriptionList" class="paperList" style="margin-top: 20px;">
-                            <!-- Liste wird hier gerendert -->
-                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- TAB 3: Subscription Management -->
+            <div id="tab-subscriptions" class="mvpl-tab-content" role="tabpanel" aria-labelledby="mvpl-btn-tab-subscriptions" style="display:none;">
+                <div class="verticalSection">
+                    <div class="flex-space-between">
+                        <div class="sectionTitleLabel">Aktive Abonnements</div>
+                        <button is="emby-button" type="button" class="raised" id="mvpl-btn-new-sub">
+                            <span class="material-icons add"></span>
+                            <span>Neues Abo</span>
+                        </button>
                     </div>
+                    <div id="subscriptionList" class="paperList mvpl-margin-top-20">
+                        <!-- Liste wird hier gerendert -->
+                    </div>
+                </div>
 
-                    <!-- Modal/Bereich zum Editieren eines Abos (Initial versteckt) -->
-                    <div id="subscriptionEditor"
-                        style="display: none; border-top: 1px solid #444; margin-top: 20px; padding-top: 20px;">
-                        <h3 id="subEditorTitle">Abonnement bearbeiten</h3>
-                        <form onsubmit="MediathekViewDL.config.saveSubscription(); return false;">
-                            <input type="hidden" id="subId" />
+                <!-- Modal/Bereich zum Editieren eines Abos (Initial versteckt) -->
+                <div id="subscriptionEditor" class="mvpl-subscription-editor">
+                    <h3 id="subEditorTitle">Abonnement bearbeiten</h3>
+                    <form id="mvpl-form-subscription">
+                        <input type="hidden" id="subId"/>
 
-                            <div class="inputContainer">
-                                <label class="inputLabel" for="subName">Name (Serienname)</label>
-                                <input is="emby-input" type="text" id="subName" required />
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="subName">Name (Serienname)</label>
+                            <input is="emby-input" type="text" id="subName" required/>
+                        </div>
+
+                        <!-- Container für dynamische Queries -->
+                        <div class="inputContainer">
+                            <label class="inputLabel">Suchanfragen</label>
+                            <div id="queriesContainer" class="mvpl-queries-container">
+                                <!-- Query-Zeilen werden hier dynamisch eingefügt -->
                             </div>
+                            <button is="emby-button" type="button" class="raised mvpl-margin-top-10" id="mvpl-btn-add-query">
+                                <span class="material-icons add"></span>
+                                <span>Anfrage hinzufügen</span>
+                            </button>
+                        </div>
 
-                            <!-- Container für dynamische Queries -->
-                            <div class="inputContainer">
-                                <label class="inputLabel">Suchanfragen</label>
-                                <div id="queriesContainer"
-                                    style="display: flex; flex-direction: column; gap: 15px; margin-top: 10px;">
-                                    <!-- Query-Zeilen werden hier dynamisch eingefügt -->
+                        <div class="mvpl-duration-inputs-row">
+                            <div class="inputContainer flex-grow">
+                                <label class="inputLabel" for="subMinDuration">Min. Dauer (Minuten)</label>
+                                <input is="emby-input" type="number" id="subMinDuration"/>
+                            </div>
+                            <div class="inputContainer flex-grow">
+                                <label class="inputLabel" for="subMaxDuration">Max. Dauer (Minuten)</label>
+                                <input is="emby-input" type="number" id="subMaxDuration"/>
+                            </div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <div class="flex-align-center">
+                                <div class="flex-grow">
+                                    <label class="inputLabel" for="subPath">Download Pfad (Optional)</label>
+                                    <input is="emby-input" type="text" id="subPath"/>
+                                    <div class="fieldDescription">Leer lassen, um den Standardpfad zu nutzen.</div>
                                 </div>
-                                <button is="emby-button" type="button" class="raised"
-                                    onclick="MediathekViewDL.config.addQueryRow()" style="margin-top: 10px;">
-                                    <span class="material-icons add"></span>
-                                    <span>Anfrage hinzufügen</span>
+                                <button type="button" is="paper-icon-button-light" id="btnSelectSubPath"
+                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                    <span class="material-icons folder_open"></span>
                                 </button>
                             </div>
+                        </div>
 
-                            <div style="display: flex; gap: 10px; margin-top: 15px;">
-                                <div class="inputContainer" style="flex-grow: 1;">
-                                    <label class="inputLabel" for="subMinDuration">Min. Dauer (Minuten)</label>
-                                    <input is="emby-input" type="number" id="subMinDuration" />
-                                </div>
-                                <div class="inputContainer" style="flex-grow: 1;">
-                                    <label class="inputLabel" for="subMaxDuration">Max. Dauer (Minuten)</label>
-                                    <input is="emby-input" type="number" id="subMaxDuration" />
-                                </div>
+                        <!-- Enforce Series Parsing Checkbox -->
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subEnforceSeries" type="checkbox" is="emby-checkbox"/>
+                                <span>Nur Serien herunterladen</span>
+                            </label>
+                            <div class="fieldDescription">Nur Videos herunterladen, die als Serie erkannt werden
                             </div>
+                        </div>
 
-                            <div class="inputContainer">
-                                <div style="display: flex; align-items: center;">
-                                    <div style="flex-grow: 1;">
-                                        <label class="inputLabel" for="subPath">Download Pfad (Optional)</label>
-                                        <input is="emby-input" type="text" id="subPath" />
-                                        <div class="fieldDescription">Leer lassen, um den Standardpfad zu nutzen.</div>
-                                    </div>
-                                    <button type="button" is="paper-icon-button-light" id="btnSelectSubPath"
-                                        title="Ordner auswählen" style="margin-left: 10px; margin-top: 15px;">
-                                        <span class="material-icons folder_open"></span>
-                                    </button>
-                                </div>
+                        <!-- Allow Absolute Episode Numbering Checkbox -->
+                        <div id="subAllowAbsoluteEpisodeNumberingContainer" class="checkboxContainer checkboxContainer-withDescription mvpl-indented-block">
+                            <label class="emby-checkbox-label">
+                                <input id="subAllowAbsoluteEpisodeNumbering" type="checkbox" is="emby-checkbox"/>
+                                <span>Absolute Episodennummerierung erlauben</span>
+                            </label>
+                            <div class="fieldDescription">Episoden auch herunterladen wenn nur Absolute
+                                Episodennummerierung vorliegt (z.B. "Episode 5" statt "Staffel 1, Episode 5"). Wird
+                                nur berücksichtigt, wenn "Nur Videos herunterladen, die als Serie erkannt werden"
+                                aktiviert ist.
                             </div>
+                        </div>
 
-                            <div class="checkboxContainer checkboxContainer-withDescription">
+                        <!-- Use Streaming-URL Files Checkbox -->
+                        <div id="subUseStreamingUrlFilesContainer" class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subUseStreamingUrlFiles" type="checkbox" is="emby-checkbox"/>
+                                <span>Streaming-URL-Dateien (.strm) verwenden</span>
+                            </label>
+                            <div class="fieldDescription">Verwendet Streaming-URL-Dateien (.strm) anstelle des
+                                Herunterladens der tatsächlichen Videodateien. Es werden keine Videodateien
+                                gespeichert, die Videos werden von ARD/ZDF direkt gestreamt. Untertitel sind hiervon nicht betroffen.
+                            </div>
+                        </div>
+
+                        <!-- Full Video for Secondary Audio Checkbox -->
+                        <div id="subDownloadFullVideoForSecondaryAudioContainer" class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subDownloadFullVideoForSecondaryAudio" type="checkbox" is="emby-checkbox"/>
+                                <span>Vollständiges Video für sekundäre Audiosprachen herunterladen</span>
+                            </label>
+                            <div class="fieldDescription">Wenn aktiviert, wird das vollständige Video heruntergeladen, auch wenn es eine andere Audiosprache als Deutsch enthält. Andernfalls wird nur die Audiospur dieser Sprache extrahiert.</div>
+                        </div>
+
+                        <!-- Treat Non-Episodes as Extras Checkbox -->
+                        <div id="subTreatNonEpisodesAsExtrasContainer" class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subTreatNonEpisodesAsExtras" type="checkbox" is="emby-checkbox"/>
+                                <span>Nicht Episoden als Extras behandeln</span>
+                            </label>
+                            <div class="fieldDescription">Nicht als Episoden erkannte Videos als Extras behandeln.
+                                Wird ignoriert, wenn "Nur Serien herunterladen" aktiviert ist.
+                            </div>
+                        </div>
+
+                        <!-- Container for Extras Saving Options -->
+                        <div class="mvpl-indented-block">
+                            <!-- Save Extras as .strm Checkbox -->
+                            <div id="subSaveExtrasAsStrmContainer" class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
-                                    <input id="subEnforceSeries" type="checkbox" is="emby-checkbox" />
-                                    <span>Nur Serien herunterladen</span>
-                                </label>
-                                <div class="fieldDescription">Nur Videos herunterladen, die als Serie erkannt werden
-                                </div>
-                            </div>
-
-                            <div class="checkboxContainer checkboxContainer-withDescription">
-                                <label class="emby-checkbox-label">
-                                    <input id="subUseStreamingUrlFiles" type="checkbox" is="emby-checkbox" />
-                                    <span>Streaming-URL-Dateien (.strm) verwenden</span>
-                                </label>
-                                <div class="fieldDescription">Verwendet Streaming-URL-Dateien (.strm) anstelle des
-                                    Herunterladens der tatsächlichen Videodateien. Es werden keine Videodateien
-                                    gespeichert, die Videos werden von ARD/ZDF direkt gestreamt. Untertitel sind hiervon nicht betroffen.</div>
-                            </div>
-
-                            <div id="subDownloadFullVideoForSecondaryAudioContainer" class="checkboxContainer checkboxContainer-withDescription">
-                                <label class="emby-checkbox-label">
-                                    <input id="subDownloadFullVideoForSecondaryAudio" type="checkbox" is="emby-checkbox" />
-                                    <span>Vollständiges Video für sekundäre Audiosprachen herunterladen</span>
-                                </label>
-                                <div class="fieldDescription">Wenn aktiviert, wird das vollständige Video heruntergeladen, auch wenn es eine andere Audiosprache als Deutsch enthält. Andernfalls wird nur die Audiospur dieser Sprache extrahiert.</div>
-                            </div>
-
-                            <div id="subTreatNonEpisodesAsExtrasContainer" class="checkboxContainer checkboxContainer-withDescription">
-                                <label class="emby-checkbox-label">
-                                    <input id="subTreatNonEpisodesAsExtras" type="checkbox" is="emby-checkbox" />
-                                    <span>Nicht Episoden als Extras behandeln</span>
-                                </label>
-                                <div class="fieldDescription">Nicht als Episoden erkannte Videos als Extras behandeln.
-                                    Wird ignoriert, wenn "Nur Serien herunterladen" aktiviert ist.</div>
-                            </div>
-                            
-                            <div id="subSaveExtrasAsStrmContainer" class="checkboxContainer checkboxContainer-withDescription" style="margin-left: 20px;">
-                                <label class="emby-checkbox-label">
-                                    <input id="subSaveExtrasAsStrm" type="checkbox" is="emby-checkbox" />
+                                    <input id="subSaveExtrasAsStrm" type="checkbox" is="emby-checkbox"/>
                                     <span>Extras als Stream (.strm) speichern</span>
                                 </label>
                                 <div class="fieldDescription">Extras werden als .strm Dateien gespeichert (spart Speicherplatz).</div>
                             </div>
 
-                            <div id="subSaveTrailersContainer" class="checkboxContainer checkboxContainer-withDescription" style="margin-left: 20px;">
+                            <!-- Save Trailers Checkbox -->
+                            <div id="subSaveTrailersContainer" class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
-                                    <input id="subSaveTrailers" type="checkbox" is="emby-checkbox" />
+                                    <input id="subSaveTrailers" type="checkbox" is="emby-checkbox"/>
                                     <span>Trailer speichern</span>
                                 </label>
                                 <div class="fieldDescription">Trailer werden gespeichert.</div>
                             </div>
 
-                            <div id="subSaveInterviewsContainer" class="checkboxContainer checkboxContainer-withDescription" style="margin-left: 20px;">
+                            <!-- Save Interviews Checkbox -->
+                            <div id="subSaveInterviewsContainer" class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
-                                    <input id="subSaveInterviews" type="checkbox" is="emby-checkbox" />
+                                    <input id="subSaveInterviews" type="checkbox" is="emby-checkbox"/>
                                     <span>Interviews speichern</span>
                                 </label>
                                 <div class="fieldDescription">Interviews werden gespeichert.</div>
                             </div>
 
-                            <div id="subSaveGenericExtrasContainer" class="checkboxContainer checkboxContainer-withDescription" style="margin-left: 20px;">
+                            <!-- Save Generic Extras Checkbox -->
+                            <div id="subSaveGenericExtrasContainer" class="checkboxContainer checkboxContainer-withDescription">
                                 <label class="emby-checkbox-label">
-                                    <input id="subSaveGenericExtras" type="checkbox" is="emby-checkbox" />
+                                    <input id="subSaveGenericExtras" type="checkbox" is="emby-checkbox"/>
                                     <span>Generische Extras speichern</span>
                                 </label>
                                 <div class="fieldDescription">Alle anderen Extras (nicht Trailer/Interviews) werden gespeichert.</div>
                             </div>
+                        </div>
 
-                            <div id="subAllowAbsoluteEpisodeNumberingContainer" class="checkboxContainer checkboxContainer-withDescription">
-                                <label class="emby-checkbox-label">
-                                    <input id="subAllowAbsoluteEpisodeNumbering" type="checkbox" is="emby-checkbox" />
-                                    <span>Absolute Episodennummerierung erlauben</span>
-                                </label>
-                                <div class="fieldDescription">Episoden auch herunterladen wenn nur Absolute
-                                    Episodennummerierung vorliegt (z.B. "Episode 5" statt "Staffel 1, Episode 5"). Wird
-                                    nur berücksichtigt, wenn "Nur Videos herunterladen, die als Serie erkannt werden"
-                                    aktiviert ist.</div>
+                        <!-- Allow Audio Description Checkbox -->
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subAllowAudioDesc" type="checkbox" is="emby-checkbox"/>
+                                <span>Versionen mit Audiodeskription erlauben</span>
+                            </label>
+                            <div class="fieldDescription">Erlaubt das Herunterladen von Versionen mit
+                                Audiodeskription (sofern verfügbar).
                             </div>
+                        </div>
 
-                            <div class="checkboxContainer checkboxContainer-withDescription">
-                                <label class="emby-checkbox-label">
-                                    <input id="subAllowAudioDesc" type="checkbox" is="emby-checkbox" />
-                                    <span>Versionen mit Audiodeskription erlauben</span>
-                                </label>
-                                <div class="fieldDescription">Erlaubt das Herunterladen von Versionen mit
-                                    Audiodeskription (sofern verfügbar).</div>
+                        <!-- Allow Sign Language Checkbox -->
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subAllowSignLanguage" type="checkbox" is="emby-checkbox"/>
+                                <span>Versionen mit Gebärdensprache erlauben</span>
+                            </label>
+                            <div class="fieldDescription">Erlaubt das Herunterladen von Versionen mit
+                                Gebärdensprache (sofern verfügbar).
                             </div>
+                        </div>
 
-                            <div class="checkboxContainer checkboxContainer-withDescription">
-                                <label class="emby-checkbox-label">
-                                    <input id="subAllowSignLanguage" type="checkbox" is="emby-checkbox" />
-                                    <span>Versionen mit Gebärdensprache erlauben</span>
-                                </label>
-                                <div class="fieldDescription">Erlaubt das Herunterladen von Versionen mit
-                                    Gebärdensprache (sofern verfügbar).</div>
-                            </div>
+                        <!-- Enhanced Duplicate Detection Checkbox -->
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subEnhancedDuplicateDetection" type="checkbox" is="emby-checkbox"/>
+                                <span>Erweiterte Duplikaterkennung</span>
+                            </label>
+                            <div class="fieldDescription">Scannt das Zielverzeichnis nach vorhandenen Dateien mit passenden SxxExx-Mustern (oder absoluter Nummerierung), um doppelte Downloads zu vermeiden (auch bei abweichenden Dateinamen).</div>
+                        </div>
 
-                            <div class="checkboxContainer checkboxContainer-withDescription">
-                                <label class="emby-checkbox-label">
-                                    <input id="subEnhancedDuplicateDetection" type="checkbox" is="emby-checkbox" />
-                                    <span>Erweiterte Duplikaterkennung</span>
-                                </label>
-                                <div class="fieldDescription">Scannt das Zielverzeichnis nach vorhandenen Dateien mit passenden SxxExx-Mustern (oder absoluter Nummerierung), um doppelte Downloads zu vermeiden (auch bei abweichenden Dateinamen).</div>
-                            </div>
+                        <div class="button-row">
+                            <button is="emby-button" type="submit" class="raised button-submit">
+                                <span>Abo Speichern</span>
+                            </button>
+                            <button is="emby-button" type="button" class="raised" id="mvpl-btn-test-sub">
+                                <span>Abo prüfen (Dry Run)</span>
+                            </button>
+                            <button is="emby-button" type="button" class="raised button-cancel" id="mvpl-btn-cancel-sub">
+                                <span>Abbrechen</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
 
-                            <div style="display: flex; gap: 10px;">
-                                <button is="emby-button" type="submit" class="raised button-submit">
-                                    <span>Abo Speichern</span>
-                                </button>
-                                <button is="emby-button" type="button" class="raised button-cancel"
-                                    onclick="MediathekViewDL.editor.close()">
-                                    <span>Abbrechen</span>
-                                </button>
-                            </div>
-                        </form>
+        </div>
+    </div>
+
+    <div id="testSubscriptionModal" class="mvpl-dialog-host">
+        <div class="mvpl-dialog-content">
+            <h2 id="testSubscriptionTitle" class="mvpl-modal-title">Test Ergebnisse</h2>
+            <div id="testSubscriptionCount" class="mvpl-test-sub-count"></div>
+            <div id="testSubscriptionResults" class="mvpl-test-sub-results">
+                <!-- Ergebnisse werden hier gerendert -->
+            </div>
+            <div class="button-row">
+                <button is="emby-button" type="button" class="raised button-cancel" id="mvpl-btn-close-test-results">
+                    <span>Schließen</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="advancedDownloadModal" class="mvpl-dialog-host">
+        <div class="mvpl-dialog-content">
+            <h2 id="advancedDownloadTitle">Erweiterter Download</h2>
+            <form id="mvpl-adv-download-form">
+                <input type="hidden" id="advancedDownloadIndex"/>
+
+                <div class="inputContainer">
+                    <div class="flex-align-center">
+                        <div class="flex-grow">
+                            <label class="inputLabel" for="advDlPath">Download Pfad</label>
+                            <input is="emby-input" type="text" id="advDlPath"/>
+                        </div>
+                        <button type="button" is="paper-icon-button-light" id="btnSelectAdvPath"
+                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                            <span class="material-icons folder_open"></span>
+                        </button>
                     </div>
                 </div>
 
-            </div>
+                <div class="inputContainer">
+                    <label class="inputLabel" for="advDlFilename">Dateiname</label>
+                    <input is="emby-input" type="text" id="advDlFilename"/>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label class="emby-checkbox-label">
+                        <input id="advDlSubtitles" type="checkbox" is="emby-checkbox"/>
+                        <span>Untertitel herunterladen</span>
+                    </label>
+                    <div id="advDlSubtitlesDesc" class="fieldDescription"></div>
+                </div>
+
+                <div class="button-row">
+                    <button is="emby-button" type="submit" class="raised button-submit">
+                        <span>Herunterladen</span>
+                    </button>
+                    <button is="emby-button" type="button" class="raised button-cancel" id="mvpl-btn-close-adv-download">
+                        <span>Abbrechen</span>
+                    </button>
+                </div>
+            </form>
         </div>
+    </div>
 
-        <div id="advancedDownloadModal" class="dialog-host"
-            style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
-            <div class="dialog-content"
-                style="background-color: #303030; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 600px; border-radius: 5px;">
-                <h2 id="advancedDownloadTitle">Erweiterter Download</h2>
-                <form onsubmit="MediathekViewDL.config.performAdvancedDownload(); return false;">
-                    <input type="hidden" id="advancedDownloadIndex" />
-
-                    <div class="inputContainer">
-                        <div style="display: flex; align-items: center;">
-                            <div style="flex-grow: 1;">
-                                <label class="inputLabel" for="advDlPath">Download Pfad</label>
-                                <input is="emby-input" type="text" id="advDlPath" />
-                            </div>
-                            <button type="button" is="paper-icon-button-light" id="btnSelectAdvPath"
-                                title="Ordner auswählen" style="margin-left: 10px; margin-top: 15px;">
-                                <span class="material-icons folder_open"></span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="inputContainer">
-                        <label class="inputLabel" for="advDlFilename">Dateiname</label>
-                        <input is="emby-input" type="text" id="advDlFilename" />
-                    </div>
-
-                    <div class="checkboxContainer">
-                        <label class="emby-checkbox-label">
-                            <input id="advDlSubtitles" type="checkbox" is="emby-checkbox" />
-                            <span>Untertitel herunterladen</span>
-                        </label>
-                    </div>
-
-                    <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button is="emby-button" type="submit" class="raised button-submit">
-                            <span>Herunterladen</span>
-                        </button>
-                        <button is="emby-button" type="button" class="raised button-cancel"
-                            onclick="MediathekViewDL.config.closeAdvancedDownloadDialog()">
-                            <span>Abbrechen</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <script type="text/javascript">
-            (function() {
+    <!--suppress JSUnusedGlobalSymbols -->
+    <script type="text/javascript">
+        (function () {
+            /**
+             * Handles subscription editor logic, populating fields and gathering values.
+             */
             class SubscriptionEditor {
+                /**
+                 * @param {MediathekPluginConfig} configInstance
+                 */
                 constructor(configInstance) {
                     this.config = configInstance;
                 }
 
+                /**
+                 * Populates the editor form with values from a subscription object.
+                 * @param {Object|null} sub - The subscription object or null for a new subscription.
+                 */
                 setEditorValues(sub) {
                     if (!sub) {
                         // Reset values
@@ -439,12 +479,18 @@
                     const queriesContainer = document.getElementById('queriesContainer');
                     queriesContainer.textContent = '';
                     if (sub.Queries && sub.Queries.length > 0) {
-                        sub.Queries.forEach((q) => { this.config.addQueryRow(q); });
+                        sub.Queries.forEach((q) => {
+                            this.config.addQueryRow(q);
+                        });
                     } else {
                         this.config.addQueryRow(null);
                     }
                 }
 
+                /**
+                 * Collects values from the editor form to create a subscription object.
+                 * @returns {Object} The subscription object.
+                 */
                 getEditorValues() {
                     const id = document.getElementById('subId').value;
                     const name = document.getElementById('subName').value;
@@ -465,14 +511,14 @@
                     const downloadFullVideoForSecondaryAudio = document.getElementById('subDownloadFullVideoForSecondaryAudio').checked;
 
                     const queries = [];
-                    document.querySelectorAll('#queriesContainer .query-row').forEach(function (row) {
+                    document.querySelectorAll('#queriesContainer .mvpl-query-row').forEach(function (row) {
                         const queryText = row.querySelector('.subQueryText').value;
                         if (queryText) {
                             const fields = [];
                             row.querySelectorAll('.subQueryField:checked').forEach(function (fieldCheckbox) {
                                 fields.push(fieldCheckbox.value);
                             });
-                            queries.push({ query: queryText, fields: fields });
+                            queries.push({query: queryText, fields: fields});
                         }
                     });
 
@@ -498,6 +544,11 @@
                     };
                 }
 
+                /**
+                 * Opens the subscription editor modal.
+                 * @param {Object|null} sub - The subscription to edit or null for new.
+                 * @param {string|null} titleText - Optional title override.
+                 */
                 show(sub, titleText) {
                     const editor = document.getElementById('subscriptionEditor');
                     const title = document.getElementById('subEditorTitle');
@@ -512,14 +563,20 @@
                     this.config.applySubscriptionDependencies();
 
                     editor.style.display = 'block';
-                    editor.scrollIntoView({ behavior: 'smooth' });
+                    editor.scrollIntoView({behavior: 'smooth'});
                 }
 
+                /**
+                 * Closes the subscription editor modal.
+                 */
                 close() {
                     document.getElementById('subscriptionEditor').style.display = 'none';
                 }
             }
 
+            /**
+             * Main configuration class for the plugin.
+             */
             class MediathekPluginConfig {
                 constructor() {
                     this.pluginId = "a31b415a-5264-419d-b152-8c8192a54994";
@@ -531,7 +588,6 @@
 
                     // --- Dependency Rules --- Disable/hide certain fields based on other field values of subscriptions
                     this.subscriptionDependencyRules = [
-
                         {
                             controllerId: 'subTreatNonEpisodesAsExtras',
                             dependentId: 'subSaveTrailersContainer',
@@ -567,23 +623,39 @@
                             dependentId: 'subDownloadFullVideoForSecondaryAudioContainer',
                             showWhen: false,
                             disableWhenHidden: true
+                        },
+                        {
+                            controllerId: 'subDownloadFullVideoForSecondaryAudio',
+                            dependentId: 'subUseStreamingUrlFilesContainer',
+                            showWhen: false,
+                            disableWhenHidden: true
                         }
                     ];
                 }
 
                 // --- Helper Functions ---
-                createIconButton(icon, title, onClick, id) {
+
+                /**
+                 * Creates an icon button.
+                 * @param {string} icon - Material icon name.
+                 * @param {string} title - Tooltip text.
+                 * @param {Function} onClick - Click handler.
+                 * @param {string} [id] - Optional ID.
+                 * @param {string} [ariaLabel] - Optional ARIA label for accessibility.
+                 * @returns {HTMLButtonElement}
+                 */
+                createIconButton(icon, title, onClick, id, ariaLabel) {
                     const btn = document.createElement('button');
                     btn.type = 'button';
                     btn.classList.add('paper-icon-button-light');
                     btn.setAttribute('is', 'emby-button');
                     btn.title = title;
                     if (id) btn.id = id;
+                    if (ariaLabel) btn.setAttribute('aria-label', ariaLabel);
+                    else btn.setAttribute('aria-label', title);
 
                     if (typeof onClick === 'function') {
                         btn.onclick = onClick;
-                    } else if (onClick) {
-                        btn.setAttribute('onclick', onClick);
                     }
 
                     const iconSpan = document.createElement('span');
@@ -594,8 +666,11 @@
                     return btn;
                 }
 
+                /**
+                 * Creates a checkbox with label and optional description.
+                 */
                 createCheckbox(label, checked, options = {}) {
-                    const { id, value, description, className, onChange } = options;
+                    const {id, value, description, className, onChange} = options;
 
                     const labelEl = document.createElement('label');
                     labelEl.classList.add('emby-checkbox-label');
@@ -633,7 +708,9 @@
                 }
 
                 confirmationPopup(message, title, resultCallback) {
+                    // noinspection JSUnresolvedReference
                     if (typeof Dashboard !== 'undefined' && typeof Dashboard.confirm === 'function') {
+                        // noinspection JSUnresolvedReference,JSCheckFunctionSignatures
                         Dashboard.confirm(message, title, resultCallback);
                     } else {
                         const result = confirm(title + "\n\n" + message);
@@ -642,7 +719,9 @@
                 }
 
                 showToast(message) {
+                    // noinspection JSUnresolvedReference
                     if (typeof Dashboard !== 'undefined' && typeof Dashboard.alert === 'function') {
+                        // noinspection JSUnresolvedReference
                         Dashboard.alert(message);
                     } else {
                         alert(message);
@@ -651,7 +730,9 @@
 
                 openFolderDialog(inputId, headerText) {
                     try {
+                        // noinspection JSUnresolvedReference
                         if (typeof Dashboard !== 'undefined' && Dashboard.DirectoryBrowser) {
+                            // noinspection JSUnresolvedReference
                             const picker = new Dashboard.DirectoryBrowser();
                             picker.show({
                                 header: headerText,
@@ -665,16 +746,16 @@
                                 }
                             });
                         } else {
-                            var currentValue = document.getElementById(inputId).value;
-                            var newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
+                            let currentValue = document.getElementById(inputId).value;
+                            let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
                             if (newPath !== null && newPath.trim() !== '') {
                                 document.getElementById(inputId).value = newPath.trim();
                             }
                         }
                     } catch (e) {
                         console.error('Error opening folder dialog:', e);
-                        var currentValue = document.getElementById(inputId).value;
-                        var newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
+                        let currentValue = document.getElementById(inputId).value;
+                        let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
                         if (newPath !== null && newPath.trim() !== '') {
                             document.getElementById(inputId).value = newPath.trim();
                         }
@@ -688,9 +769,8 @@
                         console.error('Error generating UUID using crypto.randomUUID():', e);
                     }
                     console.warn('Falling back to manual UUID generation.');
-                    // Fallback method, this is not cryptographically secure but sufficient for our use case
                     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-                        var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                        let r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
                         return v.toString(16);
                     });
                 }
@@ -715,8 +795,14 @@
                 }
 
                 // --- Core Logic ---
+
+                /**
+                 * Loads the configuration from the server.
+                 */
                 loadConfig() {
+                    // noinspection JSUnresolvedReference
                     Dashboard.showLoadingMsg();
+                    // noinspection JSUnresolvedReference
                     ApiClient.getPluginConfiguration(this.pluginId).then((config) => {
                         this.currentConfig = config;
 
@@ -729,33 +815,52 @@
                         document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
 
                         this.renderSubscriptionsList();
-
+                        // noinspection JSUnresolvedReference
                         Dashboard.hideLoadingMsg();
                     });
                 }
 
+                /**
+                 * Saves the global configuration to the server.
+                 */
                 saveGlobalConfig() {
+                    // noinspection JSUnresolvedReference
                     Dashboard.showLoadingMsg();
+                    // noinspection JSUnresolvedReference
                     ApiClient.updatePluginConfiguration(this.pluginId, this.currentConfig).then((result) => {
+                        // noinspection JSUnresolvedReference
                         Dashboard.processPluginConfigurationUpdateResult(result);
                         this.showToast("Einstellungen gespeichert.");
                         this.loadConfig();
                     });
                 }
 
+                /**
+                 * Switches the visible tab.
+                 * @param {string} tabId - The ID suffix of the tab to show ('search', 'settings', 'subscriptions').
+                 */
                 switchTab(tabId) {
-                    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+                    document.querySelectorAll('.mvpl-tab-content').forEach(el => el.style.display = 'none');
                     document.getElementById('tab-' + tabId).style.display = 'block';
 
-                    const buttons = document.querySelectorAll('.sectionTabs button');
-                    buttons.forEach(btn => btn.classList.remove('selected'));
+                    const buttons = document.querySelectorAll('.mvpl-tabs-spacer button');
+                    buttons.forEach(btn => {
+                        btn.classList.remove('selected');
+                        btn.setAttribute('aria-selected', 'false');
+                    });
 
-                    if (tabId === 'search') buttons[0].classList.add('selected');
-                    if (tabId === 'settings') buttons[1].classList.add('selected');
-                    if (tabId === 'subscriptions') buttons[2].classList.add('selected');
+                    const selectedBtn = document.getElementById('mvpl-btn-tab-' + tabId);
+                    if (selectedBtn) {
+                        selectedBtn.classList.add('selected');
+                        selectedBtn.setAttribute('aria-selected', 'true');
+                    }
                 }
 
                 // --- SEARCH LOGIC ---
+
+                /**
+                 * Executes a search against the API.
+                 */
                 performSearch() {
                     const query = document.getElementById('txtSearchQuery').value;
                     const minD = document.getElementById('numMinDuration').value;
@@ -765,18 +870,21 @@
                         this.showToast("Bitte Suchbegriff eingeben");
                         return;
                     }
-
+                    // noinspection JSUnresolvedReference
                     Dashboard.showLoadingMsg();
+                    // noinspection JSUnresolvedReference
                     let url = ApiClient.getUrl('/' + this.pluginName + '/Search');
                     url += '?query=' + encodeURIComponent(query);
                     if (minD) url += '&minDuration=' + minD;
                     if (maxD) url += '&maxDuration=' + maxD;
-
+                    // noinspection JSUnresolvedReference
                     ApiClient.getJSON(url).then((results) => {
                         this.currentSearchResults = results; // Store results
                         this.renderSearchResults();
+                        // noinspection JSUnresolvedReference
                         Dashboard.hideLoadingMsg();
                     }).catch((err) => {
+                        // noinspection JSUnresolvedReference
                         Dashboard.hideLoadingMsg();
                         this.showToast("Fehler bei der Suche: " + err);
                     });
@@ -802,80 +910,97 @@
                     container.appendChild(paperList);
                 }
 
-                createSearchResultItem(item, index) {
-                    const durationStr = Math.floor(item.duration / 60) + " Min";
-
+                createListItem(title, bodyText1, bodyText2, actions) {
                     const listItem = document.createElement('div');
                     listItem.classList.add('listItem', 'listItem-border');
 
                     const body = document.createElement('div');
                     body.classList.add('listItemBody', 'two-line');
 
-                    const title = document.createElement('h3');
-                    title.classList.add('listItemBodyText');
-                    title.textContent = item.title;
+                    const titleEl = document.createElement('h3');
+                    titleEl.classList.add('listItemBodyText');
+                    titleEl.textContent = title;
 
-                    const details = document.createElement('div');
-                    details.classList.add('listItemBodyText', 'secondary');
-                    details.style.display = 'inline-flex';
-                    details.style.alignItems = 'center';
-                    details.style.gap = '8px';
-
-                    const detailsText = document.createElement('span');
-                    detailsText.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
-                    details.appendChild(detailsText);
-
-                    if (item.url_subtitle) {
-                        const sep = document.createElement('span');
-                        sep.textContent = ' | ';
-                        details.appendChild(sep);
-
-                        const icon = document.createElement('span');
-                        icon.classList.add('material-icons', 'closed_caption');
-                        icon.title = 'Untertitel verfügbar';
-                        details.appendChild(icon);
+                    const text1El = document.createElement('div');
+                    text1El.classList.add('listItemBodyText', 'secondary');
+                    if (typeof bodyText1 === 'string') {
+                        text1El.textContent = bodyText1;
+                    } else if (bodyText1 instanceof Node) {
+                        text1El.appendChild(bodyText1);
                     }
 
-                    const desc = document.createElement('div');
-                    desc.classList.add('listItemBodyText', 'secondary');
-                    desc.style.fontSize = '0.9em';
-                    desc.style.opacity = '0.7';
-                    desc.textContent = item.description || '';
+                    const text2El = document.createElement('div');
+                    text2El.classList.add('listItemBodyText', 'secondary');
+                    if (typeof bodyText2 === 'string') {
+                        text2El.textContent = bodyText2;
+                    } else if (bodyText2 instanceof Node) {
+                        text2El.appendChild(bodyText2);
+                    }
 
-                    body.appendChild(title);
-                    body.appendChild(details);
-                    body.appendChild(desc);
+                    body.appendChild(titleEl);
+                    body.appendChild(text1El);
+                    body.appendChild(text2El);
 
+                    listItem.appendChild(body);
+
+                    if (actions) {
+                        listItem.appendChild(actions);
+                    }
+
+                    return listItem;
+                }
+
+                createSearchResultItem(item, index) {
+                    const durationStr = Math.floor(item.duration / 60) + " Min";
                     const actions = document.createElement('div');
-                    actions.style.display = 'flex';
-                    actions.style.gap = '10px';
+                    actions.classList.add('flex-gap-10');
 
                     actions.appendChild(this.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
                     actions.appendChild(this.createIconButton('settings', 'Erweiterter Download', () => this.openAdvancedDownloadDialog(index)));
                     actions.appendChild(this.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.title, item.channel, item.topic)));
 
-                    listItem.appendChild(body);
-                    listItem.appendChild(actions);
+                    // Build BodyText1
+                    const body1 = document.createElement('div');
+                    body1.classList.add('flex-align-center');
+                    body1.style.gap = '8px';
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
+                    body1.appendChild(textSpan);
 
-                    return listItem;
+                    if (item.url_subtitle) {
+                        const sep = document.createElement('span');
+                        sep.textContent = ' | ';
+                        body1.appendChild(sep);
+                        const icon = document.createElement('span');
+                        icon.classList.add('material-icons', 'closed_caption');
+                        icon.title = 'Untertitel verfügbar';
+                        body1.appendChild(icon);
+                    }
+
+                    const bodyText2 = item.description || '';
+
+                    return this.createListItem(item.title, body1, bodyText2, actions);
                 }
 
                 downloadItem(index) {
                     const item = this.currentSearchResults[index];
                     if (!item) return;
-
+                    // noinspection JSUnresolvedReference
                     const url = ApiClient.getUrl('/' + this.pluginName + '/Download');
-
+                    // noinspection JSUnresolvedReference
                     Dashboard.showLoadingMsg();
+                    // noinspection JSUnresolvedReference
                     ApiClient.ajax({
                         type: "POST",
                         url: url,
                         data: JSON.stringify(item),
                         contentType: 'application/json'
                     }).then((result) => {
+                        // noinspection JSUnresolvedReference
                         Dashboard.hideLoadingMsg();
                         this.showToast("Download für '" + item.title + "' gestartet.");
                     }).catch((err) => {
+                        // noinspection JSUnresolvedReference
                         Dashboard.hideLoadingMsg();
                         this.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
                     });
@@ -887,9 +1012,9 @@
                         Id: null,
                         Name: topic,
                         Queries: [
-                            { fields: ["title"], query: title },
-                            { fields: ["channel"], query: channel },
-                            { fields: ["topic"], query: topic }
+                            {fields: ["title"], query: title},
+                            {fields: ["channel"], query: channel},
+                            {fields: ["topic"], query: topic}
                         ],
                         MinDurationMinutes: null,
                         MaxDurationMinutes: null,
@@ -901,7 +1026,7 @@
                 }
 
 
-                // --- SUBSCRIPTION LOGIC ---
+                // ---SUBSCRIPTION LOGIC ---
                 renderSubscriptionsList() {
                     const list = document.getElementById('subscriptionList');
                     list.textContent = "";
@@ -917,42 +1042,13 @@
                         // Handle IsEnabled default true if undefined
                         if (sub.IsEnabled === undefined) sub.IsEnabled = true;
 
-                        const queriesSummary = (sub.Queries || []).map(function (q) { return q.query; }).join(', ');
+                        const queriesSummary = (sub.Queries || []).map(function (q) {
+                            return q.query;
+                        }).join(', ');
                         const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
 
-                        const listItem = document.createElement('div');
-                        listItem.classList.add('listItem', 'listItem-border');
-
-                        // Visual cue for disabled state
-                        if (!sub.IsEnabled) {
-                            listItem.style.opacity = '0.6';
-                        }
-
-                        const body = document.createElement('div');
-                        body.classList.add('listItemBody', 'two-line');
-
-                        const title = document.createElement('h3');
-                        title.classList.add('listItemBodyText');
-                        
-                        // Add Status to title
-                        const statusText = sub.IsEnabled ? "" : " (Deaktiviert)";
-                        title.textContent = sub.Name + statusText;
-
-                        const queries = document.createElement('div');
-                        queries.classList.add('listItemBodyText', 'secondary');
-                        queries.textContent = 'Queries: ' + queriesSummary;
-
-                        const lastDl = document.createElement('div');
-                        lastDl.classList.add('listItemBodyText', 'secondary');
-                        lastDl.textContent = 'Letzter Download: ' + lastDownloadText;
-
-                        body.appendChild(title);
-                        body.appendChild(queries);
-                        body.appendChild(lastDl);
-
                         const actions = document.createElement('div');
-                        actions.style.display = 'flex';
-                        actions.style.gap = '5px';
+                        actions.classList.add('flex-gap-5');
 
                         // Toggle Button
                         const toggleIcon = sub.IsEnabled ? 'pause_circle_outline' : 'play_circle_outline';
@@ -963,14 +1059,27 @@
                         actions.appendChild(this.createIconButton('edit', 'Bearbeiten', () => this.subscriptionEditor.show(sub)));
                         actions.appendChild(this.createIconButton('delete', 'Löschen', () => this.deleteSubscription(sub.Id)));
 
-                        listItem.appendChild(body);
-                        listItem.appendChild(actions);
+                        // Add Status to title
+                        const statusText = sub.IsEnabled ? "" : " (Deaktiviert)";
+                        const title = sub.Name + statusText;
+                        const bodyText1 = 'Queries: ' + queriesSummary;
+                        const bodyText2 = 'Letzter Download: ' + lastDownloadText;
+
+                        const listItem = this.createListItem(title, bodyText1, bodyText2, actions);
+
+                        // Visual cue for disabled state
+                        if (!sub.IsEnabled) {
+                            listItem.classList.add('sub-disabled');
+                        }
+
                         list.appendChild(listItem);
                     });
                 }
 
                 toggleSubscription(id) {
-                    const idx = this.currentConfig.Subscriptions.findIndex(function (s) { return s.Id === id; });
+                    const idx = this.currentConfig.Subscriptions.findIndex(function (s) {
+                        return s.Id === id;
+                    });
                     if (idx > -1) {
                         // Toggle
                         if (this.currentConfig.Subscriptions[idx].IsEnabled === undefined) {
@@ -986,15 +1095,19 @@
                 resetProcessedItems(id) {
                     this.confirmationPopup("Dies wird die Liste der bereits verarbeiteten Items für dieses Abonnement zurücksetzen. Es kann dazu führen, dass bereits heruntergeladene Inhalte erneut heruntergeladen werden, wenn sie noch in den Suchergebnissen der MediathekView API erscheinen. Fortfahren?", "Verarbeitete Items zurücksetzen", (confirmed) => {
                         if (confirmed) {
+                            // noinspection JSUnresolvedReference
                             Dashboard.showLoadingMsg();
+                            // noinspection JSUnresolvedReference
                             ApiClient.ajax({
                                 type: "POST",
                                 url: ApiClient.getUrl('/' + this.pluginName + '/ResetProcessedItems?subscriptionId=' + id),
                             }).then((result) => {
+                                // noinspection JSUnresolvedReference
                                 Dashboard.hideLoadingMsg();
                                 this.showToast("Verarbeitete Items für Abonnement zurückgesetzt.");
                                 this.loadConfig(); // Refresh the configuration to update the UI
                             }).catch((err) => {
+                                // noinspection JSUnresolvedReference
                                 Dashboard.hideLoadingMsg();
                                 this.showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
                             });
@@ -1004,19 +1117,18 @@
 
                 addQueryRow(query) {
                     if (query == null) {
-                        query = { query: '', fields: ['title', 'topic'] };
+                        query = {query: '', fields: ['title', 'topic']};
                     }
                     const container = document.getElementById('queriesContainer');
                     const newRow = document.createElement('div');
-                    newRow.className = 'query-row';
-                    newRow.style.cssText = 'display: flex; gap: 10px; align-items: center; border: 1px solid #333; padding: 10px; border-radius: 5px;';
+                    newRow.className = 'mvpl-query-row';
 
                     const queryText = query ? query.query : '';
                     const fields = query ? query.fields : ['title', 'topic'];
 
                     // Input Container
                     const inputDiv = document.createElement('div');
-                    inputDiv.style.flexGrow = '1';
+                    inputDiv.className = 'flex-grow';
 
                     const input = document.createElement('input');
                     input.setAttribute('is', 'emby-input');
@@ -1031,12 +1143,11 @@
 
                     // Checkboxes
                     const checkboxesDiv = document.createElement('div');
-                    checkboxesDiv.style.display = 'flex';
-                    checkboxesDiv.style.gap = '15px';
+                    checkboxesDiv.className = 'query-checkboxes';
 
-                    const cbTitle = this.createCheckbox('Titel', fields.includes('title'), { value: 'title', className: 'subQueryField' });
-                    const cbTopic = this.createCheckbox('Thema', fields.includes('topic'), { value: 'topic', className: 'subQueryField' });
-                    const cbChannel = this.createCheckbox('Sender', fields.includes('channel'), { value: 'channel', className: 'subQueryField' });
+                    const cbTitle = this.createCheckbox('Titel', fields.includes('title'), {value: 'title', className: 'subQueryField'});
+                    const cbTopic = this.createCheckbox('Thema', fields.includes('topic'), {value: 'topic', className: 'subQueryField'});
+                    const cbChannel = this.createCheckbox('Sender', fields.includes('channel'), {value: 'channel', className: 'subQueryField'});
 
                     checkboxesDiv.appendChild(cbTitle);
                     checkboxesDiv.appendChild(cbTopic);
@@ -1064,11 +1175,13 @@
                     if (!this.currentConfig.Subscriptions) this.currentConfig.Subscriptions = [];
 
                     if (subData.Id) {
-                        const idx = this.currentConfig.Subscriptions.findIndex(function (s) { return s.Id === subData.Id; });
+                        const idx = this.currentConfig.Subscriptions.findIndex(function (s) {
+                            return s.Id === subData.Id;
+                        });
                         if (idx > -1) {
                             // Keep existing ID logic if needed, but here subData already has ID from hidden input if set
                             var existingId = this.currentConfig.Subscriptions[idx].Id;
-                            
+
                             // Preserve IsEnabled state
                             var existingIsEnabled = this.currentConfig.Subscriptions[idx].IsEnabled;
                             if (existingIsEnabled === undefined) existingIsEnabled = true;
@@ -1091,7 +1204,9 @@
                 deleteSubscription(id) {
                     this.confirmationPopup("Soll dieses Abonnement wirklich gelöscht werden?", "Löschen bestätigen", (confirmed) => {
                         if (confirmed) {
-                            this.currentConfig.Subscriptions = this.currentConfig.Subscriptions.filter(function (s) { return s.Id !== id; });
+                            this.currentConfig.Subscriptions = this.currentConfig.Subscriptions.filter(function (s) {
+                                return s.Id !== id;
+                            });
                             this.saveGlobalConfig();
                             this.renderSubscriptionsList();
                         }
@@ -1108,12 +1223,22 @@
                     document.getElementById('advDlPath').value = this.currentConfig.DefaultDownloadPath || '';
 
                     let proposedFilename = (this.currentItemForAdvancedDl.topic || 'video') + " - " + (this.currentItemForAdvancedDl.title || 'video');
-                    proposedFilename = proposedFilename.replace(/["\/\\?%*:|"<>]/g, '-') + '.mp4';
+                    proposedFilename = proposedFilename.replace(/["\/\\?%*:|<>]/g, '-') + '.mp4';
                     document.getElementById('advDlFilename').value = proposedFilename;
 
 
-                    document.getElementById('advDlSubtitles').checked = this.currentConfig.DownloadSubtitles && this.currentItemForAdvancedDl.url_subtitle;
-                    document.getElementById('advDlSubtitles').disabled = !this.currentItemForAdvancedDl.url_subtitle;
+                    let advDlSub = document.getElementById('advDlSubtitles');
+                    let advDlSubDesc = document.getElementById('advDlSubtitlesDesc');
+                    if (!this.currentItemForAdvancedDl.url_subtitle) {
+                        advDlSub.checked = false;
+                        advDlSub.disabled = true;
+                        advDlSubDesc.textContent = "Keine Untertitel verfügbar für dieses Video.";
+                    }
+                    else {
+                        advDlSub.disabled = false;
+                        advDlSubDesc.textContent = "";
+                    }
+
 
 
                     document.getElementById('advancedDownloadModal').style.display = 'flex';
@@ -1151,12 +1276,96 @@
                     });
                 }
 
-                init() {
+                testSubscription() {
+                    const subData = this.subscriptionEditor.getEditorValues();
+                    if (subData.Queries.length === 0) {
+                        this.showToast("Bitte mindestens eine Suchanfrage definieren.");
+                        return;
+                    }
+
+                    const url = ApiClient.getUrl('/' + this.pluginName + '/TestSubscription');
+
+                    Dashboard.showLoadingMsg();
+                    ApiClient.ajax({
+                        type: "POST",
+                        url: url,
+                        data: JSON.stringify(subData),
+                        contentType: 'application/json',
+                        dataType: 'json'
+                    }).then((results) => {
+                        Dashboard.hideLoadingMsg();
+                        if (typeof results === 'string') {
+                            try {
+                                results = JSON.parse(results);
+                            } catch (e) {
+                                console.error("Failed to parse JSON results", e);
+                            }
+                        }
+                        this.renderTestResults(results);
+                        document.getElementById('testSubscriptionModal').style.display = 'flex';
+                    }).catch((err) => {
+                        Dashboard.hideLoadingMsg();
+                        console.error("Test subscription error:", err);
+                        this.showToast("Fehler beim Testen des Abos: " + (err.responseJSON ? err.responseJSON.detail : (err.message || "Unbekannter Fehler")));
+                    });
+                }
+
+                closeTestSubscriptionDialog() {
+                    document.getElementById('testSubscriptionModal').style.display = 'none';
+                }
+
+                renderTestResults(results) {
+                    const container = document.getElementById('testSubscriptionResults');
+                    const countContainer = document.getElementById('testSubscriptionCount');
+                    container.textContent = "";
+                    countContainer.textContent = "";
+
+                    if (!results || results.length === 0) {
+                        const noRes = document.createElement('p');
+                        noRes.textContent = "Keine Treffer für diese Konfiguration.";
+                        container.appendChild(noRes);
+                        return;
+                    }
+
+                    countContainer.textContent = results.length + " Einträge gefunden, die heruntergeladen würden:";
+
+                    const paperList = document.createElement('div');
+                    paperList.classList.add('paperList');
+
+                    results.forEach((item) => {
+                        const durationStr = Math.floor(item.duration / 60) + " Min";
+                        const title = item.title;
+                        const bodyText1 = item.channel + ' | ' + item.topic + ' | ' + durationStr;
+                        const bodyText2 = item.description || '';
+
+                        paperList.appendChild(this.createListItem(title, bodyText1, bodyText2, null));
+                    });
+                    container.appendChild(paperList);
+                }
+
+                /**
+                 * Binds all event listeners for static HTML elements.
+                 */
+                bindEvents() {
+                    // Page Show
                     document.querySelector('#MediathekViewDLConfigPage').addEventListener('pageshow', () => {
                         this.loadConfig();
                     });
 
-                    document.querySelector('#MediathekGeneralConfigForm').addEventListener('submit', (e) => {
+                    // Tab Navigation
+                    document.getElementById('mvpl-btn-tab-search').addEventListener('click', () => this.switchTab('search'));
+                    document.getElementById('mvpl-btn-tab-settings').addEventListener('click', () => this.switchTab('settings'));
+                    document.getElementById('mvpl-btn-tab-subscriptions').addEventListener('click', () => this.switchTab('subscriptions'));
+
+                    // Search Form
+                    document.getElementById('mvpl-form-search').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.performSearch();
+                        return false;
+                    });
+
+                    // Main Config Form
+                    document.getElementById('MediathekGeneralConfigForm').addEventListener('submit', (e) => {
                         e.preventDefault();
                         this.currentConfig.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
                         this.currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
@@ -1169,18 +1378,59 @@
                         return false;
                     });
 
+                    // Path selector in main config
                     document.getElementById('btnSelectPath').addEventListener('click', () => {
                         this.openFolderDialog('txtDefaultDownloadPath', 'Standard Download Pfad wählen');
                     });
-
+                    // Path selectors in subscription editor
                     document.getElementById('btnSelectSubPath').addEventListener('click', () => {
                         this.openFolderDialog('subPath', 'Abo Pfad wählen');
                     });
-
+                    // Path selector in advanced download dialog
                     document.getElementById('btnSelectAdvPath').addEventListener('click', () => {
                         this.openFolderDialog('advDlPath', 'Download Pfad wählen');
                     });
 
+                    // Subscription Management
+                    document.getElementById('mvpl-btn-new-sub').addEventListener('click', () => {
+                        this.subscriptionEditor.show(null);
+                    });
+
+                    document.getElementById('mvpl-form-subscription').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.saveSubscription();
+                        return false;
+                    });
+
+                    document.getElementById('mvpl-btn-add-query').addEventListener('click', () => {
+                        this.addQueryRow();
+                    });
+
+                    document.getElementById('mvpl-btn-test-sub').addEventListener('click', () => {
+                        this.testSubscription();
+                    });
+
+                    document.getElementById('mvpl-btn-cancel-sub').addEventListener('click', () => {
+                        this.subscriptionEditor.close();
+                    });
+
+                    // Test Results
+                    document.getElementById('mvpl-btn-close-test-results').addEventListener('click', () => {
+                        this.closeTestSubscriptionDialog();
+                    });
+
+                    // Advanced Download
+                    document.getElementById('mvpl-adv-download-form').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.performAdvancedDownload();
+                        return false;
+                    });
+
+                    document.getElementById('mvpl-btn-close-adv-download').addEventListener('click', () => {
+                        this.closeAdvancedDownloadDialog();
+                    });
+
+                    // Dependency Rules
                     const controllerIds = [...new Set(this.subscriptionDependencyRules.map(rule => rule.controllerId))];
                     controllerIds.forEach(id => {
                         const controller = document.getElementById(id);
@@ -1188,6 +1438,10 @@
                             controller.addEventListener('change', () => this.applySubscriptionDependencies());
                         }
                     });
+                }
+
+                init() {
+                    this.bindEvents();
                 }
             }
 
@@ -1197,23 +1451,168 @@
                 editor: mediathekConfig.subscriptionEditor
             };
             mediathekConfig.init();
-            })();
-        </script>
-        <style>
-            .tabs-spacer {
-                margin-bottom: 20px;
-                border-bottom: 1px solid #333;
-            }
+        })();
+    </script>
+    <style>
+        .mvpl-tabs-spacer {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
 
-            .sectionTabs button.selected {
-                color: #00a4dc;
-                border-bottom: 2px solid #00a4dc;
-            }
+        .mvpl-tabs-spacer button.selected {
+            color: #00a4dc;
+        }
 
-            .listItemBodyText.secondary {
-                color: #aaa;
-            }
-        </style>
-    </div>
+        .mvpl-dialog-host {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .mvpl-dialog-content {
+            background-color: #202020;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 5px;
+            width: 70%;
+            max-width: 800px;
+            max-height: 60vh;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Helper & Layout Classes */
+        .flex-grow {
+            flex-grow: 1;
+        }
+
+        .flex-align-center {
+            display: flex;
+            align-items: center;
+        }
+
+        .flex-space-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .flex-gap-5 {
+            display: flex;
+            gap: 5px;
+        }
+
+        .flex-gap-10 {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mvpl-margin-top-10 {
+            margin-top: 10px;
+        }
+
+        .mvpl-margin-top-20 {
+            margin-top: 20px;
+        }
+
+        /* Specific Components */
+        .mvpl-search-form-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .mvpl-input-short {
+            width: 150px;
+        }
+
+        .mvpl-results-container {
+            margin-top: 20px;
+        }
+
+        .mvpl-folder-button {
+            margin-left: 10px;
+            margin-top: 15px;
+        }
+
+        .mvpl-last-run-label {
+            padding: 10px 0;
+        }
+
+        .mvpl-subscription-editor {
+            display: none;
+            border-top: 1px solid #444;
+            margin-top: 20px;
+            padding-top: 20px;
+        }
+
+        .mvpl-queries-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .mvpl-query-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border: 1px solid #333;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .query-checkboxes {
+             display: flex;
+             gap: 15px;
+        }
+
+        .mvpl-duration-inputs-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .mvpl-indented-block {
+            margin-left: 20px;
+        }
+
+        .sub-disabled {
+            opacity: 0.6;
+        }
+
+        .mvpl-modal-title {
+            margin-top: 0;
+        }
+
+        .mvpl-test-sub-count {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .mvpl-test-sub-results {
+            overflow-y: auto;
+            flex-grow: 1;
+            margin-bottom: 20px;
+        }
+    </style>
+</div>
 </body>
 </html>
