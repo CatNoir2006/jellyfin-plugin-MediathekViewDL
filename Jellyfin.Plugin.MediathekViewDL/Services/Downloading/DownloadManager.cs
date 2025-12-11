@@ -5,16 +5,16 @@ using System.Threading.Tasks;
 using MediaBrowser.Controller;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 
 /// <summary>
 /// Service responsible for executing download jobs.
 /// </summary>
-public class DownloadManager
+public class DownloadManager : IDownloadManager
 {
     private readonly ILogger<DownloadManager> _logger;
-    private readonly FileDownloader _fileDownloader;
-    private readonly FFmpegService _ffmpegService;
+    private readonly IFileDownloader _fileDownloader;
+    private readonly IFFmpegService _ffmpegService;
     private readonly IServerApplicationPaths _appPaths;
 
     /// <summary>
@@ -26,8 +26,8 @@ public class DownloadManager
     /// <param name="appPaths">The application paths.</param>
     public DownloadManager(
         ILogger<DownloadManager> logger,
-        FileDownloader fileDownloader,
-        FFmpegService ffmpegService,
+        IFileDownloader fileDownloader,
+        IFFmpegService ffmpegService,
         IServerApplicationPaths appPaths)
     {
         _logger = logger;

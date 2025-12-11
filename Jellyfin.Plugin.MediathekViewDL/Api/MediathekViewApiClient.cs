@@ -13,7 +13,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api;
 /// <summary>
 /// A client for the MediathekViewWeb API.
 /// </summary>
-public class MediathekViewApiClient
+public class MediathekViewApiClient : IMediathekViewApiClient
 {
     private const string ApiUrl = "https://mediathekviewweb.de/api/query";
     private readonly IHttpClientFactory _httpClientFactory;

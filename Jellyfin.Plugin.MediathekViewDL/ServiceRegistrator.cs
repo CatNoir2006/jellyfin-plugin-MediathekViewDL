@@ -1,5 +1,9 @@
 using Jellyfin.Plugin.MediathekViewDL.Api;
 using Jellyfin.Plugin.MediathekViewDL.Services;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+using Jellyfin.Plugin.MediathekViewDL.Services.Library;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
+using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,17 +20,17 @@ namespace Jellyfin.Plugin.MediathekViewDL
         {
             serviceCollection.AddHttpClient(); // Required for FileDownloader
 
-            serviceCollection.AddSingleton<LanguageDetectionService>();
-            serviceCollection.AddSingleton<VideoParser>();
-            serviceCollection.AddSingleton<FileNameBuilderService>();
-            serviceCollection.AddSingleton<LocalMediaScanner>();
-            serviceCollection.AddTransient<MediathekViewApiClient>();
+            serviceCollection.AddSingleton<ILanguageDetectionService, LanguageDetectionService>();
+            serviceCollection.AddSingleton<IVideoParser, VideoParser>();
+            serviceCollection.AddSingleton<IFileNameBuilderService, FileNameBuilderService>();
+            serviceCollection.AddSingleton<ILocalMediaScanner, LocalMediaScanner>();
+            serviceCollection.AddTransient<IMediathekViewApiClient, MediathekViewApiClient>();
             serviceCollection.AddTransient<MediathekViewDlApiService>();
-            serviceCollection.AddTransient<FFmpegService>();
-            serviceCollection.AddTransient<FileDownloader>();
-            serviceCollection.AddTransient<SubscriptionProcessor>();
-            serviceCollection.AddTransient<DownloadManager>();
-            serviceCollection.AddSingleton<StrmValidationService>();
+            serviceCollection.AddTransient<IFFmpegService, FFmpegService>();
+            serviceCollection.AddTransient<IFileDownloader, FileDownloader>();
+            serviceCollection.AddTransient<ISubscriptionProcessor, SubscriptionProcessor>();
+            serviceCollection.AddTransient<IDownloadManager, DownloadManager>();
+            serviceCollection.AddSingleton<IStrmValidationService, StrmValidationService>();
         }
     }
 }

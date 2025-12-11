@@ -6,6 +6,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
+using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 using MediaBrowser.Common.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,11 +23,11 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api;
 [Route("MediathekViewDL")]
 public class MediathekViewDlApiService : ControllerBase
 {
-    private readonly MediathekViewApiClient _apiClient;
+    private readonly IMediathekViewApiClient _apiClient;
     private readonly ILogger<MediathekViewDlApiService> _logger;
-    private readonly FileDownloader _fileDownloader;
-    private readonly FileNameBuilderService _fileNameBuilder;
-    private readonly SubscriptionProcessor _subscriptionProcessor;
+    private readonly IFileDownloader _fileDownloader;
+    private readonly IFileNameBuilderService _fileNameBuilder;
+    private readonly ISubscriptionProcessor _subscriptionProcessor;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekViewDlApiService"/> class.
@@ -36,10 +39,10 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="subscriptionProcessor">The subscription processor.</param>
     public MediathekViewDlApiService(
         ILogger<MediathekViewDlApiService> logger,
-        MediathekViewApiClient apiClient,
-        FileDownloader fileDownloader,
-        FileNameBuilderService fileNameBuilder,
-        SubscriptionProcessor subscriptionProcessor)
+        IMediathekViewApiClient apiClient,
+        IFileDownloader fileDownloader,
+        IFileNameBuilderService fileNameBuilder,
+        ISubscriptionProcessor subscriptionProcessor)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -47,6 +50,11 @@ public class MediathekViewDlApiService : ControllerBase
         _fileNameBuilder = fileNameBuilder;
         _subscriptionProcessor = subscriptionProcessor;
     }
+
+    /// <summary>
+    /// Gets the plugin configuration.
+    /// </summary>
+    protected virtual PluginConfiguration? Configuration => Plugin.Instance?.Configuration;
 
     /// <summary>
     /// Tests a subscription to see what items would be downloaded.
@@ -110,7 +118,7 @@ public class MediathekViewDlApiService : ControllerBase
     [Authorize(Policy = Policies.RequiresElevation)]
     public IActionResult Download([FromBody] ResultItem item)
     {
-        var config = Plugin.Instance?.Configuration;
+        var config = Configuration;
         if (config == null || string.IsNullOrWhiteSpace(config.DefaultDownloadPath))
         {
             _logger.LogError("Default download path is not configured. Cannot start manual download.");
@@ -181,7 +189,7 @@ public class MediathekViewDlApiService : ControllerBase
     [Authorize(Policy = Policies.RequiresElevation)]
     public IActionResult AdvancedDownload([FromBody] AdvancedDownloadOptions options)
     {
-        var config = Plugin.Instance?.Configuration;
+        var config = Configuration;
         if (config == null)
         {
             _logger.LogError("Plugin configuration is not available. Cannot start advanced download.");
@@ -266,7 +274,7 @@ public class MediathekViewDlApiService : ControllerBase
     [Authorize(Policy = Policies.RequiresElevation)]
     public ActionResult ResetProcessedItems([FromQuery] Guid subscriptionId)
     {
-        var config = Plugin.Instance?.Configuration;
+        var config = Configuration;
         if (config == null)
         {
             _logger.LogError("Plugin configuration is not available. Cannot reset processed items.");

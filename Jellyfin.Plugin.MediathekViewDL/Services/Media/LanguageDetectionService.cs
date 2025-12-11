@@ -6,13 +6,13 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
 /// <summary>
 /// A service to detect a language from a string based on various language identifiers.
 /// This service pre-compiles regex patterns for performance.
 /// </summary>
-public class LanguageDetectionService
+public class LanguageDetectionService : ILanguageDetectionService
 {
     private readonly List<LanguageData> _languageDataList;
     private readonly HashSet<string> _ovIdentifiers = new(StringComparer.OrdinalIgnoreCase)

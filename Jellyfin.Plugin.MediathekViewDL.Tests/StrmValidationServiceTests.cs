@@ -4,7 +4,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
-using Jellyfin.Plugin.MediathekViewDL.Services;
+using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;

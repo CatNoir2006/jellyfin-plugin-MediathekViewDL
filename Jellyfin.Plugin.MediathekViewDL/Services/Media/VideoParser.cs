@@ -4,15 +4,15 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
 /// <summary>
 /// Helper class for parsing video information from media titles.
 /// </summary>
-public class VideoParser
+public class VideoParser : IVideoParser
 {
     private readonly ILogger<VideoParser> _logger;
-    private readonly LanguageDetectionService _languageDetectionService;
+    private readonly ILanguageDetectionService _languageDetectionService;
 
     // Regex for Audiodescription and Sign Language
     private readonly Regex _adRegex;
@@ -30,7 +30,7 @@ public class VideoParser
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="languageDetectionService">The language detection service.</param>
-    public VideoParser(ILogger<VideoParser> logger, LanguageDetectionService languageDetectionService)
+    public VideoParser(ILogger<VideoParser> logger, ILanguageDetectionService languageDetectionService)
     {
         _logger = logger;
         _languageDetectionService = languageDetectionService;
@@ -62,8 +62,8 @@ public class VideoParser
         // Compile regex patterns for Normal Numbering (SXXEXX, SXX/EXX, Staffel X Episode Y, XxY, (SXX/EXX), (Staffel X, Folge Y))
         _seasonEpisodePatterns = new List<Regex>
         {
-            // Standard: s01e01, staffel 1 episode 1, s01/e01
-            new Regex(@"(?:s|staffel)\s*(?<season>\d+)\s*(?:e|episode|/)\s*(?<episode>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
+            // Standard: s01e01, staffel 1 episode 1, s01/e01, s01_e01
+            new Regex(@"(?:s|staffel)[\s_]*(?<season>\d+)[\s_]*(?:e|episode|/)[\s_]*(?<episode>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
 
             // X-Notation: 1x01, 1X01
             new Regex(@"(?<season>\d+)\s*[xX]\s*(?<episode>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),

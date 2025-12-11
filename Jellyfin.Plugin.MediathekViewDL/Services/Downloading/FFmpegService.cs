@@ -4,12 +4,12 @@ using System.Threading.Tasks;
 using MediaBrowser.Controller.MediaEncoding;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 
 /// <summary>
 /// Service for handling ffmpeg operations.
 /// </summary>
-public class FFmpegService
+public class FFmpegService : IFFmpegService
 {
     private readonly ILogger<FFmpegService> _logger;
     private readonly IMediaEncoder _mediaEncoder;

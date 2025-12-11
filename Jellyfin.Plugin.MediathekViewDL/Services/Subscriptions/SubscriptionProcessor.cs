@@ -5,20 +5,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+using Jellyfin.Plugin.MediathekViewDL.Services.Library;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 
 /// <summary>
 /// Service responsible for searching and filtering content for subscriptions.
 /// </summary>
-public class SubscriptionProcessor
+public class SubscriptionProcessor : ISubscriptionProcessor
 {
     private readonly ILogger<SubscriptionProcessor> _logger;
-    private readonly MediathekViewApiClient _apiClient;
-    private readonly VideoParser _videoParser;
-    private readonly LocalMediaScanner _localMediaScanner;
-    private readonly FileNameBuilderService _fileNameBuilderService;
+    private readonly IMediathekViewApiClient _apiClient;
+    private readonly IVideoParser _videoParser;
+    private readonly ILocalMediaScanner _localMediaScanner;
+    private readonly IFileNameBuilderService _fileNameBuilderService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscriptionProcessor"/> class.
@@ -30,10 +33,10 @@ public class SubscriptionProcessor
     /// <param name="fileNameBuilderService">The file name builder service.</param>
     public SubscriptionProcessor(
         ILogger<SubscriptionProcessor> logger,
-        MediathekViewApiClient apiClient,
-        VideoParser videoParser,
-        LocalMediaScanner localMediaScanner,
-        FileNameBuilderService fileNameBuilderService)
+        IMediathekViewApiClient apiClient,
+        IVideoParser videoParser,
+        ILocalMediaScanner localMediaScanner,
+        IFileNameBuilderService fileNameBuilderService)
     {
         _logger = logger;
         _apiClient = apiClient;

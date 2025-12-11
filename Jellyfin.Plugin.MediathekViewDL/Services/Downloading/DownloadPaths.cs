@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 
 /// <summary>
 /// Holds the generated paths for a download item.

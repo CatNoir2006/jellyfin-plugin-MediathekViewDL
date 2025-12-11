@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Library;
 
 /// <summary>
 /// Service for validating streaming URLs in .strm files.
 /// </summary>
-public class StrmValidationService
+public class StrmValidationService : IStrmValidationService
 {
     private readonly ILogger<StrmValidationService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
