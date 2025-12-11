@@ -109,7 +109,7 @@ public class SubscriptionProcessor
             }
             else
             {
-                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.DirectDownload });
+                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.AudioExtraction });
             }
 
             jobs.Add(downloadJob);
