@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
@@ -42,6 +43,11 @@ public class DownloadScheduledTask : IScheduledTask
         _downloadManager = downloadManager;
     }
 
+    /// <summary>
+    /// Gets the plugin configuration.
+    /// </summary>
+    protected virtual PluginConfiguration? Configuration => Plugin.Instance?.Configuration;
+
     /// <inheritdoc />
     public string Name => "Mediathek Abo-Downloader";
 
@@ -67,7 +73,7 @@ public class DownloadScheduledTask : IScheduledTask
         _logger.LogInformation("Starting Mediathek subscription download task.");
         progress.Report(0);
 
-        var config = Plugin.Instance?.Configuration;
+        var config = Configuration;
         if (config == null || config.Subscriptions.Count == 0)
         {
             _logger.LogInformation("No subscriptions configured. Task finished.");

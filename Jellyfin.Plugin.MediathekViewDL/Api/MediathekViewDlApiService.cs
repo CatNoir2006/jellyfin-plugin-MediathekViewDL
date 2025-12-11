@@ -52,6 +52,11 @@ public class MediathekViewDlApiService : ControllerBase
     }
 
     /// <summary>
+    /// Gets the plugin configuration.
+    /// </summary>
+    protected virtual PluginConfiguration? Configuration => Plugin.Instance?.Configuration;
+
+    /// <summary>
     /// Tests a subscription to see what items would be downloaded.
     /// </summary>
     /// <param name="subscription">The subscription configuration to test.</param>
@@ -113,7 +118,7 @@ public class MediathekViewDlApiService : ControllerBase
     [Authorize(Policy = Policies.RequiresElevation)]
     public IActionResult Download([FromBody] ResultItem item)
     {
-        var config = Plugin.Instance?.Configuration;
+        var config = Configuration;
         if (config == null || string.IsNullOrWhiteSpace(config.DefaultDownloadPath))
         {
             _logger.LogError("Default download path is not configured. Cannot start manual download.");
@@ -184,7 +189,7 @@ public class MediathekViewDlApiService : ControllerBase
     [Authorize(Policy = Policies.RequiresElevation)]
     public IActionResult AdvancedDownload([FromBody] AdvancedDownloadOptions options)
     {
-        var config = Plugin.Instance?.Configuration;
+        var config = Configuration;
         if (config == null)
         {
             _logger.LogError("Plugin configuration is not available. Cannot start advanced download.");
@@ -269,7 +274,7 @@ public class MediathekViewDlApiService : ControllerBase
     [Authorize(Policy = Policies.RequiresElevation)]
     public ActionResult ResetProcessedItems([FromQuery] Guid subscriptionId)
     {
-        var config = Plugin.Instance?.Configuration;
+        var config = Configuration;
         if (config == null)
         {
             _logger.LogError("Plugin configuration is not available. Cannot reset processed items.");

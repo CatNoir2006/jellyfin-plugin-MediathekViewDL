@@ -28,6 +28,11 @@ public class FileDownloader : IFileDownloader
     }
 
     /// <summary>
+    /// Gets the plugin configuration.
+    /// </summary>
+    protected virtual PluginConfiguration? Configuration => Plugin.Instance?.Configuration;
+
+    /// <summary>
     /// Downloads a file from a URL to a specified destination path.
     /// </summary>
     /// <param name="fileUrl">The URL of the file to download.</param>
@@ -37,7 +42,7 @@ public class FileDownloader : IFileDownloader
     /// <returns>True if the download was successful, otherwise false.</returns>
     public async Task<bool> DownloadFileAsync(string fileUrl, string destinationPath, IProgress<double>? progress, CancellationToken cancellationToken)
     {
-        var pluginConfig = Plugin.Instance?.Configuration;
+        var pluginConfig = Configuration;
 
         // Validate file URL
         if (string.IsNullOrWhiteSpace(fileUrl))
