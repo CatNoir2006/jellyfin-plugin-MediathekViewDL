@@ -62,8 +62,8 @@ public class VideoParser : IVideoParser
         // Compile regex patterns for Normal Numbering (SXXEXX, SXX/EXX, Staffel X Episode Y, XxY, (SXX/EXX), (Staffel X, Folge Y))
         _seasonEpisodePatterns = new List<Regex>
         {
-            // Standard: s01e01, staffel 1 episode 1, s01/e01
-            new Regex(@"(?:s|staffel)\s*(?<season>\d+)\s*(?:e|episode|/)\s*(?<episode>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
+            // Standard: s01e01, staffel 1 episode 1, s01/e01, s01_e01
+            new Regex(@"(?:s|staffel)[\s_]*(?<season>\d+)[\s_]*(?:e|episode|/)[\s_]*(?<episode>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
 
             // X-Notation: 1x01, 1X01
             new Regex(@"(?<season>\d+)\s*[xX]\s*(?<episode>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),

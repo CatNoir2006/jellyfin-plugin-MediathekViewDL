@@ -51,6 +51,7 @@ public class VideoParserTests
     [InlineData("My Episode s01 e05", "My Episode", 1, 5, null)]
     [InlineData("My Episode Staffel 1, Folge 5", "My Episode", 1, 5, null)]
     [InlineData("My Episode (Staffel 1, Folge 5)", "My Episode", 1, 5, null)]
+    [InlineData("S03_E01 - Abwärts", "Abwärts", 3, 1, null)]
     public void ParseVideoInfo_ShouldParseNormalNumbering(string title, string expectedEpisodeTitle, int expectedSeason, int expectedEpisode, string? subscriptionName)
     {
         // Act
