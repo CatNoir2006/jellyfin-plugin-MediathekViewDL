@@ -2,9 +2,10 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Library;
 
 /// <summary>
 /// Service to scan local directories for existing episodes.

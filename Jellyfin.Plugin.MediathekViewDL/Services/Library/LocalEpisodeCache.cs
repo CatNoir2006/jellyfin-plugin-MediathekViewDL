@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Library;
 
 /// <summary>
 /// Cache for local episodes to enable fast duplicate detection.

@@ -2,9 +2,10 @@ using System;
 using System.IO;
 using System.Linq;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
 /// <summary>
 /// Service for handling file name building operations.

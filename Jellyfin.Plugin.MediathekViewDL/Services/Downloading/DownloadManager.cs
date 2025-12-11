@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using MediaBrowser.Controller;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 
 /// <summary>
 /// Service responsible for executing download jobs.

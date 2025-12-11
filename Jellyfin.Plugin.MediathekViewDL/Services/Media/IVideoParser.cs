@@ -1,4 +1,4 @@
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
 /// <summary>
 /// Interface for the VideoParser service.

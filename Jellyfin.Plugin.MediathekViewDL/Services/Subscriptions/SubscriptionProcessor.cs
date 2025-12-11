@@ -5,9 +5,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+using Jellyfin.Plugin.MediathekViewDL.Services.Library;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 
 /// <summary>
 /// Service responsible for searching and filtering content for subscriptions.

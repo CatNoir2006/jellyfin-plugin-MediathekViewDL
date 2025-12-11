@@ -1,4 +1,4 @@
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
 /// <summary>
 /// Represents parsed video information, including numbering, language, and specific features.

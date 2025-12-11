@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Services;
+using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.Logging;
 

@@ -1,4 +1,4 @@
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Library;
 
 /// <summary>
 /// Interface for the LocalMediaScanner service.

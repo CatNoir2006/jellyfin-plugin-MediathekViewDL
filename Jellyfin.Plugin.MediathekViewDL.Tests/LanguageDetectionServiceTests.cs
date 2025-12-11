@@ -1,5 +1,5 @@
 using Xunit;
-using Jellyfin.Plugin.MediathekViewDL.Services;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Tests;
 

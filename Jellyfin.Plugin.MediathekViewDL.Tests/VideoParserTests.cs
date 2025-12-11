@@ -1,7 +1,7 @@
 using Xunit;
 using Moq;
 using Microsoft.Extensions.Logging;
-using Jellyfin.Plugin.MediathekViewDL.Services;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Tests;
 

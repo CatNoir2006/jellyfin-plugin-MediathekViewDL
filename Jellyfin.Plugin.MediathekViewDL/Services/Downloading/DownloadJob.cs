@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 
 /// <summary>
 /// Represents a unit of work for the download manager.
