@@ -9,10 +9,10 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services;
 /// <summary>
 /// Helper class for parsing video information from media titles.
 /// </summary>
-public class VideoParser
+public class VideoParser : IVideoParser
 {
     private readonly ILogger<VideoParser> _logger;
-    private readonly LanguageDetectionService _languageDetectionService;
+    private readonly ILanguageDetectionService _languageDetectionService;
 
     // Regex for Audiodescription and Sign Language
     private readonly Regex _adRegex;
@@ -30,7 +30,7 @@ public class VideoParser
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="languageDetectionService">The language detection service.</param>
-    public VideoParser(ILogger<VideoParser> logger, LanguageDetectionService languageDetectionService)
+    public VideoParser(ILogger<VideoParser> logger, ILanguageDetectionService languageDetectionService)
     {
         _logger = logger;
         _languageDetectionService = languageDetectionService;

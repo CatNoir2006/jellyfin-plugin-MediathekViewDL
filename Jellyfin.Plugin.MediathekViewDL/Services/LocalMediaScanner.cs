@@ -9,10 +9,10 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services;
 /// <summary>
 /// Service to scan local directories for existing episodes.
 /// </summary>
-public class LocalMediaScanner
+public class LocalMediaScanner : ILocalMediaScanner
 {
     private readonly ILogger<LocalMediaScanner> _logger;
-    private readonly VideoParser _videoParser;
+    private readonly IVideoParser _videoParser;
 
     // Supported video extensions
     private readonly string[] _videoExtensions = { ".mkv", ".mp4", ".avi", ".mov", ".wmv", ".m4v", ".strm" };
@@ -22,7 +22,7 @@ public class LocalMediaScanner
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="videoParser">The video parser.</param>
-    public LocalMediaScanner(ILogger<LocalMediaScanner> logger, VideoParser videoParser)
+    public LocalMediaScanner(ILogger<LocalMediaScanner> logger, IVideoParser videoParser)
     {
         _logger = logger;
         _videoParser = videoParser;

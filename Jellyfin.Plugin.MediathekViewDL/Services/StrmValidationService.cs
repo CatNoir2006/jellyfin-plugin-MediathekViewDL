@@ -12,7 +12,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services;
 /// <summary>
 /// Service for validating streaming URLs in .strm files.
 /// </summary>
-public class StrmValidationService
+public class StrmValidationService : IStrmValidationService
 {
     private readonly ILogger<StrmValidationService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;

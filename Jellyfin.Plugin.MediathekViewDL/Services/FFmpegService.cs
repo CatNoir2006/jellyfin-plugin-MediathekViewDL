@@ -9,7 +9,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services;
 /// <summary>
 /// Service for handling ffmpeg operations.
 /// </summary>
-public class FFmpegService
+public class FFmpegService : IFFmpegService
 {
     private readonly ILogger<FFmpegService> _logger;
     private readonly IMediaEncoder _mediaEncoder;

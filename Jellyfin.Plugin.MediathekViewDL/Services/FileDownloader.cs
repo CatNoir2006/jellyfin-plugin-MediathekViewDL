@@ -11,7 +11,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services;
 /// <summary>
 /// Service for downloading files from a URL.
 /// </summary>
-public class FileDownloader
+public class FileDownloader : IFileDownloader
 {
     private readonly ILogger<FileDownloader> _logger;
     private readonly IHttpClientFactory _httpClientFactory;

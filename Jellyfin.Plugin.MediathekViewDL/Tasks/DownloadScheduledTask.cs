@@ -18,8 +18,8 @@ public class DownloadScheduledTask : IScheduledTask
 {
     private readonly ILogger<DownloadScheduledTask> _logger;
     private readonly ILibraryManager _libraryManager;
-    private readonly SubscriptionProcessor _subscriptionProcessor;
-    private readonly DownloadManager _downloadManager;
+    private readonly ISubscriptionProcessor _subscriptionProcessor;
+    private readonly IDownloadManager _downloadManager;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DownloadScheduledTask"/> class.
@@ -31,8 +31,8 @@ public class DownloadScheduledTask : IScheduledTask
     public DownloadScheduledTask(
         ILogger<DownloadScheduledTask> logger,
         ILibraryManager libraryManager,
-        SubscriptionProcessor subscriptionProcessor,
-        DownloadManager downloadManager)
+        ISubscriptionProcessor subscriptionProcessor,
+        IDownloadManager downloadManager)
     {
         _logger = logger;
         _libraryManager = libraryManager;

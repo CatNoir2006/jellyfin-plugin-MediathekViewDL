@@ -9,7 +9,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services;
 /// <summary>
 /// Service for handling file name building operations.
 /// </summary>
-public class FileNameBuilderService
+public class FileNameBuilderService : IFileNameBuilderService
 {
     private readonly ILogger<FileNameBuilderService> _logger;
 
@@ -26,6 +26,11 @@ public class FileNameBuilderService
     {
         _logger = logger;
     }
+
+    /// <summary>
+    /// Gets the plugin configuration. Protected virtual to allow overriding in tests.
+    /// </summary>
+    protected virtual PluginConfiguration? Configuration => Plugin.Instance?.Configuration;
 
     /// <summary>
     /// Generates all necessary download paths for a given video and subscription.
@@ -79,7 +84,7 @@ public class FileNameBuilderService
     /// <returns>The base directory path.</returns>
     public string GetSubscriptionBaseDirectory(Subscription subscription)
     {
-        var config = Plugin.Instance?.Configuration;
+        var config = Configuration;
         string targetPath;
 
         if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
@@ -175,7 +180,7 @@ public class FileNameBuilderService
     /// <returns>The target directory name. Returns an empty string if no valid path is configured.</returns>
     private string BuildDirectoryName(VideoInfo videoInfo, Subscription subscription)
     {
-        var config = Plugin.Instance?.Configuration;
+        var config = Configuration;
         string targetPath = string.Empty;
         if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
         {

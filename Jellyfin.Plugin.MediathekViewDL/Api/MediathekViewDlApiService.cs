@@ -20,11 +20,11 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api;
 [Route("MediathekViewDL")]
 public class MediathekViewDlApiService : ControllerBase
 {
-    private readonly MediathekViewApiClient _apiClient;
+    private readonly IMediathekViewApiClient _apiClient;
     private readonly ILogger<MediathekViewDlApiService> _logger;
-    private readonly FileDownloader _fileDownloader;
-    private readonly FileNameBuilderService _fileNameBuilder;
-    private readonly SubscriptionProcessor _subscriptionProcessor;
+    private readonly IFileDownloader _fileDownloader;
+    private readonly IFileNameBuilderService _fileNameBuilder;
+    private readonly ISubscriptionProcessor _subscriptionProcessor;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekViewDlApiService"/> class.
@@ -36,10 +36,10 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="subscriptionProcessor">The subscription processor.</param>
     public MediathekViewDlApiService(
         ILogger<MediathekViewDlApiService> logger,
-        MediathekViewApiClient apiClient,
-        FileDownloader fileDownloader,
-        FileNameBuilderService fileNameBuilder,
-        SubscriptionProcessor subscriptionProcessor)
+        IMediathekViewApiClient apiClient,
+        IFileDownloader fileDownloader,
+        IFileNameBuilderService fileNameBuilder,
+        ISubscriptionProcessor subscriptionProcessor)
     {
         _logger = logger;
         _apiClient = apiClient;
