@@ -37,6 +37,12 @@ public class PluginConfiguration : BasePluginConfiguration
     public long MinFreeDiskSpaceBytes { get; set; } = (long)(1.5 * 1024 * 1024 * 1024); // Default to 1.5 GiB
 
     /// <summary>
+    /// Gets or sets the maximum download bandwidth in MBit/s.
+    /// 0 means unlimited.
+    /// </summary>
+    public int MaxBandwidthMBits { get; set; } = 0;
+
+    /// <summary>
     /// Gets or sets a value indicating whether downloads from unknown domains are allowed.
     /// This may be usefull if ARD or ZDF adds new CDNs that are not yet whitelisted.
     /// This may pose a security risk, so use with caution.
