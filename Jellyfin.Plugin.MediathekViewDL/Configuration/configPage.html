@@ -746,7 +746,15 @@
 
                         if (controller && dependentContainer) {
                             const shouldShow = controller.checked === rule.showWhen;
-                            dependentContainer.style.display = shouldShow ? 'block' : 'none';
+
+                            // Ensure the container has the base animation class
+                            dependentContainer.classList.add('mvpl-animated-container');
+
+                            if (shouldShow) {
+                                dependentContainer.classList.remove('mvpl-hidden');
+                            } else {
+                                dependentContainer.classList.add('mvpl-hidden');
+                            }
 
                             if (rule.disableWhenHidden && !shouldShow) {
                                 const dependentInput = dependentContainer.querySelector('input[type="checkbox"]');
@@ -799,6 +807,9 @@
 
                         document.getElementById('queriesContainer').textContent = '';
                         this.config.addQueryRow(null);
+
+                        // Force update dependencies to hide unchecked dependent fields
+                        this.config.dependencyManager.applyDependencies();
                         return;
                     }
 
@@ -1694,6 +1705,25 @@
             overflow-y: auto;
             flex-grow: 1;
             margin-bottom: 20px;
+        }
+
+        /* Animation Classes */
+        .mvpl-animated-container {
+            transition: opacity 0.3s ease-in-out, max-height 0.3s ease-in-out, margin 0.3s ease-in-out, padding 0.3s ease-in-out;
+            max-height: 200px; /* Sufficient for checkbox containers */
+            opacity: 1;
+            overflow: hidden;
+            display: block; /* Ensure it is not none */
+        }
+
+        .mvpl-hidden {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            pointer-events: none;
         }
     </style>
 </div>
