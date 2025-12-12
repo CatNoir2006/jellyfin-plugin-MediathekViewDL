@@ -227,6 +227,19 @@
                             </div>
                         </div>
 
+                        <!-- Allow Absolute Episode Numbering Checkbox -->
+                        <div id="subAllowAbsoluteEpisodeNumberingContainer" class="checkboxContainer checkboxContainer-withDescription mvpl-indented-block">
+                            <label class="emby-checkbox-label">
+                                <input id="subAllowAbsoluteEpisodeNumbering" type="checkbox" is="emby-checkbox"/>
+                                <span>Absolute Episodennummerierung erlauben</span>
+                            </label>
+                            <div class="fieldDescription">Episoden auch herunterladen, wenn nur Absolute
+                                Episodennummerierung vorliegt (z.B. "Episode 5" statt "Staffel 1, Episode 5"). Wird
+                                nur berücksichtigt, wenn "Nur Videos herunterladen, die als Serie erkannt werden"
+                                aktiviert ist.
+                            </div>
+                        </div>
+
                         <!-- Create NFO Checkbox -->
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label class="emby-checkbox-label">
@@ -234,19 +247,6 @@
                                 <span>NFO Dateien erstellen</span>
                             </label>
                             <div class="fieldDescription">Erstellt eine .nfo Datei mit Metadaten (Beschreibung, Episodennummer) neben der Videodatei.</div>
-                        </div>
-
-                        <!-- Allow Absolute Episode Numbering Checkbox -->
-                        <div id="subAllowAbsoluteEpisodeNumberingContainer" class="checkboxContainer checkboxContainer-withDescription mvpl-indented-block">
-                            <label class="emby-checkbox-label">
-                                <input id="subAllowAbsoluteEpisodeNumbering" type="checkbox" is="emby-checkbox"/>
-                                <span>Absolute Episodennummerierung erlauben</span>
-                            </label>
-                            <div class="fieldDescription">Episoden auch herunterladen wenn nur Absolute
-                                Episodennummerierung vorliegt (z.B. "Episode 5" statt "Staffel 1, Episode 5"). Wird
-                                nur berücksichtigt, wenn "Nur Videos herunterladen, die als Serie erkannt werden"
-                                aktiviert ist.
-                            </div>
                         </div>
 
                         <!-- Use Streaming-URL Files Checkbox -->
@@ -324,10 +324,9 @@
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label class="emby-checkbox-label">
                                 <input id="subAllowAudioDesc" type="checkbox" is="emby-checkbox"/>
-                                <span>Versionen mit Audiodeskription erlauben</span>
+                                <span>Versionen mit Audiodeskription herunterladen</span>
                             </label>
-                            <div class="fieldDescription">Erlaubt das Herunterladen von Versionen mit
-                                Audiodeskription (sofern verfügbar).
+                            <div class="fieldDescription">Lädt auch Inhalte mit Audiodeskription herunter (sofern verfügbar).
                             </div>
                         </div>
 
@@ -335,10 +334,9 @@
                         <div class="checkboxContainer checkboxContainer-withDescription">
                             <label class="emby-checkbox-label">
                                 <input id="subAllowSignLanguage" type="checkbox" is="emby-checkbox"/>
-                                <span>Versionen mit Gebärdensprache erlauben</span>
+                                <span>Versionen mit Gebärdensprache herunterladen</span>
                             </label>
-                            <div class="fieldDescription">Erlaubt das Herunterladen von Versionen mit
-                                Gebärdensprache (sofern verfügbar).
+                            <div class="fieldDescription">Lädt auch Inhalte mit Gebärdensprache herunter. (sofern verfügbar).
                             </div>
                         </div>
 
@@ -1371,6 +1369,11 @@
                     if (subData.Queries.length === 0) {
                         this.showToast("Bitte mindestens eine Suchanfrage definieren.");
                         return;
+                    }
+
+                    // If ID is empty (new subscription), generate a temporary one for the backend to accept the object
+                    if (!subData.Id) {
+                        subData.Id = this.genUUID();
                     }
 
                     const url = ApiClient.getUrl('/' + this.pluginName + '/TestSubscription');
