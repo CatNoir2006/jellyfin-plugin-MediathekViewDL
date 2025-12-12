@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Jellyfin.Plugin.MediathekViewDL.Api;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
+using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 
@@ -32,17 +33,7 @@ public class DownloadJob
     public string Title { get; set; } = string.Empty;
 
     /// <summary>
-    /// Gets or sets the original MediathekView result item.
+    /// Gets or sets the NFO metadata to be created for this item, if applicable.
     /// </summary>
-    public ResultItem? MediathekItem { get; set; }
-
-    /// <summary>
-    /// Gets or sets the parsed video information.
-    /// </summary>
-    public VideoInfo? VideoInfo { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether to create an NFO file.
-    /// </summary>
-    public bool CreateNfo { get; set; }
+    public NfoDTO? NfoMetadata { get; set; }
 }

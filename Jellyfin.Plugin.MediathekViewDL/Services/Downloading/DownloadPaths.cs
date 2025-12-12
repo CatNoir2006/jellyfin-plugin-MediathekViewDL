@@ -28,6 +28,11 @@ public class DownloadPaths
     public string StrmFilePath { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the full path for the NFO metadata file.
+    /// </summary>
+    public string NfoFilePath { get; set; } = null!;
+
+    /// <summary>
     /// Gets a value indicating whether the paths are valid.
     /// </summary>
     public bool IsValid => !string.IsNullOrWhiteSpace(DirectoryPath) && (!string.IsNullOrWhiteSpace(MainFilePath) || !string.IsNullOrWhiteSpace(StrmFilePath));

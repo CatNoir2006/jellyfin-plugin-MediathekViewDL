@@ -25,26 +25,25 @@ public class NfoService : INfoService
     }
 
     /// <inheritdoc />
-    public void CreateNfo(ResultItem item, VideoInfo? videoInfo, string videoFilePath)
+    public void CreateNfo(NfoDTO item)
     {
         try
         {
-            var nfoPath = Path.ChangeExtension(videoFilePath, ".nfo");
-            _logger.LogInformation("Creating NFO file at {Path}", nfoPath);
+            _logger.LogInformation("Creating NFO file at {Path}", item.FilePath);
 
-            var root = new XElement("episodedetails");
+            string rootElementName = item.IsEpisode ? "episodedetails" : "movie";
+            var root = new XElement(rootElementName);
 
             // Title
-            var title = !string.IsNullOrWhiteSpace(videoInfo?.Title) ? videoInfo.Title : item.Title;
-            if (!string.IsNullOrWhiteSpace(title))
+            if (!string.IsNullOrWhiteSpace(item.Title))
             {
-                root.Add(new XElement("title", title));
+                root.Add(new XElement("title", item.Title));
             }
 
             // Show Title (Topic)
-            if (!string.IsNullOrWhiteSpace(item.Topic))
+            if (!string.IsNullOrWhiteSpace(item.Show))
             {
-                root.Add(new XElement("showtitle", item.Topic));
+                root.Add(new XElement("showtitle", item.Show));
             }
 
             // Plot / Description
@@ -53,56 +52,57 @@ public class NfoService : INfoService
                 root.Add(new XElement("plot", item.Description));
             }
 
-            // Season / Episode
-            if (videoInfo != null)
+            // Season
+            if (item is { Season: not null, IsEpisode: true })
             {
-                if (videoInfo.SeasonNumber.HasValue)
-                {
-                    root.Add(new XElement("season", videoInfo.SeasonNumber.Value));
-                }
+                root.Add(new XElement("season", item.Season.Value));
+            }
 
-                if (videoInfo.EpisodeNumber.HasValue)
-                {
-                    root.Add(new XElement("episode", videoInfo.EpisodeNumber.Value));
-                }
+            // Episode
+            if (item is { Episode: not null, IsEpisode: true })
+            {
+                root.Add(new XElement("episode", item.Episode.Value));
             }
 
             // Date Added
-            // Timestamp is unix epoch
             try
             {
-                // Format: yyyy-MM-dd HH:mm:ss
-                var dateAdded = DateTimeOffset.FromUnixTimeSeconds(item.Timestamp).ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
-                root.Add(new XElement("dateadded", dateAdded));
+                if (item.AirDate.HasValue)
+                {
+                    // Format: yyyy-MM-dd HH:mm:ss
+                    var dateAdded = item.AirDate.Value.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture);
+                    root.Add(new XElement("dateadded", dateAdded));
+                }
             }
-            catch (Exception ex)
+            catch
             {
-                _logger.LogWarning(ex, "Failed to parse timestamp {Timestamp} for NFO generation", item.Timestamp);
+                // ignored
             }
 
             // Studio / Channel
-            if (!string.IsNullOrWhiteSpace(item.Channel))
+            if (!string.IsNullOrWhiteSpace(item.Studio))
             {
-                root.Add(new XElement("studio", item.Channel));
+                // We skip studio as it would prevent Jellyfin from setting this based on TMDB data
+                // root.Add(new XElement("studio", item.Studio));
             }
 
             // Unique ID
-            if (!string.IsNullOrWhiteSpace(item.Id))
+            if (!string.IsNullOrWhiteSpace(item.Id) && !string.IsNullOrWhiteSpace(item.IdSource))
             {
                 // default to default provider
-                root.Add(new XElement("uniqueid", new XAttribute("type", "mediathekview"), item.Id));
+                root.Add(new XElement("uniqueid", new XAttribute("type", item.IdSource), item.Id));
             }
 
             var doc = new XDocument(
                 new XDeclaration("1.0", "UTF-8", "yes"),
                 root);
 
-            using var stream = new FileStream(nfoPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            using var stream = new FileStream(item.FilePath, FileMode.Create, FileAccess.Write, FileShare.None);
             doc.Save(stream);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating NFO file for {Path}", videoFilePath);
+            _logger.LogError(ex, "Error creating NFO file for {Title}", item.Title);
         }
     }
 }

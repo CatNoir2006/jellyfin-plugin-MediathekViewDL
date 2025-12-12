@@ -1,7 +1,6 @@
+using System;
 using System.IO;
 using System.Xml.Linq;
-using Jellyfin.Plugin.MediathekViewDL.Api;
-using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -21,7 +20,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         }
 
         [Fact]
-        public void CreateNfo_ShouldCreateValidXmlFile()
+        public void CreateNfo_Episode_ShouldCreateValidXmlFile()
         {
             // Arrange
             var tempFile = Path.GetTempFileName();
@@ -30,25 +29,21 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             try
             {
-                var item = new ResultItem
+                var dto = new NfoDTO
                 {
-                    Title = "Test Video",
-                    Topic = "Test Show",
-                    Description = "This is a test description.",
-                    Channel = "ZDF",
-                    Timestamp = 1672531200, // 2023-01-01 00:00:00 UTC
-                    Id = "12345"
-                };
-
-                var videoInfo = new VideoInfo
-                {
+                    FilePath = nfoPath,
                     Title = "Clean Title",
-                    SeasonNumber = 1,
-                    EpisodeNumber = 5
+                    Show = "Test Show",
+                    Description = "This is a test description.",
+                    Season = 1,
+                    Episode = 5,
+                    Studio = "ZDF",
+                    Id = "12345",
+                    AirDate = new DateTime(2023, 1, 1, 0, 0, 0, DateTimeKind.Utc)
                 };
 
                 // Act
-                _nfoService.CreateNfo(item, videoInfo, videoPath);
+                _nfoService.CreateNfo(dto);
 
                 // Assert
                 Assert.True(File.Exists(nfoPath));
@@ -62,17 +57,77 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 Assert.Equal("This is a test description.", root.Element("plot")?.Value);
                 Assert.Equal("1", root.Element("season")?.Value);
                 Assert.Equal("5", root.Element("episode")?.Value);
-                Assert.Equal("ZDF", root.Element("studio")?.Value);
                 
-                // dateadded is generated based on timestamp, verify format broadly or parse
+                // Studio should NOT be present in the new implementation
+                Assert.Null(root.Element("studio"));
+                
+                // DateAdded
                 var dateAdded = root.Element("dateadded")?.Value;
                 Assert.NotNull(dateAdded);
-                Assert.Matches(@"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}", dateAdded);
+                Assert.Equal("2023-01-01 00:00:00", dateAdded);
+                
+                // UniqueID
+                var uniqueId = root.Element("uniqueid");
+                Assert.NotNull(uniqueId);
+                Assert.Equal("12345", uniqueId.Value);
+                Assert.Equal("MediathekView", uniqueId.Attribute("type")?.Value);
             }
             finally
             {
                 if (File.Exists(nfoPath)) File.Delete(nfoPath);
-                if (File.Exists(tempFile)) File.Delete(tempFile); // cleanup the temp file created by GetTempFileName
+                if (File.Exists(tempFile)) File.Delete(tempFile);
+            }
+        }
+
+        [Fact]
+        public void CreateNfo_Movie_ShouldCreateValidXmlFile()
+        {
+            // Arrange
+            var tempFile = Path.GetTempFileName();
+            var videoPath = Path.ChangeExtension(tempFile, ".mp4");
+            var nfoPath = Path.ChangeExtension(videoPath, ".nfo");
+
+            try
+            {
+                var dto = new NfoDTO
+                {
+                    FilePath = nfoPath,
+                    Title = "Movie Title",
+                    Description = "Movie description.",
+                    Season = null, // No season -> Movie
+                    Episode = null,
+                    Studio = "ARD",
+                    Id = "67890",
+                    AirDate = new DateTime(2023, 5, 20, 20, 15, 0, DateTimeKind.Utc)
+                };
+
+                // Act
+                _nfoService.CreateNfo(dto);
+
+                // Assert
+                Assert.True(File.Exists(nfoPath));
+
+                var doc = XDocument.Load(nfoPath);
+                var root = doc.Root;
+                Assert.NotNull(root);
+                Assert.Equal("movie", root.Name.LocalName);
+                Assert.Equal("Movie Title", root.Element("title")?.Value);
+                Assert.Equal("Movie description.", root.Element("plot")?.Value);
+                Assert.Null(root.Element("season"));
+                Assert.Null(root.Element("episode"));
+                
+                // Studio should NOT be present
+                Assert.Null(root.Element("studio"));
+
+                 // DateAdded
+                var dateAdded = root.Element("dateadded")?.Value;
+                Assert.NotNull(dateAdded);
+                Assert.Equal("2023-05-20 20:15:00", dateAdded);
+            }
+            finally
+            {
+                if (File.Exists(nfoPath)) File.Delete(nfoPath);
+                if (File.Exists(tempFile)) File.Delete(tempFile);
             }
         }
     }

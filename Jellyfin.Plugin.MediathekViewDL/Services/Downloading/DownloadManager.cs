@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
@@ -150,18 +149,9 @@ public class DownloadManager : IDownloadManager
         {
             progress.Report(100);
 
-            if (job.CreateNfo && job.MediathekItem != null)
+            if (job.NfoMetadata is not null)
             {
-                // Identify the main video file to associate the NFO with.
-                // Priority: DirectDownload or StreamingUrl (which are video files/links)
-                var mainVideoItem = job.DownloadItems.FirstOrDefault(i => i.JobType == DownloadType.DirectDownload || i.JobType == DownloadType.StreamingUrl);
-
-                // If only audio extraction was done, we typically don't generate NFOs for audio files in this context (Video NFOs),
-                // but if we did, we'd target that. For now, let's focus on video.
-                if (mainVideoItem != null)
-                {
-                    _nfoService.CreateNfo(job.MediathekItem, job.VideoInfo, mainVideoItem.DestinationPath);
-                }
+                _nfoService.CreateNfo(job.NfoMetadata);
             }
         }
 
