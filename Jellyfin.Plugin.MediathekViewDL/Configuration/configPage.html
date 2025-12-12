@@ -432,6 +432,336 @@
     <script type="text/javascript">
         (function () {
             /**
+             * Helper class for DOM manipulation to reduce verbosity.
+             */
+            class DomHelper {
+                /**
+                 * Creates an HTML element with specified options.
+                 * @param {string} tag - The HTML tag name.
+                 * @param {Object} [options] - Options for the element.
+                 * @param {string} [options.className] - CSS class names (space separated).
+                 * @param {string} [options.text] - Text content.
+                 * @param {string} [options.id] - Element ID.
+                 * @param {Object} [options.attributes] - Key-value pair of attributes.
+                 * @param {string} [options.type] - Input type (if tag is input/button).
+                 * @param {string} [options.value] - Input value.
+                 * @param {boolean} [options.checked] - Checkbox state.
+                 * @param {Function} [options.onClick] - Click handler.
+                 * @param {HTMLElement[]} [options.children] - Array of child elements to append.
+                 * @returns {HTMLElement} The created element.
+                 */
+                create(tag, options = {}) {
+                    const el = document.createElement(tag);
+                    if (options.className) el.className = options.className;
+                    if (options.text) el.textContent = options.text;
+                    if (options.id) el.id = options.id;
+                    if (options.type) el.type = options.type;
+                    if (options.value) el.value = options.value;
+                    if (options.checked) el.checked = true;
+
+                    if (options.attributes) {
+                        for (const [key, val] of Object.entries(options.attributes)) {
+                            el.setAttribute(key, val);
+                        }
+                    }
+
+                    if (options.onClick) {
+                        el.addEventListener('click', options.onClick);
+                    }
+
+                    if (options.children) {
+                        options.children.forEach(child => {
+                            if (child) el.appendChild(child);
+                        });
+                    }
+
+                    return el;
+                }
+
+                createIconButton(icon, title, onClick, id, ariaLabel) {
+                    const span = this.create('span', {
+                        className: 'material-icons ' + icon,
+                        attributes: {'aria-hidden': 'true'}
+                    });
+
+                    const btnOptions = {
+                        type: 'button',
+                        className: 'paper-icon-button-light',
+                        attributes: {
+                            'is': 'emby-button',
+                            'title': title,
+                            'aria-label': ariaLabel || title
+                        },
+                        onClick: onClick,
+                        children: [span]
+                    };
+                    if (id) btnOptions.id = id;
+
+                    return this.create('button', btnOptions);
+                }
+
+                createCheckbox(label, checked, options = {}) {
+                    const {id, value, description, className, onChange} = options;
+
+                    const inputOptions = {
+                        type: 'checkbox',
+                        checked: checked,
+                        attributes: {'is': 'emby-checkbox'}
+                    };
+                    if (id) inputOptions.id = id;
+                    if (value) inputOptions.value = value;
+                    if (className) inputOptions.className = className;
+
+                    const input = this.create('input', inputOptions);
+                    if (onChange) input.addEventListener('change', onChange);
+
+                    const span = this.create('span', {text: label});
+
+                    const labelEl = this.create('label', {
+                        className: 'emby-checkbox-label',
+                        children: [input, span]
+                    });
+
+                    if (description) {
+                        const descEl = this.create('div', {
+                            className: 'fieldDescription',
+                            text: description
+                        });
+                        return this.create('div', {
+                            className: 'checkboxContainer checkboxContainer-withDescription',
+                            children: [labelEl, descEl]
+                        });
+                    }
+
+                    return labelEl;
+                }
+            }
+
+            /**
+             * Handles search operations.
+             */
+            class SearchController {
+                constructor(config) {
+                    this.config = config;
+                    this.dom = config.dom;
+                    this.currentSearchResults = [];
+                }
+
+                init() {
+                    document.getElementById('mvpl-form-search').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.performSearch();
+                        return false;
+                    });
+                }
+
+                performSearch() {
+                    const query = document.getElementById('txtSearchQuery').value;
+                    const minD = document.getElementById('numMinDuration').value;
+                    const maxD = document.getElementById('numMaxDuration').value;
+
+                    if (!query) {
+                        this.config.showToast("Bitte Suchbegriff eingeben");
+                        return;
+                    }
+                    // noinspection JSUnresolvedReference
+                    Dashboard.showLoadingMsg();
+                    // noinspection JSUnresolvedReference
+                    let url = ApiClient.getUrl('/' + this.config.pluginName + '/Search');
+                    url += '?query=' + encodeURIComponent(query);
+                    if (minD) url += '&minDuration=' + minD;
+                    if (maxD) url += '&maxDuration=' + maxD;
+                    // noinspection JSUnresolvedReference
+                    ApiClient.getJSON(url).then((results) => {
+                        this.currentSearchResults = results;
+                        this.renderSearchResults();
+                        // noinspection JSUnresolvedReference
+                        Dashboard.hideLoadingMsg();
+                    }).catch((err) => {
+                        // noinspection JSUnresolvedReference
+                        Dashboard.hideLoadingMsg();
+                        this.config.showToast("Fehler bei der Suche: " + err);
+                    });
+                }
+
+                renderSearchResults() {
+                    const container = document.getElementById('searchResults');
+                    container.textContent = "";
+
+                    if (!this.currentSearchResults || this.currentSearchResults.length === 0) {
+                        const noRes = document.createElement('p');
+                        noRes.textContent = "Keine Ergebnisse gefunden.";
+                        container.appendChild(noRes);
+                        return;
+                    }
+
+                    const paperList = document.createElement('div');
+                    paperList.classList.add('paperList');
+
+                    this.currentSearchResults.forEach((item, index) => {
+                        paperList.appendChild(this.createSearchResultItem(item, index));
+                    });
+                    container.appendChild(paperList);
+                }
+
+                createSearchResultItem(item, index) {
+                    const durationStr = Math.floor(item.duration / 60) + " Min";
+                    const actions = document.createElement('div');
+                    actions.classList.add('flex-gap-10');
+
+                    actions.appendChild(this.dom.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
+                    actions.appendChild(this.dom.createIconButton('settings', 'Erweiterter Download', () => this.config.openAdvancedDownloadDialog(this.currentSearchResults[index])));
+                    actions.appendChild(this.dom.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.title, item.channel, item.topic)));
+
+                    // Build BodyText1
+                    const body1 = document.createElement('div');
+                    body1.classList.add('flex-align-center');
+                    body1.style.gap = '8px';
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
+                    body1.appendChild(textSpan);
+
+                    if (item.url_subtitle) {
+                        const sep = document.createElement('span');
+                        sep.textContent = ' | ';
+                        body1.appendChild(sep);
+                        const icon = document.createElement('span');
+                        icon.classList.add('material-icons', 'closed_caption');
+                        icon.title = 'Untertitel verfügbar';
+                        body1.appendChild(icon);
+                    }
+
+                    const bodyText2 = item.description || '';
+
+                    return this.config.createListItem(item.title, body1, bodyText2, actions);
+                }
+
+                downloadItem(index) {
+                    const item = this.currentSearchResults[index];
+                    if (!item) return;
+                    // noinspection JSUnresolvedReference
+                    const url = ApiClient.getUrl('/' + this.config.pluginName + '/Download');
+                    // noinspection JSUnresolvedReference
+                    Dashboard.showLoadingMsg();
+                    // noinspection JSUnresolvedReference
+                    ApiClient.ajax({
+                        type: "POST",
+                        url: url,
+                        data: JSON.stringify(item),
+                        contentType: 'application/json'
+                    }).then((result) => {
+                        // noinspection JSUnresolvedReference
+                        Dashboard.hideLoadingMsg();
+                        this.config.showToast("Download für '" + item.title + "' gestartet.");
+                    }).catch((err) => {
+                        // noinspection JSUnresolvedReference
+                        Dashboard.hideLoadingMsg();
+                        this.config.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                    });
+                }
+
+                createSubFromSearch(btn, title, channel, topic) {
+                    this.config.switchTab('subscriptions');
+                    const newSub = {
+                        Id: null,
+                        Name: topic,
+                        Queries: [
+                            {fields: ["title"], query: title},
+                            {fields: ["channel"], query: channel},
+                            {fields: ["topic"], query: topic}
+                        ],
+                        MinDurationMinutes: null,
+                        MaxDurationMinutes: null,
+                        DownloadPath: "",
+                        EnforceSeriesParsing: false,
+                        AllowAudioDescription: false
+                    };
+                    this.config.subscriptionEditor.show(newSub);
+                }
+            }
+
+            /**
+             * Manages UI dependencies (showing/hiding fields based on others).
+             */
+            class DependencyManager {
+                constructor() {
+                    this.rules = [
+                        {
+                            controllerId: 'subTreatNonEpisodesAsExtras',
+                            dependentId: 'subSaveTrailersContainer',
+                            showWhen: true,
+                            disableWhenHidden: true
+                        },
+                        {
+                            controllerId: 'subTreatNonEpisodesAsExtras',
+                            dependentId: 'subSaveInterviewsContainer',
+                            showWhen: true,
+                            disableWhenHidden: true
+                        },
+                        {
+                            controllerId: 'subTreatNonEpisodesAsExtras',
+                            dependentId: 'subSaveGenericExtrasContainer',
+                            showWhen: true,
+                            disableWhenHidden: true
+                        },
+                        {
+                            controllerId: 'subTreatNonEpisodesAsExtras',
+                            dependentId: 'subSaveExtrasAsStrmContainer',
+                            showWhen: true,
+                            disableWhenHidden: true
+                        },
+                        {
+                            controllerId: 'subEnforceSeries',
+                            dependentId: 'subAllowAbsoluteEpisodeNumberingContainer',
+                            showWhen: true,
+                            disableWhenHidden: true
+                        },
+                        {
+                            controllerId: 'subUseStreamingUrlFiles',
+                            dependentId: 'subDownloadFullVideoForSecondaryAudioContainer',
+                            showWhen: false,
+                            disableWhenHidden: true
+                        },
+                        {
+                            controllerId: 'subDownloadFullVideoForSecondaryAudio',
+                            dependentId: 'subUseStreamingUrlFilesContainer',
+                            showWhen: false,
+                            disableWhenHidden: true
+                        }
+                    ];
+                }
+
+                init() {
+                    const controllerIds = [...new Set(this.rules.map(rule => rule.controllerId))];
+                    controllerIds.forEach(id => {
+                        const controller = document.getElementById(id);
+                        if (controller) {
+                            controller.addEventListener('change', () => this.applyDependencies());
+                        }
+                    });
+                }
+
+                applyDependencies() {
+                    this.rules.forEach(rule => {
+                        const controller = document.getElementById(rule.controllerId);
+                        const dependentContainer = document.getElementById(rule.dependentId);
+
+                        if (controller && dependentContainer) {
+                            const shouldShow = controller.checked === rule.showWhen;
+                            dependentContainer.style.display = shouldShow ? 'block' : 'none';
+
+                            if (rule.disableWhenHidden && !shouldShow) {
+                                const dependentInput = dependentContainer.querySelector('input[type="checkbox"]');
+                                if (dependentInput) {
+                                    dependentInput.checked = false;
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            /**
              * Handles subscription editor logic, populating fields and gathering values.
              */
             class SubscriptionEditor {
@@ -579,7 +909,7 @@
                     }
 
                     this.setEditorValues(sub);
-                    this.config.applySubscriptionDependencies();
+                    this.config.dependencyManager.applyDependencies();
 
                     editor.style.display = 'block';
                     editor.scrollIntoView({behavior: 'smooth'});
@@ -600,131 +930,15 @@
                 constructor() {
                     this.pluginId = "a31b415a-5264-419d-b152-8c8192a54994";
                     this.pluginName = "MediathekViewDL";
+                    this.dom = new DomHelper();
+                    this.searchController = new SearchController(this);
+                    this.dependencyManager = new DependencyManager();
                     this.currentConfig = null;
-                    this.currentSearchResults = [];
                     this.currentItemForAdvancedDl = null;
                     this.subscriptionEditor = new SubscriptionEditor(this);
-
-                    // --- Dependency Rules --- Disable/hide certain fields based on other field values of subscriptions
-                    this.subscriptionDependencyRules = [
-                        {
-                            controllerId: 'subTreatNonEpisodesAsExtras',
-                            dependentId: 'subSaveTrailersContainer',
-                            showWhen: true,
-                            disableWhenHidden: true
-                        },
-                        {
-                            controllerId: 'subTreatNonEpisodesAsExtras',
-                            dependentId: 'subSaveInterviewsContainer',
-                            showWhen: true,
-                            disableWhenHidden: true
-                        },
-                        {
-                            controllerId: 'subTreatNonEpisodesAsExtras',
-                            dependentId: 'subSaveGenericExtrasContainer',
-                            showWhen: true,
-                            disableWhenHidden: true
-                        },
-                        {
-                            controllerId: 'subTreatNonEpisodesAsExtras',
-                            dependentId: 'subSaveExtrasAsStrmContainer',
-                            showWhen: true,
-                            disableWhenHidden: true
-                        },
-                        {
-                            controllerId: 'subEnforceSeries',
-                            dependentId: 'subAllowAbsoluteEpisodeNumberingContainer',
-                            showWhen: true,
-                            disableWhenHidden: true
-                        },
-                        {
-                            controllerId: 'subUseStreamingUrlFiles',
-                            dependentId: 'subDownloadFullVideoForSecondaryAudioContainer',
-                            showWhen: false,
-                            disableWhenHidden: true
-                        },
-                        {
-                            controllerId: 'subDownloadFullVideoForSecondaryAudio',
-                            dependentId: 'subUseStreamingUrlFilesContainer',
-                            showWhen: false,
-                            disableWhenHidden: true
-                        }
-                    ];
                 }
 
                 // --- Helper Functions ---
-
-                /**
-                 * Creates an icon button.
-                 * @param {string} icon - Material icon name.
-                 * @param {string} title - Tooltip text.
-                 * @param {Function} onClick - Click handler.
-                 * @param {string} [id] - Optional ID.
-                 * @param {string} [ariaLabel] - Optional ARIA label for accessibility.
-                 * @returns {HTMLButtonElement}
-                 */
-                createIconButton(icon, title, onClick, id, ariaLabel) {
-                    const btn = document.createElement('button');
-                    btn.type = 'button';
-                    btn.classList.add('paper-icon-button-light');
-                    btn.setAttribute('is', 'emby-button');
-                    btn.title = title;
-                    if (id) btn.id = id;
-                    if (ariaLabel) btn.setAttribute('aria-label', ariaLabel);
-                    else btn.setAttribute('aria-label', title);
-
-                    if (typeof onClick === 'function') {
-                        btn.onclick = onClick;
-                    }
-
-                    const iconSpan = document.createElement('span');
-                    iconSpan.classList.add('material-icons', icon);
-                    iconSpan.setAttribute('aria-hidden', 'true');
-
-                    btn.appendChild(iconSpan);
-                    return btn;
-                }
-
-                /**
-                 * Creates a checkbox with label and optional description.
-                 */
-                createCheckbox(label, checked, options = {}) {
-                    const {id, value, description, className, onChange} = options;
-
-                    const labelEl = document.createElement('label');
-                    labelEl.classList.add('emby-checkbox-label');
-
-                    const input = document.createElement('input');
-                    input.type = 'checkbox';
-                    input.setAttribute('is', 'emby-checkbox');
-
-                    if (id) input.id = id;
-                    if (value) input.value = value;
-                    if (checked) input.checked = true;
-                    if (className) input.classList.add(className);
-                    if (onChange) input.addEventListener('change', onChange);
-
-                    const span = document.createElement('span');
-                    span.textContent = label;
-
-                    labelEl.appendChild(input);
-                    labelEl.appendChild(span);
-
-                    if (description) {
-                        const container = document.createElement('div');
-                        container.classList.add('checkboxContainer', 'checkboxContainer-withDescription');
-                        container.appendChild(labelEl);
-
-                        const descEl = document.createElement('div');
-                        descEl.classList.add('fieldDescription');
-                        descEl.textContent = description;
-                        container.appendChild(descEl);
-
-                        return container;
-                    }
-
-                    return labelEl;
-                }
 
                 confirmationPopup(message, title, resultCallback) {
                     // noinspection JSUnresolvedReference
@@ -794,25 +1008,6 @@
                     });
                 }
 
-                applySubscriptionDependencies() {
-                    this.subscriptionDependencyRules.forEach(rule => {
-                        const controller = document.getElementById(rule.controllerId);
-                        const dependentContainer = document.getElementById(rule.dependentId);
-
-                        if (controller && dependentContainer) {
-                            const shouldShow = controller.checked === rule.showWhen;
-                            dependentContainer.style.display = shouldShow ? 'block' : 'none';
-
-                            if (rule.disableWhenHidden && !shouldShow) {
-                                const dependentInput = dependentContainer.querySelector('input[type="checkbox"]');
-                                if (dependentInput) {
-                                    dependentInput.checked = false;
-                                }
-                            }
-                        }
-                    });
-                }
-
                 // --- Core Logic ---
 
                 /**
@@ -878,58 +1073,6 @@
 
                 // --- SEARCH LOGIC ---
 
-                /**
-                 * Executes a search against the API.
-                 */
-                performSearch() {
-                    const query = document.getElementById('txtSearchQuery').value;
-                    const minD = document.getElementById('numMinDuration').value;
-                    const maxD = document.getElementById('numMaxDuration').value;
-
-                    if (!query) {
-                        this.showToast("Bitte Suchbegriff eingeben");
-                        return;
-                    }
-                    // noinspection JSUnresolvedReference
-                    Dashboard.showLoadingMsg();
-                    // noinspection JSUnresolvedReference
-                    let url = ApiClient.getUrl('/' + this.pluginName + '/Search');
-                    url += '?query=' + encodeURIComponent(query);
-                    if (minD) url += '&minDuration=' + minD;
-                    if (maxD) url += '&maxDuration=' + maxD;
-                    // noinspection JSUnresolvedReference
-                    ApiClient.getJSON(url).then((results) => {
-                        this.currentSearchResults = results; // Store results
-                        this.renderSearchResults();
-                        // noinspection JSUnresolvedReference
-                        Dashboard.hideLoadingMsg();
-                    }).catch((err) => {
-                        // noinspection JSUnresolvedReference
-                        Dashboard.hideLoadingMsg();
-                        this.showToast("Fehler bei der Suche: " + err);
-                    });
-                }
-
-                renderSearchResults() {
-                    const container = document.getElementById('searchResults');
-                    container.textContent = "";
-
-                    if (!this.currentSearchResults || this.currentSearchResults.length === 0) {
-                        const noRes = document.createElement('p');
-                        noRes.textContent = "Keine Ergebnisse gefunden.";
-                        container.appendChild(noRes);
-                        return;
-                    }
-
-                    const paperList = document.createElement('div');
-                    paperList.classList.add('paperList');
-
-                    this.currentSearchResults.forEach((item, index) => {
-                        paperList.appendChild(this.createSearchResultItem(item, index));
-                    });
-                    container.appendChild(paperList);
-                }
-
                 createListItem(title, bodyText1, bodyText2, actions) {
                     const listItem = document.createElement('div');
                     listItem.classList.add('listItem', 'listItem-border');
@@ -970,81 +1113,6 @@
                     return listItem;
                 }
 
-                createSearchResultItem(item, index) {
-                    const durationStr = Math.floor(item.duration / 60) + " Min";
-                    const actions = document.createElement('div');
-                    actions.classList.add('flex-gap-10');
-
-                    actions.appendChild(this.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
-                    actions.appendChild(this.createIconButton('settings', 'Erweiterter Download', () => this.openAdvancedDownloadDialog(index)));
-                    actions.appendChild(this.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.title, item.channel, item.topic)));
-
-                    // Build BodyText1
-                    const body1 = document.createElement('div');
-                    body1.classList.add('flex-align-center');
-                    body1.style.gap = '8px';
-                    const textSpan = document.createElement('span');
-                    textSpan.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
-                    body1.appendChild(textSpan);
-
-                    if (item.url_subtitle) {
-                        const sep = document.createElement('span');
-                        sep.textContent = ' | ';
-                        body1.appendChild(sep);
-                        const icon = document.createElement('span');
-                        icon.classList.add('material-icons', 'closed_caption');
-                        icon.title = 'Untertitel verfügbar';
-                        body1.appendChild(icon);
-                    }
-
-                    const bodyText2 = item.description || '';
-
-                    return this.createListItem(item.title, body1, bodyText2, actions);
-                }
-
-                downloadItem(index) {
-                    const item = this.currentSearchResults[index];
-                    if (!item) return;
-                    // noinspection JSUnresolvedReference
-                    const url = ApiClient.getUrl('/' + this.pluginName + '/Download');
-                    // noinspection JSUnresolvedReference
-                    Dashboard.showLoadingMsg();
-                    // noinspection JSUnresolvedReference
-                    ApiClient.ajax({
-                        type: "POST",
-                        url: url,
-                        data: JSON.stringify(item),
-                        contentType: 'application/json'
-                    }).then((result) => {
-                        // noinspection JSUnresolvedReference
-                        Dashboard.hideLoadingMsg();
-                        this.showToast("Download für '" + item.title + "' gestartet.");
-                    }).catch((err) => {
-                        // noinspection JSUnresolvedReference
-                        Dashboard.hideLoadingMsg();
-                        this.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
-                    });
-                }
-
-                createSubFromSearch(btn, title, channel, topic) {
-                    this.switchTab('subscriptions');
-                    const newSub = {
-                        Id: null,
-                        Name: topic,
-                        Queries: [
-                            {fields: ["title"], query: title},
-                            {fields: ["channel"], query: channel},
-                            {fields: ["topic"], query: topic}
-                        ],
-                        MinDurationMinutes: null,
-                        MaxDurationMinutes: null,
-                        DownloadPath: "",
-                        EnforceSeriesParsing: false,
-                        AllowAudioDescription: false
-                    };
-                    this.subscriptionEditor.show(newSub);
-                }
-
 
                 // ---SUBSCRIPTION LOGIC ---
                 renderSubscriptionsList() {
@@ -1073,11 +1141,11 @@
                         // Toggle Button
                         const toggleIcon = sub.IsEnabled ? 'pause_circle_outline' : 'play_circle_outline';
                         const toggleTitle = sub.IsEnabled ? 'Deaktivieren' : 'Aktivieren';
-                        actions.appendChild(this.createIconButton(toggleIcon, toggleTitle, () => this.toggleSubscription(sub.Id)));
+                        actions.appendChild(this.dom.createIconButton(toggleIcon, toggleTitle, () => this.toggleSubscription(sub.Id)));
 
-                        actions.appendChild(this.createIconButton('refresh', 'Verarbeitete Items zurücksetzen', () => this.resetProcessedItems(sub.Id)));
-                        actions.appendChild(this.createIconButton('edit', 'Bearbeiten', () => this.subscriptionEditor.show(sub)));
-                        actions.appendChild(this.createIconButton('delete', 'Löschen', () => this.deleteSubscription(sub.Id)));
+                        actions.appendChild(this.dom.createIconButton('refresh', 'Verarbeitete Items zurücksetzen', () => this.resetProcessedItems(sub.Id)));
+                        actions.appendChild(this.dom.createIconButton('edit', 'Bearbeiten', () => this.subscriptionEditor.show(sub)));
+                        actions.appendChild(this.dom.createIconButton('delete', 'Löschen', () => this.deleteSubscription(sub.Id)));
 
                         // Add Status to title
                         const statusText = sub.IsEnabled ? "" : " (Deaktiviert)";
@@ -1139,49 +1207,51 @@
                     if (query == null) {
                         query = {query: '', fields: ['title', 'topic']};
                     }
-                    const container = document.getElementById('queriesContainer');
-                    const newRow = document.createElement('div');
-                    newRow.className = 'mvpl-query-row';
-
                     const queryText = query ? query.query : '';
                     const fields = query ? query.fields : ['title', 'topic'];
 
-                    // Input Container
-                    const inputDiv = document.createElement('div');
-                    inputDiv.className = 'flex-grow';
+                    const input = this.dom.create('input', {
+                        type: 'text',
+                        className: 'subQueryText',
+                        value: queryText,
+                        attributes: {
+                            'is': 'emby-input',
+                            'placeholder': 'Suchtext',
+                            'required': 'true'
+                        }
+                    });
 
-                    const input = document.createElement('input');
-                    input.setAttribute('is', 'emby-input');
-                    input.type = 'text';
-                    input.className = 'subQueryText';
-                    input.value = queryText;
-                    input.placeholder = 'Suchtext';
-                    input.required = true;
+                    const cbTitle = this.dom.createCheckbox('Titel', fields.includes('title'), {
+                        value: 'title',
+                        className: 'subQueryField'
+                    });
+                    const cbTopic = this.dom.createCheckbox('Thema', fields.includes('topic'), {
+                        value: 'topic',
+                        className: 'subQueryField'
+                    });
+                    const cbChannel = this.dom.createCheckbox('Sender', fields.includes('channel'), {
+                        value: 'channel',
+                        className: 'subQueryField'
+                    });
 
-                    inputDiv.appendChild(input);
-                    newRow.appendChild(inputDiv);
-
-                    // Checkboxes
-                    const checkboxesDiv = document.createElement('div');
-                    checkboxesDiv.className = 'query-checkboxes';
-
-                    const cbTitle = this.createCheckbox('Titel', fields.includes('title'), {value: 'title', className: 'subQueryField'});
-                    const cbTopic = this.createCheckbox('Thema', fields.includes('topic'), {value: 'topic', className: 'subQueryField'});
-                    const cbChannel = this.createCheckbox('Sender', fields.includes('channel'), {value: 'channel', className: 'subQueryField'});
-
-                    checkboxesDiv.appendChild(cbTitle);
-                    checkboxesDiv.appendChild(cbTopic);
-                    checkboxesDiv.appendChild(cbChannel);
-                    newRow.appendChild(checkboxesDiv);
-
-                    // Remove Button
-                    const removeBtn = this.createIconButton('remove_circle_outline', 'Anfrage entfernen', () => {
-                        newRow.remove();
+                    const removeBtn = this.dom.createIconButton('remove_circle_outline', 'Anfrage entfernen', (e) => {
+                        e.target.closest('.mvpl-query-row').remove();
                     });
                     removeBtn.classList.add('btnRemoveQuery');
-                    newRow.appendChild(removeBtn);
 
-                    container.appendChild(newRow);
+                    const newRow = this.dom.create('div', {
+                        className: 'mvpl-query-row',
+                        children: [
+                            this.dom.create('div', {className: 'flex-grow', children: [input]}),
+                            this.dom.create('div', {
+                                className: 'query-checkboxes',
+                                children: [cbTitle, cbTopic, cbChannel]
+                            }),
+                            removeBtn
+                        ]
+                    });
+
+                    document.getElementById('queriesContainer').appendChild(newRow);
                 }
 
                 saveSubscription() {
@@ -1233,12 +1303,12 @@
                     });
                 }
 
-                openAdvancedDownloadDialog(index) {
-                    this.currentItemForAdvancedDl = this.currentSearchResults[index];
+                openAdvancedDownloadDialog(item) {
+                    this.currentItemForAdvancedDl = item;
                     if (!this.currentItemForAdvancedDl) return;
 
                     document.getElementById('advancedDownloadTitle').innerText = 'Erweiterter Download: ' + this.currentItemForAdvancedDl.title;
-                    document.getElementById('advancedDownloadIndex').value = index;
+                    document.getElementById('advancedDownloadIndex').value = ""; // Not needed anymore contextually but keeping element
 
                     document.getElementById('advDlPath').value = this.currentConfig.DefaultDownloadPath || '';
 
@@ -1377,13 +1447,6 @@
                     document.getElementById('mvpl-btn-tab-settings').addEventListener('click', () => this.switchTab('settings'));
                     document.getElementById('mvpl-btn-tab-subscriptions').addEventListener('click', () => this.switchTab('subscriptions'));
 
-                    // Search Form
-                    document.getElementById('mvpl-form-search').addEventListener('submit', (e) => {
-                        e.preventDefault();
-                        this.performSearch();
-                        return false;
-                    });
-
                     // Main Config Form
                     document.getElementById('MediathekGeneralConfigForm').addEventListener('submit', (e) => {
                         e.preventDefault();
@@ -1453,19 +1516,12 @@
                     document.getElementById('mvpl-btn-close-adv-download').addEventListener('click', () => {
                         this.closeAdvancedDownloadDialog();
                     });
-
-                    // Dependency Rules
-                    const controllerIds = [...new Set(this.subscriptionDependencyRules.map(rule => rule.controllerId))];
-                    controllerIds.forEach(id => {
-                        const controller = document.getElementById(id);
-                        if (controller) {
-                            controller.addEventListener('change', () => this.applySubscriptionDependencies());
-                        }
-                    });
                 }
 
                 init() {
                     this.bindEvents();
+                    this.searchController.init();
+                    this.dependencyManager.init();
                 }
             }
 
