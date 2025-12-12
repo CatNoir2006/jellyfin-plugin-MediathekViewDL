@@ -23,6 +23,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         private readonly Mock<IVideoParser> _videoParserMock;
         private readonly Mock<ILocalMediaScanner> _localMediaScannerMock;
         private readonly Mock<IFileNameBuilderService> _fileNameBuilderServiceMock;
+        private readonly Mock<IStrmValidationService> _strmValidationServiceMock;
         private readonly SubscriptionProcessor _processor;
 
         public SubscriptionProcessorTests()
@@ -32,13 +33,20 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _videoParserMock = new Mock<IVideoParser>();
             _localMediaScannerMock = new Mock<ILocalMediaScanner>();
             _fileNameBuilderServiceMock = new Mock<IFileNameBuilderService>();
+            _strmValidationServiceMock = new Mock<IStrmValidationService>();
+
+            // Default setup: Validation always succeeds
+            _strmValidationServiceMock
+                .Setup(x => x.ValidateUrlAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true);
 
             _processor = new SubscriptionProcessor(
                 _loggerMock.Object,
                 _apiClientMock.Object,
                 _videoParserMock.Object,
                 _localMediaScannerMock.Object,
-                _fileNameBuilderServiceMock.Object
+                _fileNameBuilderServiceMock.Object,
+                _strmValidationServiceMock.Object
             );
         }
 
@@ -220,6 +228,98 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var job = jobs[0];
             Assert.Equal(2, job.DownloadItems.Count); // Video + Subtitle
             Assert.Contains(job.DownloadItems, d => d.JobType == DownloadType.DirectDownload && d.SourceUrl == "http://subs.ttml");
+        }
+
+        [Fact]
+        public async Task GetJobsForSubscriptionAsync_ShouldFallback_ToNextQuality_WhenPrimaryFails()
+        {
+            // Arrange
+            var subscription = new Subscription { Name = "TestSub" };
+            var item = new ResultItem 
+            { 
+                Id = "123", 
+                UrlVideoHd = "http://hd.mp4",
+                UrlVideo = "http://sd.mp4",
+                UrlVideoLow = "http://low.mp4"
+            };
+
+            var resultChannels = new ResultChannels
+            {
+                Results = new Collection<ResultItem> { item },
+                QueryInfo = new QueryInfo { TotalResults = 1 }
+            };
+
+            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQuery>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultChannels);
+
+            var videoInfo = new VideoInfo { Title = "Test", Language = "deu" };
+            _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(videoInfo);
+            
+            _fileNameBuilderServiceMock.Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>()))
+                .Returns(new DownloadPaths { DirectoryPath = "/tmp", MainFilePath = "/tmp/v.mp4" });
+
+            // Fail HD, Succeed SD
+            _strmValidationServiceMock
+                .Setup(x => x.ValidateUrlAsync("http://hd.mp4", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false); // Fail
+
+            _strmValidationServiceMock
+                .Setup(x => x.ValidateUrlAsync("http://sd.mp4", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true); // Success
+
+            // Act
+            var jobs = await _processor.GetJobsForSubscriptionAsync(subscription, false, CancellationToken.None);
+
+            // Assert
+            Assert.Single(jobs);
+            var job = jobs[0];
+            Assert.Equal("http://sd.mp4", job.DownloadItems.First().SourceUrl);
+            
+            // Verify HD was checked first
+            _strmValidationServiceMock.Verify(x => x.ValidateUrlAsync("http://hd.mp4", It.IsAny<CancellationToken>()), Times.Once);
+            _strmValidationServiceMock.Verify(x => x.ValidateUrlAsync("http://sd.mp4", It.IsAny<CancellationToken>()), Times.Once);
+            _strmValidationServiceMock.Verify(x => x.ValidateUrlAsync("http://low.mp4", It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task GetJobsForSubscriptionAsync_ShouldSkip_WhenAllQualitiesFail()
+        {
+            // Arrange
+            var subscription = new Subscription { Name = "TestSub" };
+            var item = new ResultItem 
+            { 
+                Id = "123", 
+                UrlVideoHd = "http://hd.mp4",
+                UrlVideo = "http://sd.mp4"
+            };
+
+            var resultChannels = new ResultChannels
+            {
+                Results = new Collection<ResultItem> { item },
+                QueryInfo = new QueryInfo { TotalResults = 1 }
+            };
+
+            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQuery>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultChannels);
+
+            var videoInfo = new VideoInfo { Title = "Test", Language = "deu" };
+            _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(videoInfo);
+            
+            _fileNameBuilderServiceMock.Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>()))
+                .Returns(new DownloadPaths { DirectoryPath = "/tmp", MainFilePath = "/tmp/v.mp4" });
+
+            // Fail all
+            _strmValidationServiceMock
+                .Setup(x => x.ValidateUrlAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(false);
+
+            // Act
+            var jobs = await _processor.GetJobsForSubscriptionAsync(subscription, false, CancellationToken.None);
+
+            // Assert
+            Assert.Empty(jobs); // Should not create a job
         }
     }
 }

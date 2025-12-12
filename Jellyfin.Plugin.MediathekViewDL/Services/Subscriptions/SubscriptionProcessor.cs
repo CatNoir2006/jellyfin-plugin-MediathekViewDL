@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private readonly IVideoParser _videoParser;
     private readonly ILocalMediaScanner _localMediaScanner;
     private readonly IFileNameBuilderService _fileNameBuilderService;
+    private readonly IStrmValidationService _strmValidationService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscriptionProcessor"/> class.
@@ -33,18 +35,21 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="videoParser">The video parser.</param>
     /// <param name="localMediaScanner">The local media scanner.</param>
     /// <param name="fileNameBuilderService">The file name builder service.</param>
+    /// <param name="strmValidationService">The STRM validation service.</param>
     public SubscriptionProcessor(
         ILogger<SubscriptionProcessor> logger,
         IMediathekViewApiClient apiClient,
         IVideoParser videoParser,
         ILocalMediaScanner localMediaScanner,
-        IFileNameBuilderService fileNameBuilderService)
+        IFileNameBuilderService fileNameBuilderService,
+        IStrmValidationService strmValidationService)
     {
         _logger = logger;
         _apiClient = apiClient;
         _videoParser = videoParser;
         _localMediaScanner = localMediaScanner;
         _fileNameBuilderService = fileNameBuilderService;
+        _strmValidationService = strmValidationService;
     }
 
     /// <summary>
@@ -92,10 +97,34 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 continue;
             }
 
-            var videoUrl = item.UrlVideoHd ?? item.UrlVideo ?? item.UrlVideoLow;
+            string? videoUrl = null;
+            var candidateUrls = new List<string?> { item.UrlVideoHd, item.UrlVideo, item.UrlVideoLow };
+            var validCandidates = candidateUrls.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct().ToList();
+
+            foreach (var url in validCandidates)
+            {
+                try
+                {
+                    if (await _strmValidationService.ValidateUrlAsync(url!, cancellationToken).ConfigureAwait(false))
+                    {
+                        videoUrl = url;
+                        if (url != validCandidates.First())
+                        {
+                            _logger.LogWarning("Primary quality download failed for '{Title}'. Fallback to: {Url}", item.Title, url);
+                        }
+
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to validate URL '{Url}' for '{Title}'. Trying next quality...", url, item.Title);
+                }
+            }
+
             if (string.IsNullOrWhiteSpace(videoUrl))
             {
-                _logger.LogWarning("No video URL found for item '{Title}'.", item.Title);
+                _logger.LogWarning("No valid video URL found for item '{Title}'.", item.Title);
                 continue;
             }
 
