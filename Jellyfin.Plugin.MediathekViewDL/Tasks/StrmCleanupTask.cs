@@ -18,14 +18,14 @@ public class StrmCleanupTask : IScheduledTask
 {
     private const long MaxStrmFileSize = 4096; // 4 KB max size for .strm files to prevent accidents
     private readonly ILogger<StrmCleanupTask> _logger;
-    private readonly StrmValidationService _validationService;
+    private readonly IStrmValidationService _validationService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StrmCleanupTask"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="validationService">The validation service.</param>
-    public StrmCleanupTask(ILogger<StrmCleanupTask> logger, StrmValidationService validationService)
+    public StrmCleanupTask(ILogger<StrmCleanupTask> logger, IStrmValidationService validationService)
     {
         _logger = logger;
         _validationService = validationService;
