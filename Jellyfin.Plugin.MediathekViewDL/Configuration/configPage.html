@@ -221,6 +221,15 @@
                             </div>
                         </div>
 
+                        <!-- Create NFO Checkbox -->
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subCreateNfo" type="checkbox" is="emby-checkbox"/>
+                                <span>NFO Dateien erstellen</span>
+                            </label>
+                            <div class="fieldDescription">Erstellt eine .nfo Datei mit Metadaten (Beschreibung, Episodennummer) neben der Videodatei.</div>
+                        </div>
+
                         <!-- Allow Absolute Episode Numbering Checkbox -->
                         <div id="subAllowAbsoluteEpisodeNumberingContainer" class="checkboxContainer checkboxContainer-withDescription mvpl-indented-block">
                             <label class="emby-checkbox-label">
@@ -441,6 +450,7 @@
                         document.getElementById('subPath').value = "";
 
                         document.getElementById('subEnforceSeries').checked = false;
+                        document.getElementById('subCreateNfo').checked = false;
                         document.getElementById('subAllowAudioDesc').checked = false;
                         document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = false;
                         document.getElementById('subAllowSignLanguage').checked = false;
@@ -464,6 +474,7 @@
                     document.getElementById('subMaxDuration').value = sub.MaxDurationMinutes || "";
                     document.getElementById('subPath').value = sub.DownloadPath || "";
                     document.getElementById('subEnforceSeries').checked = sub.EnforceSeriesParsing;
+                    document.getElementById('subCreateNfo').checked = sub.CreateNfo !== undefined ? sub.CreateNfo : false;
                     document.getElementById('subAllowAudioDesc').checked = sub.AllowAudioDescription;
                     document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = sub.AllowAbsoluteEpisodeNumbering;
                     document.getElementById('subAllowSignLanguage').checked = sub.AllowSignLanguage;
@@ -498,6 +509,7 @@
                     const maxDuration = document.getElementById('subMaxDuration').value;
                     const path = document.getElementById('subPath').value;
                     const enforce = document.getElementById('subEnforceSeries').checked;
+                    const createNfo = document.getElementById('subCreateNfo').checked;
                     const allowAudio = document.getElementById('subAllowAudioDesc').checked;
                     const allowAbsolute = document.getElementById('subAllowAbsoluteEpisodeNumbering').checked;
                     const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
@@ -530,6 +542,7 @@
                         MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
                         DownloadPath: path,
                         EnforceSeriesParsing: enforce,
+                        CreateNfo: createNfo,
                         AllowAudioDescription: allowAudio,
                         AllowAbsoluteEpisodeNumbering: allowAbsolute,
                         AllowSignLanguage: allowSignLanguage,

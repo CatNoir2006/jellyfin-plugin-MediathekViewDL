@@ -98,7 +98,14 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
 
             // Video/Main Job
-            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo.Title, };
+            var downloadJob = new DownloadJob
+            {
+                ItemId = item.Id,
+                Title = tempVideoInfo.Title,
+                MediathekItem = item,
+                VideoInfo = tempVideoInfo,
+                CreateNfo = subscription.CreateNfo
+            };
 
             bool useStrmForThisItem = subscription.UseStreamingUrlFiles || (subscription is { SaveExtrasAsStrm: true, TreatNonEpisodesAsExtras: true } && !tempVideoInfo.IsShow);
 

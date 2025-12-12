@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using Jellyfin.Plugin.MediathekViewDL.Api;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 
@@ -28,4 +30,19 @@ public class DownloadJob
     /// Gets or sets the title of the video/content. Used primarily for logging.
     /// </summary>
     public string Title { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the original MediathekView result item.
+    /// </summary>
+    public ResultItem? MediathekItem { get; set; }
+
+    /// <summary>
+    /// Gets or sets the parsed video information.
+    /// </summary>
+    public VideoInfo? VideoInfo { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to create an NFO file.
+    /// </summary>
+    public bool CreateNfo { get; set; }
 }
