@@ -54,7 +54,7 @@ public class FileNameBuilderService : IFileNameBuilderService
         paths.MainFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, subscription, false));
         paths.SubtitleFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, subscription, true));
         paths.StrmFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, subscription, false, true));
-
+        paths.NfoFilePath = Path.ChangeExtension(paths.MainFilePath, ".nfo");
         return paths;
     }
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -8,6 +9,7 @@ using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
+using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
@@ -98,7 +100,11 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
 
             // Video/Main Job
-            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo.Title, };
+            var downloadJob = new DownloadJob
+            {
+                ItemId = item.Id,
+                Title = tempVideoInfo.Title,
+            };
 
             bool useStrmForThisItem = subscription.UseStreamingUrlFiles || (subscription is { SaveExtrasAsStrm: true, TreatNonEpisodesAsExtras: true } && !tempVideoInfo.IsShow);
 
@@ -121,6 +127,26 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             if (downloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
             {
                 downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = item.UrlSubtitle, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
+            }
+
+            if (subscription.CreateNfo)
+            {
+                var topic = string.IsNullOrWhiteSpace(subscription.Name) ? item.Topic : subscription.Name;
+
+                downloadJob.NfoMetadata = new NfoDTO()
+                {
+                    Title = tempVideoInfo.Title,
+                    Description = item.Description,
+                    Show = tempVideoInfo.SeasonNumber.HasValue ? topic : string.Empty,
+                    Season = tempVideoInfo.SeasonNumber,
+                    Episode = tempVideoInfo.EpisodeNumber,
+                    Id = item.Id,
+                    FilePath = paths.NfoFilePath,
+                    Studio = item.Channel,
+                    RunTime = TimeSpan.FromSeconds(item.Duration),
+                    AirDate = DateTimeOffset.FromUnixTimeSeconds(item.Timestamp).DateTime,
+                    Set = string.Empty
+                };
             }
         }
 

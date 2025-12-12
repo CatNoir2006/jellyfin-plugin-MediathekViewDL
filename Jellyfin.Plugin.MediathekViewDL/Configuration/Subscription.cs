@@ -78,6 +78,11 @@ public class Subscription
     public bool EnforceSeriesParsing { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to create a local .nfo file with metadata (Episode number, description, etc.).
+    /// </summary>
+    public bool CreateNfo { get; set; } = false;
+
+    /// <summary>
     /// Gets or sets a value indicating whether to allow downloading content with absolute episode numbering.
     /// This is ignored if EnforceSeriesParsing is false.
     /// </summary>
