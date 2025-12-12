@@ -135,6 +135,12 @@
                         </div>
 
                         <div class="inputContainer">
+                            <label class="inputLabel" for="txtMaxBandwidthMBits">Maximale Download-Bandbreite (MBit/s)</label>
+                            <input is="emby-input" type="number" id="txtMaxBandwidthMBits"/>
+                            <div class="fieldDescription">Begrenzt die Download-Geschwindigkeit. 0 bedeutet unbegrenzt.</div>
+                        </div>
+
+                        <div class="inputContainer">
                             <label class="inputLabel">Letzter Lauf</label>
                             <div id="lblLastRun" class="mvpl-last-run-label">Noch nie</div>
                         </div>
@@ -825,6 +831,7 @@
                         document.querySelector('#chkScanLibraryAfterDownload').checked = config.ScanLibraryAfterDownload;
                         document.querySelector('#chkEnableStrmCleanup').checked = config.EnableStrmCleanup;
                         document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
+                        document.querySelector('#txtMaxBandwidthMBits').value = config.MaxBandwidthMBits || 0;
                         document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
 
                         this.renderSubscriptionsList();
@@ -1387,6 +1394,10 @@
                         this.currentConfig.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
                         const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
                         this.currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
+
+                        const maxBandwidth = parseInt(document.querySelector('#txtMaxBandwidthMBits').value, 10);
+                        this.currentConfig.MaxBandwidthMBits = isNaN(maxBandwidth) ? 0 : maxBandwidth;
+
                         this.saveGlobalConfig();
                         return false;
                     });

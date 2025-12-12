@@ -130,11 +130,18 @@ public class FileDownloader : IFileDownloader
             await using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
             {
 #pragma warning disable CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
-                await using (var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken))
+                var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+                if (pluginConfig.MaxBandwidthMBits > 0)
+                {
+                    long bytesPerSecond = (long)pluginConfig.MaxBandwidthMBits * 1_000_000 / 8;
+                    stream = new ThrottledStream(stream, bytesPerSecond);
+                }
+
+                await using (stream)
                 {
                     while (true)
                     {
-                        var read = await contentStream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+                        var read = await stream.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
                         if (read == 0)
                         {
                             break;
