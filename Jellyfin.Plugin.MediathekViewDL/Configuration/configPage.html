@@ -349,6 +349,15 @@
                             <div class="fieldDescription">Scannt das Zielverzeichnis nach vorhandenen Dateien mit passenden SxxExx-Mustern (oder absoluter Nummerierung), um doppelte Downloads zu vermeiden (auch bei abweichenden Dateinamen).</div>
                         </div>
 
+                        <!-- Auto Upgrade Quality Checkbox -->
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subAutoUpgradeToHigherQuality" type="checkbox" is="emby-checkbox"/>
+                                <span>Automatisch auf höhere Qualität upgraden</span>
+                            </label>
+                            <div class="fieldDescription">Wenn aktiviert, werden bereits vorhandene Episoden durch eine Version mit höherer Auflösung ersetzt, falls verfügbar.</div>
+                        </div>
+
                         <div class="button-row">
                             <button is="emby-button" type="submit" class="raised button-submit">
                                 <span>Abo Speichern</span>
@@ -804,6 +813,7 @@
                         document.getElementById('subUseStreamingUrlFiles').checked = false;
                         document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = false;
                         document.getElementById('subEnhancedDuplicateDetection').checked = false;
+                        document.getElementById('subAutoUpgradeToHigherQuality').checked = false;
 
                         document.getElementById('queriesContainer').textContent = '';
                         this.config.addQueryRow(null);
@@ -824,6 +834,7 @@
                     document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = sub.AllowAbsoluteEpisodeNumbering;
                     document.getElementById('subAllowSignLanguage').checked = sub.AllowSignLanguage;
                     document.getElementById('subEnhancedDuplicateDetection').checked = sub.EnhancedDuplicateDetection;
+                    document.getElementById('subAutoUpgradeToHigherQuality').checked = sub.AutoUpgradeToHigherQuality !== undefined ? sub.AutoUpgradeToHigherQuality : false;
                     document.getElementById('subTreatNonEpisodesAsExtras').checked = sub.TreatNonEpisodesAsExtras;
                     document.getElementById('subSaveTrailers').checked = sub.SaveTrailers;
                     document.getElementById('subSaveInterviews').checked = sub.SaveInterviews;
@@ -859,6 +870,7 @@
                     const allowAbsolute = document.getElementById('subAllowAbsoluteEpisodeNumbering').checked;
                     const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
                     const enhancedDuplicateDetection = document.getElementById('subEnhancedDuplicateDetection').checked;
+                    const autoUpgradeToHigherQuality = document.getElementById('subAutoUpgradeToHigherQuality').checked;
                     const treatNonEpisodesAsExtras = document.getElementById('subTreatNonEpisodesAsExtras').checked;
                     const saveTrailers = document.getElementById('subSaveTrailers').checked;
                     const saveInterviews = document.getElementById('subSaveInterviews').checked;
@@ -892,6 +904,7 @@
                         AllowAbsoluteEpisodeNumbering: allowAbsolute,
                         AllowSignLanguage: allowSignLanguage,
                         EnhancedDuplicateDetection: enhancedDuplicateDetection,
+                        AutoUpgradeToHigherQuality: autoUpgradeToHigherQuality,
                         TreatNonEpisodesAsExtras: treatNonEpisodesAsExtras,
                         SaveTrailers: saveTrailers,
                         SaveInterviews: saveInterviews,

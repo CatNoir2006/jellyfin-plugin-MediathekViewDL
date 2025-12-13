@@ -105,6 +105,11 @@ public class Subscription
     public bool EnhancedDuplicateDetection { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to automatically upgrade to a higher quality version if available.
+    /// </summary>
+    public bool AutoUpgradeToHigherQuality { get; set; } = false;
+
+    /// <summary>
     /// Gets or sets the minimum duration in minutes for search results.
     /// </summary>
     public int? MinDurationMinutes { get; set; }
