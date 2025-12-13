@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -26,6 +27,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private readonly ILocalMediaScanner _localMediaScanner;
     private readonly IFileNameBuilderService _fileNameBuilderService;
     private readonly IStrmValidationService _strmValidationService;
+    private readonly IFFmpegService _ffmpegService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscriptionProcessor"/> class.
@@ -36,13 +38,15 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="localMediaScanner">The local media scanner.</param>
     /// <param name="fileNameBuilderService">The file name builder service.</param>
     /// <param name="strmValidationService">The STRM validation service.</param>
+    /// <param name="ffmpegService">The ffmpeg Service.</param>
     public SubscriptionProcessor(
         ILogger<SubscriptionProcessor> logger,
         IMediathekViewApiClient apiClient,
         IVideoParser videoParser,
         ILocalMediaScanner localMediaScanner,
         IFileNameBuilderService fileNameBuilderService,
-        IStrmValidationService strmValidationService)
+        IStrmValidationService strmValidationService,
+        IFFmpegService ffmpegService)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -50,15 +54,10 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         _localMediaScanner = localMediaScanner;
         _fileNameBuilderService = fileNameBuilderService;
         _strmValidationService = strmValidationService;
+        _ffmpegService = ffmpegService;
     }
 
-    /// <summary>
-    /// Processes a subscription to find new download jobs.
-    /// </summary>
-    /// <param name="subscription">The subscription to process.</param>
-    /// <param name="downloadSubtitles">Whether to download subtitles globally.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A list of download jobs.</returns>
+    /// <inheritdoc/>
     public async Task<List<DownloadJob>> GetJobsForSubscriptionAsync(
         Subscription subscription,
         bool downloadSubtitles,
@@ -78,7 +77,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
         await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            if (subscription.ProcessedItemIds.Contains(item.Id))
+            if (subscription.ProcessedItemIds.Contains(item.Id) && !subscription.AutoUpgradeToHigherQuality)
             {
                 _logger.LogDebug("Skipping item '{Title}' (ID: {Id}) as it was already processed for subscription '{SubscriptionName}'.", item.Title, item.Id, subscription.Name);
                 continue;
@@ -100,16 +99,11 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             string? videoUrl = await GetUrlCandidate(item, subscription, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(videoUrl))
             {
-                _logger.LogWarning("No valid video URL found for item '{Title}'.", item.Title);
                 continue;
             }
 
             // Video/Main Job
-            var downloadJob = new DownloadJob
-            {
-                ItemId = item.Id,
-                Title = tempVideoInfo.Title,
-            };
+            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo.Title, };
 
             bool useStrmForThisItem = subscription.UseStreamingUrlFiles || (subscription is { SaveExtrasAsStrm: true, TreatNonEpisodesAsExtras: true } && !tempVideoInfo.IsShow);
 
@@ -119,7 +113,18 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
             else if (tempVideoInfo.Language == "deu" || subscription.DownloadFullVideoForSecondaryAudio)
             {
-                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.DirectDownload });
+                // Check for quality upgrade if enabled
+                if (subscription.AutoUpgradeToHigherQuality && File.Exists(paths.MainFilePath))
+                {
+                    if (await IsQualityUpgradeAvailable(paths.MainFilePath, videoUrl, cancellationToken).ConfigureAwait(false))
+                    {
+                        downloadJob.DownloadItems.Add(new DownloadItem() { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.QualityUpgrade });
+                    }
+                }
+                else
+                {
+                    downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.DirectDownload });
+                }
             }
             else
             {
@@ -201,7 +206,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// Applies filtering rules to determine if the item should be processed.
     /// </summary>
     /// <returns>True if the item passes all filters; otherwise, false.</returns>
-    private bool ApplyFilters([NotNullWhen(true)]VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
+    private bool ApplyFilters([NotNullWhen(true)] VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
     {
         if (tempVideoInfo == null)
         {
@@ -209,7 +214,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             return false;
         }
 
-        if (localEpisodeCache != null && localEpisodeCache.Contains(tempVideoInfo))
+        if (localEpisodeCache != null && localEpisodeCache.Contains(tempVideoInfo) && !subscription.AutoUpgradeToHigherQuality)
         {
             _logger.LogInformation(
                 "Skipping item '{Title}' (S{Season}E{Episode} / Abs: {Abs}) as it was found locally via enhanced duplicate detection.",
@@ -267,6 +272,45 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
         }
 
+        return true;
+    }
+
+    /// <summary>
+    /// Tests if a quality upgrade is available by comparing current file and online URL.
+    /// </summary>
+    /// <param name="currentFilePath">The path of the current file.</param>
+    /// <param name="newUrl">The new URL.</param>
+    /// <param name="cancellationToken">The CancellationToken.</param>
+    /// <returns>True if a quality upgrade is available, false otherwise.</returns>
+    private async Task<bool> IsQualityUpgradeAvailable(string currentFilePath, string newUrl, CancellationToken cancellationToken)
+    {
+        var currentQuality = await _ffmpegService.GetMediaInfoAsync(currentFilePath, cancellationToken).ConfigureAwait(false);
+        var onlineQuality = await _ffmpegService.GetMediaInfoAsync(newUrl, cancellationToken).ConfigureAwait(false);
+
+        if (!currentQuality.HasValue || !onlineQuality.HasValue)
+        {
+            _logger.LogWarning("Could not determine media info for quality comparison.");
+            return false;
+        }
+
+        if (onlineQuality.Value.Height <= currentQuality.Value.Height)
+        {
+            _logger.LogInformation("No quality upgrade available. Current height: {CurrentHeight}, Online height: {OnlineHeight}.", currentQuality.Value.Height, onlineQuality.Value.Height);
+            return false;
+        }
+
+        if (onlineQuality.Value.Width <= currentQuality.Value.Width)
+        {
+            _logger.LogInformation("No quality upgrade available. Current width: {CurrentWidth}, Online width: {OnlineWidth}.", currentQuality.Value.Width, onlineQuality.Value.Width);
+            return false;
+        }
+
+        _logger.LogInformation(
+            "Quality upgrade available! Current: {CurrentWidth}x{CurrentHeight}, Online: {OnlineWidth}x{OnlineHeight}.",
+            currentQuality.Value.Width,
+            currentQuality.Value.Height,
+            onlineQuality.Value.Width,
+            onlineQuality.Value.Height);
         return true;
     }
 
