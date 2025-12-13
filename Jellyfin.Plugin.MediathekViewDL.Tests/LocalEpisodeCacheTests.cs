@@ -9,7 +9,7 @@ public class LocalEpisodeCacheTests
     public void Contains_SeasonAndEpisode_ReturnsTrue()
     {
         var cache = new LocalEpisodeCache();
-        cache.Add(1, 1, null, "deu");
+        cache.Add(1, 1, null, "path/to/file.mp4", "deu");
 
         Assert.True(cache.Contains(1, 1, null, "deu"));
         Assert.True(cache.Contains(1, 1, 999, "deu")); // Should match on S/E regardless of abs
@@ -20,7 +20,7 @@ public class LocalEpisodeCacheTests
     public void Contains_AbsoluteEpisode_ReturnsTrue()
     {
         var cache = new LocalEpisodeCache();
-        cache.Add(null, null, 10, "deu");
+        cache.Add(null, null, 10, "path/to/file.mp4", "deu");
 
         Assert.True(cache.Contains(null, null, 10, "deu"));
         Assert.True(cache.Contains(99, 99, 10, "deu"));
@@ -32,9 +32,9 @@ public class LocalEpisodeCacheTests
     {
         var cache = new LocalEpisodeCache();
         // Add S1E1
-        cache.Add(1, 1, null, "deu");
+        cache.Add(1, 1, null, "path/to/file.mp4", "deu");
         // Add Abs 5
-        cache.Add(null, null, 5, "eng");
+        cache.Add(null, null, 5, "path/to/file.mp4", "eng");
 
         // Match S1E1
         Assert.True(cache.Contains(1, 1, null, "deu"));

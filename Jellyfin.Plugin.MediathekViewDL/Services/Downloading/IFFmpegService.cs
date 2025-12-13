@@ -17,4 +17,12 @@ public interface IFFmpegService
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>True if the extraction was successful, otherwise false.</returns>
     Task<bool> ExtractAudioAsync(string tempVideoPath, string outputAudioPath, string languageCode, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Gets the media information (width, height, duration) from a remote URL or local file.
+    /// </summary>
+    /// <param name="urlOrPath">The URL or file path.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The media info, or null if it could not be determined.</returns>
+    Task<Library.LocalMediaInfo?> GetMediaInfoAsync(string urlOrPath, CancellationToken cancellationToken);
 }

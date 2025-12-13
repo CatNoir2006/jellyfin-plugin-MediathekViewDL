@@ -105,6 +105,11 @@ public class Subscription
     public bool EnhancedDuplicateDetection { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to automatically upgrade to a higher quality version if available.
+    /// </summary>
+    public bool AutoUpgradeToHigherQuality { get; set; }
+
+    /// <summary>
     /// Gets or sets the minimum duration in minutes for search results.
     /// </summary>
     public int? MinDurationMinutes { get; set; }
@@ -123,7 +128,20 @@ public class Subscription
     /// Gets or sets a value indicating whether to download the full video for secondary audio languages.
     /// If false, only the audio track will be extracted for secondary languages.
     /// </summary>
-    public bool DownloadFullVideoForSecondaryAudio { get; set; } = false;
+    public bool DownloadFullVideoForSecondaryAudio { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to allow falling back to lower quality versions
+    /// if HD version is not available.
+    /// </summary>
+    public bool AllowFallbackToLowerQuality { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to check if the URL retrieved from MediathekViewWeb API is valid.
+    /// If not it will try with the next lower quality available.
+    /// This can slow down the Scan. Especially if thers a lot of unavailable videos.
+    /// </summary>
+    public bool QualityCheckWithUrl { get; set; }
 
     /// <summary>
     /// Gets or sets the UTC timestamp of the last successful download for this subscription.

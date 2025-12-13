@@ -18,5 +18,10 @@ public enum DownloadType
     /// <summary>
     /// Create a streaming URL file (.strm).
     /// </summary>
-    StreamingUrl
+    StreamingUrl,
+
+    /// <summary>
+    /// Upgrade the quality of an existing file.
+    /// </summary>
+    QualityUpgrade
 }

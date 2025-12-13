@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -26,6 +27,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private readonly ILocalMediaScanner _localMediaScanner;
     private readonly IFileNameBuilderService _fileNameBuilderService;
     private readonly IStrmValidationService _strmValidationService;
+    private readonly IFFmpegService _ffmpegService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscriptionProcessor"/> class.
@@ -36,13 +38,15 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="localMediaScanner">The local media scanner.</param>
     /// <param name="fileNameBuilderService">The file name builder service.</param>
     /// <param name="strmValidationService">The STRM validation service.</param>
+    /// <param name="ffmpegService">The ffmpeg Service.</param>
     public SubscriptionProcessor(
         ILogger<SubscriptionProcessor> logger,
         IMediathekViewApiClient apiClient,
         IVideoParser videoParser,
         ILocalMediaScanner localMediaScanner,
         IFileNameBuilderService fileNameBuilderService,
-        IStrmValidationService strmValidationService)
+        IStrmValidationService strmValidationService,
+        IFFmpegService ffmpegService)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -50,15 +54,10 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         _localMediaScanner = localMediaScanner;
         _fileNameBuilderService = fileNameBuilderService;
         _strmValidationService = strmValidationService;
+        _ffmpegService = ffmpegService;
     }
 
-    /// <summary>
-    /// Processes a subscription to find new download jobs.
-    /// </summary>
-    /// <param name="subscription">The subscription to process.</param>
-    /// <param name="downloadSubtitles">Whether to download subtitles globally.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A list of download jobs.</returns>
+    /// <inheritdoc/>
     public async Task<List<DownloadJob>> GetJobsForSubscriptionAsync(
         Subscription subscription,
         bool downloadSubtitles,
@@ -78,7 +77,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
         await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            if (subscription.ProcessedItemIds.Contains(item.Id))
+            if (subscription.ProcessedItemIds.Contains(item.Id) && !subscription.AutoUpgradeToHigherQuality)
             {
                 _logger.LogDebug("Skipping item '{Title}' (ID: {Id}) as it was already processed for subscription '{SubscriptionName}'.", item.Title, item.Id, subscription.Name);
                 continue;
@@ -97,43 +96,14 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 continue;
             }
 
-            string? videoUrl = null;
-            var candidateUrls = new List<string?> { item.UrlVideoHd, item.UrlVideo, item.UrlVideoLow };
-            var validCandidates = candidateUrls.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct().ToList();
-
-            foreach (var url in validCandidates)
-            {
-                try
-                {
-                    if (await _strmValidationService.ValidateUrlAsync(url!, cancellationToken).ConfigureAwait(false))
-                    {
-                        videoUrl = url;
-                        if (url != validCandidates.First())
-                        {
-                            _logger.LogWarning("Primary quality download failed for '{Title}'. Fallback to: {Url}", item.Title, url);
-                        }
-
-                        break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to validate URL '{Url}' for '{Title}'. Trying next quality...", url, item.Title);
-                }
-            }
-
+            string? videoUrl = await GetUrlCandidate(item, subscription, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(videoUrl))
             {
-                _logger.LogWarning("No valid video URL found for item '{Title}'.", item.Title);
                 continue;
             }
 
             // Video/Main Job
-            var downloadJob = new DownloadJob
-            {
-                ItemId = item.Id,
-                Title = tempVideoInfo.Title,
-            };
+            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo.Title, };
 
             bool useStrmForThisItem = subscription.UseStreamingUrlFiles || (subscription is { SaveExtrasAsStrm: true, TreatNonEpisodesAsExtras: true } && !tempVideoInfo.IsShow);
 
@@ -143,7 +113,27 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
             else if (tempVideoInfo.Language == "deu" || subscription.DownloadFullVideoForSecondaryAudio)
             {
-                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.DirectDownload });
+                // Resolve the file path to check for existence/quality.
+                string? existingFilePath = localEpisodeCache?.GetExistingFilePath(tempVideoInfo);
+
+                // If not in cache, check the standard path
+                if (string.IsNullOrEmpty(existingFilePath) && File.Exists(paths.MainFilePath))
+                {
+                    existingFilePath = paths.MainFilePath;
+                }
+
+                if (!string.IsNullOrEmpty(existingFilePath) && File.Exists(existingFilePath))
+                {
+                    var upgradeItem = await CreateQualityUpgradeItemIfAvailable(subscription, existingFilePath, videoUrl, paths.MainFilePath, cancellationToken).ConfigureAwait(false);
+                    if (upgradeItem != null)
+                    {
+                        downloadJob.DownloadItems.Add(upgradeItem);
+                    }
+                }
+                else
+                {
+                    downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.DirectDownload });
+                }
             }
             else
             {
@@ -182,12 +172,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         return jobs;
     }
 
-    /// <summary>
-    /// Tests a subscription query and filters without creating download jobs.
-    /// </summary>
-    /// <param name="subscription">The subscription to test.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A list of items that would be downloaded.</returns>
+    /// <inheritdoc/>
     public async IAsyncEnumerable<ResultItem> TestSubscriptionAsync(
         Subscription subscription,
         [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -230,7 +215,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// Applies filtering rules to determine if the item should be processed.
     /// </summary>
     /// <returns>True if the item passes all filters; otherwise, false.</returns>
-    private bool ApplyFilters([NotNullWhen(true)]VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
+    private bool ApplyFilters([NotNullWhen(true)] VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
     {
         if (tempVideoInfo == null)
         {
@@ -238,7 +223,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             return false;
         }
 
-        if (localEpisodeCache != null && localEpisodeCache.Contains(tempVideoInfo))
+        if (localEpisodeCache != null && localEpisodeCache.Contains(tempVideoInfo) && !subscription.AutoUpgradeToHigherQuality)
         {
             _logger.LogInformation(
                 "Skipping item '{Title}' (S{Season}E{Episode} / Abs: {Abs}) as it was found locally via enhanced duplicate detection.",
@@ -297,6 +282,154 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Creates a quality upgrade download item if an upgrade is available.
+    /// </summary>
+    /// <param name="subscription">The subscription.</param>
+    /// <param name="existingFilePath">The path to the existing file.</param>
+    /// <param name="videoUrl">The new video URL.</param>
+    /// <param name="targetPath">The target path for the new file.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A DownloadItem if an upgrade is available, otherwise null.</returns>
+    private async Task<DownloadItem?> CreateQualityUpgradeItemIfAvailable(
+        Subscription subscription,
+        string existingFilePath,
+        string videoUrl,
+        string targetPath,
+        CancellationToken cancellationToken)
+    {
+        if (!subscription.AutoUpgradeToHigherQuality)
+        {
+            return null;
+        }
+
+        if (await IsQualityUpgradeAvailable(existingFilePath, videoUrl, cancellationToken).ConfigureAwait(false))
+        {
+            return new DownloadItem()
+            {
+                SourceUrl = videoUrl,
+                DestinationPath = targetPath,
+                ReplaceFilePath = existingFilePath,
+                JobType = DownloadType.QualityUpgrade
+            };
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Tests if a quality upgrade is available by comparing current file and online URL.
+    /// </summary>
+    /// <param name="currentFilePath">The path of the current file.</param>
+    /// <param name="newUrl">The new URL.</param>
+    /// <param name="cancellationToken">The CancellationToken.</param>
+    /// <returns>True if a quality upgrade is available, false otherwise.</returns>
+    private async Task<bool> IsQualityUpgradeAvailable(string currentFilePath, string newUrl, CancellationToken cancellationToken)
+    {
+        var currentQuality = await _ffmpegService.GetMediaInfoAsync(currentFilePath, cancellationToken).ConfigureAwait(false);
+        var onlineQuality = await _ffmpegService.GetMediaInfoAsync(newUrl, cancellationToken).ConfigureAwait(false);
+
+        if (!currentQuality.HasValue || !onlineQuality.HasValue)
+        {
+            _logger.LogWarning("Could not determine media info for quality comparison.");
+            return false;
+        }
+
+        if (onlineQuality.Value.Height <= currentQuality.Value.Height)
+        {
+            _logger.LogInformation("No quality upgrade available. Current height: {CurrentHeight}, Online height: {OnlineHeight}.", currentQuality.Value.Height, onlineQuality.Value.Height);
+            return false;
+        }
+
+        if (onlineQuality.Value.Width <= currentQuality.Value.Width)
+        {
+            _logger.LogInformation("No quality upgrade available. Current width: {CurrentWidth}, Online width: {OnlineWidth}.", currentQuality.Value.Width, onlineQuality.Value.Width);
+            return false;
+        }
+
+        if (!onlineQuality.Value.Duration.HasValue || !currentQuality.Value.Duration.HasValue)
+        {
+            _logger.LogWarning("Could not determine duration for quality comparison.");
+            return false;
+        }
+
+        var onlineDuration = onlineQuality.Value.Duration.Value;
+        var currentDuration = currentQuality.Value.Duration.Value;
+        var durationDifference = Math.Abs((onlineDuration - currentDuration).TotalSeconds);
+
+        if (durationDifference > 2) // Max 2 seconds difference allowed, may add a configuration option later
+        {
+            _logger.LogInformation("No quality upgrade available due to duration mismatch. Current duration: {CurrentDuration}s, Online duration: {OnlineDuration}s.", currentDuration.TotalSeconds, onlineDuration.TotalSeconds);
+            return false;
+        }
+
+        _logger.LogInformation(
+            "Quality upgrade available! Current: {CurrentWidth}x{CurrentHeight}, Online: {OnlineWidth}x{OnlineHeight}.",
+            currentQuality.Value.Width,
+            currentQuality.Value.Height,
+            onlineQuality.Value.Width,
+            onlineQuality.Value.Height);
+        return true;
+    }
+
+    /// <summary>
+    /// Gets the best available URL candidate for downloading the video.
+    /// </summary>
+    /// <param name="item">The item to get the url for.</param>
+    /// <param name="subscription">The subscription.</param>
+    /// <param name="cancellationToken">The cancellationToken.</param>
+    /// <returns>The best URL candidate, or null if none found.</returns>
+    private async Task<string?> GetUrlCandidate(ResultItem item, Subscription subscription, CancellationToken cancellationToken = default)
+    {
+        // If no fallback is allowed, return HD URL if available
+        if (!subscription.AllowFallbackToLowerQuality)
+        {
+            return string.IsNullOrWhiteSpace(item.UrlVideoHd) ? null : item.UrlVideoHd;
+        }
+
+        List<string?> candidateUrls = [item.UrlVideoHd, item.UrlVideo, item.UrlVideoLow];
+
+        // If no url availability check is required, return the first non-empty URL
+        if (!subscription.QualityCheckWithUrl)
+        {
+            return candidateUrls.FirstOrDefault(u => !string.IsNullOrWhiteSpace(u));
+        }
+
+        string? candidateUrl = null;
+
+        var validCandidates = candidateUrls.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct().ToList();
+
+        foreach (var url in validCandidates)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                if (await _strmValidationService.ValidateUrlAsync(url!, cancellationToken).ConfigureAwait(false))
+                {
+                    candidateUrl = url;
+                    if (url != validCandidates.First())
+                    {
+                        _logger.LogWarning("Primary quality download failed for '{Title}'. Fallback to: {Url}", item.Title, url);
+                    }
+
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to validate URL '{Url}' for '{Title}'. Trying next quality...", url, item.Title);
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(candidateUrl))
+        {
+            _logger.LogWarning("No valid video URL found for item '{Title}'.", item.Title);
+            return null;
+        }
+
+        return candidateUrl;
     }
 
     /// <summary>
