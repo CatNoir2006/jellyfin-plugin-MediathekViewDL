@@ -97,31 +97,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 continue;
             }
 
-            string? videoUrl = null;
-            var candidateUrls = new List<string?> { item.UrlVideoHd, item.UrlVideo, item.UrlVideoLow };
-            var validCandidates = candidateUrls.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct().ToList();
-
-            foreach (var url in validCandidates)
-            {
-                try
-                {
-                    if (await _strmValidationService.ValidateUrlAsync(url!, cancellationToken).ConfigureAwait(false))
-                    {
-                        videoUrl = url;
-                        if (url != validCandidates.First())
-                        {
-                            _logger.LogWarning("Primary quality download failed for '{Title}'. Fallback to: {Url}", item.Title, url);
-                        }
-
-                        break;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to validate URL '{Url}' for '{Title}'. Trying next quality...", url, item.Title);
-                }
-            }
-
+            string? videoUrl = await GetUrlCandidate(item, subscription, cancellationToken).ConfigureAwait(false);
             if (string.IsNullOrWhiteSpace(videoUrl))
             {
                 _logger.LogWarning("No valid video URL found for item '{Title}'.", item.Title);
@@ -182,12 +158,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         return jobs;
     }
 
-    /// <summary>
-    /// Tests a subscription query and filters without creating download jobs.
-    /// </summary>
-    /// <param name="subscription">The subscription to test.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A list of items that would be downloaded.</returns>
+    /// <inheritdoc/>
     public async IAsyncEnumerable<ResultItem> TestSubscriptionAsync(
         Subscription subscription,
         [EnumeratorCancellation] CancellationToken cancellationToken)
@@ -297,6 +268,64 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Gets the best available URL candidate for downloading the video.
+    /// </summary>
+    /// <param name="item">The item to get the url for.</param>
+    /// <param name="subscription">The subscription.</param>
+    /// <param name="cancellationToken">The cancellationToken.</param>
+    /// <returns>The best URL candidate, or null if none found.</returns>
+    private async Task<string?> GetUrlCandidate(ResultItem item, Subscription subscription, CancellationToken cancellationToken = default)
+    {
+        // If no fallback is allowed, return HD URL if available
+        if (!subscription.AllowFallbackToLowerQuality)
+        {
+            return string.IsNullOrWhiteSpace(item.UrlVideoHd) ? null : item.UrlVideoHd;
+        }
+
+        List<string?> candidateUrls = [item.UrlVideoHd, item.UrlVideo, item.UrlVideoLow];
+
+        // If no url availability check is required, return the first non-empty URL
+        if (!subscription.QualityCheckWithUrl)
+        {
+            return candidateUrls.FirstOrDefault(u => !string.IsNullOrWhiteSpace(u));
+        }
+
+        string? candidateUrl = null;
+
+        var validCandidates = candidateUrls.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct().ToList();
+
+        foreach (var url in validCandidates)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                if (await _strmValidationService.ValidateUrlAsync(url!, cancellationToken).ConfigureAwait(false))
+                {
+                    candidateUrl = url;
+                    if (url != validCandidates.First())
+                    {
+                        _logger.LogWarning("Primary quality download failed for '{Title}'. Fallback to: {Url}", item.Title, url);
+                    }
+
+                    break;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to validate URL '{Url}' for '{Title}'. Trying next quality...", url, item.Title);
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(candidateUrl))
+        {
+            _logger.LogWarning("No valid video URL found for item '{Title}'.", item.Title);
+            return null;
+        }
+
+        return candidateUrl;
     }
 
     /// <summary>
