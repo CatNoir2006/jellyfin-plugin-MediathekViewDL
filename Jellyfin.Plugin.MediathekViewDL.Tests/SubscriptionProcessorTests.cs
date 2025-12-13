@@ -158,9 +158,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             videoInfo.AbsoluteEpisodeNumber = 100;
             localCache.Add(null, null, 100, "deu");
 
-            // Todo: Repair this mock setup
-            // _localMediaScannerMock.Setup(x => x.ScanDirectory("/tmp/TestSub", "TestSub"))
-               // .Returns(localCache);
+            _localMediaScannerMock.Setup(x => x.ScanDirectory("/tmp/TestSub", "TestSub"))
+               .Returns(localCache);
 
             // Act
             var jobs = await _processor.GetJobsForSubscriptionAsync(subscription, false, CancellationToken.None);
@@ -238,7 +237,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetJobsForSubscriptionAsync_ShouldFallback_ToNextQuality_WhenPrimaryFails()
         {
             // Arrange
-            var subscription = new Subscription { Name = "TestSub" };
+            var subscription = new Subscription { Name = "TestSub", QualityCheckWithUrl = true };
             var item = new ResultItem
             {
                 Id = "123",
@@ -290,7 +289,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetJobsForSubscriptionAsync_ShouldSkip_WhenAllQualitiesFail()
         {
             // Arrange
-            var subscription = new Subscription { Name = "TestSub" };
+            var subscription = new Subscription { Name = "TestSub", QualityCheckWithUrl = true };
             var item = new ResultItem
             {
                 Id = "123",
