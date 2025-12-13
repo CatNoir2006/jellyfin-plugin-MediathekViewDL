@@ -156,7 +156,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             // VideoInfo defaults: SeasonNumber=null, EpisodeNumber=null, AbsoluteEpisodeNumber=null
             // But we can force match by setting absolute number
             videoInfo.AbsoluteEpisodeNumber = 100;
-            localCache.Add(null, null, 100, "deu");
+            localCache.Add(null, null, 100, "path/to/file.mp4", "deu");
 
             _localMediaScannerMock.Setup(x => x.ScanDirectory("/tmp/TestSub", "TestSub"))
                .Returns(localCache);
