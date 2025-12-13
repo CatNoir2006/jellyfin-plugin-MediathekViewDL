@@ -153,7 +153,7 @@ public class DownloadManager : IDownloadManager
         {
             progress.Report(100);
 
-            if (job.NfoMetadata is not null)
+            if (job.NfoMetadata is not null && !File.Exists(job.NfoMetadata.FilePath))
             {
                 _nfoService.CreateNfo(job.NfoMetadata);
             }
@@ -179,25 +179,67 @@ public class DownloadManager : IDownloadManager
                 return false;
             }
 
-            if (!File.Exists(tempPath) || !File.Exists(item.DestinationPath))
+            // Determine the actual file that needs to be replaced on disk.
+            // This could be different from DestinationPath if the filename/extension has changed.
+            string fileToReplace = item.ReplaceFilePath ?? item.DestinationPath;
+
+            if (!File.Exists(tempPath) || !File.Exists(fileToReplace))
             {
-                _logger.LogError("Either temporary file '{TempPath}' or destination file '{DestPath}' does not exist for quality upgrade.", tempPath, item.DestinationPath);
+                _logger.LogError("Either temporary file '{TempPath}' or the file to replace '{FileToReplace}' does not exist for quality upgrade.", tempPath, fileToReplace);
                 return false;
             }
 
             var tempFile = new FileInfo(tempPath);
-            var destFile = new FileInfo(item.DestinationPath);
-            if (tempFile.Length <= destFile.Length)
+            var existingFile = new FileInfo(fileToReplace);
+
+            if (tempFile.Length <= existingFile.Length)
             {
-                _logger.LogInformation("Downloaded file '{TempPath}' is not larger than existing file '{DestPath}'. Skipping upgrade.", tempPath, item.DestinationPath);
+                _logger.LogInformation("Downloaded file '{TempPath}' is not larger than existing file '{ExistingFile}'. Skipping upgrade.", tempPath, fileToReplace);
                 return false;
             }
 
-            _logger.LogInformation("Upgrading file '{DestPath}' with higher quality download from '{TempPath}'.", item.DestinationPath, tempPath);
-            var backupPath = $"{item.DestinationPath}.{Guid.NewGuid()}.bak";
-            File.Move(item.DestinationPath, backupPath);
-            File.Move(tempPath, item.DestinationPath);
-            File.Delete(backupPath); // Clean up backup if everything went well, otherwise user can restore from it. This should be save as File.Move throws if it fails.
+            _logger.LogInformation(
+                "Upgrading file '{FileToReplace}' to '{DestinationPath}' with higher quality download from '{TempPath}'.",
+                fileToReplace,
+                item.DestinationPath,
+                tempPath);
+
+            if (Path.GetFullPath(fileToReplace).Equals(Path.GetFullPath(item.DestinationPath), StringComparison.OrdinalIgnoreCase))
+            {
+                // Destination and file to replace are the same (e.g., same name, same extension)
+                var backupPath = $"{item.DestinationPath}.{Guid.NewGuid()}.bak";
+                File.Move(item.DestinationPath, backupPath); // item.DestinationPath is safe because it's same as fileToReplace
+                File.Move(tempPath, item.DestinationPath);
+                File.Delete(backupPath);
+            }
+            else
+            {
+                // Destination and file to replace are different (e.g., different extension, name changed)
+                // Ensure the target directory for the new file exists
+                var destinationDirectory = Path.GetDirectoryName(item.DestinationPath);
+                if (!string.IsNullOrEmpty(destinationDirectory) && !Directory.Exists(destinationDirectory))
+                {
+                    Directory.CreateDirectory(destinationDirectory);
+                }
+
+                // Move the new file FIRST
+                File.Move(tempPath, item.DestinationPath);
+
+                // Then delete the old file
+                try
+                {
+                    if (File.Exists(fileToReplace))
+                    {
+                        File.Delete(fileToReplace);
+                        _logger.LogInformation("Deleted old file '{FileToReplace}' after successful upgrade.", fileToReplace);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete old file '{FileToReplace}'. The new file is already in place at '{DestinationPath}'.", fileToReplace, item.DestinationPath);
+                }
+            }
+
             return true;
         }
         catch (Exception ex)

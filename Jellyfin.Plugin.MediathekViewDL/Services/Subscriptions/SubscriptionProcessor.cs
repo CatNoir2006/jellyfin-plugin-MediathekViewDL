@@ -113,12 +113,21 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
             else if (tempVideoInfo.Language == "deu" || subscription.DownloadFullVideoForSecondaryAudio)
             {
-                // Check for quality upgrade if enabled
-                if (subscription.AutoUpgradeToHigherQuality && File.Exists(paths.MainFilePath))
+                // Resolve the file path to check for existence/quality.
+                string? existingFilePath = localEpisodeCache?.GetExistingFilePath(tempVideoInfo);
+
+                // If not in cache, check the standard path
+                if (string.IsNullOrEmpty(existingFilePath) && File.Exists(paths.MainFilePath))
                 {
-                    if (await IsQualityUpgradeAvailable(paths.MainFilePath, videoUrl, cancellationToken).ConfigureAwait(false))
+                    existingFilePath = paths.MainFilePath;
+                }
+
+                if (!string.IsNullOrEmpty(existingFilePath) && File.Exists(existingFilePath))
+                {
+                    var upgradeItem = await CreateQualityUpgradeItemIfAvailable(subscription, existingFilePath, videoUrl, paths.MainFilePath, cancellationToken).ConfigureAwait(false);
+                    if (upgradeItem != null)
                     {
-                        downloadJob.DownloadItems.Add(new DownloadItem() { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.QualityUpgrade });
+                        downloadJob.DownloadItems.Add(upgradeItem);
                     }
                 }
                 else
@@ -273,6 +282,41 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Creates a quality upgrade download item if an upgrade is available.
+    /// </summary>
+    /// <param name="subscription">The subscription.</param>
+    /// <param name="existingFilePath">The path to the existing file.</param>
+    /// <param name="videoUrl">The new video URL.</param>
+    /// <param name="targetPath">The target path for the new file.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A DownloadItem if an upgrade is available, otherwise null.</returns>
+    private async Task<DownloadItem?> CreateQualityUpgradeItemIfAvailable(
+        Subscription subscription,
+        string existingFilePath,
+        string videoUrl,
+        string targetPath,
+        CancellationToken cancellationToken)
+    {
+        if (!subscription.AutoUpgradeToHigherQuality)
+        {
+            return null;
+        }
+
+        if (await IsQualityUpgradeAvailable(existingFilePath, videoUrl, cancellationToken).ConfigureAwait(false))
+        {
+            return new DownloadItem()
+            {
+                SourceUrl = videoUrl,
+                DestinationPath = targetPath,
+                ReplaceFilePath = existingFilePath,
+                JobType = DownloadType.QualityUpgrade
+            };
+        }
+
+        return null;
     }
 
     /// <summary>

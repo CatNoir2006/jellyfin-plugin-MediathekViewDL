@@ -16,7 +16,7 @@ public class LocalMediaScanner : ILocalMediaScanner
     private readonly IVideoParser _videoParser;
 
     // Supported video extensions
-    private readonly string[] _videoExtensions = { ".mkv", ".mp4", ".avi", ".mov", ".wmv", ".m4v", ".strm" };
+    private readonly string[] _videoExtensions = { ".mkv", ".mp4", ".avi", ".mov", ".wmv", ".m4v", ".strm", ".mka" };
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LocalMediaScanner"/> class.
@@ -63,7 +63,7 @@ public class LocalMediaScanner : ILocalMediaScanner
                 {
                     if ((videoInfo.SeasonNumber.HasValue && videoInfo.EpisodeNumber.HasValue) || videoInfo.AbsoluteEpisodeNumber.HasValue)
                     {
-                        cache.Add(videoInfo.SeasonNumber, videoInfo.EpisodeNumber, videoInfo.AbsoluteEpisodeNumber, videoInfo.Language);
+                        cache.Add(videoInfo.SeasonNumber, videoInfo.EpisodeNumber, videoInfo.AbsoluteEpisodeNumber, file, videoInfo.Language);
                         _logger.LogTrace(
                             "Found existing episode: {FileName} -> S{Season}E{Episode} (Abs: {Abs}) [{Lang}]",
                             fileName,
