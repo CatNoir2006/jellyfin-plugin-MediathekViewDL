@@ -305,6 +305,22 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             return false;
         }
 
+        if (!onlineQuality.Value.Duration.HasValue || !currentQuality.Value.Duration.HasValue)
+        {
+            _logger.LogWarning("Could not determine duration for quality comparison.");
+            return false;
+        }
+
+        var onlineDuration = onlineQuality.Value.Duration.Value;
+        var currentDuration = currentQuality.Value.Duration.Value;
+        var durationDifference = Math.Abs((onlineDuration - currentDuration).TotalSeconds);
+
+        if (durationDifference > 2) // Max 2 seconds difference allowed, may add a configuration option later
+        {
+            _logger.LogInformation("No quality upgrade available due to duration mismatch. Current duration: {CurrentDuration}s, Online duration: {OnlineDuration}s.", currentDuration.TotalSeconds, onlineDuration.TotalSeconds);
+            return false;
+        }
+
         _logger.LogInformation(
             "Quality upgrade available! Current: {CurrentWidth}x{CurrentHeight}, Online: {OnlineWidth}x{OnlineHeight}.",
             currentQuality.Value.Width,

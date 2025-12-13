@@ -56,7 +56,7 @@ public class DownloadManager : IDownloadManager
         foreach (var item in job.DownloadItems)
         {
             _logger.LogInformation("Processing download item: {Type} -> {Path}", item.JobType, item.DestinationPath);
-            if (File.Exists(item.DestinationPath))
+            if (File.Exists(item.DestinationPath) && item.JobType != DownloadType.QualityUpgrade)
             {
                 _logger.LogDebug("File '{Path}' already exists. Skipping download.", item.DestinationPath);
                 // Even if file exists, we might want to check for NFO if configured, but typically we assume "done is done".
@@ -94,8 +94,12 @@ public class DownloadManager : IDownloadManager
                         success &= await _fileDownloader.DownloadFileAsync(item.SourceUrl, item.DestinationPath, progress, cancellationToken).ConfigureAwait(false);
                         break;
 
+                    case DownloadType.QualityUpgrade:
+                        _logger.LogInformation("Starting quality upgrade download for '{Title}' to '{Path}'.", job.Title, item.DestinationPath);
+                        success &= await DoQualityUpgrade(item, progress, cancellationToken).ConfigureAwait(false);
+                        break;
                     case DownloadType.AudioExtraction:
-                        var tempVideoPath = Path.Combine(_appPaths.TempDirectory, $"{Guid.NewGuid()}.mp4");
+                        var tempVideoPath = GetTempFilePath(".mkv");
                         _logger.LogInformation("Downloading temporary video for '{Title}' to extract '{Language}' audio.", job.Title, job.AudioLanguage);
 
                         // Track progress for the download part (0-80%)
@@ -156,5 +160,75 @@ public class DownloadManager : IDownloadManager
         }
 
         return success;
+    }
+
+    /// <summary>
+    /// Tries to perform a quality upgrade download.
+    /// </summary>
+    /// <param name="item">The Download item to process.</param>
+    /// <param name="progress">Progress Reporting.</param>
+    /// <param name="cancellationToken">The cancellation Token.</param>
+    /// <returns>Return true if the upgrade was successful, false otherwise.</returns>
+    private async Task<bool> DoQualityUpgrade(DownloadItem item, IProgress<double> progress, CancellationToken cancellationToken)
+    {
+        var tempPath = GetTempFilePath(".mkv");
+        try
+        {
+            if (!await _fileDownloader.DownloadFileAsync(item.SourceUrl, tempPath, progress, cancellationToken).ConfigureAwait(false))
+            {
+                return false;
+            }
+
+            if (!File.Exists(tempPath) || !File.Exists(item.DestinationPath))
+            {
+                _logger.LogError("Either temporary file '{TempPath}' or destination file '{DestPath}' does not exist for quality upgrade.", tempPath, item.DestinationPath);
+                return false;
+            }
+
+            var tempFile = new FileInfo(tempPath);
+            var destFile = new FileInfo(item.DestinationPath);
+            if (tempFile.Length <= destFile.Length)
+            {
+                _logger.LogInformation("Downloaded file '{TempPath}' is not larger than existing file '{DestPath}'. Skipping upgrade.", tempPath, item.DestinationPath);
+                return false;
+            }
+
+            _logger.LogInformation("Upgrading file '{DestPath}' with higher quality download from '{TempPath}'.", item.DestinationPath, tempPath);
+            var backupPath = $"{item.DestinationPath}.{Guid.NewGuid()}.bak";
+            File.Move(item.DestinationPath, backupPath);
+            File.Move(tempPath, item.DestinationPath);
+            File.Delete(backupPath); // Clean up backup if everything went well, otherwise user can restore from it. This should be save as File.Move throws if it fails.
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during quality upgrade download for '{DestPath}'.", item.DestinationPath);
+            throw new InvalidOperationException("Error during quality upgrade download.", ex);
+        }
+        finally
+        {
+            if (File.Exists(tempPath))
+            {
+                try
+                {
+                    File.Delete(tempPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete temporary file '{TempPath}'.", tempPath);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets a temporary file path with an optional extension.
+    /// </summary>
+    /// <param name="extension">The Extension for the Temp-path.</param>
+    /// <returns>The Temp-path.</returns>
+    private string GetTempFilePath(string? extension = null)
+    {
+        var tempFileName = $"{Guid.NewGuid()}{extension}";
+        return Path.Combine(_appPaths.TempDirectory, tempFileName);
     }
 }
