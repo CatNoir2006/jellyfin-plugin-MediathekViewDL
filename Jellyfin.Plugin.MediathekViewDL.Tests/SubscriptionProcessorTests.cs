@@ -27,6 +27,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         private readonly Mock<IStrmValidationService> _strmValidationServiceMock;
         private readonly Mock<IFFmpegService> _ffmpegServiceMock;
         private readonly Mock<IQualityCacheRepository> _qualityCacheRepositoryMock;
+        private readonly Mock<IDownloadHistoryRepository> _downloadHistoryRepositoryMock;
         private readonly SubscriptionProcessor _processor;
 
         public SubscriptionProcessorTests()
@@ -39,6 +40,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _strmValidationServiceMock = new Mock<IStrmValidationService>();
             _ffmpegServiceMock = new Mock<IFFmpegService>();
             _qualityCacheRepositoryMock = new Mock<IQualityCacheRepository>();
+            _downloadHistoryRepositoryMock = new Mock<IDownloadHistoryRepository>();
 
             // Default setup: Validation always succeeds
             _strmValidationServiceMock
@@ -53,7 +55,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 _fileNameBuilderServiceMock.Object,
                 _strmValidationServiceMock.Object,
                 _ffmpegServiceMock.Object,
-                _qualityCacheRepositoryMock.Object
+                _qualityCacheRepositoryMock.Object,
+                _downloadHistoryRepositoryMock.Object
             );
         }
 

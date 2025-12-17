@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
@@ -23,6 +24,7 @@ public class DownloadScheduledTask : IScheduledTask
     private readonly ILibraryManager _libraryManager;
     private readonly ISubscriptionProcessor _subscriptionProcessor;
     private readonly IDownloadManager _downloadManager;
+    private readonly IDownloadHistoryRepository _downloadHistoryRepository;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DownloadScheduledTask"/> class.
@@ -31,16 +33,19 @@ public class DownloadScheduledTask : IScheduledTask
     /// <param name="libraryManager">The library manager.</param>
     /// <param name="subscriptionProcessor">The subscription processor.</param>
     /// <param name="downloadManager">The download manager.</param>
+    /// <param name="downloadHistoryRepository">The Download History Repo.</param>
     public DownloadScheduledTask(
         ILogger<DownloadScheduledTask> logger,
         ILibraryManager libraryManager,
         ISubscriptionProcessor subscriptionProcessor,
-        IDownloadManager downloadManager)
+        IDownloadManager downloadManager,
+        IDownloadHistoryRepository downloadHistoryRepository)
     {
         _logger = logger;
         _libraryManager = libraryManager;
         _subscriptionProcessor = subscriptionProcessor;
         _downloadManager = downloadManager;
+        _downloadHistoryRepository = downloadHistoryRepository;
     }
 
     /// <summary>
@@ -134,6 +139,16 @@ public class DownloadScheduledTask : IScheduledTask
 
                 if (await _downloadManager.ExecuteJobAsync(job, jobProgress, cancellationToken).ConfigureAwait(false))
                 {
+                    foreach (var download in job.DownloadItems)
+                    {
+                        if (await _downloadHistoryRepository.ExistsByUrlAndSubscriptionIdAsync(download.SourceUrl, subscription.Id).ConfigureAwait(false))
+                        {
+                            continue;
+                        }
+
+                        await _downloadHistoryRepository.AddAsync(download.SourceUrl, job.ItemId, subscription.Id, download.DestinationPath).ConfigureAwait(false);
+                    }
+
                     subscription.ProcessedItemIds.Add(job.ItemId);
                     hasDownloadedAnyItem = true;
                 }

@@ -30,6 +30,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private readonly IStrmValidationService _strmValidationService;
     private readonly IFFmpegService _ffmpegService;
     private readonly IQualityCacheRepository _qualityCacheRepository;
+    private readonly IDownloadHistoryRepository _downloadHistoryRepository;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscriptionProcessor"/> class.
@@ -42,6 +43,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="strmValidationService">The STRM validation service.</param>
     /// <param name="ffmpegService">The ffmpeg Service.</param>
     /// <param name="qualityCacheRepository">The QualityCacheRepository.</param>
+    /// <param name="downloadHistoryRepository">The Download History Repo.</param>
     public SubscriptionProcessor(
         ILogger<SubscriptionProcessor> logger,
         IMediathekViewApiClient apiClient,
@@ -50,7 +52,8 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         IFileNameBuilderService fileNameBuilderService,
         IStrmValidationService strmValidationService,
         IFFmpegService ffmpegService,
-        IQualityCacheRepository qualityCacheRepository)
+        IQualityCacheRepository qualityCacheRepository,
+        IDownloadHistoryRepository downloadHistoryRepository)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -60,6 +63,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         _strmValidationService = strmValidationService;
         _ffmpegService = ffmpegService;
         _qualityCacheRepository = qualityCacheRepository;
+        _downloadHistoryRepository = downloadHistoryRepository;
     }
 
     /// <inheritdoc/>
@@ -82,7 +86,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
         await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            if (subscription.ProcessedItemIds.Contains(item.Id) && !subscription.AutoUpgradeToHigherQuality)
+            if (await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false) && !subscription.AutoUpgradeToHigherQuality)
             {
                 _logger.LogDebug("Skipping item '{Title}' (ID: {Id}) as it was already processed for subscription '{SubscriptionName}'.", item.Title, item.Id, subscription.Name);
                 continue;
@@ -322,6 +326,12 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         }
 
         return null;
+    }
+
+    private async Task<bool> IsInDownloadCache(string itemId, Guid subscriptionId)
+    {
+        var item = await _downloadHistoryRepository.GetByItemIdAndSubscriptionIdAsync(itemId, subscriptionId).ConfigureAwait(false);
+        return item is not null;
     }
 
     /// <summary>
