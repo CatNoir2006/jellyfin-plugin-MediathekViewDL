@@ -43,6 +43,24 @@ The project is built using the standard .NET CLI.
     ```
 *   **Release Builds:** Release builds and packaging are handled automatically by the GitHub Actions CI/CD workflow and should not be performed manually.
 
+### Database Migrations
+
+The project uses Entity Framework Core with SQLite. Because Jellyfin plugin dependencies must exclude runtime assets to avoid conflicts, a special build condition is required to run EF Core tools.
+
+**To create a migration:**
+
+You must set the `EnableEfDesign` environment variable to `true` when running `dotnet-ef`.
+
+**PowerShell:**
+```powershell
+$env:EnableEfDesign="true"; dotnet tool run dotnet-ef migrations add <MigrationName> --project Jellyfin.Plugin.MediathekViewDL
+```
+
+**Bash:**
+```bash
+EnableEfDesign=true dotnet tool run dotnet-ef migrations add <MigrationName> --project Jellyfin.Plugin.MediathekViewDL
+```
+
 ## Development Conventions
 
 *   **File Structure:** Each class must be in its own separate file, except for classes that are nested within another class.
