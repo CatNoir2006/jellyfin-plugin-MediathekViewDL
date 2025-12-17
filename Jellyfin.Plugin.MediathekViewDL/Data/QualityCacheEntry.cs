@@ -38,6 +38,11 @@ public class QualityCacheEntry
     public long Size { get; set; }
 
     /// <summary>
+    /// Gets or sets the duration of the video.
+    /// </summary>
+    public TimeSpan Duration { get; set; }
+
+    /// <summary>
     /// Gets or sets the last updated timestamp.
     /// </summary>
     public DateTimeOffset LastUpdated { get; set; }
