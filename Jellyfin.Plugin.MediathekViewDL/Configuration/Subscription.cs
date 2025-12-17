@@ -148,10 +148,4 @@ public class Subscription
     /// This is purely for debugging and informational purposes.
     /// </summary>
     public DateTime? LastDownloadedTimestamp { get; set; }
-
-    /// <summary>
-    /// Gets a set of unique identifiers for items that have already been processed for this subscription.
-    /// This is used to avoid re-processing or re-downloading content.
-    /// </summary>
-    public HashSet<string> ProcessedItemIds { get; init; } = new();
 }

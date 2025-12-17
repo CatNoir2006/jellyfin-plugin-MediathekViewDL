@@ -180,6 +180,21 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
             .ConfigureAwait(false);
     }
 
+    /// <inheritdoc />
+    public async Task RemoveBySubscriptionIdAsync(Guid subscriptionId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
+
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
+
+        // ExecuteDeleteAsync is more efficient in EF Core 7+ (available in .NET 9)
+        await context.DownloadHistory
+            .Where(e => e.SubscriptionId == subscriptionId)
+            .ExecuteDeleteAsync()
+            .ConfigureAwait(false);
+    }
+
     private static string HashUrl(string url)
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(url));

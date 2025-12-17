@@ -84,4 +84,11 @@ public interface IDownloadHistoryRepository
     /// <param name="subscriptionId">The subscription identifier.</param>
     /// <returns>A collection of download history entries.</returns>
     Task<IEnumerable<DownloadHistoryEntry>> GetBySubscriptionIdAsync(Guid subscriptionId);
+
+    /// <summary>
+    /// Removes all download history entries for a specific subscription.
+    /// </summary>
+    /// <param name="subscriptionId">The SubId.</param>
+    /// <returns>The Task.</returns>
+    Task RemoveBySubscriptionIdAsync(Guid subscriptionId);
 }

@@ -94,12 +94,12 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
 
-            if (!ApplyFilters(tempVideoInfo, subscription, item, localEpisodeCache))
+            if (!await ApplyFilters(tempVideoInfo, subscription, item, localEpisodeCache).ConfigureAwait(false))
             {
                 continue;
             }
 
-            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo, subscription);
+            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription);
             if (!paths.IsValid)
             {
                 continue;
@@ -112,7 +112,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
 
             // Video/Main Job
-            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo.Title, };
+            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo!.Title, };
 
             bool useStrmForThisItem = subscription.UseStreamingUrlFiles || (subscription is { SaveExtrasAsStrm: true, TreatNonEpisodesAsExtras: true } && !tempVideoInfo.IsShow);
 
@@ -192,25 +192,14 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
         await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            // Note: For test/dry-run, we might want to ignore the "already processed" check
-            // if we assume the user wants to see what the query *covers*,
-            // but strictly speaking, "what would be downloaded" implies filtering processed ones.
-            // Since the subscription object coming from the UI might not have the full history
-            // (unless we merge it or the UI sends it), this check depends on what the UI sends.
-            // Usually, the UI sends the full object including IDs.
-            if (subscription.ProcessedItemIds.Contains(item.Id))
-            {
-                continue;
-            }
-
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
 
-            if (!ApplyFilters(tempVideoInfo, subscription, item, null))
+            if (!await ApplyFilters(tempVideoInfo, subscription, item, null).ConfigureAwait(false))
             {
                 continue;
             }
 
-            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo, subscription);
+            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription);
             if (!paths.IsValid)
             {
                 continue;
@@ -224,7 +213,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// Applies filtering rules to determine if the item should be processed.
     /// </summary>
     /// <returns>True if the item passes all filters; otherwise, false.</returns>
-    private bool ApplyFilters([NotNullWhen(true)] VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
+    private async Task<bool> ApplyFilters([NotNullWhen(true)] VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
     {
         if (tempVideoInfo == null)
         {
@@ -241,7 +230,8 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 tempVideoInfo.EpisodeNumber,
                 tempVideoInfo.AbsoluteEpisodeNumber);
 
-            subscription.ProcessedItemIds.Add(item.Id);
+            var localPath = localEpisodeCache.GetExistingFilePath(tempVideoInfo);
+            await _downloadHistoryRepository.AddAsync(string.Empty, item.Id, subscription.Id, localPath!).ConfigureAwait(false);
             return false;
         }
 
@@ -428,6 +418,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         if (cacheEntry.Duration == TimeSpan.Zero)
         {
             _logger.LogInformation("Cached entry for URL '{Url}' has zero duration, ignoring cache.", url);
+            cancellationToken.ThrowIfCancellationRequested();
             await _qualityCacheRepository.RemoveByUrlAsync(url).ConfigureAwait(false);
             return null;
         }

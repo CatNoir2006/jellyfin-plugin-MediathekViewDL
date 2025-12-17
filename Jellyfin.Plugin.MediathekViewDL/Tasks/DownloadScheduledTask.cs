@@ -77,6 +77,7 @@ public class DownloadScheduledTask : IScheduledTask
     {
         _logger.LogInformation("Starting Mediathek subscription download task.");
         progress.Report(0);
+        bool hasDownloadedAnyItemOverall = false;
 
         var config = Configuration;
         if (config == null || config.Subscriptions.Count == 0)
@@ -149,7 +150,6 @@ public class DownloadScheduledTask : IScheduledTask
                         await _downloadHistoryRepository.AddAsync(download.SourceUrl, job.ItemId, subscription.Id, download.DestinationPath).ConfigureAwait(false);
                     }
 
-                    subscription.ProcessedItemIds.Add(job.ItemId);
                     hasDownloadedAnyItem = true;
                 }
 
@@ -158,6 +158,7 @@ public class DownloadScheduledTask : IScheduledTask
 
             if (hasDownloadedAnyItem)
             {
+                hasDownloadedAnyItemOverall = true;
                 subscription.LastDownloadedTimestamp = DateTime.UtcNow;
             }
         }
@@ -167,7 +168,7 @@ public class DownloadScheduledTask : IScheduledTask
         Plugin.Instance?.UpdateConfiguration(config);
 
         // Trigger library scans
-        if (config.ScanLibraryAfterDownload)
+        if (config.ScanLibraryAfterDownload && hasDownloadedAnyItemOverall)
         {
             _logger.LogInformation("Triggering library scan");
             _libraryManager.QueueLibraryScan();
