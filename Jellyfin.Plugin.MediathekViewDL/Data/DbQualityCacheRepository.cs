@@ -14,14 +14,17 @@ namespace Jellyfin.Plugin.MediathekViewDL.Data;
 public class DbQualityCacheRepository : IQualityCacheRepository
 {
     private readonly IServiceScopeFactory _scopeFactory;
+    private readonly DatabaseMigrator _migrator;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DbQualityCacheRepository"/> class.
     /// </summary>
     /// <param name="scopeFactory">The service scope factory.</param>
-    public DbQualityCacheRepository(IServiceScopeFactory scopeFactory)
+    /// <param name="migrator">The database migrator.</param>
+    public DbQualityCacheRepository(IServiceScopeFactory scopeFactory, DatabaseMigrator migrator)
     {
         _scopeFactory = scopeFactory;
+        _migrator = migrator;
     }
 
     /// <inheritdoc />
@@ -31,7 +34,7 @@ public class DbQualityCacheRepository : IQualityCacheRepository
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
 
         // Ensure database is created/migrated (lazy initialization)
-        await context.Database.MigrateAsync().ConfigureAwait(false);
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
 
         var hash = HashUrl(url);
         return await context.QualityCacheEntries
@@ -45,7 +48,7 @@ public class DbQualityCacheRepository : IQualityCacheRepository
     {
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
-        await context.Database.MigrateAsync().ConfigureAwait(false);
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
 
         var hash = HashUrl(url);
         var entry = await context.QualityCacheEntries
@@ -81,7 +84,7 @@ public class DbQualityCacheRepository : IQualityCacheRepository
     {
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
-        await context.Database.MigrateAsync().ConfigureAwait(false);
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
 
         var hash = HashUrl(url);
         // ExecuteDeleteAsync is more efficient in EF Core 7+ (available in .NET 9)
