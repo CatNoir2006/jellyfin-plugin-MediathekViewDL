@@ -30,6 +30,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private readonly IStrmValidationService _strmValidationService;
     private readonly IFFmpegService _ffmpegService;
     private readonly IQualityCacheRepository _qualityCacheRepository;
+    private readonly IDownloadHistoryRepository _downloadHistoryRepository;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscriptionProcessor"/> class.
@@ -42,6 +43,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="strmValidationService">The STRM validation service.</param>
     /// <param name="ffmpegService">The ffmpeg Service.</param>
     /// <param name="qualityCacheRepository">The QualityCacheRepository.</param>
+    /// <param name="downloadHistoryRepository">The Download History Repo.</param>
     public SubscriptionProcessor(
         ILogger<SubscriptionProcessor> logger,
         IMediathekViewApiClient apiClient,
@@ -50,7 +52,8 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         IFileNameBuilderService fileNameBuilderService,
         IStrmValidationService strmValidationService,
         IFFmpegService ffmpegService,
-        IQualityCacheRepository qualityCacheRepository)
+        IQualityCacheRepository qualityCacheRepository,
+        IDownloadHistoryRepository downloadHistoryRepository)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -60,6 +63,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         _strmValidationService = strmValidationService;
         _ffmpegService = ffmpegService;
         _qualityCacheRepository = qualityCacheRepository;
+        _downloadHistoryRepository = downloadHistoryRepository;
     }
 
     /// <inheritdoc/>
@@ -82,7 +86,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
         await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            if (subscription.ProcessedItemIds.Contains(item.Id) && !subscription.AutoUpgradeToHigherQuality)
+            if (await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false) && !subscription.AutoUpgradeToHigherQuality)
             {
                 _logger.LogDebug("Skipping item '{Title}' (ID: {Id}) as it was already processed for subscription '{SubscriptionName}'.", item.Title, item.Id, subscription.Name);
                 continue;
@@ -90,12 +94,12 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
 
-            if (!ApplyFilters(tempVideoInfo, subscription, item, localEpisodeCache))
+            if (!await ApplyFilters(tempVideoInfo, subscription, item, localEpisodeCache).ConfigureAwait(false))
             {
                 continue;
             }
 
-            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo, subscription);
+            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription);
             if (!paths.IsValid)
             {
                 continue;
@@ -108,7 +112,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
 
             // Video/Main Job
-            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo.Title, };
+            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo!.Title, };
 
             bool useStrmForThisItem = subscription.UseStreamingUrlFiles || (subscription is { SaveExtrasAsStrm: true, TreatNonEpisodesAsExtras: true } && !tempVideoInfo.IsShow);
 
@@ -188,25 +192,14 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
         await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            // Note: For test/dry-run, we might want to ignore the "already processed" check
-            // if we assume the user wants to see what the query *covers*,
-            // but strictly speaking, "what would be downloaded" implies filtering processed ones.
-            // Since the subscription object coming from the UI might not have the full history
-            // (unless we merge it or the UI sends it), this check depends on what the UI sends.
-            // Usually, the UI sends the full object including IDs.
-            if (subscription.ProcessedItemIds.Contains(item.Id))
-            {
-                continue;
-            }
-
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
 
-            if (!ApplyFilters(tempVideoInfo, subscription, item, null))
+            if (!await ApplyFilters(tempVideoInfo, subscription, item, null).ConfigureAwait(false))
             {
                 continue;
             }
 
-            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo, subscription);
+            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription);
             if (!paths.IsValid)
             {
                 continue;
@@ -220,7 +213,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// Applies filtering rules to determine if the item should be processed.
     /// </summary>
     /// <returns>True if the item passes all filters; otherwise, false.</returns>
-    private bool ApplyFilters([NotNullWhen(true)] VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
+    private async Task<bool> ApplyFilters([NotNullWhen(true)] VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
     {
         if (tempVideoInfo == null)
         {
@@ -237,7 +230,8 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 tempVideoInfo.EpisodeNumber,
                 tempVideoInfo.AbsoluteEpisodeNumber);
 
-            subscription.ProcessedItemIds.Add(item.Id);
+            var localPath = localEpisodeCache.GetExistingFilePath(tempVideoInfo);
+            await _downloadHistoryRepository.AddAsync(string.Empty, item.Id, subscription.Id, localPath!).ConfigureAwait(false);
             return false;
         }
 
@@ -322,6 +316,12 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         }
 
         return null;
+    }
+
+    private async Task<bool> IsInDownloadCache(string itemId, Guid subscriptionId)
+    {
+        var item = await _downloadHistoryRepository.GetByItemIdAndSubscriptionIdAsync(itemId, subscriptionId).ConfigureAwait(false);
+        return item is not null;
     }
 
     /// <summary>
@@ -418,6 +418,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         if (cacheEntry.Duration == TimeSpan.Zero)
         {
             _logger.LogInformation("Cached entry for URL '{Url}' has zero duration, ignoring cache.", url);
+            cancellationToken.ThrowIfCancellationRequested();
             await _qualityCacheRepository.RemoveByUrlAsync(url).ConfigureAwait(false);
             return null;
         }

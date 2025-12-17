@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
@@ -28,6 +29,7 @@ public class MediathekViewDlApiService : ControllerBase
     private readonly IFileDownloader _fileDownloader;
     private readonly IFileNameBuilderService _fileNameBuilder;
     private readonly ISubscriptionProcessor _subscriptionProcessor;
+    private readonly IDownloadHistoryRepository _downloadHistoryRepository;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekViewDlApiService"/> class.
@@ -37,18 +39,21 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="fileDownloader">The file downloader.</param>
     /// <param name="fileNameBuilder">The file name builder.</param>
     /// <param name="subscriptionProcessor">The subscription processor.</param>
+    /// <param name="downloadHistoryRepository">The Download History Repo.</param>
     public MediathekViewDlApiService(
         ILogger<MediathekViewDlApiService> logger,
         IMediathekViewApiClient apiClient,
         IFileDownloader fileDownloader,
         IFileNameBuilderService fileNameBuilder,
-        ISubscriptionProcessor subscriptionProcessor)
+        ISubscriptionProcessor subscriptionProcessor,
+        IDownloadHistoryRepository downloadHistoryRepository)
     {
         _logger = logger;
         _apiClient = apiClient;
         _fileDownloader = fileDownloader;
         _fileNameBuilder = fileNameBuilder;
         _subscriptionProcessor = subscriptionProcessor;
+        _downloadHistoryRepository = downloadHistoryRepository;
     }
 
     /// <summary>
@@ -63,7 +68,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <returns>A list of items that would be downloaded.</returns>
     [HttpPost("TestSubscription")]
     [Authorize(Policy = Policies.RequiresElevation)]
-    public async Task<ActionResult<List<ResultItem>>> TestSubscription([FromBody] Subscription subscription)
+    public async Task<ActionResult<List<ResultItem>>> TestSubscription([FromBody] Subscription? subscription)
     {
         if (subscription == null)
         {
@@ -100,13 +105,8 @@ public class MediathekViewDlApiService : ControllerBase
             return BadRequest("Search query cannot be empty.");
         }
 
-        var results = await _apiClient.SearchAsync(query, minDuration, maxDuration, default).ConfigureAwait(false);
-        if (results == null)
-        {
-            return StatusCode(500, "An error occurred while searching.");
-        }
-
-        return Ok(results);
+        var results = await _apiClient.SearchAsync(query, minDuration, maxDuration, CancellationToken.None).ConfigureAwait(false);
+        return results == null ? StatusCode(500, "An error occurred while searching.") : Ok(results);
     }
 
     /// <summary>
@@ -272,7 +272,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <returns>An OK result if successful, or BadRequest/NotFound if an error occurs.</returns>
     [HttpPost("ResetProcessedItems")]
     [Authorize(Policy = Policies.RequiresElevation)]
-    public ActionResult ResetProcessedItems([FromQuery] Guid subscriptionId)
+    public async Task<ActionResult> ResetProcessedItems([FromQuery] Guid subscriptionId)
     {
         var config = Configuration;
         if (config == null)
@@ -288,7 +288,7 @@ public class MediathekViewDlApiService : ControllerBase
             return NotFound($"Subscription with ID '{subscriptionId}' not found.");
         }
 
-        subscription.ProcessedItemIds.Clear();
+        await _downloadHistoryRepository.RemoveBySubscriptionIdAsync(subscriptionId).ConfigureAwait(false);
         subscription.LastDownloadedTimestamp = null; // Also reset the timestamp for consistency
         Plugin.Instance?.UpdateConfiguration(config);
 

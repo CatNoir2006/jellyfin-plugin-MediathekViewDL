@@ -27,6 +27,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         private readonly Mock<IStrmValidationService> _strmValidationServiceMock;
         private readonly Mock<IFFmpegService> _ffmpegServiceMock;
         private readonly Mock<IQualityCacheRepository> _qualityCacheRepositoryMock;
+        private readonly Mock<IDownloadHistoryRepository> _downloadHistoryRepositoryMock;
         private readonly SubscriptionProcessor _processor;
 
         public SubscriptionProcessorTests()
@@ -39,6 +40,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _strmValidationServiceMock = new Mock<IStrmValidationService>();
             _ffmpegServiceMock = new Mock<IFFmpegService>();
             _qualityCacheRepositoryMock = new Mock<IQualityCacheRepository>();
+            _downloadHistoryRepositoryMock = new Mock<IDownloadHistoryRepository>();
 
             // Default setup: Validation always succeeds
             _strmValidationServiceMock
@@ -53,7 +55,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 _fileNameBuilderServiceMock.Object,
                 _strmValidationServiceMock.Object,
                 _ffmpegServiceMock.Object,
-                _qualityCacheRepositoryMock.Object
+                _qualityCacheRepositoryMock.Object,
+                _downloadHistoryRepositoryMock.Object
             );
         }
 
@@ -101,38 +104,6 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         }
 
         [Fact]
-        public async Task GetJobsForSubscriptionAsync_ShouldSkip_IfAlreadyProcessed()
-        {
-            // Arrange
-            var subscription = new Subscription { Name = "TestSub" };
-            subscription.ProcessedItemIds.Add("123"); // Mark as processed
-
-            var item = new ResultItem
-            {
-                Id = "123",
-                Title = "TestTitle"
-            };
-
-            var resultChannels = new ResultChannels
-            {
-                Results = new Collection<ResultItem> { item },
-                QueryInfo = new QueryInfo { TotalResults = 1 }
-            };
-
-            _apiClientMock
-                .Setup(x => x.SearchAsync(It.IsAny<ApiQuery>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(resultChannels);
-
-            // Act
-            var jobs = await _processor.GetJobsForSubscriptionAsync(subscription, false, CancellationToken.None);
-
-            // Assert
-            Assert.Empty(jobs);
-            // Verify video parser was NOT called because we skipped early
-            _videoParserMock.Verify(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
-        }
-
-        [Fact]
         public async Task GetJobsForSubscriptionAsync_ShouldSkip_IfFoundLocally_AndEnhancedDetectionEnabled()
         {
             // Arrange
@@ -170,8 +141,6 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             // Assert
             Assert.Empty(jobs);
-            // Verify it was added to processed list
-            Assert.Contains("456", subscription.ProcessedItemIds);
         }
 
         [Fact]

@@ -29,22 +29,68 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
     }
 
     /// <inheritdoc />
-    public async Task AddAsync(DownloadHistoryEntry entry)
+    public async Task AddAsync(string videoUrl, string itemId, Guid subscriptionId, string downloadPath)
     {
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
 
         await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
 
+        DownloadHistoryEntry entry = new DownloadHistoryEntry
+        {
+            VideoUrlHash = HashUrl(videoUrl),
+            VideoUrl = videoUrl,
+            ItemId = itemId,
+            SubscriptionId = subscriptionId,
+            Timestamp = DateTimeOffset.UtcNow,
+            DownloadPath = downloadPath,
+        };
         context.DownloadHistory.Add(entry);
         await context.SaveChangesAsync().ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public async Task<bool> ExistsAsync(string videoUrl)
+    public async Task<bool> ExistsByUrlAsync(string videoUrl)
     {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
+
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
+
         var hash = HashUrl(videoUrl);
-        return await ExistsByHashAsync(hash).ConfigureAwait(false);
+        return await context.DownloadHistory
+            .AsNoTracking()
+            .AnyAsync(e => e.VideoUrlHash == hash)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> ExistsByItemIdAsync(string itemId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
+
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
+
+        return await context.DownloadHistory
+            .AsNoTracking()
+            .AnyAsync(e => e.ItemId == itemId)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> ExistsByUrlAndSubscriptionIdAsync(string videoUrl, Guid subscriptionId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
+
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
+
+        var hash = HashUrl(videoUrl);
+        return await context.DownloadHistory
+            .AsNoTracking()
+            .AnyAsync(e => e.VideoUrlHash == hash && e.SubscriptionId == subscriptionId)
+            .ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -77,6 +123,49 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
     }
 
     /// <inheritdoc />
+    public async Task<DownloadHistoryEntry?> GetByItemIdAndSubscriptionIdAsync(string itemId, Guid subscriptionId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
+
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
+
+        return await context.DownloadHistory
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.ItemId == itemId && e.SubscriptionId == subscriptionId)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<DownloadHistoryEntry?> GetByItemIdAsync(string itemId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
+
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
+
+        return await context.DownloadHistory
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.ItemId == itemId)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<DownloadHistoryEntry?> GetByUrlAndSubscriptionIdAsync(string videoUrl, Guid subscriptionId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
+
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
+
+        var hash = HashUrl(videoUrl);
+        return await context.DownloadHistory
+            .AsNoTracking()
+            .FirstOrDefaultAsync(e => e.VideoUrlHash == hash && e.SubscriptionId == subscriptionId)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public async Task<IEnumerable<DownloadHistoryEntry>> GetBySubscriptionIdAsync(Guid subscriptionId)
     {
         using var scope = _scopeFactory.CreateScope();
@@ -88,6 +177,21 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
             .AsNoTracking()
             .Where(e => e.SubscriptionId == subscriptionId)
             .ToListAsync()
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task RemoveBySubscriptionIdAsync(Guid subscriptionId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
+
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
+
+        // ExecuteDeleteAsync is more efficient in EF Core 7+ (available in .NET 9)
+        await context.DownloadHistory
+            .Where(e => e.SubscriptionId == subscriptionId)
+            .ExecuteDeleteAsync()
             .ConfigureAwait(false);
     }
 
