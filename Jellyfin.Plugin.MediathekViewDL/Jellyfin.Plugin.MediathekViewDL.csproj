@@ -21,8 +21,11 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
+      <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0">
+      <ExcludeAssets>runtime</ExcludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -35,5 +38,11 @@
     <None Remove="Configuration\configPage.html" />
     <EmbeddedResource Include="Configuration\configPage.html" />
   </ItemGroup>
+
+  <!-- Fix for BadImageFormatException: Remove native runtimes that Jellyfin mistakenly tries to load as managed assemblies -->
+  <Target Name="CleanRuntimes" AfterTargets="Build;Publish">
+    <RemoveDir Directories="$(TargetDir)runtimes" />
+    <RemoveDir Directories="$(PublishDir)runtimes" />
+  </Target>
 
 </Project>
