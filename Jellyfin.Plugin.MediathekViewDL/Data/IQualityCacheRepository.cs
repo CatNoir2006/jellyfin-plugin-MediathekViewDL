@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Data;
@@ -20,9 +21,10 @@ public interface IQualityCacheRepository
     /// <param name="url">The video URL.</param>
     /// <param name="width">The width of the video.</param>
     /// <param name="height">The height of the video.</param>
+    /// <param name="duration">The Duration of the video.</param>
     /// <param name="size">The file size.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task AddOrUpdateAsync(string url, int width, int height, long size);
+    Task AddOrUpdateAsync(string url, int width, int height, TimeSpan duration, long size);
 
     /// <summary>
     /// Removes a cache entry by the video URL.
@@ -30,4 +32,11 @@ public interface IQualityCacheRepository
     /// <param name="url">The video URL.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task RemoveByUrlAsync(string url);
+
+    /// <summary>
+    /// Throws away all cache entries older than the specified age.
+    /// </summary>
+    /// <param name="maxAge">The maxAge to keep the entries.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task RemoveByAgeAsync(TimeSpan maxAge);
 }

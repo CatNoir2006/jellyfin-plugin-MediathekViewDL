@@ -44,7 +44,7 @@ public class DbQualityCacheRepository : IQualityCacheRepository
     }
 
     /// <inheritdoc />
-    public async Task AddOrUpdateAsync(string url, int width, int height, long size)
+    public async Task AddOrUpdateAsync(string url, int width, int height, TimeSpan duration, long size)
     {
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
@@ -63,6 +63,7 @@ public class DbQualityCacheRepository : IQualityCacheRepository
                 Width = width,
                 Height = height,
                 Size = size,
+                Duration = duration,
                 LastUpdated = DateTimeOffset.UtcNow
             };
             context.QualityCacheEntries.Add(entry);
@@ -90,6 +91,20 @@ public class DbQualityCacheRepository : IQualityCacheRepository
         // ExecuteDeleteAsync is more efficient in EF Core 7+ (available in .NET 9)
         await context.QualityCacheEntries
             .Where(e => e.UrlHash == hash)
+            .ExecuteDeleteAsync()
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task RemoveByAgeAsync(TimeSpan maxAge)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
+
+        var cutoff = DateTimeOffset.UtcNow - maxAge;
+        await context.QualityCacheEntries
+            .Where(e => e.LastUpdated < cutoff)
             .ExecuteDeleteAsync()
             .ConfigureAwait(false);
     }

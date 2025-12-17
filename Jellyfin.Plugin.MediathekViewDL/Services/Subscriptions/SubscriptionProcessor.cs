@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
@@ -28,6 +29,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private readonly IFileNameBuilderService _fileNameBuilderService;
     private readonly IStrmValidationService _strmValidationService;
     private readonly IFFmpegService _ffmpegService;
+    private readonly IQualityCacheRepository _qualityCacheRepository;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscriptionProcessor"/> class.
@@ -39,6 +41,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="fileNameBuilderService">The file name builder service.</param>
     /// <param name="strmValidationService">The STRM validation service.</param>
     /// <param name="ffmpegService">The ffmpeg Service.</param>
+    /// <param name="qualityCacheRepository">The QualityCacheRepository.</param>
     public SubscriptionProcessor(
         ILogger<SubscriptionProcessor> logger,
         IMediathekViewApiClient apiClient,
@@ -46,7 +49,8 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         ILocalMediaScanner localMediaScanner,
         IFileNameBuilderService fileNameBuilderService,
         IStrmValidationService strmValidationService,
-        IFFmpegService ffmpegService)
+        IFFmpegService ffmpegService,
+        IQualityCacheRepository qualityCacheRepository)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -55,6 +59,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         _fileNameBuilderService = fileNameBuilderService;
         _strmValidationService = strmValidationService;
         _ffmpegService = ffmpegService;
+        _qualityCacheRepository = qualityCacheRepository;
     }
 
     /// <inheritdoc/>
@@ -329,34 +334,34 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private async Task<bool> IsQualityUpgradeAvailable(string currentFilePath, string newUrl, CancellationToken cancellationToken)
     {
         var currentQuality = await _ffmpegService.GetMediaInfoAsync(currentFilePath, cancellationToken).ConfigureAwait(false);
-        var onlineQuality = await _ffmpegService.GetMediaInfoAsync(newUrl, cancellationToken).ConfigureAwait(false);
+        var onlineQuality = await GetOnlineQualityInfoAsync(newUrl, cancellationToken).ConfigureAwait(false);
 
-        if (!currentQuality.HasValue || !onlineQuality.HasValue)
+        if (currentQuality?.IsValid() != true || onlineQuality?.IsValid() != true)
         {
             _logger.LogWarning("Could not determine media info for quality comparison.");
             return false;
         }
 
-        if (onlineQuality.Value.Height <= currentQuality.Value.Height)
+        if (onlineQuality.Height <= currentQuality.Height)
         {
-            _logger.LogInformation("No quality upgrade available. Current height: {CurrentHeight}, Online height: {OnlineHeight}.", currentQuality.Value.Height, onlineQuality.Value.Height);
+            _logger.LogInformation("No quality upgrade available. Current height: {CurrentHeight}, Online height: {OnlineHeight}.", currentQuality.Height, onlineQuality.Height);
             return false;
         }
 
-        if (onlineQuality.Value.Width <= currentQuality.Value.Width)
+        if (onlineQuality.Width <= currentQuality.Width)
         {
-            _logger.LogInformation("No quality upgrade available. Current width: {CurrentWidth}, Online width: {OnlineWidth}.", currentQuality.Value.Width, onlineQuality.Value.Width);
+            _logger.LogInformation("No quality upgrade available. Current width: {CurrentWidth}, Online width: {OnlineWidth}.", currentQuality.Width, onlineQuality.Width);
             return false;
         }
 
-        if (!onlineQuality.Value.Duration.HasValue || !currentQuality.Value.Duration.HasValue)
+        if (!onlineQuality.Duration.HasValue || !currentQuality.Duration.HasValue)
         {
             _logger.LogWarning("Could not determine duration for quality comparison.");
             return false;
         }
 
-        var onlineDuration = onlineQuality.Value.Duration.Value;
-        var currentDuration = currentQuality.Value.Duration.Value;
+        var onlineDuration = onlineQuality.Duration.Value;
+        var currentDuration = currentQuality.Duration.Value;
         var durationDifference = Math.Abs((onlineDuration - currentDuration).TotalSeconds);
 
         if (durationDifference > 2) // Max 2 seconds difference allowed, may add a configuration option later
@@ -367,11 +372,64 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
         _logger.LogInformation(
             "Quality upgrade available! Current: {CurrentWidth}x{CurrentHeight}, Online: {OnlineWidth}x{OnlineHeight}.",
-            currentQuality.Value.Width,
-            currentQuality.Value.Height,
-            onlineQuality.Value.Width,
-            onlineQuality.Value.Height);
+            currentQuality.Width,
+            currentQuality.Height,
+            onlineQuality.Width,
+            onlineQuality.Height);
         return true;
+    }
+
+    private async Task<LocalMediaInfo?> GetOnlineQualityInfoAsync(string url, CancellationToken cancellationToken)
+    {
+        // First, try to get from cache
+        var cachedInfo = await GetOnlineQualityInfoFromCacheAsync(url, cancellationToken).ConfigureAwait(false);
+        if (cachedInfo != null)
+        {
+            return cachedInfo;
+        }
+
+        // If not in cache, get from ffmpeg
+        var mediaInfo = await _ffmpegService.GetMediaInfoAsync(url, cancellationToken).ConfigureAwait(false);
+        if (mediaInfo is null || !mediaInfo.IsValid())
+        {
+            return null;
+        }
+
+        // Store in cache for future use
+        await _qualityCacheRepository.AddOrUpdateAsync(
+            url,
+            mediaInfo.Width.Value,
+            mediaInfo.Height.Value,
+            mediaInfo.Duration.Value,
+            mediaInfo.FileSize.Value).ConfigureAwait(false);
+
+        return mediaInfo;
+    }
+
+    private async Task<LocalMediaInfo?> GetOnlineQualityInfoFromCacheAsync(string url, CancellationToken cancellationToken)
+    {
+        var cacheEntry = await _qualityCacheRepository.GetByUrlAsync(url).ConfigureAwait(false);
+        if (cacheEntry is null)
+        {
+            return null;
+        }
+
+        // ReSharper disable once InvertIf
+        if (cacheEntry.Duration == TimeSpan.Zero)
+        {
+            _logger.LogInformation("Cached entry for URL '{Url}' has zero duration, ignoring cache.", url);
+            await _qualityCacheRepository.RemoveByUrlAsync(url).ConfigureAwait(false);
+            return null;
+        }
+
+        return new LocalMediaInfo
+        {
+            Width = cacheEntry.Width,
+            Height = cacheEntry.Height,
+            FileSize = cacheEntry.Size,
+            Duration = cacheEntry.Duration,
+            FilePath = url
+        };
     }
 
     /// <summary>
