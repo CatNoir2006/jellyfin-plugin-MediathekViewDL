@@ -1,4 +1,6 @@
+using System.IO;
 using Jellyfin.Plugin.MediathekViewDL.Api;
+using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 using Jellyfin.Plugin.MediathekViewDL.Services.Library;
@@ -7,6 +9,7 @@ using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Plugins;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Jellyfin.Plugin.MediathekViewDL
@@ -20,6 +23,15 @@ namespace Jellyfin.Plugin.MediathekViewDL
         public void RegisterServices(IServiceCollection serviceCollection, IServerApplicationHost applicationHost)
         {
             serviceCollection.AddHttpClient(); // Required for FileDownloader
+
+            // Database
+            serviceCollection.AddDbContext<MediathekViewDlDbContext>(options =>
+            {
+                var dbPath = System.IO.Path.Combine(Plugin.Instance!.DataFolderPath, "mediathek-dl.db");
+                options.UseSqlite($"Data Source={dbPath}");
+            });
+            serviceCollection.AddSingleton<IQualityCacheRepository, DbQualityCacheRepository>();
+            serviceCollection.AddSingleton<IDownloadHistoryRepository, DbDownloadHistoryRepository>();
 
             serviceCollection.AddSingleton<ILanguageDetectionService, LanguageDetectionService>();
             serviceCollection.AddSingleton<IVideoParser, VideoParser>();
