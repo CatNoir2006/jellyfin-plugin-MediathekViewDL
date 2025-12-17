@@ -13,7 +13,7 @@ public class DatabaseMigrator : IDisposable
 {
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly SemaphoreSlim _lock = new(1, 1);
-    private bool _migrated = false;
+    private bool _migrated;
     private bool _disposed;
 
     /// <summary>

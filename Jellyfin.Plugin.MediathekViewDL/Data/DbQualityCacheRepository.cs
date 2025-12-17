@@ -74,7 +74,6 @@ public class DbQualityCacheRepository : IQualityCacheRepository
             entry.Height = height;
             entry.Size = size;
             entry.LastUpdated = DateTimeOffset.UtcNow;
-            context.QualityCacheEntries.Update(entry);
         }
 
         await context.SaveChangesAsync().ConfigureAwait(false);

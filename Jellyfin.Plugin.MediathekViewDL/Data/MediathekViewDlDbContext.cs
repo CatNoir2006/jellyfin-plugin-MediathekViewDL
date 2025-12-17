@@ -25,21 +25,4 @@ public class MediathekViewDlDbContext : DbContext
     /// Gets or sets the download history entries.
     /// </summary>
     public DbSet<DownloadHistoryEntry> DownloadHistory { get; set; } = null!;
-
-    /// <inheritdoc />
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-
-        modelBuilder.Entity<QualityCacheEntry>(entity =>
-        {
-            entity.HasIndex(e => e.UrlHash);
-        });
-
-        modelBuilder.Entity<DownloadHistoryEntry>(entity =>
-        {
-            entity.HasIndex(e => e.VideoUrlHash);
-            entity.HasIndex(e => e.SubscriptionId);
-        });
-    }
 }
