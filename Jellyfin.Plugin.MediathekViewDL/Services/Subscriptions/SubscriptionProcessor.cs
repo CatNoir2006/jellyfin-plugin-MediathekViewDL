@@ -112,7 +112,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
 
             // Video/Main Job
-            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo!.Title, };
+            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo!.Title, AudioLanguage = tempVideoInfo.Language };
 
             bool useStrmForThisItem = subscription.UseStreamingUrlFiles || (subscription is { SaveExtrasAsStrm: true, TreatNonEpisodesAsExtras: true } && !tempVideoInfo.IsShow);
 
