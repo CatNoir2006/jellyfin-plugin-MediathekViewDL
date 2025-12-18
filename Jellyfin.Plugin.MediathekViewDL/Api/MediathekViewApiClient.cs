@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Api;
@@ -42,8 +43,9 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     /// <param name="minDuration">Optional minimum duration in seconds.</param>
     /// <param name="maxDuration">Optional maximum duration in seconds.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A collection of result items, or null if an error occurred.</returns>
-    public async Task<Collection<ResultItem>?> SearchAsync(
+    /// <returns>A collection of result items.</returns>
+    /// <exception cref="MediathekException">Thrown when an error occurs while calling the API.</exception>
+    public async Task<Collection<ResultItem>> SearchAsync(
         string searchQuery,
         int? minDuration,
         int? maxDuration,
@@ -60,7 +62,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             MaxDuration = maxDuration
         };
         var res = await SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
-        return res?.Results;
+        return res.Results;
     }
 
     /// <summary>
@@ -68,8 +70,9 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     /// </summary>
     /// <param name="apiQuery">The api query.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>An API result, or null if an error occurred.</returns>
-    public async Task<ResultChannels?> SearchAsync(
+    /// <returns>An API result.</returns>
+    /// <exception cref="MediathekException">Thrown when an error occurs while calling the API.</exception>
+    public async Task<ResultChannels> SearchAsync(
         ApiQuery apiQuery,
         CancellationToken cancellationToken)
     {
@@ -85,19 +88,34 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogError("API request failed with status code {StatusCode}", response.StatusCode);
-                return null;
+                throw new MediathekApiException($"API request failed with status code {response.StatusCode}", response.StatusCode);
             }
 
             var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             var apiResult = await JsonSerializer.DeserializeAsync<ApiResult>(responseStream, _jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
 
-            _logger.LogInformation("API search returned {Count} results", apiResult?.Result.Results.Count);
-            return apiResult?.Result;
+            if (apiResult?.Result == null)
+            {
+                throw new MediathekParsingException("Failed to deserialize API result or result was null.");
+            }
+
+            _logger.LogInformation("API search returned {Count} results", apiResult.Result.Results.Count);
+            return apiResult.Result;
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            _logger.LogError(ex, "An error occurred while calling the MediathekViewWeb API");
-            return null;
+            _logger.LogError(ex, "A network error occurred while calling the MediathekViewWeb API");
+            throw new MediathekConnectionException("A network error occurred while calling the MediathekViewWeb API", ex);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "A parsing error occurred while deserializing the MediathekViewWeb API response");
+            throw new MediathekParsingException("A parsing error occurred while deserializing the MediathekViewWeb API response", ex);
+        }
+        catch (Exception ex) when (ex is not MediathekException)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while calling the MediathekViewWeb API");
+            throw new MediathekApiException("An unexpected error occurred while calling the MediathekViewWeb API", ex);
         }
     }
 }

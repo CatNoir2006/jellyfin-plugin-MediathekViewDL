@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
+using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
 using Jellyfin.Plugin.MediathekViewDL.Services;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
@@ -105,8 +106,32 @@ public class MediathekViewDlApiService : ControllerBase
             return BadRequest("Search query cannot be empty.");
         }
 
-        var results = await _apiClient.SearchAsync(query, minDuration, maxDuration, CancellationToken.None).ConfigureAwait(false);
-        return results == null ? StatusCode(500, "An error occurred while searching.") : Ok(results);
+        try
+        {
+            var results = await _apiClient.SearchAsync(query, minDuration, maxDuration, CancellationToken.None).ConfigureAwait(false);
+            return Ok(results);
+        }
+        catch (MediathekConnectionException ex)
+        {
+            _logger.LogError(ex, "Connection error while searching.");
+            return StatusCode(503, "The MediathekView API is currently unreachable. Please try again later.");
+        }
+        catch (MediathekParsingException ex)
+        {
+            _logger.LogError(ex, "Parsing error while searching.");
+            return StatusCode(502, "Received an invalid response from the MediathekView API.");
+        }
+        catch (MediathekApiException ex)
+        {
+            _logger.LogError(ex, "API error while searching. Status code: {StatusCode}", ex.StatusCode);
+            var statusCode = (int)ex.StatusCode >= 500 ? 502 : 500;
+            return StatusCode(statusCode, $"The MediathekView API returned an error ({ex.StatusCode}).");
+        }
+        catch (MediathekException ex)
+        {
+            _logger.LogError(ex, "An error occurred while searching.");
+            return StatusCode(500, "An unexpected error occurred while calling the MediathekView API.");
+        }
     }
 
     /// <summary>
