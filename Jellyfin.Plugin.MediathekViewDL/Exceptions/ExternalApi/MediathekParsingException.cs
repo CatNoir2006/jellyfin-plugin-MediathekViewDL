@@ -18,7 +18,7 @@ public class MediathekParsingException : MediathekException
     /// Initializes a new instance of the <see cref="MediathekParsingException"/> class with a specified error message.
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
-    public MediathekParsingException(string message)
+    public MediathekParsingException(string? message)
         : base(message)
     {
     }
@@ -28,7 +28,7 @@ public class MediathekParsingException : MediathekException
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
     /// <param name="innerException">The exception that is the cause of the current exception, or a null reference if no inner exception is specified.</param>
-    public MediathekParsingException(string message, Exception innerException)
+    public MediathekParsingException(string? message, Exception? innerException)
         : base(message, innerException)
     {
     }

@@ -12,18 +12,17 @@ public class MediathekApiException : MediathekException
     /// Initializes a new instance of the <see cref="MediathekApiException"/> class.
     /// </summary>
     public MediathekApiException()
+        : this(null, HttpStatusCode.InternalServerError)
     {
-        StatusCode = HttpStatusCode.InternalServerError; // Default or unknown status
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekApiException"/> class with a specified error message.
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
-    public MediathekApiException(string message)
-        : base(message)
+    public MediathekApiException(string? message)
+        : this(message, HttpStatusCode.InternalServerError)
     {
-        StatusCode = HttpStatusCode.InternalServerError;
     }
 
     /// <summary>
@@ -31,10 +30,9 @@ public class MediathekApiException : MediathekException
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
     /// <param name="statusCode">The HTTP status code.</param>
-    public MediathekApiException(string message, HttpStatusCode statusCode)
-        : base(message)
+    public MediathekApiException(string? message, HttpStatusCode statusCode)
+        : this(message, statusCode, null)
     {
-        StatusCode = statusCode;
     }
 
     /// <summary>
@@ -42,10 +40,9 @@ public class MediathekApiException : MediathekException
     /// </summary>
     /// <param name="message">The error message that explains the reason for the exception.</param>
     /// <param name="innerException">The exception that is the cause of the current exception, or a null reference if no inner exception is specified.</param>
-    public MediathekApiException(string message, Exception innerException)
-        : base(message, innerException)
+    public MediathekApiException(string? message, Exception? innerException)
+        : this(message, HttpStatusCode.InternalServerError, innerException)
     {
-        StatusCode = HttpStatusCode.InternalServerError;
     }
 
     /// <summary>
@@ -54,7 +51,7 @@ public class MediathekApiException : MediathekException
     /// <param name="message">The error message that explains the reason for the exception.</param>
     /// <param name="statusCode">The HTTP status code.</param>
     /// <param name="innerException">The exception that is the cause of the current exception, or a null reference if no inner exception is specified.</param>
-    public MediathekApiException(string message, HttpStatusCode statusCode, Exception innerException)
+    public MediathekApiException(string? message, HttpStatusCode statusCode, Exception? innerException)
         : base(message, innerException)
     {
         StatusCode = statusCode;
