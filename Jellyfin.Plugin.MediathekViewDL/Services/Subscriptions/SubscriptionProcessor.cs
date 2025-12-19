@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
+using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
@@ -112,7 +113,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
 
             // Video/Main Job
-            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo!.Title, };
+            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo!.Title, AudioLanguage = tempVideoInfo.Language };
 
             bool useStrmForThisItem = subscription.UseStreamingUrlFiles || (subscription is { SaveExtrasAsStrm: true, TreatNonEpisodesAsExtras: true } && !tempVideoInfo.IsShow);
 
@@ -515,8 +516,18 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 MaxDuration = subscription.MaxDurationMinutes.HasValue ? subscription.MaxDurationMinutes * 60 : null
             };
 
-            var result = await _apiClient.SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
-            if (result?.QueryInfo?.TotalResults > (currentPage + 1) * pageSize)
+            ResultChannels result;
+            try
+            {
+                result = await _apiClient.SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
+            }
+            catch (MediathekException ex)
+            {
+                _logger.LogWarning(ex, "Could not retrieve search results for subscription '{SubscriptionName}' due to an API error.", subscription.Name);
+                yield break;
+            }
+
+            if (result.QueryInfo?.TotalResults > (currentPage + 1) * pageSize)
             {
                 hasMoreResults = true;
                 currentPage++;
@@ -524,12 +535,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             else
             {
                 hasMoreResults = false;
-            }
-
-            if (result?.Results == null)
-            {
-                _logger.LogWarning("Could not retrieve search results for subscription '{SubscriptionName}'.", subscription.Name);
-                yield break;
             }
 
             foreach (var item in result.Results)

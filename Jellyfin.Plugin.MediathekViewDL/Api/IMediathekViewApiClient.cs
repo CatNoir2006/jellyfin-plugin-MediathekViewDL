@@ -16,14 +16,16 @@ public interface IMediathekViewApiClient
     /// <param name="minDuration">Optional minimum duration in seconds.</param>
     /// <param name="maxDuration">Optional maximum duration in seconds.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A collection of result items, or null if an error occurred.</returns>
-    Task<Collection<ResultItem>?> SearchAsync(string searchQuery, int? minDuration, int? maxDuration, CancellationToken cancellationToken);
+    /// <returns>A collection of result items.</returns>
+    /// <exception cref="Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi.MediathekException">Thrown when an error occurs while calling the API.</exception>
+    Task<Collection<ResultItem>> SearchAsync(string searchQuery, int? minDuration, int? maxDuration, CancellationToken cancellationToken);
 
     /// <summary>
     /// Searches for media on the MediathekViewWeb API using a specified query.
     /// </summary>
     /// <param name="apiQuery">The api query.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>An API result, or null if an error occurred.</returns>
-    Task<ResultChannels?> SearchAsync(ApiQuery apiQuery, CancellationToken cancellationToken);
+    /// <returns>An API result.</returns>
+    /// <exception cref="Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi.MediathekException">Thrown when an error occurs while calling the API.</exception>
+    Task<ResultChannels> SearchAsync(ApiQuery apiQuery, CancellationToken cancellationToken);
 }
