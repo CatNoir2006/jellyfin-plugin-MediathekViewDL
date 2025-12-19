@@ -9,7 +9,6 @@ using Jellyfin.Plugin.MediathekViewDL.Services;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 using MediaBrowser.Controller.Configuration;
-using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Tasks;
 using Microsoft.Extensions.Logging;
 
@@ -21,7 +20,6 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tasks;
 public class DownloadScheduledTask : IScheduledTask
 {
     private readonly ILogger<DownloadScheduledTask> _logger;
-    private readonly ILibraryManager _libraryManager;
     private readonly ISubscriptionProcessor _subscriptionProcessor;
     private readonly IDownloadQueueManager _downloadQueueManager;
 
@@ -29,17 +27,14 @@ public class DownloadScheduledTask : IScheduledTask
     /// Initializes a new instance of the <see cref="DownloadScheduledTask"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
-    /// <param name="libraryManager">The library manager.</param>
     /// <param name="subscriptionProcessor">The subscription processor.</param>
     /// <param name="downloadQueueManager">The download queue manager.</param>
     public DownloadScheduledTask(
         ILogger<DownloadScheduledTask> logger,
-        ILibraryManager libraryManager,
         ISubscriptionProcessor subscriptionProcessor,
         IDownloadQueueManager downloadQueueManager)
     {
         _logger = logger;
-        _libraryManager = libraryManager;
         _subscriptionProcessor = subscriptionProcessor;
         _downloadQueueManager = downloadQueueManager;
     }
@@ -73,7 +68,6 @@ public class DownloadScheduledTask : IScheduledTask
     {
         _logger.LogInformation("Starting Mediathek subscription download task.");
         progress.Report(0);
-        bool hasQueuedAnyItemOverall = false;
 
         var config = Configuration;
         if (config == null || config.Subscriptions.Count == 0)
@@ -124,7 +118,6 @@ public class DownloadScheduledTask : IScheduledTask
             }
 
             subscription.LastDownloadedTimestamp = DateTime.UtcNow;
-            hasQueuedAnyItemOverall = true;
 
             progress.Report(baseProgressForSubscription + subscriptionProgressShare);
         }
@@ -132,14 +125,6 @@ public class DownloadScheduledTask : IScheduledTask
         // Save the new timestamp
         config.LastRun = newLastRun;
         Plugin.Instance?.UpdateConfiguration(config);
-
-        // Trigger library scans - Note: This might trigger BEFORE downloads are finished
-        // but since it's a queued background process, we just queue the scan too.
-        if (config.ScanLibraryAfterDownload && hasQueuedAnyItemOverall)
-        {
-            _logger.LogInformation("Triggering library scan (queued items).");
-            _libraryManager.QueueLibraryScan();
-        }
 
         progress.Report(100);
         _logger.LogInformation("Mediathek subscription discovery task finished. Jobs are in the download queue.");
