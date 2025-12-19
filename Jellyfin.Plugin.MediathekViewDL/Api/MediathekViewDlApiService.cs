@@ -31,6 +31,7 @@ public class MediathekViewDlApiService : ControllerBase
     private readonly IFileNameBuilderService _fileNameBuilder;
     private readonly ISubscriptionProcessor _subscriptionProcessor;
     private readonly IDownloadHistoryRepository _downloadHistoryRepository;
+    private readonly IDownloadQueueManager _downloadQueueManager;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekViewDlApiService"/> class.
@@ -41,13 +42,15 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="fileNameBuilder">The file name builder.</param>
     /// <param name="subscriptionProcessor">The subscription processor.</param>
     /// <param name="downloadHistoryRepository">The Download History Repo.</param>
+    /// <param name="downloadQueueManager">The download queue manager.</param>
     public MediathekViewDlApiService(
         ILogger<MediathekViewDlApiService> logger,
         IMediathekViewApiClient apiClient,
         IFileDownloader fileDownloader,
         IFileNameBuilderService fileNameBuilder,
         ISubscriptionProcessor subscriptionProcessor,
-        IDownloadHistoryRepository downloadHistoryRepository)
+        IDownloadHistoryRepository downloadHistoryRepository,
+        IDownloadQueueManager downloadQueueManager)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -55,12 +58,61 @@ public class MediathekViewDlApiService : ControllerBase
         _fileNameBuilder = fileNameBuilder;
         _subscriptionProcessor = subscriptionProcessor;
         _downloadHistoryRepository = downloadHistoryRepository;
+        _downloadQueueManager = downloadQueueManager;
     }
 
     /// <summary>
     /// Gets the plugin configuration.
     /// </summary>
     protected virtual PluginConfiguration? Configuration => Plugin.Instance?.Configuration;
+
+    /// <summary>
+    /// Gets the currently active downloads.
+    /// </summary>
+    /// <returns>A list of active downloads.</returns>
+    [HttpGet("Downloads/Active")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public ActionResult<IEnumerable<ActiveDownload>> GetActiveDownloads()
+    {
+        return Ok(_downloadQueueManager.GetActiveDownloads());
+    }
+
+    /// <summary>
+    /// Gets the download history.
+    /// </summary>
+    /// <param name="limit">The maximum number of entries to return.</param>
+    /// <returns>A list of download history entries.</returns>
+    [HttpGet("Downloads/History")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public async Task<ActionResult<IEnumerable<DownloadHistoryEntry>>> GetDownloadHistory([FromQuery] int limit = 50)
+    {
+        var history = await _downloadHistoryRepository.GetRecentHistoryAsync(limit).ConfigureAwait(false);
+        return Ok(history);
+    }
+
+    /// <summary>
+    /// Cancels a specific download.
+    /// </summary>
+    /// <param name="id">The active download identifier.</param>
+    /// <returns>An OK result.</returns>
+    [HttpDelete("Downloads/{id}")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public IActionResult CancelDownload([FromRoute] Guid id)
+    {
+        try
+        {
+            _downloadQueueManager.CancelJob(id);
+            return Ok($"Download '{id}' cancellation requested.");
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound($"Download with ID '{id}' not found.");
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
 
     /// <summary>
     /// Tests a subscription to see what items would be downloaded.
@@ -165,44 +217,36 @@ public class MediathekViewDlApiService : ControllerBase
 
         _logger.LogInformation("Manual download requested for item: {Title}", item.Title);
 
-        // Fire and forget
-        Task.Run(async () =>
+        var sanitizedTitle = _fileNameBuilder.SanitizeFileName(item.Title);
+        var manualDownloadFolder = Path.Combine(config.DefaultDownloadPath, "manual");
+        var videoDestinationPath = Path.Combine(manualDownloadFolder, sanitizedTitle + ".mp4");
+
+        var job = new DownloadJob
         {
-            var sanitizedTitle = _fileNameBuilder.SanitizeFileName(item.Title);
-            var manualDownloadFolder = Path.Combine(config.DefaultDownloadPath, "manual");
-            Directory.CreateDirectory(manualDownloadFolder);
+            ItemId = item.Id,
+            Title = item.Title
+        };
 
-            // Download Video
-            var videoDestinationPath = Path.Combine(manualDownloadFolder, sanitizedTitle + ".mp4");
-            _logger.LogInformation("Starting manual video download of '{Title}' to '{Path}'", item.Title, videoDestinationPath);
-            var videoSuccess = await _fileDownloader.DownloadFileAsync(videoUrl, videoDestinationPath, null, CancellationToken.None).ConfigureAwait(false);
-            if (videoSuccess)
-            {
-                _logger.LogInformation("Successfully finished manual video download of '{Title}'.", item.Title);
-            }
-            else
-            {
-                _logger.LogError("Failed to manually download video for '{Title}'.", item.Title);
-            }
-
-            // Download Subtitle
-            if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
-            {
-                var subtitleDestinationPath = Path.Combine(manualDownloadFolder, sanitizedTitle + ".ttml");
-                _logger.LogInformation("Starting manual subtitle download of '{Title}' to '{Path}'", item.Title, subtitleDestinationPath);
-                var subtitleSuccess = await _fileDownloader.DownloadFileAsync(item.UrlSubtitle, subtitleDestinationPath, null, CancellationToken.None).ConfigureAwait(false);
-                if (subtitleSuccess)
-                {
-                    _logger.LogInformation("Successfully finished manual subtitle download of '{Title}'.", item.Title);
-                }
-                else
-                {
-                    _logger.LogError("Failed to manually download subtitle for '{Title}'.", item.Title);
-                }
-            }
+        job.DownloadItems.Add(new DownloadItem
+        {
+            SourceUrl = videoUrl,
+            DestinationPath = videoDestinationPath,
+            JobType = DownloadType.DirectDownload
         });
 
-        return Ok($"Download for '{item.Title}' started in the background.");
+        if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
+        {
+            var subtitleDestinationPath = Path.Combine(manualDownloadFolder, sanitizedTitle + ".ttml");
+            job.DownloadItems.Add(new DownloadItem
+            {
+                SourceUrl = item.UrlSubtitle,
+                DestinationPath = subtitleDestinationPath,
+                JobType = DownloadType.DirectDownload
+            });
+        }
+
+        _downloadQueueManager.QueueJob(job);
+        return Ok($"Download for '{item.Title}' queued.");
     }
 
     /// <summary>
@@ -249,45 +293,39 @@ public class MediathekViewDlApiService : ControllerBase
 
         _logger.LogInformation("Advanced download requested for item: {Title} to path: {Path} with filename: {FileName}", item.Title, targetDownloadPath, options.FileName);
 
-        // Fire and forget
-        Task.Run(async () =>
+        var fileName = string.IsNullOrWhiteSpace(options.FileName)
+            ? _fileNameBuilder.SanitizeFileName(item.Title) + ".mp4"
+            : _fileNameBuilder.SanitizeFileName(options.FileName);
+
+        var videoDestinationPath = Path.Combine(targetDownloadPath, fileName);
+
+        var job = new DownloadJob
         {
-            // Sanitize filename provided by the user, or use a default one.
-            var fileName = string.IsNullOrWhiteSpace(options.FileName)
-                ? _fileNameBuilder.SanitizeFileName(item.Title) + ".mp4"
-                : _fileNameBuilder.SanitizeFileName(options.FileName);
+            ItemId = item.Id,
+            Title = item.Title
+        };
 
-            var videoDestinationPath = Path.Combine(targetDownloadPath, fileName);
-            _logger.LogInformation("Starting advanced video download of '{Title}' to '{Path}'", item.Title, videoDestinationPath);
-            var videoSuccess = await _fileDownloader.DownloadFileAsync(videoUrl, videoDestinationPath, null, CancellationToken.None).ConfigureAwait(false);
-            if (videoSuccess)
-            {
-                _logger.LogInformation("Successfully finished advanced video download of '{Title}'.", item.Title);
-            }
-            else
-            {
-                _logger.LogError("Failed to advanced download video for '{Title}'.", item.Title);
-            }
-
-            // Download Subtitle
-            if (options.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
-            {
-                var subtitleFileName = Path.GetFileNameWithoutExtension(fileName) + ".ttml";
-                var subtitleDestinationPath = Path.Combine(targetDownloadPath, subtitleFileName);
-                _logger.LogInformation("Starting advanced subtitle download of '{Title}' to '{Path}'", item.Title, subtitleDestinationPath);
-                var subtitleSuccess = await _fileDownloader.DownloadFileAsync(item.UrlSubtitle, subtitleDestinationPath, null, CancellationToken.None).ConfigureAwait(false);
-                if (subtitleSuccess)
-                {
-                    _logger.LogInformation("Successfully finished advanced subtitle download of '{Title}'.", item.Title);
-                }
-                else
-                {
-                    _logger.LogError("Failed to advanced download subtitle for '{Title}'.", item.Title);
-                }
-            }
+        job.DownloadItems.Add(new DownloadItem
+        {
+            SourceUrl = videoUrl,
+            DestinationPath = videoDestinationPath,
+            JobType = DownloadType.DirectDownload
         });
 
-        return Ok($"Advanced download for '{item.Title}' started in the background.");
+        if (options.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
+        {
+            var subtitleFileName = Path.GetFileNameWithoutExtension(fileName) + ".ttml";
+            var subtitleDestinationPath = Path.Combine(targetDownloadPath, subtitleFileName);
+            job.DownloadItems.Add(new DownloadItem
+            {
+                SourceUrl = item.UrlSubtitle,
+                DestinationPath = subtitleDestinationPath,
+                JobType = DownloadType.DirectDownload
+            });
+        }
+
+        _downloadQueueManager.QueueJob(job);
+        return Ok($"Advanced download for '{item.Title}' queued.");
     }
 
     /// <summary>

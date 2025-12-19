@@ -195,6 +195,25 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
             .ConfigureAwait(false);
     }
 
+    /// <inheritdoc />
+    public async Task<IEnumerable<DownloadHistoryEntry>> GetRecentHistoryAsync(int limit)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
+
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
+
+        return await context.DownloadHistory
+            .AsNoTracking()
+            // SQLite has issues sorting by DateTimeOffset.
+            // Since Timestamp is set to UtcNow on insertion and Id is auto-incrementing,
+            // sorting by Id yields the same chronological order.
+            .OrderByDescending(e => e.Id)
+            .Take(limit)
+            .ToListAsync()
+            .ConfigureAwait(false);
+    }
+
     private static string HashUrl(string url)
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(url));

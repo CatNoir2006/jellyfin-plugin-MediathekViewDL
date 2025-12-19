@@ -91,4 +91,11 @@ public interface IDownloadHistoryRepository
     /// <param name="subscriptionId">The SubId.</param>
     /// <returns>The Task.</returns>
     Task RemoveBySubscriptionIdAsync(Guid subscriptionId);
+
+    /// <summary>
+    /// Gets the most recent download history entries.
+    /// </summary>
+    /// <param name="limit">The maximum number of entries to return.</param>
+    /// <returns>A collection of download history entries.</returns>
+    Task<IEnumerable<DownloadHistoryEntry>> GetRecentHistoryAsync(int limit);
 }

@@ -23,8 +23,7 @@ public class DownloadScheduledTask : IScheduledTask
     private readonly ILogger<DownloadScheduledTask> _logger;
     private readonly ILibraryManager _libraryManager;
     private readonly ISubscriptionProcessor _subscriptionProcessor;
-    private readonly IDownloadManager _downloadManager;
-    private readonly IDownloadHistoryRepository _downloadHistoryRepository;
+    private readonly IDownloadQueueManager _downloadQueueManager;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DownloadScheduledTask"/> class.
@@ -32,20 +31,17 @@ public class DownloadScheduledTask : IScheduledTask
     /// <param name="logger">The logger.</param>
     /// <param name="libraryManager">The library manager.</param>
     /// <param name="subscriptionProcessor">The subscription processor.</param>
-    /// <param name="downloadManager">The download manager.</param>
-    /// <param name="downloadHistoryRepository">The Download History Repo.</param>
+    /// <param name="downloadQueueManager">The download queue manager.</param>
     public DownloadScheduledTask(
         ILogger<DownloadScheduledTask> logger,
         ILibraryManager libraryManager,
         ISubscriptionProcessor subscriptionProcessor,
-        IDownloadManager downloadManager,
-        IDownloadHistoryRepository downloadHistoryRepository)
+        IDownloadQueueManager downloadQueueManager)
     {
         _logger = logger;
         _libraryManager = libraryManager;
         _subscriptionProcessor = subscriptionProcessor;
-        _downloadManager = downloadManager;
-        _downloadHistoryRepository = downloadHistoryRepository;
+        _downloadQueueManager = downloadQueueManager;
     }
 
     /// <summary>
@@ -63,7 +59,7 @@ public class DownloadScheduledTask : IScheduledTask
     public string Category => "Mediathek Downloader";
 
     /// <inheritdoc />
-    public string Description => "Sucht nach neuen Inhalten für Abonnements und lädt sie herunter.";
+    public string Description => "Sucht nach neuen Inhalten für Abonnements und fügt sie der Download-Warteschlange hinzu.";
 
     /// <inheritdoc />
     public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
@@ -77,7 +73,7 @@ public class DownloadScheduledTask : IScheduledTask
     {
         _logger.LogInformation("Starting Mediathek subscription download task.");
         progress.Report(0);
-        bool hasDownloadedAnyItemOverall = false;
+        bool hasQueuedAnyItemOverall = false;
 
         var config = Configuration;
         if (config == null || config.Subscriptions.Count == 0)
@@ -121,64 +117,31 @@ public class DownloadScheduledTask : IScheduledTask
                 continue;
             }
 
-            var progressPerJob = subscriptionProgressShare / numJobs;
-            var hasDownloadedAnyItem = false;
-
-            // Step 2: Execute jobs
-            for (int j = 0; j < numJobs; j++)
+            // Step 2: Queue jobs
+            foreach (var job in jobs)
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var job = jobs[j];
-                var baseProgressForJob = baseProgressForSubscription + (j * progressPerJob);
-
-                var jobProgress = new Progress<double>(p =>
-                {
-                    var itemDownloadProgress = p / 100.0 * progressPerJob;
-                    progress.Report(baseProgressForJob + itemDownloadProgress);
-                });
-
-                if (await _downloadManager.ExecuteJobAsync(job, jobProgress, cancellationToken).ConfigureAwait(false))
-                {
-                    foreach (var download in job.DownloadItems)
-                    {
-                        if (await _downloadHistoryRepository.ExistsByUrlAndSubscriptionIdAsync(download.SourceUrl, subscription.Id).ConfigureAwait(false))
-                        {
-                            continue;
-                        }
-
-                        await _downloadHistoryRepository.AddAsync(download.SourceUrl, job.ItemId, subscription.Id, download.DestinationPath).ConfigureAwait(false);
-                    }
-
-                    hasDownloadedAnyItem = true;
-                }
-
-                progress.Report(baseProgressForJob + progressPerJob);
+                _downloadQueueManager.QueueJob(job, subscription.Id);
             }
 
-            if (hasDownloadedAnyItem)
-            {
-                hasDownloadedAnyItemOverall = true;
-                subscription.LastDownloadedTimestamp = DateTime.UtcNow;
-            }
+            subscription.LastDownloadedTimestamp = DateTime.UtcNow;
+            hasQueuedAnyItemOverall = true;
+
+            progress.Report(baseProgressForSubscription + subscriptionProgressShare);
         }
 
         // Save the new timestamp
         config.LastRun = newLastRun;
         Plugin.Instance?.UpdateConfiguration(config);
 
-        // Trigger library scans
-        if (config.ScanLibraryAfterDownload && hasDownloadedAnyItemOverall)
+        // Trigger library scans - Note: This might trigger BEFORE downloads are finished
+        // but since it's a queued background process, we just queue the scan too.
+        if (config.ScanLibraryAfterDownload && hasQueuedAnyItemOverall)
         {
-            _logger.LogInformation("Triggering library scan");
+            _logger.LogInformation("Triggering library scan (queued items).");
             _libraryManager.QueueLibraryScan();
-        }
-        else
-        {
-            _logger.LogInformation("Library scan skipped (configured in settings).");
         }
 
         progress.Report(100);
-        _logger.LogInformation("Mediathek subscription download task finished.");
+        _logger.LogInformation("Mediathek subscription discovery task finished. Jobs are in the download queue.");
     }
 }

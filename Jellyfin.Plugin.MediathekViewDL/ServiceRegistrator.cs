@@ -51,6 +51,7 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddTransient<IFileDownloader, FileDownloader>();
             serviceCollection.AddTransient<ISubscriptionProcessor, SubscriptionProcessor>();
             serviceCollection.AddTransient<IDownloadManager, DownloadManager>();
+            serviceCollection.AddSingleton<IDownloadQueueManager, DownloadQueueManager>();
             serviceCollection.AddSingleton<IStrmValidationService, StrmValidationService>();
             serviceCollection.AddTransient<INfoService, NfoService>();
         }

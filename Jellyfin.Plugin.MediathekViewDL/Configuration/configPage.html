@@ -27,6 +27,10 @@
                     <span class="material-icons subscriptions" aria-hidden="true"></span>
                     <span>Abo Verwaltung</span>
                 </button>
+                <button type="button" class="paper-icon-button-light" id="mvpl-btn-tab-downloads" role="tab" aria-selected="false" aria-controls="tab-downloads">
+                    <span class="material-icons file_download" aria-hidden="true"></span>
+                    <span>Downloads</span>
+                </button>
             </div>
 
             <!-- TAB 1: Search -->
@@ -389,6 +393,24 @@
                 </div>
             </div>
 
+            <!-- TAB 4: Downloads -->
+            <div id="tab-downloads" class="mvpl-tab-content" role="tabpanel" aria-labelledby="mvpl-btn-tab-downloads" style="display:none;">
+                <div class="verticalSection">
+                    <div class="sectionTitleLabel">Aktive Downloads</div>
+                    <p class="sectionDescription">Hier werden aktuell laufende und geplante Downloads angezeigt. Die Liste wird automatisch aktualisiert.</p>
+                    <div id="activeDownloadsList" class="paperList mvpl-margin-top-20">
+                        <!-- Liste der aktiven Downloads -->
+                    </div>
+                </div>
+                <div class="verticalSection mvpl-margin-top-20">
+                    <div class="sectionTitleLabel">Download Verlauf</div>
+                    <p class="sectionDescription">Zuletzt erfolgreich abgeschlossene Downloads.</p>
+                    <div id="downloadHistoryList" class="paperList mvpl-margin-top-20">
+                        <!-- Liste des Verlaufs -->
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -675,7 +697,7 @@
                     }).then((result) => {
                         // noinspection JSUnresolvedReference
                         Dashboard.hideLoadingMsg();
-                        this.config.showToast("Download für '" + item.title + "' gestartet.");
+                        this.config.showToast("Download für '" + item.title + "' in Warteschlange.");
                     }).catch((err) => {
                         // noinspection JSUnresolvedReference
                         Dashboard.hideLoadingMsg();
@@ -700,6 +722,151 @@
                         AllowAudioDescription: false
                     };
                     this.config.subscriptionEditor.show(newSub);
+                }
+            }
+
+            class DownloadsController {
+                constructor(config) {
+                    this.config = config;
+                    this.dom = config.dom;
+                    this.pollInterval = null;
+                    this.statusMapping = {
+                        'Queued': { text: 'Warteschlange', color: '#888' }, // Queued
+                        'Downloading': { text: 'Laden...', color: '#00a4dc' }, // Downloading
+                        'Processing': { text: 'Verarbeiten...', color: '#00a4dc' }, // Processing
+                        'Finished': { text: 'Fertig', color: '#4CAF50' }, // Finished
+                        'Failed': { text: 'Fehler', color: '#F44336' }, // Failed
+                        'Cancelled': { text: 'Abgebrochen', color: '#FF9800' } // Cancelled
+                    };
+                }
+
+                init() {
+                    // Initial load handled by switchTab
+                }
+
+                startPolling() {
+                    this.stopPolling();
+                    this.refreshData();
+                    this.pollInterval = setInterval(() => this.refreshData(), 3000);
+                }
+
+                stopPolling() {
+                    if (this.pollInterval) {
+                        clearInterval(this.pollInterval);
+                        this.pollInterval = null;
+                    }
+                }
+
+                refreshData() {
+                    this.fetchActive();
+                    this.fetchHistory();
+                }
+
+                fetchActive() {
+                    const url = ApiClient.getUrl('/' + this.config.pluginName + '/Downloads/Active');
+                    ApiClient.getJSON(url).then((downloads) => {
+                        this.renderActive(downloads);
+                    }).catch((err) => {
+                        console.error("Error fetching active downloads", err);
+                    });
+                }
+
+                fetchHistory() {
+                    const url = ApiClient.getUrl('/' + this.config.pluginName + '/Downloads/History?limit=20');
+                    ApiClient.getJSON(url).then((history) => {
+                        this.renderHistory(history);
+                    }).catch((err) => {
+                        console.error("Error fetching download history", err);
+                    });
+                }
+
+                renderActive(downloads) {
+                    const container = document.getElementById('activeDownloadsList');
+                    container.textContent = "";
+
+                    if (!downloads || downloads.length === 0) {
+                        const noRes = document.createElement('p');
+                        noRes.textContent = "Keine aktiven Downloads.";
+                        container.appendChild(noRes);
+                        return;
+                    }
+
+                    downloads.forEach((dl) => {
+                        const statusInfo = this.statusMapping[dl.Status] || { text: 'Unbekannt', color: '#fff' };
+                        const progress = Math.round(dl.Progress || 0);
+
+                        const actions = document.createElement('div');
+                        actions.classList.add('flex-gap-10');
+
+                        // Show cancel button only if not finished/failed/cancelled
+                        if (dl.Status < 3) {
+                             actions.appendChild(this.dom.createIconButton('cancel', 'Abbrechen', () => this.cancelDownload(dl.Id)));
+                        }
+
+                        const statusBadge = document.createElement('span');
+                        statusBadge.textContent = statusInfo.text;
+                        statusBadge.style.backgroundColor = statusInfo.color;
+                        statusBadge.style.padding = '2px 6px';
+                        statusBadge.style.borderRadius = '3px';
+                        statusBadge.style.fontSize = '0.8em';
+                        statusBadge.style.marginLeft = '10px';
+
+                        const body1 = document.createElement('div');
+                        body1.classList.add('flex-align-center');
+                        body1.appendChild(document.createTextNode('Fortschritt: ' + progress + '%'));
+                        body1.appendChild(statusBadge);
+
+                        if (dl.ErrorMessage) {
+                             const errorText = document.createElement('div');
+                             errorText.style.color = '#F44336';
+                             errorText.style.fontSize = '0.85em';
+                             errorText.style.marginTop = '4px';
+                             errorText.textContent = dl.ErrorMessage;
+                             body1.appendChild(errorText);
+                        }
+
+                        const createdAt = new Date(dl.CreatedAt).toLocaleString();
+                        const body2 = 'Hinzugefügt: ' + createdAt + (dl.SubscriptionId === '00000000-0000-0000-0000-000000000000' ? ' (Manuell)' : ' (Abo)');
+
+                        container.appendChild(this.config.createListItem(dl.Job.Title, body1, body2, actions));
+                    });
+                }
+
+                renderHistory(history) {
+                    const container = document.getElementById('downloadHistoryList');
+                    container.textContent = "";
+
+                    if (!history || history.length === 0) {
+                        const noRes = document.createElement('p');
+                        noRes.textContent = "Kein Verlauf verfügbar.";
+                        container.appendChild(noRes);
+                        return;
+                    }
+
+                    history.forEach((entry) => {
+                        const timestamp = new Date(entry.Timestamp).toLocaleString();
+                        const body1 = 'Pfad: ' + entry.DownloadPath;
+                        const body2 = 'Datum: ' + timestamp;
+
+                        container.appendChild(this.config.createListItem(entry.ItemId, body1, body2, null));
+                        // Wait, ItemId as Title is not great. ResultItem Title is better but not in history.
+                        // Let's use the filename from the path as title.
+                        const fileName = entry.DownloadPath.split(/[\\\/]/).pop();
+                        container.lastChild.querySelector('.listItemBodyText').textContent = fileName;
+                    });
+                }
+
+                cancelDownload(id) {
+                    const url = ApiClient.getUrl('/' + this.config.pluginName + '/Downloads/' + id);
+                    ApiClient.ajax({
+                        type: "DELETE",
+                        url: url
+                    }).then(() => {
+                        this.config.showToast("Abbruch angefordert.");
+                        this.refreshData();
+                    }).catch((err) => {
+                        this.config.showToast("Fehler beim Abbrechen: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                    });
                 }
             }
 
@@ -985,6 +1152,7 @@
                     this.pluginName = "MediathekViewDL";
                     this.dom = new DomHelper();
                     this.searchController = new SearchController(this);
+                    this.downloadsController = new DownloadsController(this);
                     this.dependencyManager = new DependencyManager();
                     this.currentConfig = null;
                     this.currentItemForAdvancedDl = null;
@@ -1121,6 +1289,12 @@
                     if (selectedBtn) {
                         selectedBtn.classList.add('selected');
                         selectedBtn.setAttribute('aria-selected', 'true');
+                    }
+
+                    if (tabId === 'downloads') {
+                        this.downloadsController.startPolling();
+                    } else {
+                        this.downloadsController.stopPolling();
                     }
                 }
 
@@ -1504,6 +1678,7 @@
                     document.getElementById('mvpl-btn-tab-search').addEventListener('click', () => this.switchTab('search'));
                     document.getElementById('mvpl-btn-tab-settings').addEventListener('click', () => this.switchTab('settings'));
                     document.getElementById('mvpl-btn-tab-subscriptions').addEventListener('click', () => this.switchTab('subscriptions'));
+                    document.getElementById('mvpl-btn-tab-downloads').addEventListener('click', () => this.switchTab('downloads'));
 
                     // Main Config Form
                     document.getElementById('MediathekGeneralConfigForm').addEventListener('submit', (e) => {
