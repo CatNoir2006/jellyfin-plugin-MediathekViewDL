@@ -38,6 +38,7 @@ namespace Jellyfin.Plugin.MediathekViewDL
             });
 
             serviceCollection.AddSingleton<DatabaseMigrator>();
+            serviceCollection.AddHostedService<MigrationHostedService>();
             serviceCollection.AddSingleton<IQualityCacheRepository, DbQualityCacheRepository>();
             serviceCollection.AddSingleton<IDownloadHistoryRepository, DbDownloadHistoryRepository>();
 

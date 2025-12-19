@@ -15,17 +15,14 @@ namespace Jellyfin.Plugin.MediathekViewDL.Data;
 public class DbDownloadHistoryRepository : IDownloadHistoryRepository
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly DatabaseMigrator _migrator;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DbDownloadHistoryRepository"/> class.
     /// </summary>
     /// <param name="scopeFactory">The service scope factory.</param>
-    /// <param name="migrator">The database migrator.</param>
-    public DbDownloadHistoryRepository(IServiceScopeFactory scopeFactory, DatabaseMigrator migrator)
+    public DbDownloadHistoryRepository(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
-        _migrator = migrator;
     }
 
     /// <inheritdoc />
@@ -34,13 +31,11 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
 
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
-
-        DownloadHistoryEntry entry = new DownloadHistoryEntry
+        var entry = new DownloadHistoryEntry
         {
-            VideoUrlHash = HashUrl(videoUrl),
-            VideoUrl = videoUrl,
             ItemId = itemId,
+            VideoUrl = videoUrl,
+            VideoUrlHash = HashUrl(videoUrl),
             SubscriptionId = subscriptionId,
             Timestamp = DateTimeOffset.UtcNow,
             DownloadPath = downloadPath,
@@ -57,8 +52,6 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
 
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
-
         var hash = HashUrl(videoUrl);
         return await context.DownloadHistory
             .AsNoTracking()
@@ -72,8 +65,6 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
 
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
-
         return await context.DownloadHistory
             .AsNoTracking()
             .AnyAsync(e => e.ItemId == itemId)
@@ -85,8 +76,6 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
     {
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
-
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
 
         var hash = HashUrl(videoUrl);
         return await context.DownloadHistory
@@ -101,8 +90,6 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
 
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
-
         return await context.DownloadHistory
             .AsNoTracking()
             .AnyAsync(e => e.ItemId == itemId && e.SubscriptionId == subscriptionId)
@@ -115,8 +102,6 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
 
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
-
         return await context.DownloadHistory
             .AsNoTracking()
             .AnyAsync(e => e.VideoUrlHash == videoUrlHash)
@@ -128,8 +113,6 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
     {
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
-
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
 
         var hash = HashUrl(videoUrl);
         return await context.DownloadHistory
@@ -144,8 +127,6 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
 
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
-
         return await context.DownloadHistory
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.ItemId == itemId && e.SubscriptionId == subscriptionId)
@@ -158,8 +139,6 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
 
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
-
         return await context.DownloadHistory
             .AsNoTracking()
             .FirstOrDefaultAsync(e => e.ItemId == itemId)
@@ -171,8 +150,6 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
     {
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
-
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
 
         var hash = HashUrl(videoUrl);
         return await context.DownloadHistory
@@ -187,8 +164,6 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
 
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
-
         return await context.DownloadHistory
             .AsNoTracking()
             .Where(e => e.SubscriptionId == subscriptionId)
@@ -202,8 +177,6 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
 
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
-
         // ExecuteDeleteAsync is more efficient in EF Core 7+ (available in .NET 9)
         await context.DownloadHistory
             .Where(e => e.SubscriptionId == subscriptionId)
@@ -216,8 +189,6 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
     {
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
-
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
 
         return await context.DownloadHistory
             .AsNoTracking()

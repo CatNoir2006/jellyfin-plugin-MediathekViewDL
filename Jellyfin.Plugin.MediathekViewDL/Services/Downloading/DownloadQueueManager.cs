@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using MediaBrowser.Controller.Library;
@@ -17,11 +18,12 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
 {
     private readonly ConcurrentDictionary<Guid, ActiveDownload> _activeDownloads = new();
-    private readonly ConcurrentQueue<ActiveDownload> _queue = new();
+    private readonly Channel<ActiveDownload> _queueChannel;
     private readonly SemaphoreSlim _concurrencySemaphore = new(2); // Limit to 2 concurrent downloads
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<DownloadQueueManager> _logger;
     private readonly CancellationTokenSource _shutdownCts = new();
+    private readonly Task _queueProcessor;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DownloadQueueManager"/> class.
@@ -34,6 +36,8 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _queueChannel = Channel.CreateUnbounded<ActiveDownload>();
+        _queueProcessor = Task.Run(ProcessQueueAsync);
     }
 
     /// <inheritdoc />
@@ -45,9 +49,16 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
 
         if (_activeDownloads.TryAdd(activeDownload.Id, activeDownload))
         {
-            _queue.Enqueue(activeDownload);
-            _logger.LogInformation("Queued download job '{Title}' (ID: {Id}).", job.Title, activeDownload.Id);
-            _ = ProcessQueueAsync();
+            if (_queueChannel.Writer.TryWrite(activeDownload))
+            {
+                _logger.LogInformation("Queued download job '{Title}' (ID: {Id}).", job.Title, activeDownload.Id);
+            }
+            else
+            {
+                _logger.LogError("Failed to write download job '{Title}' (ID: {Id}) to channel.", job.Title, activeDownload.Id);
+                activeDownload.Status = DownloadStatus.Failed;
+                activeDownload.ErrorMessage = "Internal error: Queue full or closed.";
+            }
         }
     }
 
@@ -108,43 +119,52 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
 
     private async Task ProcessQueueAsync()
     {
-        while (!_shutdownCts.IsCancellationRequested && _queue.TryPeek(out _))
+        try
         {
-            await _concurrencySemaphore.WaitAsync(_shutdownCts.Token).ConfigureAwait(false);
-
-            if (_queue.TryDequeue(out var download))
+            while (await _queueChannel.Reader.WaitToReadAsync(_shutdownCts.Token).ConfigureAwait(false))
             {
-                // Verify it hasn't been cancelled while in queue
-                if (download.Status == DownloadStatus.Cancelled)
+                while (_queueChannel.Reader.TryRead(out var download))
                 {
-                    _concurrencySemaphore.Release();
-                    continue;
-                }
-
-                _ = Task.Run(
-                    async () =>
+                    if (download.Status == DownloadStatus.Cancelled)
                     {
-                        try
+                        continue;
+                    }
+
+                    await _concurrencySemaphore.WaitAsync(_shutdownCts.Token).ConfigureAwait(false);
+
+                    if (download.Status == DownloadStatus.Cancelled)
+                    {
+                        _concurrencySemaphore.Release();
+                        continue;
+                    }
+
+                    _ = Task.Run(
+                        async () =>
                         {
-                            await ExecuteDownloadAsync(download).ConfigureAwait(false);
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Error executing download job '{Title}' (ID: {Id}).", download.Job.Title, download.Id);
-                        }
-                        finally
-                        {
-                            _concurrencySemaphore.Release();
-                            // Trigger next check
-                            _ = ProcessQueueAsync();
-                        }
-                    },
-                    _shutdownCts.Token);
+                            try
+                            {
+                                await ExecuteDownloadAsync(download).ConfigureAwait(false);
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger.LogError(ex, "Error executing download job '{Title}' (ID: {Id}).", download.Job.Title, download.Id);
+                            }
+                            finally
+                            {
+                                _concurrencySemaphore.Release();
+                            }
+                        },
+                        _shutdownCts.Token);
+                }
             }
-            else
-            {
-                _concurrencySemaphore.Release();
-            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Ignore
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in download queue loop.");
         }
     }
 

@@ -748,7 +748,8 @@
                 constructor(config) {
                     this.config = config;
                     this.dom = config.dom;
-                    this.pollInterval = null;
+                    this.pollTimeout = null;
+                    this.isPolling = false;
                     this.statusMapping = {
                         'Queued': { text: 'Warteschlange' }, // Queued
                         'Downloading': { text: 'Herunterladen...' }, // Downloading
@@ -765,25 +766,34 @@
 
                 startPolling() {
                     this.stopPolling();
-                    this.refreshData();
-                    this.pollInterval = setInterval(() => this.refreshData(), 3000);
+                    this.poll();
                 }
 
                 stopPolling() {
-                    if (this.pollInterval) {
-                        clearInterval(this.pollInterval);
-                        this.pollInterval = null;
+                    if (this.pollTimeout) {
+                        clearTimeout(this.pollTimeout);
+                        this.pollTimeout = null;
                     }
+                    this.isPolling = false;
+                }
+
+                poll() {
+                    this.isPolling = true;
+                    this.refreshData().finally(() => {
+                        if (this.isPolling) {
+                            this.pollTimeout = setTimeout(() => this.poll(), 3000);
+                        }
+                    });
                 }
 
                 refreshData() {
-                    this.fetchActive();
-                    this.fetchHistory();
+                    // Return a promise that resolves when both requests are done
+                    return Promise.all([this.fetchActive(), this.fetchHistory()]);
                 }
 
                 fetchActive() {
                     const url = ApiClient.getUrl('/' + this.config.pluginName + '/Downloads/Active');
-                    ApiClient.getJSON(url).then((downloads) => {
+                    return ApiClient.getJSON(url).then((downloads) => {
                         this.renderActive(downloads);
                     }).catch((err) => {
                         console.error("Error fetching active downloads", err);
@@ -792,7 +802,7 @@
 
                 fetchHistory() {
                     const url = ApiClient.getUrl('/' + this.config.pluginName + '/Downloads/History?limit=20');
-                    ApiClient.getJSON(url).then((history) => {
+                    return ApiClient.getJSON(url).then((history) => {
                         this.renderHistory(history);
                     }).catch((err) => {
                         console.error("Error fetching download history", err);
