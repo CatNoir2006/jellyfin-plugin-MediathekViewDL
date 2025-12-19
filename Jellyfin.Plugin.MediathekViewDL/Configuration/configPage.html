@@ -582,6 +582,25 @@
                 }
             }
 
+            class StringHelper {
+                /**
+                 * Sanitizes a string to be safe for use as a filename.
+                 * @param {string} input - The input string.
+                 * @returns {string} The sanitized filename.
+                 */
+                static sanitizeForFilename(input) {
+                    return input.replace(/[\/\\?%*:|"<>]/g, '_').trim();
+                }
+
+                /**
+                 * Checks if a string is null, undefined, or consists only of whitespace.
+                 * @param {string} input - The input string.
+                 * @returns {boolean} True if null/whitespace, false otherwise.
+                 */
+                static isNullOrWhitespace(input) {
+                    return !input || !input.trim?.();
+                }
+            }
             /**
              * Handles search operations.
              */
@@ -825,7 +844,8 @@
                         }
 
                         const createdAt = new Date(dl.CreatedAt).toLocaleString();
-                        const body2 = 'Hinzugefügt: ' + createdAt + (dl.SubscriptionId === '00000000-0000-0000-0000-000000000000' ? ' (Manuell)' : ' (Abo)');
+                        const downloadTrigger = StringHelper.isNullOrWhitespace(dl.SubscriptionId) ? ' (Manuell)' : ' (Abo)';
+                        const body2 = 'Hinzugefügt: ' + createdAt + downloadTrigger;
 
                         container.appendChild(this.config.createListItem(dl.Job.Title, body1, body2, actions));
                     });
@@ -846,12 +866,9 @@
                         const timestamp = new Date(entry.Timestamp).toLocaleString();
                         const body1 = 'Pfad: ' + entry.DownloadPath;
                         const body2 = 'Datum: ' + timestamp;
-
-                        container.appendChild(this.config.createListItem(entry.ItemId, body1, body2, null));
-                        // Wait, ItemId as Title is not great. ResultItem Title is better but not in history.
-                        // Let's use the filename from the path as title.
                         const fileName = entry.DownloadPath.split(/[\\\/]/).pop();
-                        container.lastChild.querySelector('.listItemBodyText').textContent = fileName;
+                        const title = StringHelper.isNullOrWhitespace(entry.Title) ? fileName : entry.Title;
+                        container.appendChild(this.config.createListItem(title, body1, body2, null));
                     });
                 }
 

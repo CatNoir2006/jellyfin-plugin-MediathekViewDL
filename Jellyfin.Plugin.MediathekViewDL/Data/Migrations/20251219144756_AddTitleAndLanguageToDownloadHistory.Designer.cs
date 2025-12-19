@@ -3,6 +3,7 @@ using System;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Jellyfin.Plugin.MediathekViewDL.Data.Migrations
 {
     [DbContext(typeof(MediathekViewDlDbContext))]
-    partial class MediathekViewDlDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251219144756_AddTitleAndLanguageToDownloadHistory")]
+    partial class AddTitleAndLanguageToDownloadHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.0");
