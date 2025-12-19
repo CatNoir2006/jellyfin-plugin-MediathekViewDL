@@ -164,7 +164,9 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
                         item.SourceUrl,
                         download.Job.ItemId,
                         download.SubscriptionId ?? Guid.Empty,
-                        item.DestinationPath).ConfigureAwait(false);
+                        item.DestinationPath,
+                        download.Job.Title,
+                        download.Job.AudioLanguage).ConfigureAwait(false);
                 }
             }
             else if (download.Status != DownloadStatus.Cancelled)

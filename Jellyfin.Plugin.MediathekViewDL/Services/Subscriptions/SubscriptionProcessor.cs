@@ -232,7 +232,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 tempVideoInfo.AbsoluteEpisodeNumber);
 
             var localPath = localEpisodeCache.GetExistingFilePath(tempVideoInfo);
-            await _downloadHistoryRepository.AddAsync(string.Empty, item.Id, subscription.Id, localPath!).ConfigureAwait(false);
+            await _downloadHistoryRepository.AddAsync(string.Empty, item.Id, subscription.Id, localPath!, item.Title, tempVideoInfo.Language).ConfigureAwait(false);
             return false;
         }
 

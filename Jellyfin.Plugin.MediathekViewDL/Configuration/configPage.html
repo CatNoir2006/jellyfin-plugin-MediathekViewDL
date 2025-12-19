@@ -731,12 +731,12 @@
                     this.dom = config.dom;
                     this.pollInterval = null;
                     this.statusMapping = {
-                        'Queued': { text: 'Warteschlange', color: '#888' }, // Queued
-                        'Downloading': { text: 'Laden...', color: '#00a4dc' }, // Downloading
-                        'Processing': { text: 'Verarbeiten...', color: '#00a4dc' }, // Processing
-                        'Finished': { text: 'Fertig', color: '#4CAF50' }, // Finished
-                        'Failed': { text: 'Fehler', color: '#F44336' }, // Failed
-                        'Cancelled': { text: 'Abgebrochen', color: '#FF9800' } // Cancelled
+                        'Queued': { text: 'Warteschlange' }, // Queued
+                        'Downloading': { text: 'Herunterladen...' }, // Downloading
+                        'Processing': { text: 'Verarbeiten...'}, // Processing
+                        'Finished': { text: 'Fertig'}, // Finished
+                        'Failed': { text: 'Fehler' }, // Failed
+                        'Cancelled': { text: 'Abgebrochen' } // Cancelled
                     };
                 }
 
@@ -792,28 +792,27 @@
                     }
 
                     downloads.forEach((dl) => {
-                        const statusInfo = this.statusMapping[dl.Status] || { text: 'Unbekannt', color: '#fff' };
-                        const progress = Math.round(dl.Progress || 0);
+                        const statusInfo = this.statusMapping[dl.Status] || { text: 'Unbekannt' };
+                        const progress = dl.Status === 'Downloading' ?  Math.round(dl.Progress || 0) + '%' : '-';
 
                         const actions = document.createElement('div');
                         actions.classList.add('flex-gap-10');
 
                         // Show cancel button only if not finished/failed/cancelled
-                        if (dl.Status < 3) {
+                        if (['Queued', 'Downloading', 'Processing'].includes(dl.Status) ) {
                              actions.appendChild(this.dom.createIconButton('cancel', 'Abbrechen', () => this.cancelDownload(dl.Id)));
                         }
 
                         const statusBadge = document.createElement('span');
+                        statusBadge.classList.add('mvpl-download-status');
+                        statusBadge.setAttribute('data-status', dl.Status);
                         statusBadge.textContent = statusInfo.text;
-                        statusBadge.style.backgroundColor = statusInfo.color;
-                        statusBadge.style.padding = '2px 6px';
-                        statusBadge.style.borderRadius = '3px';
-                        statusBadge.style.fontSize = '0.8em';
-                        statusBadge.style.marginLeft = '10px';
+
+
 
                         const body1 = document.createElement('div');
                         body1.classList.add('flex-align-center');
-                        body1.appendChild(document.createTextNode('Fortschritt: ' + progress + '%'));
+                        body1.appendChild(document.createTextNode('Fortschritt: ' + progress));
                         body1.appendChild(statusBadge);
 
                         if (dl.ErrorMessage) {
@@ -1924,6 +1923,46 @@
             overflow-y: auto;
             flex-grow: 1;
             margin-bottom: 20px;
+        }
+
+        .mvpl-download-status {
+            background-color: #FFF;
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .mvpl-download-status[data-status="Queued"] {
+            background-color: #888;
+            color: black;
+        }
+
+        .mvpl-download-status[data-status="Downloading"] {
+            background-color: #00a4dc;
+            color: black;
+        }
+
+        .mvpl-download-status[data-status="Processing"] {
+            background-color: #00a4dc;
+            color: black;
+        }
+
+        .mvpl-download-status[data-status="Finished"] {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .mvpl-download-status[data-status="Failed"] {
+            background-color: #F44336;
+            color: white;
+        }
+
+        .mvpl-download-status[data-status="Cancelled"] {
+            background-color: #FF9800;
+            color: white;
         }
 
         /* Animation Classes */

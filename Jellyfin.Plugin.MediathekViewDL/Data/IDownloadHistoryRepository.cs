@@ -16,8 +16,10 @@ public interface IDownloadHistoryRepository
     /// <param name="itemId">The MediathekView Id.</param>
     /// <param name="subscriptionId">The SubId.</param>
     /// <param name="downloadPath">The Download Path.</param>
+    /// <param name="title">The Title of the Item.</param>
+    /// <param name="language">The language.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task AddAsync(string videoUrl, string itemId, Guid subscriptionId, string downloadPath);
+    Task AddAsync(string videoUrl, string itemId, Guid subscriptionId, string downloadPath, string title, string? language);
 
     /// <summary>
     /// Checks if a video URL has already been downloaded.
@@ -40,6 +42,14 @@ public interface IDownloadHistoryRepository
     /// <param name="subscriptionId">The Id of the Sub.</param>
     /// <returns>True if the video exists in history, otherwise false.</returns>
     Task<bool> ExistsByUrlAndSubscriptionIdAsync(string videoUrl, Guid subscriptionId);
+
+    /// <summary>
+    /// Gets whether a download history entry exists for the specified item ID and subscription ID.
+    /// </summary>
+    /// <param name="itemId">The Item Id.</param>
+    /// <param name="subscriptionId">The SubID.</param>
+    /// <returns>True if the video exists in history, otherwise false.</returns>
+    Task<bool> ExistsByItemIdAndSubscriptionIdAsync(string itemId, Guid subscriptionId);
 
     /// <summary>
     /// Checks if a video URL hash has already been downloaded.

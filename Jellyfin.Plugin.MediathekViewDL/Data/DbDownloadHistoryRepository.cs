@@ -29,7 +29,7 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
     }
 
     /// <inheritdoc />
-    public async Task AddAsync(string videoUrl, string itemId, Guid subscriptionId, string downloadPath)
+    public async Task AddAsync(string videoUrl, string itemId, Guid subscriptionId, string downloadPath, string title, string? language)
     {
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
@@ -44,6 +44,8 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
             SubscriptionId = subscriptionId,
             Timestamp = DateTimeOffset.UtcNow,
             DownloadPath = downloadPath,
+            Title = title,
+            Language = language ?? "deu"
         };
         context.DownloadHistory.Add(entry);
         await context.SaveChangesAsync().ConfigureAwait(false);
@@ -90,6 +92,20 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
         return await context.DownloadHistory
             .AsNoTracking()
             .AnyAsync(e => e.VideoUrlHash == hash && e.SubscriptionId == subscriptionId)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> ExistsByItemIdAndSubscriptionIdAsync(string itemId, Guid subscriptionId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
+
+        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
+
+        return await context.DownloadHistory
+            .AsNoTracking()
+            .AnyAsync(e => e.ItemId == itemId && e.SubscriptionId == subscriptionId)
             .ConfigureAwait(false);
     }
 
