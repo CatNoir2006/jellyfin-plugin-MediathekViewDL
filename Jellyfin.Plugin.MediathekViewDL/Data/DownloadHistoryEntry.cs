@@ -32,6 +32,7 @@ public class DownloadHistoryEntry
     /// Gets or sets the hash of the video URL.
     /// </summary>
     [Required]
+    [MaxLength(64)]
     public string VideoUrlHash { get; set; } = string.Empty;
 
     /// <summary>
@@ -43,6 +44,18 @@ public class DownloadHistoryEntry
     /// Gets or sets the item identifier from the provider.
     /// </summary>
     public string ItemId { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the title of the downloaded item.
+    /// </summary>
+    [MaxLength(100)]
+    public string Title { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the language code of the downloaded item.
+    /// </summary>
+    [MaxLength(3)]
+    public string Language { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the timestamp when the download was recorded.
