@@ -19,7 +19,7 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
 {
     private readonly ConcurrentDictionary<Guid, ActiveDownload> _activeDownloads = new();
     private readonly Channel<ActiveDownload> _queueChannel;
-    private readonly SemaphoreSlim _concurrencySemaphore = new(2); // Limit to 2 concurrent downloads
+    private readonly SemaphoreSlim _concurrencySemaphore = new(1, 1); // Limit to 1 concurrent download
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<DownloadQueueManager> _logger;
     private readonly CancellationTokenSource _shutdownCts = new();
