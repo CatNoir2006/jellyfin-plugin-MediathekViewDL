@@ -308,7 +308,7 @@ public class DownloadManager : IDownloadManager
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Could not create temp directory in destination '{DestDir}'. Falling back to system temp.", tempDir);
+                        _logger.LogError(ex, "Could not create temp directory '{TempDir}'. Falling back to system temp.", tempDir);
                         tempDir = null;
                     }
                 }
