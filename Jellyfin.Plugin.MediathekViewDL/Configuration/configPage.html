@@ -854,21 +854,17 @@
                         }
 
                         const createdAt = new Date(dl.CreatedAt).toLocaleString();
-                        
+
                         let downloadTrigger = ' (Manuell)';
                         if (!StringHelper.isNullOrWhitespace(dl.SubscriptionId)) {
-                             const subId = dl.SubscriptionId;
-                             const sub = this.config.currentConfig && this.config.currentConfig.Subscriptions 
-                                         ? this.config.currentConfig.Subscriptions.find(s => s.Id === subId) 
-                                         : null;
-                             
-                             if (sub) {
-                                 downloadTrigger = ' (Abo: ' + sub.Name + ')';
-                             } else {
-                                 downloadTrigger = ' (Abo)';
-                             }
+                            const sub = this.config.currentConfig?.Subscriptions?.find(s => s.Id === dl.SubscriptionId);
+                            if (sub) {
+                                downloadTrigger = ' (Abo: ' + sub.Name + ')'
+                            } else {
+                                downloadTrigger = ' (Abo)';
+                            }
                         }
-                        
+
                         const body2 = 'Hinzugefügt: ' + createdAt + downloadTrigger;
 
                         container.appendChild(this.config.createListItem(dl.Job.Title, body1, body2, actions));
@@ -891,18 +887,13 @@
                         const body1 = 'Pfad: ' + entry.DownloadPath;
 
                         let downloadTrigger = ' (Manuell)';
-                        // Check for valid SubscriptionId (not null/empty and not Guid.Empty string)
-                        if (entry.SubscriptionId && entry.SubscriptionId !== "00000000-0000-0000-0000-000000000000") {
-                             const subId = entry.SubscriptionId;
-                             const sub = this.config.currentConfig && this.config.currentConfig.Subscriptions 
-                                         ? this.config.currentConfig.Subscriptions.find(s => s.Id === subId) 
-                                         : null;
-                             
-                             if (sub) {
-                                 downloadTrigger = ' (Abo: ' + sub.Name + ')';
-                             } else {
-                                 downloadTrigger = ' (Abo)';
-                             }
+                        if (!StringHelper.isNullOrWhitespace(entry.SubscriptionId)) {
+                            const sub = this.config.currentConfig?.Subscriptions?.find(s => s.Id === entry.SubscriptionId);
+                            if (sub) {
+                                downloadTrigger = ' (Abo: ' + sub.Name + ')';
+                            } else {
+                                downloadTrigger = ' (Abo)';
+                            }
                         }
 
                         const body2 = 'Datum: ' + timestamp + downloadTrigger;

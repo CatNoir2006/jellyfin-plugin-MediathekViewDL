@@ -50,7 +50,7 @@ public class FileNameBuilderService : IFileNameBuilderService
             return paths; // Return empty paths object
         }
 
-        paths.MainType = GetTagetMainType(videoInfo, subscription);
+        paths.MainType = GetTargetMainType(videoInfo, subscription);
 
         paths.DirectoryPath = targetDirectory;
         var mainFile = BuildFileName(videoInfo, subscription, paths.MainType);
@@ -227,7 +227,7 @@ public class FileNameBuilderService : IFileNameBuilderService
         return targetPath;
     }
 
-    private FileType GetTagetMainType(VideoInfo videoInfo, Subscription subscription)
+    private FileType GetTargetMainType(VideoInfo videoInfo, Subscription subscription)
     {
         bool useStrm = subscription.UseStreamingUrlFiles || (subscription is { SaveExtrasAsStrm: true, TreatNonEpisodesAsExtras: true } && !videoInfo.IsShow);
         if (useStrm)
