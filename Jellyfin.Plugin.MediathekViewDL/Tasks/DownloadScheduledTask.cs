@@ -60,7 +60,7 @@ public class DownloadScheduledTask : IScheduledTask
     public IEnumerable<TaskTriggerInfo> GetDefaultTriggers()
     {
         // Run every 6 hours
-        yield return new TaskTriggerInfo { Type = TaskTriggerInfo.TriggerInterval, IntervalTicks = TimeSpan.FromHours(6).Ticks };
+        yield return new TaskTriggerInfo { Type = TaskTriggerInfoType.IntervalTrigger, IntervalTicks = TimeSpan.FromHours(6).Ticks };
     }
 
     /// <inheritdoc />

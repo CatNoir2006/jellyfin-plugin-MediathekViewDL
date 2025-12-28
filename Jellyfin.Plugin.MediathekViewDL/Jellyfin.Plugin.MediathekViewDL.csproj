@@ -17,10 +17,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Jellyfin.Controller" Version="10.9.11">
+    <PackageReference Include="Jellyfin.Controller" Version="10.11.0">
       <ExcludeAssets>$(PluginDependencyExcludeAssets)</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Jellyfin.Model" Version="10.9.11">
+    <PackageReference Include="Jellyfin.Model" Version="10.11.0">
       <ExcludeAssets>$(PluginDependencyExcludeAssets)</ExcludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
@@ -31,6 +31,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0">
       <ExcludeAssets>$(PluginDependencyExcludeAssets)</ExcludeAssets>
     </PackageReference>
+    <PackageReference Include="Polly" Version="8.6.4" />
   </ItemGroup>
 
   <ItemGroup>

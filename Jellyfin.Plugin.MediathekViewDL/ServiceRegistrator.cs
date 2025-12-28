@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Net.Http;
 using Jellyfin.Plugin.MediathekViewDL.Api;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services;
@@ -22,7 +24,11 @@ namespace Jellyfin.Plugin.MediathekViewDL
         /// <inheritdoc />
         public void RegisterServices(IServiceCollection serviceCollection, IServerApplicationHost applicationHost)
         {
-            serviceCollection.AddHttpClient(); // Required for FileDownloader
+            // Register a named client for FileDownloader
+            serviceCollection.AddHttpClient("FileDownloaderClient");
+
+            // Register the typed client for API
+            serviceCollection.AddHttpClient<IMediathekViewApiClient, MediathekViewApiClient>();
 
             // Database
             serviceCollection.AddDbContext<MediathekViewDlDbContext>(options =>
@@ -46,7 +52,7 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddSingleton<IVideoParser, VideoParser>();
             serviceCollection.AddSingleton<IFileNameBuilderService, FileNameBuilderService>();
             serviceCollection.AddSingleton<ILocalMediaScanner, LocalMediaScanner>();
-            serviceCollection.AddTransient<IMediathekViewApiClient, MediathekViewApiClient>();
+            // IMediathekViewApiClient is already registered via AddHttpClient above
             serviceCollection.AddTransient<MediathekViewDlApiService>();
             serviceCollection.AddTransient<IFFmpegService, FFmpegService>();
             serviceCollection.AddTransient<IFileDownloader, FileDownloader>();

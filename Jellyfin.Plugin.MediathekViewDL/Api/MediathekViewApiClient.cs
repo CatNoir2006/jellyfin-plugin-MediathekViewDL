@@ -8,6 +8,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
 using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.CircuitBreaker;
+using Polly.Retry;
+using Polly.Wrap;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Api;
 
@@ -17,18 +21,27 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api;
 public class MediathekViewApiClient : IMediathekViewApiClient
 {
     private const string ApiUrl = "https://mediathekviewweb.de/api/query";
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly HttpClient _httpClient;
     private readonly ILogger<MediathekViewApiClient> _logger;
     private readonly JsonSerializerOptions _jsonSerializerOptions;
+
+    private static readonly AsyncPolicy<HttpResponseMessage> _resiliencePolicy = Policy
+        .Handle<HttpRequestException>()
+        .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500 || r.StatusCode == System.Net.HttpStatusCode.RequestTimeout)
+        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)))
+        .WrapAsync(Policy
+            .Handle<HttpRequestException>()
+            .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500 || r.StatusCode == System.Net.HttpStatusCode.RequestTimeout)
+            .CircuitBreakerAsync(5, TimeSpan.FromSeconds(30)));
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekViewApiClient"/> class.
     /// </summary>
-    /// <param name="httpClientFactory">The http client factory.</param>
+    /// <param name="httpClient">The http client.</param>
     /// <param name="logger">The logger.</param>
-    public MediathekViewApiClient(IHttpClientFactory httpClientFactory, ILogger<MediathekViewApiClient> logger)
+    public MediathekViewApiClient(HttpClient httpClient, ILogger<MediathekViewApiClient> logger)
     {
-        _httpClientFactory = httpClientFactory;
+        _httpClient = httpClient;
         _logger = logger;
         _jsonSerializerOptions = new JsonSerializerOptions
         {
@@ -78,12 +91,13 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     {
         try
         {
-            var httpClient = _httpClientFactory.CreateClient();
             var json = JsonSerializer.Serialize(apiQuery);
             _logger.LogDebug("Performing API search with payload: {Json}", json);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await httpClient.PostAsync(ApiUrl, content, cancellationToken).ConfigureAwait(false);
+            var response = await _resiliencePolicy.ExecuteAsync(
+                async ct => await _httpClient.PostAsync(ApiUrl, content, ct).ConfigureAwait(false),
+                cancellationToken).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
