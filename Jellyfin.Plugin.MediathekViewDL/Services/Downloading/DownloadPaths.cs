@@ -1,4 +1,4 @@
-using System.IO;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 
@@ -23,17 +23,17 @@ public class DownloadPaths
     public string SubtitleFilePath { get; set; } = null!;
 
     /// <summary>
-    /// Gets or sets the full path for the streaming (.strm) file.
-    /// </summary>
-    public string StrmFilePath { get; set; } = null!;
-
-    /// <summary>
     /// Gets or sets the full path for the NFO metadata file.
     /// </summary>
     public string NfoFilePath { get; set; } = null!;
 
     /// <summary>
+    /// Gets or sets the File Type of the Main File Path.
+    /// </summary>
+    public FileType MainType { get; set; } = FileType.Video;
+
+    /// <summary>
     /// Gets a value indicating whether the paths are valid.
     /// </summary>
-    public bool IsValid => !string.IsNullOrWhiteSpace(DirectoryPath) && (!string.IsNullOrWhiteSpace(MainFilePath) || !string.IsNullOrWhiteSpace(StrmFilePath));
+    public bool IsValid => !string.IsNullOrWhiteSpace(DirectoryPath) && (!string.IsNullOrWhiteSpace(MainFilePath));
 }

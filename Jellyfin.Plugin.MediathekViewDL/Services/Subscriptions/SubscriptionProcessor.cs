@@ -115,39 +115,59 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             // Video/Main Job
             var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo!.Title, AudioLanguage = tempVideoInfo.Language };
 
-            bool useStrmForThisItem = subscription.UseStreamingUrlFiles || (subscription is { SaveExtrasAsStrm: true, TreatNonEpisodesAsExtras: true } && !tempVideoInfo.IsShow);
-
-            if (useStrmForThisItem)
+            switch (paths.MainType)
             {
-                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.StrmFilePath, JobType = DownloadType.StreamingUrl });
-            }
-            else if (tempVideoInfo.Language == "deu" || subscription.DownloadFullVideoForSecondaryAudio)
-            {
-                // Resolve the file path to check for existence/quality.
-                string? existingFilePath = localEpisodeCache?.GetExistingFilePath(tempVideoInfo);
-
-                // If not in cache, check the standard path
-                if (string.IsNullOrEmpty(existingFilePath) && File.Exists(paths.MainFilePath))
-                {
-                    existingFilePath = paths.MainFilePath;
-                }
-
-                if (!string.IsNullOrEmpty(existingFilePath) && File.Exists(existingFilePath))
-                {
-                    var upgradeItem = await CreateQualityUpgradeItemIfAvailable(subscription, existingFilePath, videoUrl, paths.MainFilePath, cancellationToken).ConfigureAwait(false);
-                    if (upgradeItem != null)
+                case FileType.Strm:
+                    // Quality Upgrade is only available for Video
+                    if (localEpisodeCache?.Contains(tempVideoInfo) == true || await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false))
                     {
-                        downloadJob.DownloadItems.Add(upgradeItem);
+                        continue;
                     }
-                }
-                else
-                {
-                    downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.DirectDownload });
-                }
-            }
-            else
-            {
-                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.AudioExtraction });
+
+                    downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.StreamingUrl });
+                    break;
+                case FileType.Video:
+                    // Resolve the file path to check for existence/quality.
+                    string? existingFilePath = localEpisodeCache?.GetExistingFilePath(tempVideoInfo);
+
+                    // If not in cache, check the standard path
+                    if (string.IsNullOrEmpty(existingFilePath) && File.Exists(paths.MainFilePath))
+                    {
+                        existingFilePath = paths.MainFilePath;
+                    }
+
+                    if (!string.IsNullOrEmpty(existingFilePath) && File.Exists(existingFilePath))
+                    {
+                        var upgradeItem = await CreateQualityUpgradeItemIfAvailable(subscription, existingFilePath, videoUrl, paths.MainFilePath, cancellationToken).ConfigureAwait(false);
+                        if (upgradeItem != null)
+                        {
+                            downloadJob.DownloadItems.Add(upgradeItem);
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+                    else
+                    {
+                        downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.DirectDownload });
+                    }
+
+                    break;
+                case FileType.Audio:
+                    // Quality Upgrade is only available for Video
+                    if (localEpisodeCache?.Contains(tempVideoInfo) == true || await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false))
+                    {
+                        continue;
+                    }
+
+                    downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.AudioExtraction });
+                    break;
+                // Subtitles are downloaded separately.
+                case FileType.Subtitle:
+                default:
+                    _logger.LogError("Unknown file type '{FileType}'.", paths.MainType);
+                    break;
             }
 
             jobs.Add(downloadJob);

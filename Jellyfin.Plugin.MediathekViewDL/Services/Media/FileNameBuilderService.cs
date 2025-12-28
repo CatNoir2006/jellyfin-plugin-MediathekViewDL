@@ -50,11 +50,14 @@ public class FileNameBuilderService : IFileNameBuilderService
             return paths; // Return empty paths object
         }
 
+        paths.MainType = GetTagetMainType(videoInfo, subscription);
+
         paths.DirectoryPath = targetDirectory;
-        paths.MainFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, subscription, false));
-        paths.SubtitleFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, subscription, true));
-        paths.StrmFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, subscription, false, true));
+        var mainFile = BuildFileName(videoInfo, subscription, paths.MainType);
+        paths.MainFilePath = Path.Combine(paths.DirectoryPath, mainFile);
+        paths.SubtitleFilePath = Path.Combine(targetDirectory, BuildFileName(videoInfo, subscription, FileType.Subtitle));
         paths.NfoFilePath = Path.ChangeExtension(paths.MainFilePath, ".nfo");
+
         return paths;
     }
 
@@ -113,28 +116,20 @@ public class FileNameBuilderService : IFileNameBuilderService
     /// </summary>
     /// <param name="videoInfo">The video information.</param>
     /// <param name="subscription">The subscription settings.</param>
-    /// <param name="isSubtitle">Whether the file is a subtitle.</param>
-    /// <param name="useStreamingUrlFile">Whether to generate a streaming URL file name.</param>
+    /// <param name="targetType">The FileType we want.</param>
     /// <returns>The sanitized file name.</returns>
-    private string BuildFileName(VideoInfo videoInfo, Subscription subscription, bool isSubtitle, bool useStreamingUrlFile = false)
+    private string BuildFileName(VideoInfo videoInfo, Subscription subscription, FileType targetType)
     {
-        string fileNamePart;
-        if (videoInfo.IsShow && videoInfo.HasSeasonEpisodeNumbering)
+        string fileNamePart = videoInfo switch
         {
-            fileNamePart = $"S{videoInfo.SeasonNumber!.Value:D2}E{videoInfo.EpisodeNumber!.Value:D2}";
-        }
-        else if (videoInfo.IsShow && videoInfo.HasAbsoluteNumbering)
-        {
-            fileNamePart = $"{videoInfo.AbsoluteEpisodeNumber!.Value:D3}"; // Pad absolute number to 3 digits for consistency
-        }
-        else
-        {
-            fileNamePart = string.Empty;
-        }
+            { IsShow: true, HasSeasonEpisodeNumbering: true } => $"S{videoInfo.SeasonNumber!.Value:D2}E{videoInfo.EpisodeNumber!.Value:D2}",
+            { IsShow: true, HasAbsoluteNumbering: true } => $"{videoInfo.AbsoluteEpisodeNumber!.Value:D3}",
+            _ => string.Empty
+        };
 
         fileNamePart = string.IsNullOrWhiteSpace(fileNamePart) ? videoInfo.Title : $"{fileNamePart} - {videoInfo.Title}";
 
-        if (!isSubtitle)
+        if (targetType != FileType.Subtitle)
         {
             if (videoInfo.HasAudiodescription)
             {
@@ -147,26 +142,28 @@ public class FileNameBuilderService : IFileNameBuilderService
             }
         }
 
-        if (videoInfo.Language != "deu" || isSubtitle)
+        if (videoInfo.Language != "deu" || targetType != FileType.Video)
         {
             fileNamePart += $".{videoInfo.Language}";
         }
 
-        if (isSubtitle)
+        switch (targetType)
         {
-            fileNamePart += ".ttml"; // Subtitle file extension
-        }
-        else if (useStreamingUrlFile)
-        {
-            fileNamePart += ".strm"; // Streaming URL file extension
-        }
-        else if (videoInfo.Language == "deu" || subscription.DownloadFullVideoForSecondaryAudio)
-        {
-            fileNamePart += ".mkv"; // Main video with German audio or full video download for secondary languages
-        }
-        else
-        {
-            fileNamePart += ".mka"; // Audio track only
+            case FileType.Subtitle:
+                fileNamePart += ".ttml";
+                break;
+            case FileType.Strm:
+                fileNamePart += ".strm";
+                break;
+            case FileType.Video:
+                fileNamePart += ".mkv";
+                break;
+            case FileType.Audio:
+                fileNamePart += ".mka";
+                break;
+            default:
+                _logger.LogError("Unknown file type '{TargetType}' for File '{FileName}'.", targetType, videoInfo.Title);
+                break;
         }
 
         string sanitizedTitle = SanitizeFileName(fileNamePart);
@@ -228,5 +225,22 @@ public class FileNameBuilderService : IFileNameBuilderService
         }
 
         return targetPath;
+    }
+
+    private FileType GetTagetMainType(VideoInfo videoInfo, Subscription subscription)
+    {
+        bool useStrm = subscription.UseStreamingUrlFiles || (subscription is { SaveExtrasAsStrm: true, TreatNonEpisodesAsExtras: true } && !videoInfo.IsShow);
+        if (useStrm)
+        {
+            return FileType.Strm;
+        }
+
+        // Audiodesc. and SignLang. Should be only saved as Audio unless we Save everything as Video.
+        if ((videoInfo is { Language: "deu", HasAudiodescription: false, HasSignLanguage: false }) || subscription.DownloadFullVideoForSecondaryAudio)
+        {
+            return FileType.Video;
+        }
+
+        return FileType.Audio;
     }
 }
