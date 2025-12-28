@@ -5,6 +5,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Retry;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 
@@ -15,6 +17,11 @@ public class FileDownloader : IFileDownloader
 {
     private readonly ILogger<FileDownloader> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+
+    private static readonly AsyncRetryPolicy<HttpResponseMessage> _resiliencePolicy = Policy
+        .Handle<HttpRequestException>()
+        .OrResult<HttpResponseMessage>(r => (int)r.StatusCode >= 500 || r.StatusCode == System.Net.HttpStatusCode.RequestTimeout)
+        .WaitAndRetryAsync(3, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FileDownloader"/> class.
@@ -96,8 +103,9 @@ public class FileDownloader : IFileDownloader
                 return false;
             }
 
-            var httpClient = _httpClientFactory.CreateClient();
-            using var response = await httpClient.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+            var httpClient = _httpClientFactory.CreateClient("FileDownloaderClient");
+            using var response = await _resiliencePolicy.ExecuteAsync(async () =>
+                await httpClient.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
