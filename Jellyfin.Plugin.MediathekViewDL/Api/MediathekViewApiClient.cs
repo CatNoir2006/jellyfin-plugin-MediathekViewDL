@@ -95,8 +95,9 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             _logger.LogDebug("Performing API search with payload: {Json}", json);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-            var response = await _resiliencePolicy.ExecuteAsync(async () =>
-                await _httpClient.PostAsync(ApiUrl, content, cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
+            var response = await _resiliencePolicy.ExecuteAsync(
+                async ct => await _httpClient.PostAsync(ApiUrl, content, ct).ConfigureAwait(false),
+                cancellationToken).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {

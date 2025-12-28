@@ -104,9 +104,9 @@ public class FileDownloader : IFileDownloader
             }
 
             var httpClient = _httpClientFactory.CreateClient("FileDownloaderClient");
-            using var response = await _resiliencePolicy.ExecuteAsync(async () =>
-                await httpClient.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();
+            using var response = await _resiliencePolicy.ExecuteAsync(
+                async ct => await httpClient.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false),
+                cancellationToken).ConfigureAwait(false);
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
             // Check disk space again considering the file size
