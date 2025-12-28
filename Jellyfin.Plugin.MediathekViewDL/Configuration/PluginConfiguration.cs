@@ -27,6 +27,12 @@ public class PluginConfiguration : BasePluginConfiguration
     public string DefaultDownloadPath { get; set; }
 
     /// <summary>
+    /// Gets or sets the temporary path where files are stored during download.
+    /// If empty, the destination path is used directly.
+    /// </summary>
+    public string TempDownloadPath { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets a value indicating whether subtitles should be downloaded if available.
     /// </summary>
     public bool DownloadSubtitles { get; set; }
@@ -35,6 +41,12 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets the minimum free disk space in bytes required to start a new download.
     /// </summary>
     public long MinFreeDiskSpaceBytes { get; set; } = (long)(1.5 * 1024 * 1024 * 1024); // Default to 1.5 GiB
+
+    /// <summary>
+    /// Gets or sets a value indicating whether downloads should be allowed if the available disk space cannot be determined.
+    /// This can happen with network shares or non-standard file systems.
+    /// </summary>
+    public bool AllowDownloadOnUnknownDiskSpace { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum download bandwidth in MBit/s.
@@ -47,7 +59,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// This may be usefull if ARD or ZDF adds new CDNs that are not yet whitelisted.
     /// This may pose a security risk, so use with caution.
     /// </summary>
-    public bool AllowUnknownDomains { get; set; } = false;
+    public bool AllowUnknownDomains { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether a library scan should be triggered after a download finishes.
@@ -57,7 +69,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// Gets or sets a value indicating whether to enable the automated cleanup of invalid .strm files.
     /// </summary>
-    public bool EnableStrmCleanup { get; set; } = false;
+    public bool EnableStrmCleanup { get; set; }
 
     /// <summary>
     /// Gets the list of download subscriptions.
