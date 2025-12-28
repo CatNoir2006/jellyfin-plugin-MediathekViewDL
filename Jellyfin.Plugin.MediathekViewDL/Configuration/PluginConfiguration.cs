@@ -43,6 +43,12 @@ public class PluginConfiguration : BasePluginConfiguration
     public long MinFreeDiskSpaceBytes { get; set; } = (long)(1.5 * 1024 * 1024 * 1024); // Default to 1.5 GiB
 
     /// <summary>
+    /// Gets or sets a value indicating whether downloads should be allowed if the available disk space cannot be determined.
+    /// This can happen with network shares or non-standard file systems.
+    /// </summary>
+    public bool AllowDownloadOnUnknownDiskSpace { get; set; } = false;
+
+    /// <summary>
     /// Gets or sets the maximum download bandwidth in MBit/s.
     /// 0 means unlimited.
     /// </summary>

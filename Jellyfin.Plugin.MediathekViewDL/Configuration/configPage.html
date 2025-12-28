@@ -152,6 +152,14 @@
                             <div class="fieldDescription">Legt den minimalen freien Speicherplatz fest, der erforderlich ist, um einen neuen Download zu starten.</div>
                         </div>
 
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkAllowDownloadOnUnknownDiskSpace" type="checkbox" is="emby-checkbox"/>
+                                <span>Download bei unbekanntem Speicherplatz erlauben</span>
+                            </label>
+                            <div class="fieldDescription">Ermöglicht den Download auch dann, wenn der verfügbare Speicherplatz nicht ermittelt werden kann (z.B. bei manchen Netzwerkfreigaben). Wenn deaktiviert, wird der Download in diesem Fall blockiert.</div>
+                        </div>
+
                         <div class="inputContainer">
                             <label class="inputLabel" for="txtMaxBandwidthMBits">Maximale Download-Bandbreite (MBit/s)</label>
                             <input is="emby-input" type="number" id="txtMaxBandwidthMBits"/>
@@ -1308,6 +1316,7 @@
                         document.querySelector('#chkAllowUnknownDomains').checked = config.AllowUnknownDomains;
                         document.querySelector('#chkScanLibraryAfterDownload').checked = config.ScanLibraryAfterDownload;
                         document.querySelector('#chkEnableStrmCleanup').checked = config.EnableStrmCleanup;
+                        document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked = config.AllowDownloadOnUnknownDiskSpace;
                         document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
                         document.querySelector('#txtMaxBandwidthMBits').value = config.MaxBandwidthMBits || 0;
                         document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
@@ -1751,6 +1760,7 @@
                         this.currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
                         this.currentConfig.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
                         this.currentConfig.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
+                        this.currentConfig.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
                         const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
                         this.currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
 

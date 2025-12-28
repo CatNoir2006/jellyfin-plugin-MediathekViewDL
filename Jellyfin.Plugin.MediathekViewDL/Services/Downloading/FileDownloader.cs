@@ -84,16 +84,32 @@ public class FileDownloader : IFileDownloader
             }
 
             var diskSpace = GetDiskSpace(destinationPath);
-            // Check if there is enough disk space before starting the download
-            if (diskSpace < pluginConfig.MinFreeDiskSpaceBytes)
+
+            if (diskSpace == null)
             {
-                _logger.LogError(
-                    "Insufficient disk space to download '{FileUrl}' to '{DestinationPath}'. Required: {RequiredBytes} bytes, Available: {AvailableBytes} bytes.",
-                    fileUrl,
-                    destinationPath,
-                    pluginConfig?.MinFreeDiskSpaceBytes,
-                    diskSpace);
-                return false;
+                if (pluginConfig.AllowDownloadOnUnknownDiskSpace)
+                {
+                    _logger.LogWarning("Could not determine available disk space for '{DestinationPath}'. Proceeding with download as configured.", destinationPath);
+                }
+                else
+                {
+                    _logger.LogError("Could not determine available disk space for '{DestinationPath}'. Download blocked. Enable 'Allow download on unknown disk space' in settings to bypass this check.", destinationPath);
+                    return false;
+                }
+            }
+            else
+            {
+                // Check if there is enough disk space before starting the download
+                if (diskSpace < pluginConfig.MinFreeDiskSpaceBytes)
+                {
+                    _logger.LogError(
+                        "Insufficient disk space to download '{FileUrl}' to '{DestinationPath}'. Required: {RequiredBytes} bytes, Available: {AvailableBytes} bytes.",
+                        fileUrl,
+                        destinationPath,
+                        pluginConfig.MinFreeDiskSpaceBytes,
+                        diskSpace);
+                    return false;
+                }
             }
 
             var httpClient = _httpClientFactory.CreateClient();
@@ -102,7 +118,7 @@ public class FileDownloader : IFileDownloader
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
             // Check disk space again considering the file size
-            if (totalBytes != -1)
+            if (totalBytes != -1 && diskSpace != null)
             {
                 long requiredSpace = totalBytes + pluginConfig.MinFreeDiskSpaceBytes;
 
@@ -239,8 +255,8 @@ public class FileDownloader : IFileDownloader
     /// Gets the available free disk space in bytes for the drive containing the specified path.
     /// </summary>
     /// <param name="path">The path to check disk space for.</param>
-    /// <returns>The available free disk space in bytes.</returns>
-    public static long GetDiskSpace(string path)
+    /// <returns>The available free disk space in bytes, or null if it could not be determined.</returns>
+    public static long? GetDiskSpace(string path)
     {
         string directory = path;
 
@@ -267,10 +283,10 @@ public class FileDownloader : IFileDownloader
             var drive = new DriveInfo(directory);
             return drive.AvailableFreeSpace;
         }
-        catch (ArgumentException)
+        catch (Exception)
         {
             // This can happen for UNC paths, etc.
-            return 0;
+            return null;
         }
     }
 
