@@ -90,6 +90,20 @@
                             </div>
                         </div>
 
+                        <div class="inputContainer">
+                            <div class="flex-align-center">
+                                <div class="flex-grow">
+                                    <label class="inputLabel" for="txtTempDownloadPath">Temporärer Download Pfad</label>
+                                    <input is="emby-input" type="text" id="txtTempDownloadPath"/>
+                                    <div class="fieldDescription">Ein optionaler Ordner, in dem Downloads zwischengespeichert werden. Dies kann genutzt werden, um SSD-Abnutzung zu reduzieren, indem ein Pfad auf einer HDD gewählt wird (idealerweise auf der gleichen Festplatte wie die Bibliothek, um unnötiges Verschieben zwischen Laufwerken und Spin-Ups zu vermeiden). Leer lassen, um direkt in den Zielordner herunterzuladen.</div>
+                                </div>
+                                <button type="button" is="paper-icon-button-light" id="btnSelectTempPath"
+                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                    <span class="material-icons folder_open"></span>
+                                </button>
+                            </div>
+                        </div>
+
                         <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
                             <label class="emby-checkbox-label">
                                 <input id="chkDownloadSubtitles" type="checkbox" is="emby-checkbox"/>
@@ -1289,6 +1303,7 @@
                         this.currentConfig = config;
 
                         document.querySelector('#txtDefaultDownloadPath').value = config.DefaultDownloadPath || "";
+                        document.querySelector('#txtTempDownloadPath').value = config.TempDownloadPath || "";
                         document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
                         document.querySelector('#chkAllowUnknownDomains').checked = config.AllowUnknownDomains;
                         document.querySelector('#chkScanLibraryAfterDownload').checked = config.ScanLibraryAfterDownload;
@@ -1731,6 +1746,7 @@
                     document.getElementById('MediathekGeneralConfigForm').addEventListener('submit', (e) => {
                         e.preventDefault();
                         this.currentConfig.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
+                        this.currentConfig.TempDownloadPath = document.querySelector('#txtTempDownloadPath').value;
                         this.currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
                         this.currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
                         this.currentConfig.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
@@ -1748,6 +1764,9 @@
                     // Path selector in main config
                     document.getElementById('btnSelectPath').addEventListener('click', () => {
                         this.openFolderDialog('txtDefaultDownloadPath', 'Standard Download Pfad wählen');
+                    });
+                    document.getElementById('btnSelectTempPath').addEventListener('click', () => {
+                        this.openFolderDialog('txtTempDownloadPath', 'Temporären Download Pfad wählen');
                     });
                     // Path selectors in subscription editor
                     document.getElementById('btnSelectSubPath').addEventListener('click', () => {

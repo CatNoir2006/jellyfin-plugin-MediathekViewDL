@@ -27,6 +27,12 @@ public class PluginConfiguration : BasePluginConfiguration
     public string DefaultDownloadPath { get; set; }
 
     /// <summary>
+    /// Gets or sets the temporary path where files are stored during download.
+    /// If empty, the destination path is used directly.
+    /// </summary>
+    public string TempDownloadPath { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets a value indicating whether subtitles should be downloaded if available.
     /// </summary>
     public bool DownloadSubtitles { get; set; }

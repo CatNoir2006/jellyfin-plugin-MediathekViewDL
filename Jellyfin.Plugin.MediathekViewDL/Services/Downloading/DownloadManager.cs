@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using MediaBrowser.Controller;
 using Microsoft.Extensions.Logging;
@@ -99,7 +100,7 @@ public class DownloadManager : IDownloadManager
                         success &= await DoQualityUpgrade(item, progress, cancellationToken).ConfigureAwait(false);
                         break;
                     case DownloadType.AudioExtraction:
-                        var tempVideoPath = GetTempFilePath(".mkv");
+                        var tempVideoPath = GetTempFilePath(item.DestinationPath, ".mkv");
                         _logger.LogInformation("Downloading temporary video for '{Title}' to extract '{Language}' audio.", job.Title, job.AudioLanguage);
 
                         // Track progress for the download part (0-80%)
@@ -171,7 +172,7 @@ public class DownloadManager : IDownloadManager
     /// <returns>Return true if the upgrade was successful, false otherwise.</returns>
     private async Task<bool> DoQualityUpgrade(DownloadItem item, IProgress<double> progress, CancellationToken cancellationToken)
     {
-        var tempPath = GetTempFilePath(".mkv");
+        var tempPath = GetTempFilePath(item.DestinationPath, ".mkv");
         try
         {
             if (!await _fileDownloader.DownloadFileAsync(item.SourceUrl, tempPath, progress, cancellationToken).ConfigureAwait(false))
@@ -266,11 +267,62 @@ public class DownloadManager : IDownloadManager
     /// <summary>
     /// Gets a temporary file path with an optional extension.
     /// </summary>
+    /// <param name="destinationPath">The destination path of the final file, used to determine relative temp path if configured.</param>
     /// <param name="extension">The Extension for the Temp-path.</param>
     /// <returns>The Temp-path.</returns>
-    private string GetTempFilePath(string? extension = null)
+    private string GetTempFilePath(string? destinationPath, string? extension = null)
     {
-        var tempFileName = $"{Guid.NewGuid()}{extension}";
-        return Path.Combine(_appPaths.TempDirectory, tempFileName);
+        var config = Plugin.Instance?.Configuration;
+        var tempDir = config?.TempDownloadPath;
+        var tempDirName = ".temp";
+
+        // 1. If TempDownloadPath is configured, use it.
+        if (!string.IsNullOrWhiteSpace(tempDir))
+        {
+            if (!Directory.Exists(tempDir))
+            {
+                try
+                {
+                    Directory.CreateDirectory(tempDir);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Could not create configured temp directory '{TempDir}'. Falling back to system temp.", tempDir);
+                    tempDir = null; // Fallback
+                }
+            }
+        }
+
+        // 2. If no configured temp dir, and destination provided (implied "empty = use destination" from HTML desc)
+        if (string.IsNullOrWhiteSpace(tempDir) && !string.IsNullOrWhiteSpace(destinationPath))
+        {
+            var destDir = Path.GetDirectoryName(destinationPath);
+            if (!string.IsNullOrEmpty(destDir))
+            {
+                tempDir = Path.Combine(destDir, tempDirName);
+                if (!Directory.Exists(tempDir))
+                {
+                    try
+                    {
+                        Directory.CreateDirectory(tempDir);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Could not create temp directory in destination '{DestDir}'. Falling back to system temp.", tempDir);
+                        tempDir = null;
+                    }
+                }
+            }
+        }
+
+        // 3. Fallback to System Temp (Jellyfin Temp)
+        if (string.IsNullOrWhiteSpace(tempDir))
+        {
+            tempDir = _appPaths.TempDirectory;
+        }
+
+        // Add custom extension Part to the file so we can detect our temp files Later.
+        var tempFileName = $"{Guid.NewGuid()}.mvdl-tmp{extension}";
+        return Path.Combine(tempDir, tempFileName);
     }
 }
