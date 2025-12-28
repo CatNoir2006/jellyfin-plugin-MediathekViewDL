@@ -208,9 +208,9 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
                         download.Job.AudioLanguage).ConfigureAwait(false);
                 }
 
-                if (Plugin.Instance?.Configuration?.ScanLibraryAfterDownload == true)
+                if (Plugin.Instance?.Configuration?.ScanLibraryAfterDownload == true && _activeDownloads.Values.All(d => d.Status != DownloadStatus.Queued))
                 {
-                    _logger.LogInformation("Triggering library scan (download finished).");
+                    _logger.LogInformation("Triggering library scan (all downloads finished).");
                     libraryManager.QueueLibraryScan();
                 }
             }
