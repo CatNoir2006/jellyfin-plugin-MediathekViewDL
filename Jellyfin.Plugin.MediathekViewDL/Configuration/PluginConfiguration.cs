@@ -46,7 +46,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets a value indicating whether downloads should be allowed if the available disk space cannot be determined.
     /// This can happen with network shares or non-standard file systems.
     /// </summary>
-    public bool AllowDownloadOnUnknownDiskSpace { get; set; } = false;
+    public bool AllowDownloadOnUnknownDiskSpace { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum download bandwidth in MBit/s.
@@ -59,7 +59,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// This may be usefull if ARD or ZDF adds new CDNs that are not yet whitelisted.
     /// This may pose a security risk, so use with caution.
     /// </summary>
-    public bool AllowUnknownDomains { get; set; } = false;
+    public bool AllowUnknownDomains { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether a library scan should be triggered after a download finishes.
@@ -69,7 +69,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>
     /// Gets or sets a value indicating whether to enable the automated cleanup of invalid .strm files.
     /// </summary>
-    public bool EnableStrmCleanup { get; set; } = false;
+    public bool EnableStrmCleanup { get; set; }
 
     /// <summary>
     /// Gets the list of download subscriptions.
