@@ -7,7 +7,7 @@
 </head>
 
 <body>
-<div id="MediathekViewDLConfigPage" data-role="page" class="page type-interior pluginConfigurationPage"
+<div id="MediathekViewDLConfigPage" data-role="page" class="page type-interior pluginConfigurationPage esqConfigurationPage"
      data-require="emby-input,emby-button,emby-select,emby-checkbox,emby-linkbutton">
 
     <div data-role="content">
@@ -854,7 +854,17 @@
                         }
 
                         const createdAt = new Date(dl.CreatedAt).toLocaleString();
-                        const downloadTrigger = StringHelper.isNullOrWhitespace(dl.SubscriptionId) ? ' (Manuell)' : ' (Abo)';
+
+                        let downloadTrigger = ' (Manuell)';
+                        if (!StringHelper.isNullOrWhitespace(dl.SubscriptionId)) {
+                            const sub = this.config.currentConfig?.Subscriptions?.find(s => s.Id === dl.SubscriptionId);
+                            if (sub) {
+                                downloadTrigger = ' (Abo: ' + sub.Name + ')'
+                            } else {
+                                downloadTrigger = ' (Abo)';
+                            }
+                        }
+
                         const body2 = 'Hinzugefügt: ' + createdAt + downloadTrigger;
 
                         container.appendChild(this.config.createListItem(dl.Job.Title, body1, body2, actions));
@@ -875,7 +885,18 @@
                     history.forEach((entry) => {
                         const timestamp = new Date(entry.Timestamp).toLocaleString();
                         const body1 = 'Pfad: ' + entry.DownloadPath;
-                        const body2 = 'Datum: ' + timestamp;
+
+                        let downloadTrigger = ' (Manuell)';
+                        if (!StringHelper.isNullOrWhitespace(entry.SubscriptionId)) {
+                            const sub = this.config.currentConfig?.Subscriptions?.find(s => s.Id === entry.SubscriptionId);
+                            if (sub) {
+                                downloadTrigger = ' (Abo: ' + sub.Name + ')';
+                            } else {
+                                downloadTrigger = ' (Abo)';
+                            }
+                        }
+
+                        const body2 = 'Datum: ' + timestamp + downloadTrigger;
                         const fileName = entry.DownloadPath.split(/[\\\/]/).pop();
                         const title = StringHelper.isNullOrWhitespace(entry.Title) ? fileName : entry.Title;
                         container.appendChild(this.config.createListItem(title, body1, body2, null));
