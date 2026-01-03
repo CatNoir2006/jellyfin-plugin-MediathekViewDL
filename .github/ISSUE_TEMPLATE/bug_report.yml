@@ -59,7 +59,7 @@ body:
       description: |
         Bitte füge relevante Teile deiner Konfiguration hier ein, falls zutreffend.
         ⚠️ **WICHTIG:** Bitte zensiere sensible Daten wie persönliche Ordnerpfade!
-      render: json
+      render: xml
     validations:
       required: false
 

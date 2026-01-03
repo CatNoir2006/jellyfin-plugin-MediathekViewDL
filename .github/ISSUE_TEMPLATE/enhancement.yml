@@ -42,6 +42,6 @@ body:
       description: |
         Falls relevant, füge Teile deiner Konfiguration hier ein.
         ⚠️ **WICHTIG:** Bitte zensiere sensible Daten wie persönliche Ordnerpfade!
-      render: json
+      render: xml
     validations:
       required: false
