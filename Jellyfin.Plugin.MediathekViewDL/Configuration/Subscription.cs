@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel.DataAnnotations;
 using Jellyfin.Plugin.MediathekViewDL.Api;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Configuration;
@@ -29,6 +30,11 @@ public class Subscription
     /// Gets or sets the user-defined name for the subscription. Used for the series folder name.
     /// </summary>
     public string Name { get; set; }
+
+    /// <summary>
+    /// Gets or sets the language code (3-letter ISO) to use when the language cannot be detected or is detected as "und" (e.g. for OV content).
+    /// </summary>
+    public string? OriginalLanguage { get; set; }
 
     /// <summary>
     /// Gets the search query for the MediathekViewWeb API.

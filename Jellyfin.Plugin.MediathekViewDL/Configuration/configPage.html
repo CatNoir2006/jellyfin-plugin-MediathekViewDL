@@ -206,6 +206,12 @@
                             <input is="emby-input" type="text" id="subName" required/>
                         </div>
 
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="subOriginalLanguage">Originalsprache (ISO Code, z.B. 'eng')</label>
+                            <input is="emby-input" type="text" id="subOriginalLanguage" placeholder="Optional: Wird verwendet, wenn 'OV' erkannt wird"/>
+                            <div class="fieldDescription">Falls gesetzt, wird dieser Sprachcode verwendet, wenn der Inhalt als Originalversion (OV/OmU) erkannt wird (statt 'und').</div>
+                        </div>
+
                         <!-- Container für dynamische Queries -->
                         <div class="inputContainer">
                             <label class="inputLabel">Suchanfragen</label>
@@ -1054,6 +1060,7 @@
                         // Reset values
                         document.getElementById('subId').value = "";
                         document.getElementById('subName').value = "";
+                        document.getElementById('subOriginalLanguage').value = "";
                         document.getElementById('subMinDuration').value = "";
                         document.getElementById('subMaxDuration').value = "";
                         document.getElementById('subPath').value = "";
@@ -1085,6 +1092,7 @@
 
                     document.getElementById('subId').value = sub.Id || "";
                     document.getElementById('subName').value = sub.Name;
+                    document.getElementById('subOriginalLanguage').value = sub.OriginalLanguage || "";
                     document.getElementById('subMinDuration').value = sub.MinDurationMinutes || "";
                     document.getElementById('subMaxDuration').value = sub.MaxDurationMinutes || "";
                     document.getElementById('subPath').value = sub.DownloadPath || "";
@@ -1124,6 +1132,7 @@
                 getEditorValues() {
                     const id = document.getElementById('subId').value;
                     const name = document.getElementById('subName').value;
+                    const originalLanguage = document.getElementById('subOriginalLanguage').value;
                     const minDuration = document.getElementById('subMinDuration').value;
                     const maxDuration = document.getElementById('subMaxDuration').value;
                     const path = document.getElementById('subPath').value;
@@ -1159,6 +1168,7 @@
                     return {
                         Id: id,
                         Name: name,
+                        OriginalLanguage: originalLanguage,
                         Queries: queries,
                         MinDurationMinutes: minDuration ? parseInt(minDuration, 10) : null,
                         MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,

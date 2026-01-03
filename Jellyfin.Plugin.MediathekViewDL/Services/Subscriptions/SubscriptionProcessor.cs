@@ -95,6 +95,11 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
 
+            if (tempVideoInfo is { Language: "und" } && !string.IsNullOrWhiteSpace(subscription.OriginalLanguage))
+            {
+                tempVideoInfo.Language = subscription.OriginalLanguage;
+            }
+
             if (!await ApplyFilters(tempVideoInfo, subscription, item, localEpisodeCache).ConfigureAwait(false))
             {
                 continue;
@@ -214,6 +219,11 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
+
+            if (tempVideoInfo != null && tempVideoInfo.Language == "und" && !string.IsNullOrWhiteSpace(subscription.OriginalLanguage))
+            {
+                tempVideoInfo.Language = subscription.OriginalLanguage;
+            }
 
             if (!await ApplyFilters(tempVideoInfo, subscription, item, null).ConfigureAwait(false))
             {
