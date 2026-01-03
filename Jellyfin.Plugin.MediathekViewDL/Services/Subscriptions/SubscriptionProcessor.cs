@@ -94,8 +94,9 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
 
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
+            SetOvLanguageIfSet(subscription, tempVideoInfo);
 
-            if (!await ApplyFilters(tempVideoInfo, subscription, item, localEpisodeCache).ConfigureAwait(false))
+            if (!await MatchesSubCriteriaAsync(tempVideoInfo, subscription, item, localEpisodeCache).ConfigureAwait(false))
             {
                 continue;
             }
@@ -215,7 +216,9 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         {
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
 
-            if (!await ApplyFilters(tempVideoInfo, subscription, item, null).ConfigureAwait(false))
+            SetOvLanguageIfSet(subscription, tempVideoInfo);
+
+            if (!await MatchesSubCriteriaAsync(tempVideoInfo, subscription, item, null).ConfigureAwait(false))
             {
                 continue;
             }
@@ -234,7 +237,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// Applies filtering rules to determine if the item should be processed.
     /// </summary>
     /// <returns>True if the item passes all filters; otherwise, false.</returns>
-    private async Task<bool> ApplyFilters([NotNullWhen(true)] VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
+    private async Task<bool> MatchesSubCriteriaAsync([NotNullWhen(true)] VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
     {
         if (tempVideoInfo == null)
         {
@@ -339,12 +342,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         return null;
     }
 
-    private async Task<bool> IsInDownloadCache(string itemId, Guid subscriptionId)
-    {
-        var item = await _downloadHistoryRepository.GetByItemIdAndSubscriptionIdAsync(itemId, subscriptionId).ConfigureAwait(false);
-        return item is not null;
-    }
-
     /// <summary>
     /// Tests if a quality upgrade is available by comparing current file and online URL.
     /// </summary>
@@ -398,6 +395,20 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             onlineQuality.Width,
             onlineQuality.Height);
         return true;
+    }
+
+    private async Task<bool> IsInDownloadCache(string itemId, Guid subscriptionId)
+    {
+        var item = await _downloadHistoryRepository.GetByItemIdAndSubscriptionIdAsync(itemId, subscriptionId).ConfigureAwait(false);
+        return item is not null;
+    }
+
+    private void SetOvLanguageIfSet(Subscription subscription, VideoInfo? videoInfo)
+    {
+        if (videoInfo is { Language: "und" } && !string.IsNullOrWhiteSpace(subscription.OriginalLanguage))
+        {
+            videoInfo.Language = subscription.OriginalLanguage;
+        }
     }
 
     private async Task<LocalMediaInfo?> GetOnlineQualityInfoAsync(string url, CancellationToken cancellationToken)
