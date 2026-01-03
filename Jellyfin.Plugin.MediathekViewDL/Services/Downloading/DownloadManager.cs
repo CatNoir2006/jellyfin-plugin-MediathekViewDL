@@ -102,7 +102,7 @@ public class DownloadManager : IDownloadManager
                     if (useNewMode)
                     {
                         // TODO: Add progress bar support
-                        // TODO: Create a plan to pass additional information (e.g. AudioDescription) to the download process
+                        // TODO: Create an extensible mechanism to pass additional information (like AudioDescription) to the download manager to easily support future features
                         success &= await DoAudioExtractNew(item, job.AudioLanguage ?? "und", progress, cancellationToken).ConfigureAwait(false);
                     }
                     else
