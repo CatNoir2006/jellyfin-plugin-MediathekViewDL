@@ -1,7 +1,7 @@
 name: Kleine Verbesserung (Enhancement)
 description: Vorschläge für kleine Verbesserungen, Optimierungen oder Refactoring.
 title: "[Improvement]: "
-labels: ["enhancement", "good first issue"]
+labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
