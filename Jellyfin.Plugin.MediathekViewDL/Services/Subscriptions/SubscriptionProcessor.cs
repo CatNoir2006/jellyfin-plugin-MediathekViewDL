@@ -96,7 +96,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
             SetOvLanguageIfSet(subscription, tempVideoInfo);
 
-            if (!await ApplyFilters(tempVideoInfo, subscription, item, localEpisodeCache).ConfigureAwait(false))
+            if (!await MatchesSubCriteriaAsync(tempVideoInfo, subscription, item, localEpisodeCache).ConfigureAwait(false))
             {
                 continue;
             }
@@ -218,7 +218,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
             SetOvLanguageIfSet(subscription, tempVideoInfo);
 
-            if (!await ApplyFilters(tempVideoInfo, subscription, item, null).ConfigureAwait(false))
+            if (!await MatchesSubCriteriaAsync(tempVideoInfo, subscription, item, null).ConfigureAwait(false))
             {
                 continue;
             }
@@ -237,7 +237,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// Applies filtering rules to determine if the item should be processed.
     /// </summary>
     /// <returns>True if the item passes all filters; otherwise, false.</returns>
-    private async Task<bool> ApplyFilters([NotNullWhen(true)] VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
+    private async Task<bool> MatchesSubCriteriaAsync([NotNullWhen(true)] VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
     {
         if (tempVideoInfo == null)
         {
