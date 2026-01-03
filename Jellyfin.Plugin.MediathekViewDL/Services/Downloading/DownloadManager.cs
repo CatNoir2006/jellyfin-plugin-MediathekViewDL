@@ -97,9 +97,12 @@ public class DownloadManager : IDownloadManager
                     break;
                 case DownloadType.AudioExtraction:
                     _logger.LogInformation("Downloading '{Title}' to '{Path}'.", job.Title, item.DestinationPath);
+                    // TODO: Add option to disable/enable the new audio download method
                     bool useNewMode = true;
                     if (useNewMode)
                     {
+                        // TODO: Add progress bar support
+                        // TODO: Create a plan to pass additional information (e.g. AudioDescription) to the download process
                         success &= await DoAudioExtractNew(item, job.AudioLanguage ?? "und", progress, cancellationToken).ConfigureAwait(false);
                     }
                     else
@@ -241,6 +244,7 @@ public class DownloadManager : IDownloadManager
     private async Task<bool> DoAudioExtractNew(DownloadItem item, string language, IProgress<double> progress, CancellationToken cancellationToken)
     {
         var tempPath = GetTempFilePath(item.DestinationPath, ".mka");
+        // TODO: Add support for setting the AudioDescription tag
         var res = await _ffmpegService.ExtractAudioFromWebAsync(item.SourceUrl, tempPath, language, true, false, cancellationToken).ConfigureAwait(false);
         if (res)
         {
