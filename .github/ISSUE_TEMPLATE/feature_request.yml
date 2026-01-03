@@ -1,0 +1,56 @@
+name: Funktionswunsch (Feature Request)
+description: Schlage eine neue Idee oder Funktion für das Plugin vor.
+title: "[Feature]: "
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für deinen Vorschlag! Bitte beschreibe deine Idee so genau wie möglich.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Beschreibung des Funktionswunsches
+      description: Was möchtest du erreichen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problemstellung
+      description: Bezieht sich dein Wunsch auf ein Problem? Bitte beschreibe es.
+      placeholder: Ich bin immer frustriert, wenn...
+    validations:
+      required: false
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Lösungsvorschlag
+      description: Wie sollte die Lösung deiner Meinung nach aussehen?
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (falls relevant)
+      description: |
+        Falls relevant, füge Logs hier ein.
+        ⚠️ **WICHTIG:** Bitte zensiere sensible Daten wie persönliche Ordnerpfade, Benutzernamen oder IP-Adressen!
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Konfigurationsauszug (falls relevant)
+      description: |
+        Falls relevant, füge Teile deiner Konfiguration hier ein.
+        ⚠️ **WICHTIG:** Bitte zensiere sensible Daten wie persönliche Ordnerpfade!
+      render: xml
+    validations:
+      required: false

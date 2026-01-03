@@ -1,0 +1,47 @@
+name: Kleine Verbesserung (Enhancement)
+description: Vorschläge für kleine Verbesserungen, Optimierungen oder Refactoring.
+title: "[Improvement]: "
+labels: ["enhancement", "good first issue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für deinen Verbesserungsvorschlag!
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Beschreibung der Verbesserung
+      description: Was soll verbessert werden und warum?
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_behavior
+    attributes:
+      label: Aktueller Zustand
+      description: Wie verhält es sich aktuell?
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs (falls relevant)
+      description: |
+        Falls relevant, füge Logs hier ein.
+        ⚠️ **WICHTIG:** Bitte zensiere sensible Daten wie persönliche Ordnerpfade, Benutzernamen oder IP-Adressen!
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Konfigurationsauszug (falls relevant)
+      description: |
+        Falls relevant, füge Teile deiner Konfiguration hier ein.
+        ⚠️ **WICHTIG:** Bitte zensiere sensible Daten wie persönliche Ordnerpfade!
+      render: json
+    validations:
+      required: false

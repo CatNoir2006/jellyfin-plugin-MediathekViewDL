@@ -1,0 +1,84 @@
+name: Fehlerbericht (Bug Report)
+description: Melde einen Fehler, um bei dessen Behebung zu unterstützen.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke, dass du dir die Zeit nimmst, diesen Fehler zu melden!
+        Bitte fülle die folgenden Abschnitte so genau wie möglich aus.
+
+        *Hinweis: Es wird immer nur die aktuelle Jellyfin-Version (zum Zeitpunkt des Releases) offiziell unterstützt.*
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Fehlerbeschreibung
+      description: Was ist passiert? Bitte beschreibe den Fehler detailliert.
+      placeholder: Wenn ich X mache, passiert Y...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Schritte zum Reproduzieren
+      description: Wie kann der Fehler nachgestellt werden?
+      placeholder: |
+        1. Gehe zu '...'
+        2. Klicke auf '...'
+        3. Scroll herunter zu '...'
+        4. Siehe Fehler
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Erwartetes Verhalten
+      description: Was hast du erwartet?
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: |
+        Bitte füge relevante Logs hier ein.
+        ⚠️ **WICHTIG:** Bitte zensiere sensible Daten wie persönliche Ordnerpfade, Benutzernamen oder IP-Adressen!
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Konfigurationsauszug
+      description: |
+        Bitte füge relevante Teile deiner Konfiguration hier ein, falls zutreffend.
+        ⚠️ **WICHTIG:** Bitte zensiere sensible Daten wie persönliche Ordnerpfade!
+      render: json
+    validations:
+      required: false
+
+  - type: input
+    id: plugin_version
+    attributes:
+      label: Plugin Version
+      placeholder: z.B. 1.0.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Betriebssystem
+      options:
+        - Docker
+        - Linux
+        - Windows
+        - Andere
+    validations:
+      required: false
