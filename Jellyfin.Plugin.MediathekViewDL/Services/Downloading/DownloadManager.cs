@@ -60,93 +60,59 @@ public class DownloadManager : IDownloadManager
             if (File.Exists(item.DestinationPath) && item.JobType != DownloadType.QualityUpgrade)
             {
                 _logger.LogDebug("File '{Path}' already exists. Skipping download.", item.DestinationPath);
-                // Even if file exists, we might want to check for NFO if configured, but typically we assume "done is done".
-                // However, user might have just enabled NFO.
-                // For now, we only generate NFO on successful download action or if we decide to support retroactive NFO gen.
-                // Let's stick to "new downloads" for now to avoid side effects on existing files unless explicitly requested.
-                // But wait, if the file exists, the loop continues. We should probably flag this item as "successful".
+                // Still continue execution so NFO and other files continue downloading.
+                continue;
             }
-            else
+
+            var directory = Path.GetDirectoryName(item.DestinationPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             {
-                var directory = Path.GetDirectoryName(item.DestinationPath);
-                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                try
                 {
-                    try
-                    {
-                        Directory.CreateDirectory(directory);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Failed to create directory '{Directory}'.", directory);
-                        success = false;
-                        continue; // Skip this item
-                    }
+                    Directory.CreateDirectory(directory);
                 }
-
-                switch (item.JobType)
+                catch (Exception ex)
                 {
-                    case DownloadType.StreamingUrl:
-                        _logger.LogInformation("Creating streaming URL file for '{Title}' at '{Path}'.", job.Title, item.DestinationPath);
-                        success &= await _fileDownloader.GenerateStreamingUrlFileAsync(item.SourceUrl, item.DestinationPath, cancellationToken).ConfigureAwait(false);
-                        break;
-
-                    case DownloadType.DirectDownload:
-                        _logger.LogInformation("Downloading '{Title}' to '{Path}'.", job.Title, item.DestinationPath);
-                        success &= await _fileDownloader.DownloadFileAsync(item.SourceUrl, item.DestinationPath, progress, cancellationToken).ConfigureAwait(false);
-                        break;
-
-                    case DownloadType.QualityUpgrade:
-                        _logger.LogInformation("Starting quality upgrade download for '{Title}' to '{Path}'.", job.Title, item.DestinationPath);
-                        success &= await DoQualityUpgrade(item, progress, cancellationToken).ConfigureAwait(false);
-                        break;
-                    case DownloadType.AudioExtraction:
-                        var tempVideoPath = GetTempFilePath(item.DestinationPath, ".mkv");
-                        _logger.LogInformation("Downloading temporary video for '{Title}' to extract '{Language}' audio.", job.Title, job.AudioLanguage);
-
-                        // Track progress for the download part (0-80%)
-                        var downloadProgress = new Progress<double>(p => progress.Report(p * 0.8));
-
-                        if (await _fileDownloader.DownloadFileAsync(item.SourceUrl, tempVideoPath, downloadProgress, cancellationToken).ConfigureAwait(false))
-                        {
-                            _logger.LogInformation("Extracting '{Language}' audio for '{Title}' to '{Path}'.", job.AudioLanguage, job.Title, item.DestinationPath);
-                            progress.Report(85);
-                            success &= await _ffmpegService.ExtractAudioAsync(tempVideoPath, item.DestinationPath, job.AudioLanguage ?? "und", cancellationToken).ConfigureAwait(false);
-
-                            if (success)
-                            {
-                                _logger.LogInformation("Successfully extracted '{Language}' audio for '{Title}'.", job.AudioLanguage, job.Title);
-                            }
-                            else
-                            {
-                                _logger.LogError("Failed to extract audio for '{Title}'.", job.Title);
-                            }
-
-                            // Clean up
-                            try
-                            {
-                                if (File.Exists(tempVideoPath))
-                                {
-                                    File.Delete(tempVideoPath);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                _logger.LogWarning(ex, "Failed to delete temporary file '{TempPath}'.", tempVideoPath);
-                            }
-                        }
-                        else
-                        {
-                            _logger.LogError("Failed to download temporary video for '{Title}'.", job.Title);
-                            success = false;
-                        }
-
-                        break;
-
-                    default:
-                        _logger.LogError("Unknown download type: {Type}", item.JobType);
-                        success = false;
-                        break;
+                    _logger.LogError(ex, "Failed to create directory '{Directory}'.", directory);
+                    success = false;
+                    continue; // Skip this item
                 }
+            }
+
+            switch (item.JobType)
+            {
+                case DownloadType.StreamingUrl:
+                    _logger.LogInformation("Creating streaming URL file for '{Title}' at '{Path}'.", job.Title, item.DestinationPath);
+                    success &= await _fileDownloader.GenerateStreamingUrlFileAsync(item.SourceUrl, item.DestinationPath, cancellationToken).ConfigureAwait(false);
+                    break;
+
+                case DownloadType.DirectDownload:
+                    _logger.LogInformation("Downloading '{Title}' to '{Path}'.", job.Title, item.DestinationPath);
+                    success &= await _fileDownloader.DownloadFileAsync(item.SourceUrl, item.DestinationPath, progress, cancellationToken).ConfigureAwait(false);
+                    break;
+
+                case DownloadType.QualityUpgrade:
+                    _logger.LogInformation("Starting quality upgrade download for '{Title}' to '{Path}'.", job.Title, item.DestinationPath);
+                    success &= await DoQualityUpgrade(item, progress, cancellationToken).ConfigureAwait(false);
+                    break;
+                case DownloadType.AudioExtraction:
+                    _logger.LogInformation("Downloading '{Title}' to '{Path}'.", job.Title, item.DestinationPath);
+                    bool useNewMode = true;
+                    if (useNewMode)
+                    {
+                        success &= await DoAudioExtractNew(item, job.AudioLanguage ?? "und", progress, cancellationToken).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        success &= await DoAudioExtractOld(item, job.AudioLanguage ?? "und", progress, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    break;
+
+                default:
+                    _logger.LogError("Unknown download type: {Type}", item.JobType);
+                    success = false;
+                    break;
             }
         }
 
@@ -265,6 +231,90 @@ public class DownloadManager : IDownloadManager
     }
 
     /// <summary>
+    /// Does AudioExtraction using the new ffmpeg Extraction directly from URL.
+    /// </summary>
+    /// <param name="item">The Download item to process.</param>
+    /// <param name="language">The Language.</param>
+    /// <param name="progress">Progress Reporting.</param>
+    /// <param name="cancellationToken">The cancellation Token.</param>
+    /// <returns>Return true if the audio download was successful, false otherwise.</returns>
+    private async Task<bool> DoAudioExtractNew(DownloadItem item, string language, IProgress<double> progress, CancellationToken cancellationToken)
+    {
+        var tempPath = GetTempFilePath(item.DestinationPath, ".mka");
+        var res = await _ffmpegService.ExtractAudioFromWebAsync(item.SourceUrl, tempPath, language, true, false, cancellationToken).ConfigureAwait(false);
+        if (res)
+        {
+            try
+            {
+                File.Move(tempPath, item.DestinationPath);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        if (File.Exists(tempPath))
+        {
+            try
+            {
+                File.Delete(tempPath);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Does AudioExtraction using the old Download then extract method.
+    /// </summary>
+    /// <param name="item">The Download item to process.</param>
+    /// <param name="language">The Language.</param>
+    /// <param name="progress">Progress Reporting.</param>
+    /// <param name="cancellationToken">The cancellation Token.</param>
+    /// <returns>Return true if the audio download was successful, false otherwise.</returns>
+    private async Task<bool> DoAudioExtractOld(DownloadItem item, string language, IProgress<double> progress, CancellationToken cancellationToken)
+    {
+        bool success = true;
+        var tempVideoPath = GetTempFilePath(item.DestinationPath, ".mkv");
+
+        // Track progress for the download part (0-80%)
+        var downloadProgress = new Progress<double>(p => progress.Report(p * 0.8));
+
+        if (await _fileDownloader.DownloadFileAsync(item.SourceUrl, tempVideoPath, downloadProgress, cancellationToken).ConfigureAwait(false))
+        {
+            progress.Report(85);
+            success &= await _ffmpegService.ExtractAudioAsync(tempVideoPath, item.DestinationPath, language, cancellationToken).ConfigureAwait(false);
+
+            // Clean up
+            try
+            {
+                if (File.Exists(tempVideoPath))
+                {
+                    File.Delete(tempVideoPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to delete temporary file '{TempPath}'.", tempVideoPath);
+                success = false;
+            }
+        }
+        else
+        {
+            _logger.LogError("Failed to download temporary video for '{Title}'.", item.DestinationPath);
+            success = false;
+        }
+
+        return success;
+    }
+
+    /// <summary>
     /// Gets a temporary file path with an optional extension.
     /// </summary>
     /// <param name="destinationPath">The destination path of the final file, used to determine relative temp path if configured.</param>
@@ -274,7 +324,6 @@ public class DownloadManager : IDownloadManager
     {
         var config = Plugin.Instance?.Configuration;
         var tempDir = config?.TempDownloadPath;
-        var tempDirName = ".temp";
 
         // 1. If TempDownloadPath is configured, use it.
         if (!string.IsNullOrWhiteSpace(tempDir))
@@ -299,7 +348,7 @@ public class DownloadManager : IDownloadManager
             var destDir = Path.GetDirectoryName(destinationPath);
             if (!string.IsNullOrEmpty(destDir))
             {
-                tempDir = Path.Combine(destDir, tempDirName);
+                tempDir = destDir;
                 if (!Directory.Exists(tempDir))
                 {
                     try
@@ -322,7 +371,7 @@ public class DownloadManager : IDownloadManager
         }
 
         // Add custom extension Part to the file so we can detect our temp files Later.
-        var tempFileName = $"{Guid.NewGuid()}.mvdl-tmp{extension}";
+        var tempFileName = $"{Guid.NewGuid()}{extension}.mvdl-tmp";
         return Path.Combine(tempDir, tempFileName);
     }
 }

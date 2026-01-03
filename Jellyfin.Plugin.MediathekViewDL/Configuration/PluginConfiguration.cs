@@ -62,6 +62,13 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool AllowUnknownDomains { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether http is allowed for download URLs.
+    /// This may be nessery as some URLs do not support https for some reason.
+    /// I Recomment keeping this of if and only turning it on if you encounter problems.
+    /// </summary>
+    public bool AllowHttp { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether a library scan should be triggered after a download finishes.
     /// </summary>
     public bool ScanLibraryAfterDownload { get; set; } = true;

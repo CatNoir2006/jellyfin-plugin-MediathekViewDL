@@ -43,10 +43,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     {
         _httpClient = httpClient;
         _logger = logger;
-        _jsonSerializerOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-        };
+        _jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, };
     }
 
     /// <summary>
@@ -66,10 +63,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     {
         var apiQuery = new ApiQuery
         {
-            Queries = new Collection<QueryFields>
-            {
-                new() { Query = searchQuery }
-            },
+            Queries = new Collection<QueryFields> { new() { Query = searchQuery } },
             Size = 50, // Get a decent number of results
             MinDuration = minDuration,
             MaxDuration = maxDuration
@@ -114,6 +108,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             }
 
             _logger.LogInformation("API search returned {Count} results", apiResult.Result.Results.Count);
+            ChannelUrlHttpsUpgrade(apiResult.Result);
             return apiResult.Result;
         }
         catch (HttpRequestException ex)
@@ -131,5 +126,32 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             _logger.LogError(ex, "An unexpected error occurred while calling the MediathekViewWeb API");
             throw new MediathekApiException("An unexpected error occurred while calling the MediathekViewWeb API", ex);
         }
+    }
+
+    private void ChannelUrlHttpsUpgrade(ResultChannels? channels)
+    {
+        if (channels?.Results == null || channels.Results.Count == 0 || Plugin.Instance?.Configuration.AllowHttp == true)
+        {
+            return;
+        }
+
+        foreach (var channel in channels.Results)
+        {
+            channel.UrlSubtitle = UrlHttpsUpgrade(channel.UrlSubtitle);
+            channel.UrlVideo = UrlHttpsUpgrade(channel.UrlVideo);
+            channel.UrlVideoHd = UrlHttpsUpgrade(channel.UrlVideoHd);
+            channel.UrlVideoLow = UrlHttpsUpgrade(channel.UrlVideoLow);
+        }
+    }
+
+    private string UrlHttpsUpgrade(string uri)
+    {
+        if (Uri.TryCreate(uri, UriKind.Absolute, out var uriRes) && uriRes.Scheme == Uri.UriSchemeHttp)
+        {
+            var builder = new UriBuilder(uriRes) { Scheme = Uri.UriSchemeHttps };
+            return builder.ToString();
+        }
+
+        return uri;
     }
 }

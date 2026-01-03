@@ -51,16 +51,16 @@ public class StrmValidationService : IStrmValidationService
             throw new ArgumentException($"Invalid URL format: {url}", nameof(url));
         }
 
-        // Security check: Only allow HTTPS
-        if (uri.Scheme != Uri.UriSchemeHttps)
-        {
-            throw new ArgumentException($"Insecure URL scheme (not HTTPS): {url}", nameof(url));
-        }
-
         var config = Configuration;
         if (config == null)
         {
             throw new InvalidOperationException("Plugin configuration not available.");
+        }
+
+        // Security check: Only allow HTTPS
+        if (uri.Scheme != Uri.UriSchemeHttps && !(config.AllowHttp && uri.Scheme == Uri.UriSchemeHttp))
+        {
+            throw new ArgumentException($"Insecure URL scheme (not HTTPS): {url}", nameof(url));
         }
 
         // Domain check (reuse logic/list from configuration)

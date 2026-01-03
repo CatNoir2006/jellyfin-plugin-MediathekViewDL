@@ -20,16 +20,19 @@ public class FFmpegService : IFFmpegService
 {
     private readonly ILogger<FFmpegService> _logger;
     private readonly IMediaEncoder _mediaEncoder;
+    private readonly IStrmValidationService _strmValidationService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FFmpegService"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="mediaEncoder">The MediaEncoder.</param>
-    public FFmpegService(ILogger<FFmpegService> logger, IMediaEncoder mediaEncoder)
+    /// <param name="strmValidationService">The StrmValidationService.</param>
+    public FFmpegService(ILogger<FFmpegService> logger, IMediaEncoder mediaEncoder, IStrmValidationService strmValidationService)
     {
         _logger = logger;
         _mediaEncoder = mediaEncoder;
+        _strmValidationService = strmValidationService;
     }
 
     /// <inheritdoc />
@@ -75,6 +78,124 @@ public class FFmpegService : IFFmpegService
 
         _logger.LogInformation("Successfully extracted audio for '{Output}'", outputAudioPath);
         return true;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> ExtractAudioFromWebAsync(string videoUrl, string outputAudioPath, string languageCode, bool setOriginalLanguageTag, bool isAudioDescription, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (!await _strmValidationService.ValidateUrlAsync(videoUrl, cancellationToken).ConfigureAwait(false))
+            {
+                _logger.LogError("URL validation failed for '{Url}'", videoUrl);
+                return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "URL validation threw exception for '{Url}'", videoUrl);
+            return false;
+        }
+
+        _logger.LogInformation("Extracting audio from '{Input}' to '{Output}' with language '{Lang}'", videoUrl, outputAudioPath, languageCode);
+        if (string.IsNullOrWhiteSpace(_mediaEncoder.EncoderPath))
+        {
+            _logger.LogError("FFmpeg encoder path is not configured.");
+            return false;
+        }
+
+        // Build ffmpeg arguments
+        var args = new List<string>
+        {
+            "-i",
+            videoUrl,
+            "-vn",
+            "-acodec",
+            "copy",
+            "-metadata:s:a:0",
+            $"language={languageCode}"
+        };
+
+        var dispositions = new List<string>();
+
+        if (setOriginalLanguageTag)
+        {
+            dispositions.Add("original");
+        }
+
+        if (isAudioDescription)
+        {
+            dispositions.Add("visual_impaired");
+        }
+
+        if (dispositions.Count > 0)
+        {
+            args.Add("-disposition:a:0");
+            args.Add(string.Join("+", dispositions));
+        }
+
+        args.Add("-f");
+        args.Add("matroska");
+        args.Add("-y"); // Force overwrite Temp Path.
+        args.Add(outputAudioPath);
+
+        // Set up the process start info
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = _mediaEncoder.EncoderPath,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        // Add arguments to the process
+        foreach (var arg in args)
+        {
+            startInfo.ArgumentList.Add(arg);
+        }
+
+        using var process = new Process();
+        process.StartInfo = startInfo;
+
+        var onExitHandler = GetProcessExitHandler(process);
+        try
+        {
+            process.Start();
+
+            AppDomain.CurrentDomain.ProcessExit += onExitHandler;
+
+            // Registriere den Abbruch des Tokens, um den Prozess hart zu killen
+            using var registration = cancellationToken.Register(() =>
+            {
+                try
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+                catch
+                {
+                    // ignored
+                }
+            });
+
+            var errorReadTask = process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+            await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            string error = await errorReadTask;
+
+            if (process.ExitCode != 0)
+            {
+                _logger.LogError("ffmpeg process failed with exit code {ExitCode}. Error: {Error}", process.ExitCode, error);
+                return false;
+            }
+
+            _logger.LogInformation("Successfully extracted audio for '{Output}'", outputAudioPath);
+            return true;
+        }
+        finally
+        {
+            AppDomain.CurrentDomain.ProcessExit -= onExitHandler;
+            KillProcess(process);
+        }
     }
 
     /// <inheritdoc />
@@ -197,6 +318,29 @@ public class FFmpegService : IFFmpegService
         {
             _logger.LogError(ex, "Error getting media info for '{UrlOrPath}': {Message}", urlOrPath, ex.Message);
             return null;
+        }
+    }
+
+    private EventHandler GetProcessExitHandler(Process process)
+    {
+        return (sender, e) =>
+        {
+            KillProcess(process);
+        };
+    }
+
+    private void KillProcess(Process process)
+    {
+        try
+        {
+            if (process is { HasExited: false })
+            {
+                process.Kill(entireProcessTree: true);
+            }
+        }
+        catch
+        {
+            // ignored
         }
     }
 
