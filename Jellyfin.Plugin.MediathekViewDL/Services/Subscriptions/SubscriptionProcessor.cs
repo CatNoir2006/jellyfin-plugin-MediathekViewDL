@@ -94,11 +94,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
 
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
-
-            if (tempVideoInfo is { Language: "und" } && !string.IsNullOrWhiteSpace(subscription.OriginalLanguage))
-            {
-                tempVideoInfo.Language = subscription.OriginalLanguage;
-            }
+            SetOvLanguageIfSet(subscription, tempVideoInfo);
 
             if (!await ApplyFilters(tempVideoInfo, subscription, item, localEpisodeCache).ConfigureAwait(false))
             {
@@ -220,10 +216,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         {
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
 
-            if (tempVideoInfo != null && tempVideoInfo.Language == "und" && !string.IsNullOrWhiteSpace(subscription.OriginalLanguage))
-            {
-                tempVideoInfo.Language = subscription.OriginalLanguage;
-            }
+            SetOvLanguageIfSet(subscription, tempVideoInfo);
 
             if (!await ApplyFilters(tempVideoInfo, subscription, item, null).ConfigureAwait(false))
             {
@@ -349,12 +342,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         return null;
     }
 
-    private async Task<bool> IsInDownloadCache(string itemId, Guid subscriptionId)
-    {
-        var item = await _downloadHistoryRepository.GetByItemIdAndSubscriptionIdAsync(itemId, subscriptionId).ConfigureAwait(false);
-        return item is not null;
-    }
-
     /// <summary>
     /// Tests if a quality upgrade is available by comparing current file and online URL.
     /// </summary>
@@ -408,6 +395,20 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             onlineQuality.Width,
             onlineQuality.Height);
         return true;
+    }
+
+    private async Task<bool> IsInDownloadCache(string itemId, Guid subscriptionId)
+    {
+        var item = await _downloadHistoryRepository.GetByItemIdAndSubscriptionIdAsync(itemId, subscriptionId).ConfigureAwait(false);
+        return item is not null;
+    }
+
+    private void SetOvLanguageIfSet(Subscription subscription, VideoInfo? videoInfo)
+    {
+        if (videoInfo is { Language: "und" } && !string.IsNullOrWhiteSpace(subscription.OriginalLanguage))
+        {
+            videoInfo.Language = subscription.OriginalLanguage;
+        }
     }
 
     private async Task<LocalMediaInfo?> GetOnlineQualityInfoAsync(string url, CancellationToken cancellationToken)
