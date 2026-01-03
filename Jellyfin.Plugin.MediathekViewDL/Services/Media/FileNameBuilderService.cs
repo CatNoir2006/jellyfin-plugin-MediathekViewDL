@@ -235,8 +235,8 @@ public class FileNameBuilderService : IFileNameBuilderService
             return FileType.Strm;
         }
 
-        // Audiodesc. and SignLang. Should be only saved as Audio unless we Save everything as Video.
-        if ((videoInfo is { Language: "deu", HasAudiodescription: false, HasSignLanguage: false }) || subscription.DownloadFullVideoForSecondaryAudio)
+        // Audiodesc. should alwas be Audioonly, SignLang must be Video because else its nonsense
+        if ((videoInfo is { Language: "deu", HasAudiodescription: false } or { HasSignLanguage: true }) || subscription.DownloadFullVideoForSecondaryAudio)
         {
             return FileType.Video;
         }
