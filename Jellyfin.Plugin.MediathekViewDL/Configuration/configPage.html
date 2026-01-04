@@ -147,6 +147,14 @@
 
                         <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
                             <label class="emby-checkbox-label">
+                                <input id="chkEnableDirectAudioExtraction" type="checkbox" is="emby-checkbox"/>
+                                <span>Direkte Audio-Extraktion aktivieren</span>
+                            </label>
+                            <div class="fieldDescription">Wenn aktiviert, wird versucht, Audio direkt aus der URL zu extrahieren. Hinweis: Die Bandbreitenbegrenzung funktioniert hierbei nicht, aber es müssen generell weniger Daten heruntergeladen werden und der Vorgang sollte schneller sein. (Standard: An)</div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
                                 <input id="chkEnableStrmCleanup" type="checkbox" is="emby-checkbox"/>
                                 <span>Bereinigung ungültiger Streaming-Dateien (.strm) aktivieren</span>
                             </label>
@@ -1324,6 +1332,7 @@
                         document.querySelector('#chkAllowUnknownDomains').checked = config.AllowUnknownDomains;
                         document.querySelector('#chkAllowHttp').checked = config.AllowHttp;
                         document.querySelector('#chkScanLibraryAfterDownload').checked = config.ScanLibraryAfterDownload;
+                        document.querySelector('#chkEnableDirectAudioExtraction').checked = config.EnableDirectAudioExtraction;
                         document.querySelector('#chkEnableStrmCleanup').checked = config.EnableStrmCleanup;
                         document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked = config.AllowDownloadOnUnknownDiskSpace;
                         document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
@@ -1769,6 +1778,7 @@
                         this.currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
                         this.currentConfig.AllowHttp = document.querySelector('#chkAllowHttp').checked;
                         this.currentConfig.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
+                        this.currentConfig.EnableDirectAudioExtraction = document.querySelector('#chkEnableDirectAudioExtraction').checked;
                         this.currentConfig.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
                         this.currentConfig.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
                         const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);

@@ -103,9 +103,7 @@ public class DownloadManager : IDownloadManager
                     break;
                 case DownloadType.AudioExtraction:
                     _logger.LogInformation("Downloading '{Title}' to '{Path}'.", job.Title, item.DestinationPath);
-                    // TODO: Add option to disable/enable the new audio download method
-                    bool useNewMode = true;
-                    if (useNewMode)
+                    if (config.EnableDirectAudioExtraction)
                     {
                         // TODO: Add progress bar support
                         success &= await DoAudioExtractNew(item, job.ItemInfo, progress, cancellationToken).ConfigureAwait(false);
