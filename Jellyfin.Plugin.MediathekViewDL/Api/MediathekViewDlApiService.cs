@@ -224,7 +224,8 @@ public class MediathekViewDlApiService : ControllerBase
         var job = new DownloadJob
         {
             ItemId = item.Id,
-            Title = item.Title
+            Title = item.Title,
+            ItemInfo = new VideoInfo()
         };
 
         job.DownloadItems.Add(new DownloadItem
@@ -302,7 +303,8 @@ public class MediathekViewDlApiService : ControllerBase
         var job = new DownloadJob
         {
             ItemId = item.Id,
-            Title = item.Title
+            Title = item.Title,
+            ItemInfo = new VideoInfo()
         };
 
         job.DownloadItems.Add(new DownloadItem

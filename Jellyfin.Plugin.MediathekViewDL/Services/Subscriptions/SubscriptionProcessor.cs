@@ -113,7 +113,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
 
             // Video/Main Job
-            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo!.Title, AudioLanguage = tempVideoInfo.Language };
+            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo!.Title, ItemInfo = tempVideoInfo };
 
             switch (paths.MainType)
             {

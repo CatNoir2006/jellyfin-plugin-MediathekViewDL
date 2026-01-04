@@ -2,7 +2,8 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.MediathekViewDL;
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using MediaBrowser.Controller;
 using Microsoft.Extensions.Logging;
@@ -19,6 +20,7 @@ public class DownloadManager : IDownloadManager
     private readonly IFFmpegService _ffmpegService;
     private readonly IServerApplicationPaths _appPaths;
     private readonly INfoService _nfoService;
+    private readonly IConfigurationProvider _configProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DownloadManager"/> class.
@@ -28,18 +30,21 @@ public class DownloadManager : IDownloadManager
     /// <param name="ffmpegService">The FFmpeg service.</param>
     /// <param name="appPaths">The application paths.</param>
     /// <param name="nfoService">The NFO service.</param>
+    /// <param name="configProvider">The ConfigurationProvider.</param>
     public DownloadManager(
         ILogger<DownloadManager> logger,
         IFileDownloader fileDownloader,
         IFFmpegService ffmpegService,
         IServerApplicationPaths appPaths,
-        INfoService nfoService)
+        INfoService nfoService,
+        IConfigurationProvider configProvider)
     {
         _logger = logger;
         _fileDownloader = fileDownloader;
         _ffmpegService = ffmpegService;
         _appPaths = appPaths;
         _nfoService = nfoService;
+        _configProvider = configProvider;
     }
 
     /// <summary>
@@ -53,6 +58,7 @@ public class DownloadManager : IDownloadManager
     {
         _logger.LogInformation("Starting download job for '{Title}'.", job.Title);
         var success = true;
+        var config = _configProvider.Configuration;
 
         foreach (var item in job.DownloadItems)
         {
@@ -102,12 +108,11 @@ public class DownloadManager : IDownloadManager
                     if (useNewMode)
                     {
                         // TODO: Add progress bar support
-                        // TODO: Create an extensible mechanism to pass additional information (like AudioDescription) to the download manager to easily support future features
-                        success &= await DoAudioExtractNew(item, job.AudioLanguage ?? "und", progress, cancellationToken).ConfigureAwait(false);
+                        success &= await DoAudioExtractNew(item, job.ItemInfo, progress, cancellationToken).ConfigureAwait(false);
                     }
                     else
                     {
-                        success &= await DoAudioExtractOld(item, job.AudioLanguage ?? "und", progress, cancellationToken).ConfigureAwait(false);
+                        success &= await DoAudioExtractOld(item, job.ItemInfo.Language, progress, cancellationToken).ConfigureAwait(false);
                     }
 
                     break;
@@ -237,15 +242,14 @@ public class DownloadManager : IDownloadManager
     /// Does AudioExtraction using the new ffmpeg Extraction directly from URL.
     /// </summary>
     /// <param name="item">The Download item to process.</param>
-    /// <param name="language">The Language.</param>
+    /// <param name="itemInfo">Information about the Download Item.</param>
     /// <param name="progress">Progress Reporting.</param>
     /// <param name="cancellationToken">The cancellation Token.</param>
     /// <returns>Return true if the audio download was successful, false otherwise.</returns>
-    private async Task<bool> DoAudioExtractNew(DownloadItem item, string language, IProgress<double> progress, CancellationToken cancellationToken)
+    private async Task<bool> DoAudioExtractNew(DownloadItem item, VideoInfo itemInfo, IProgress<double> progress, CancellationToken cancellationToken)
     {
         var tempPath = GetTempFilePath(item.DestinationPath, ".mka");
-        // TODO: Add support for setting the AudioDescription tag
-        var res = await _ffmpegService.ExtractAudioFromWebAsync(item.SourceUrl, tempPath, language, true, false, cancellationToken).ConfigureAwait(false);
+        var res = await _ffmpegService.ExtractAudioFromWebAsync(item.SourceUrl, tempPath, itemInfo.Language, itemInfo.Language != "deu", itemInfo.HasAudiodescription, cancellationToken).ConfigureAwait(false);
         if (res)
         {
             try

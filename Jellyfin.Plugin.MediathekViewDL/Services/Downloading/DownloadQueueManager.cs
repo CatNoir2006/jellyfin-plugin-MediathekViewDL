@@ -205,7 +205,7 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
                         download.SubscriptionId ?? Guid.Empty,
                         item.DestinationPath,
                         download.Job.Title,
-                        download.Job.AudioLanguage).ConfigureAwait(false);
+                        download.Job.ItemInfo.Language).ConfigureAwait(false);
                 }
 
                 if (Plugin.Instance?.Configuration?.ScanLibraryAfterDownload == true && _activeDownloads.Values.All(d => d.Status != DownloadStatus.Queued))

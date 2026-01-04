@@ -5,7 +5,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 /// <summary>
 /// Holds the generated paths for a download item.
 /// </summary>
-public class DownloadPaths
+public record DownloadPaths
 {
     /// <summary>
     /// Gets or sets the target directory path.
