@@ -18,6 +18,7 @@ public class PluginConfiguration : BasePluginConfiguration
         Subscriptions = new Collection<Subscription>();
         DefaultDownloadPath = string.Empty;
         DownloadSubtitles = true;
+        EnableDirectAudioExtraction = true;
     }
 
     /// <summary>
@@ -36,6 +37,11 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets a value indicating whether subtitles should be downloaded if available.
     /// </summary>
     public bool DownloadSubtitles { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether direct audio extraction from URL is enabled.
+    /// </summary>
+    public bool EnableDirectAudioExtraction { get; set; }
 
     /// <summary>
     /// Gets or sets the minimum free disk space in bytes required to start a new download.
@@ -60,6 +66,13 @@ public class PluginConfiguration : BasePluginConfiguration
     /// This may pose a security risk, so use with caution.
     /// </summary>
     public bool AllowUnknownDomains { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether http is allowed for download URLs.
+    /// This may be necessary as some URLs do not support https for some reason.
+    /// I recommend keeping this off and only turning it on if you encounter problems.
+    /// </summary>
+    public bool AllowHttp { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether a library scan should be triggered after a download finishes.

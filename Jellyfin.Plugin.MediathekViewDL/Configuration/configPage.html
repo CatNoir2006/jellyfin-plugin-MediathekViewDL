@@ -131,10 +131,26 @@
 
                         <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
                             <label class="emby-checkbox-label">
+                                <input id="chkAllowHttp" type="checkbox" is="emby-checkbox"/>
+                                <span>HTTP Downloads erlauben</span>
+                            </label>
+                            <div class="fieldDescription">Dies kann notwendig sein, da manche URLs aus irgendeinem Grund kein HTTPS unterstützen. Es wird empfohlen, dies deaktiviert zu lassen und nur zu aktivieren, wenn Probleme auftreten.</div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
                                 <input id="chkScanLibraryAfterDownload" type="checkbox" is="emby-checkbox"/>
                                 <span>Bibliotheks-Scan nach Download</span>
                             </label>
                             <div class="fieldDescription">Startet automatisch einen Scan der Medienbibliothek, nachdem neue Inhalte heruntergeladen wurden. Wenn deaktiviert, erscheinen neue Inhalte erst nach dem nächsten regulären Scan.</div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkEnableDirectAudioExtraction" type="checkbox" is="emby-checkbox"/>
+                                <span>Direkte Audio-Extraktion aktivieren</span>
+                            </label>
+                            <div class="fieldDescription">Wenn aktiviert, wird versucht, Audio direkt aus der URL zu extrahieren. Hinweis: Die Bandbreitenbegrenzung funktioniert hierbei nicht, aber es müssen generell weniger Daten heruntergeladen werden und der Vorgang sollte schneller sein. (Standard: An)</div>
                         </div>
 
                         <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
@@ -1324,7 +1340,9 @@
                         document.querySelector('#txtTempDownloadPath').value = config.TempDownloadPath || "";
                         document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
                         document.querySelector('#chkAllowUnknownDomains').checked = config.AllowUnknownDomains;
+                        document.querySelector('#chkAllowHttp').checked = config.AllowHttp;
                         document.querySelector('#chkScanLibraryAfterDownload').checked = config.ScanLibraryAfterDownload;
+                        document.querySelector('#chkEnableDirectAudioExtraction').checked = config.EnableDirectAudioExtraction;
                         document.querySelector('#chkEnableStrmCleanup').checked = config.EnableStrmCleanup;
                         document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked = config.AllowDownloadOnUnknownDiskSpace;
                         document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
@@ -1768,7 +1786,9 @@
                         this.currentConfig.TempDownloadPath = document.querySelector('#txtTempDownloadPath').value;
                         this.currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
                         this.currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
+                        this.currentConfig.AllowHttp = document.querySelector('#chkAllowHttp').checked;
                         this.currentConfig.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
+                        this.currentConfig.EnableDirectAudioExtraction = document.querySelector('#chkEnableDirectAudioExtraction').checked;
                         this.currentConfig.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
                         this.currentConfig.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
                         const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);

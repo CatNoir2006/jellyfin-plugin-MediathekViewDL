@@ -22,7 +22,7 @@ public class ActiveDownload
     /// <summary>
     /// Gets or sets the download job details.
     /// </summary>
-    public DownloadJob Job { get; set; } = new();
+    public DownloadJob Job { get; set; } = null!;
 
     /// <summary>
     /// Gets or sets the current status.
@@ -48,5 +48,5 @@ public class ActiveDownload
     /// Gets the cancellation token source for this job.
     /// </summary>
     [JsonIgnore]
-    public CancellationTokenSource Cts { get; } = new CancellationTokenSource();
+    public CancellationTokenSource Cts { get; } = new();
 }

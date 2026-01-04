@@ -3,7 +3,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services.Media;
 /// <summary>
 /// Represents parsed video information, including numbering, language, and specific features.
 /// </summary>
-public class VideoInfo
+public record VideoInfo
 {
     /// <summary>
     /// Gets or sets the season number, if available.

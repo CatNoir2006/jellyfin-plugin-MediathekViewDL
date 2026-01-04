@@ -22,6 +22,7 @@ public class DownloadScheduledTask : IScheduledTask
     private readonly ILogger<DownloadScheduledTask> _logger;
     private readonly ISubscriptionProcessor _subscriptionProcessor;
     private readonly IDownloadQueueManager _downloadQueueManager;
+    private readonly IConfigurationProvider _configurationProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DownloadScheduledTask"/> class.
@@ -29,20 +30,18 @@ public class DownloadScheduledTask : IScheduledTask
     /// <param name="logger">The logger.</param>
     /// <param name="subscriptionProcessor">The subscription processor.</param>
     /// <param name="downloadQueueManager">The download queue manager.</param>
+    /// <param name="configurationProvider">The configuration provider.</param>
     public DownloadScheduledTask(
         ILogger<DownloadScheduledTask> logger,
         ISubscriptionProcessor subscriptionProcessor,
-        IDownloadQueueManager downloadQueueManager)
+        IDownloadQueueManager downloadQueueManager,
+        IConfigurationProvider configurationProvider)
     {
         _logger = logger;
         _subscriptionProcessor = subscriptionProcessor;
         _downloadQueueManager = downloadQueueManager;
+        _configurationProvider = configurationProvider;
     }
-
-    /// <summary>
-    /// Gets the plugin configuration.
-    /// </summary>
-    protected virtual PluginConfiguration? Configuration => Plugin.Instance?.Configuration;
 
     /// <inheritdoc />
     public string Name => "Mediathek Abo-Downloader";
@@ -69,7 +68,7 @@ public class DownloadScheduledTask : IScheduledTask
         _logger.LogInformation("Starting Mediathek subscription download task.");
         progress.Report(0);
 
-        var config = Configuration;
+        var config = _configurationProvider.ConfigurationOrNull;
         if (config == null || config.Subscriptions.Count == 0)
         {
             _logger.LogInformation("No subscriptions configured. Task finished.");
@@ -124,7 +123,7 @@ public class DownloadScheduledTask : IScheduledTask
 
         // Save the new timestamp
         config.LastRun = newLastRun;
-        Plugin.Instance?.UpdateConfiguration(config);
+        _configurationProvider.TryUpdate(config);
 
         progress.Report(100);
         _logger.LogInformation("Mediathek subscription discovery task finished. Jobs are in the download queue.");

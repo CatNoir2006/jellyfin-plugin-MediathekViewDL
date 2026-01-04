@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net.Http;
 using Jellyfin.Plugin.MediathekViewDL.Api;
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
@@ -33,11 +34,11 @@ namespace Jellyfin.Plugin.MediathekViewDL
             // Database
             serviceCollection.AddDbContext<MediathekViewDlDbContext>(options =>
             {
-                var dbPath = System.IO.Path.Combine(Plugin.Instance!.DataFolderPath, "mediathek-dl.db");
-                var dbDir = System.IO.Path.GetDirectoryName(dbPath);
-                if (!string.IsNullOrEmpty(dbDir) && !System.IO.Directory.Exists(dbDir))
+                var dbPath = Path.Combine(Plugin.Instance!.DataFolderPath, "mediathek-dl.db");
+                var dbDir = Path.GetDirectoryName(dbPath);
+                if (!string.IsNullOrEmpty(dbDir) && !Directory.Exists(dbDir))
                 {
-                    System.IO.Directory.CreateDirectory(dbDir);
+                    Directory.CreateDirectory(dbDir);
                 }
 
                 options.UseSqlite($"Data Source={dbPath}");
@@ -48,6 +49,7 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddSingleton<IQualityCacheRepository, DbQualityCacheRepository>();
             serviceCollection.AddSingleton<IDownloadHistoryRepository, DbDownloadHistoryRepository>();
 
+            serviceCollection.AddSingleton<IConfigurationProvider, PluginConfigurationProvider>();
             serviceCollection.AddSingleton<ILanguageDetectionService, LanguageDetectionService>();
             serviceCollection.AddSingleton<IVideoParser, VideoParser>();
             serviceCollection.AddSingleton<IFileNameBuilderService, FileNameBuilderService>();

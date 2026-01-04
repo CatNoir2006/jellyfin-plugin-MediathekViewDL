@@ -19,6 +19,18 @@ public interface IFFmpegService
     Task<bool> ExtractAudioAsync(string tempVideoPath, string outputAudioPath, string languageCode, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Extracts the audio track from a url and saves it as an MKA file.
+    /// </summary>
+    /// <param name="videoUrl">The path to the temporary input video file.</param>
+    /// <param name="outputAudioPath">The path for the output MKA audio file.</param>
+    /// <param name="languageCode">The 3-letter language code (e.g., 'eng') to set in the metadata.</param>
+    /// <param name="setOriginalLanguageTag">Whether to tag the audio as original language.</param>
+    /// <param name="isAudioDescription">Whether the audio track is an audio description.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>True if the extraction was successful, otherwise false.</returns>
+    Task<bool> ExtractAudioFromWebAsync(string videoUrl, string outputAudioPath, string languageCode, bool setOriginalLanguageTag, bool isAudioDescription, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Gets the media information (width, height, duration) from a remote URL or local file.
     /// </summary>
     /// <param name="urlOrPath">The URL or file path.</param>

@@ -16,22 +16,20 @@ public class StrmValidationService : IStrmValidationService
 {
     private readonly ILogger<StrmValidationService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfigurationProvider _configurationProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StrmValidationService"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="httpClientFactory">The HTTP client factory.</param>
-    public StrmValidationService(ILogger<StrmValidationService> logger, IHttpClientFactory httpClientFactory)
+    /// <param name="configurationProvider">The configuration provider.</param>
+    public StrmValidationService(ILogger<StrmValidationService> logger, IHttpClientFactory httpClientFactory, IConfigurationProvider configurationProvider)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _configurationProvider = configurationProvider;
     }
-
-    /// <summary>
-    /// Gets the plugin configuration. Virtual for testing.
-    /// </summary>
-    protected virtual PluginConfiguration Configuration => Plugin.Instance!.Configuration;
 
     /// <summary>
     /// Validates a streaming URL.
@@ -51,16 +49,16 @@ public class StrmValidationService : IStrmValidationService
             throw new ArgumentException($"Invalid URL format: {url}", nameof(url));
         }
 
-        // Security check: Only allow HTTPS
-        if (uri.Scheme != Uri.UriSchemeHttps)
-        {
-            throw new ArgumentException($"Insecure URL scheme (not HTTPS): {url}", nameof(url));
-        }
-
-        var config = Configuration;
+        var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
         {
             throw new InvalidOperationException("Plugin configuration not available.");
+        }
+
+        // Security check: Only allow HTTPS
+        if (uri.Scheme != Uri.UriSchemeHttps && !(config.AllowHttp && uri.Scheme == Uri.UriSchemeHttp))
+        {
+            throw new ArgumentException($"Insecure URL scheme (not HTTPS): {url}", nameof(url));
         }
 
         // Domain check (reuse logic/list from configuration)

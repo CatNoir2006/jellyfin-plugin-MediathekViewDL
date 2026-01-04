@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api;
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
@@ -47,7 +48,12 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             var httpClient = new HttpClient(mockHttpMessageHandler.Object);
             var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
-            var client = new MediathekViewApiClient(httpClient, mockLogger.Object);
+            var mockConfigProvider = new Mock<IConfigurationProvider>();
+            
+            // Ensure ConfigurationOrNull returns something valid if accessed (though strictly not needed for this test logic, it's safer)
+            mockConfigProvider.Setup(x => x.ConfigurationOrNull).Returns(new PluginConfiguration());
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, mockConfigProvider.Object);
 
             // Act
             await client.SearchAsync(new ApiQuery(), CancellationToken.None);

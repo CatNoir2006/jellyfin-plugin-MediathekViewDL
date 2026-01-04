@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services;
 using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using MediaBrowser.Model.Tasks;
@@ -19,16 +20,19 @@ public class StrmCleanupTask : IScheduledTask
     private const long MaxStrmFileSize = 4096; // 4 KB max size for .strm files to prevent accidents
     private readonly ILogger<StrmCleanupTask> _logger;
     private readonly IStrmValidationService _validationService;
+    private readonly IConfigurationProvider _configurationProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="StrmCleanupTask"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="validationService">The validation service.</param>
-    public StrmCleanupTask(ILogger<StrmCleanupTask> logger, IStrmValidationService validationService)
+    /// <param name="configurationProvider">The configuration provider.</param>
+    public StrmCleanupTask(ILogger<StrmCleanupTask> logger, IStrmValidationService validationService, IConfigurationProvider configurationProvider)
     {
         _logger = logger;
         _validationService = validationService;
+        _configurationProvider = configurationProvider;
     }
 
     /// <inheritdoc />
@@ -52,7 +56,7 @@ public class StrmCleanupTask : IScheduledTask
     /// <inheritdoc />
     public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
     {
-        var config = Plugin.Instance?.Configuration;
+        var config = _configurationProvider.ConfigurationOrNull;
         if (config == null || !config.EnableStrmCleanup)
         {
             _logger.LogInformation("Strm cleanup task is disabled in configuration or config is missing. Skipping.");
