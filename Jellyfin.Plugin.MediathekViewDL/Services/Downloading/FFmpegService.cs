@@ -168,14 +168,7 @@ public class FFmpegService : IFFmpegService
             // Registriere den Abbruch des Tokens, um den Prozess hart zu killen
             using var registration = cancellationToken.Register(() =>
             {
-                try
-                {
-                    process.Kill(entireProcessTree: true);
-                }
-                catch
-                {
-                    // ignored
-                }
+                KillProcess(process);
             });
 
             var errorReadTask = process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
@@ -338,9 +331,9 @@ public class FFmpegService : IFFmpegService
                 process.Kill(entireProcessTree: true);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // ignored
+            _logger.LogWarning(ex, "Failed to kill ffmpeg process.");
         }
     }
 

@@ -255,8 +255,9 @@ public class DownloadManager : IDownloadManager
                 File.Move(tempPath, item.DestinationPath);
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Failed to move temporary audio file from {TempPath} to {DestinationPath}", tempPath, item.DestinationPath);
                 return false;
             }
         }
@@ -267,9 +268,9 @@ public class DownloadManager : IDownloadManager
             {
                 File.Delete(tempPath);
             }
-            catch
+            catch (Exception ex)
             {
-                // ignored
+                _logger.LogWarning(ex, "Failed to delete temporary audio file {TempPath}", tempPath);
             }
         }
 

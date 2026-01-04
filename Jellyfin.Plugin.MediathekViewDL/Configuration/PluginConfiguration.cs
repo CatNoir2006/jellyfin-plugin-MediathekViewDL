@@ -69,8 +69,8 @@ public class PluginConfiguration : BasePluginConfiguration
 
     /// <summary>
     /// Gets or sets a value indicating whether http is allowed for download URLs.
-    /// This may be nessery as some URLs do not support https for some reason.
-    /// I Recomment keeping this of if and only turning it on if you encounter problems.
+    /// This may be necessary as some URLs do not support https for some reason.
+    /// I recommend keeping this off and only turning it on if you encounter problems.
     /// </summary>
     public bool AllowHttp { get; set; }
 
