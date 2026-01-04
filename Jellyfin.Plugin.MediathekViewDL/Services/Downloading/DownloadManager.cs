@@ -330,7 +330,7 @@ public class DownloadManager : IDownloadManager
     /// <returns>The Temp-path.</returns>
     private string GetTempFilePath(string? destinationPath, string? extension = null)
     {
-        var config = Plugin.Instance?.Configuration;
+        var config = _configProvider.ConfigurationOrNull;
         var tempDir = config?.TempDownloadPath;
 
         // 1. If TempDownloadPath is configured, use it.

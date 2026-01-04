@@ -11,33 +11,19 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
     public class FileNameBuilderServiceTests
     {
         private readonly Mock<ILogger<FileNameBuilderService>> _loggerMock;
+        private readonly Mock<IConfigurationProvider> _configProviderMock;
 
         public FileNameBuilderServiceTests()
         {
             _loggerMock = new Mock<ILogger<FileNameBuilderService>>();
-        }
-
-        // Helper class to override Configuration for testing
-        private class TestableFileNameBuilderService : FileNameBuilderService
-        {
-            private readonly PluginConfiguration _testConfiguration;
-
-            public TestableFileNameBuilderService(
-                ILogger<FileNameBuilderService> logger,
-                PluginConfiguration testConfiguration)
-                : base(logger)
-            {
-                _testConfiguration = testConfiguration;
-            }
-
-            protected override PluginConfiguration? Configuration => _testConfiguration;
+            _configProviderMock = new Mock<IConfigurationProvider>();
         }
 
         [Fact]
         public void SanitizeFileName_ShouldRemoveInvalidCharacters()
         {
             // Arrange
-            var service = new FileNameBuilderService(_loggerMock.Object);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
             string unsafeName = "File/Name:With*Invalid?Chars";
 
             // Act
@@ -54,7 +40,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public void SanitizeDirectoryName_ShouldRemoveInvalidCharacters()
         {
             // Arrange
-            var service = new FileNameBuilderService(_loggerMock.Object);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
             string unsafeName = "Folder/Name:With*Invalid?Chars";
 
             // Act
@@ -72,7 +58,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         {
             // Arrange
             var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
-            var service = new TestableFileNameBuilderService(_loggerMock.Object, config);
+            _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
 
             var videoInfo = new VideoInfo
             {
@@ -97,7 +84,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         {
             // Arrange
             var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
-            var service = new TestableFileNameBuilderService(_loggerMock.Object, config);
+            _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
 
             var videoInfo = new VideoInfo
             {
@@ -127,7 +115,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         {
             // Arrange
             var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
-            var service = new TestableFileNameBuilderService(_loggerMock.Object, config);
+            _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
 
             var videoInfo = new VideoInfo { Title = "Test" };
             var subscription = new Subscription 
@@ -148,7 +137,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         {
             // Arrange
             var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
-            var service = new TestableFileNameBuilderService(_loggerMock.Object, config);
+            _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
 
             var videoInfo = new VideoInfo { Title = "Trailer", IsTrailer = true };
             var subscription = new Subscription 
@@ -169,7 +159,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         {
             // Arrange
             var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
-            var service = new TestableFileNameBuilderService(_loggerMock.Object, config);
+            _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
 
             var videoInfo = new VideoInfo 
             { 
@@ -194,7 +185,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         {
             // Arrange
             var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
-            var service = new TestableFileNameBuilderService(_loggerMock.Object, config);
+            _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
 
             var videoInfo = new VideoInfo 
             { 

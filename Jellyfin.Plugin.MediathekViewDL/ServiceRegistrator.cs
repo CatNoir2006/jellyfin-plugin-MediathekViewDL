@@ -34,11 +34,11 @@ namespace Jellyfin.Plugin.MediathekViewDL
             // Database
             serviceCollection.AddDbContext<MediathekViewDlDbContext>(options =>
             {
-                var dbPath = System.IO.Path.Combine(Plugin.Instance!.DataFolderPath, "mediathek-dl.db");
-                var dbDir = System.IO.Path.GetDirectoryName(dbPath);
-                if (!string.IsNullOrEmpty(dbDir) && !System.IO.Directory.Exists(dbDir))
+                var dbPath = Path.Combine(Plugin.Instance!.DataFolderPath, "mediathek-dl.db");
+                var dbDir = Path.GetDirectoryName(dbPath);
+                if (!string.IsNullOrEmpty(dbDir) && !Directory.Exists(dbDir))
                 {
-                    System.IO.Directory.CreateDirectory(dbDir);
+                    Directory.CreateDirectory(dbDir);
                 }
 
                 options.UseSqlite($"Data Source={dbPath}");

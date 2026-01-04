@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using MediaBrowser.Controller.Library;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,6 +23,7 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
     private readonly SemaphoreSlim _concurrencySemaphore = new(1, 1); // Limit to 1 concurrent download
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<DownloadQueueManager> _logger;
+    private readonly IConfigurationProvider _configurationProvider;
     private readonly CancellationTokenSource _shutdownCts = new();
     private readonly Task _queueProcessor;
 
@@ -30,12 +32,15 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
     /// </summary>
     /// <param name="scopeFactory">The service scope factory.</param>
     /// <param name="logger">The logger.</param>
+    /// <param name="configurationProvider">The configuration provider.</param>
     public DownloadQueueManager(
         IServiceScopeFactory scopeFactory,
-        ILogger<DownloadQueueManager> logger)
+        ILogger<DownloadQueueManager> logger,
+        IConfigurationProvider configurationProvider)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _configurationProvider = configurationProvider;
         _queueChannel = Channel.CreateUnbounded<ActiveDownload>();
         _queueProcessor = Task.Run(ProcessQueueAsync);
     }
@@ -208,7 +213,7 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
                         download.Job.ItemInfo.Language).ConfigureAwait(false);
                 }
 
-                if (Plugin.Instance?.Configuration?.ScanLibraryAfterDownload == true && _activeDownloads.Values.All(d => d.Status != DownloadStatus.Queued))
+                if (_configurationProvider.ConfigurationOrNull?.ScanLibraryAfterDownload == true && _activeDownloads.Values.All(d => d.Status != DownloadStatus.Queued))
                 {
                     _logger.LogInformation("Triggering library scan (all downloads finished).");
                     libraryManager.QueueLibraryScan();

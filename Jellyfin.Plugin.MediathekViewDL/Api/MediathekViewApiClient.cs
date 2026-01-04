@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
 using Microsoft.Extensions.Logging;
 using Polly;
@@ -23,6 +24,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     private const string ApiUrl = "https://mediathekviewweb.de/api/query";
     private readonly HttpClient _httpClient;
     private readonly ILogger<MediathekViewApiClient> _logger;
+    private readonly IConfigurationProvider _configurationProvider;
     private readonly JsonSerializerOptions _jsonSerializerOptions;
 
     private static readonly AsyncPolicy<HttpResponseMessage> _resiliencePolicy = Policy
@@ -39,10 +41,12 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     /// </summary>
     /// <param name="httpClient">The http client.</param>
     /// <param name="logger">The logger.</param>
-    public MediathekViewApiClient(HttpClient httpClient, ILogger<MediathekViewApiClient> logger)
+    /// <param name="configurationProvider">The configuration provider.</param>
+    public MediathekViewApiClient(HttpClient httpClient, ILogger<MediathekViewApiClient> logger, IConfigurationProvider configurationProvider)
     {
         _httpClient = httpClient;
         _logger = logger;
+        _configurationProvider = configurationProvider;
         _jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, };
     }
 
@@ -130,7 +134,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
 
     private void ChannelUrlHttpsUpgrade(ResultChannels? channels)
     {
-        if (channels?.Results == null || channels.Results.Count == 0 || Plugin.Instance?.Configuration.AllowHttp == true)
+        if (channels?.Results == null || channels.Results.Count == 0 || _configurationProvider.ConfigurationOrNull?.AllowHttp == true)
         {
             return;
         }

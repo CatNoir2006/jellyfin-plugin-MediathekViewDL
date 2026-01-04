@@ -17,6 +17,7 @@ public class FileDownloader : IFileDownloader
 {
     private readonly ILogger<FileDownloader> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly IConfigurationProvider _configurationProvider;
 
     private static readonly AsyncRetryPolicy<HttpResponseMessage> _resiliencePolicy = Policy
         .Handle<HttpRequestException>()
@@ -28,16 +29,13 @@ public class FileDownloader : IFileDownloader
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="httpClientFactory">The http client factory.</param>
-    public FileDownloader(ILogger<FileDownloader> logger, IHttpClientFactory httpClientFactory)
+    /// <param name="configurationProvider">The configuration provider.</param>
+    public FileDownloader(ILogger<FileDownloader> logger, IHttpClientFactory httpClientFactory, IConfigurationProvider configurationProvider)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _configurationProvider = configurationProvider;
     }
-
-    /// <summary>
-    /// Gets the plugin configuration.
-    /// </summary>
-    protected virtual PluginConfiguration? Configuration => Plugin.Instance?.Configuration;
 
     /// <summary>
     /// Downloads a file from a URL to a specified destination path.
@@ -49,7 +47,7 @@ public class FileDownloader : IFileDownloader
     /// <returns>True if the download was successful, otherwise false.</returns>
     public async Task<bool> DownloadFileAsync(string fileUrl, string destinationPath, IProgress<double>? progress, CancellationToken cancellationToken)
     {
-        var pluginConfig = Configuration;
+        var pluginConfig = _configurationProvider.ConfigurationOrNull;
 
         // Validate file URL
         if (string.IsNullOrWhiteSpace(fileUrl))

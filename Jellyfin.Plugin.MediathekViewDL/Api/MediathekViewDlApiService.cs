@@ -32,6 +32,7 @@ public class MediathekViewDlApiService : ControllerBase
     private readonly ISubscriptionProcessor _subscriptionProcessor;
     private readonly IDownloadHistoryRepository _downloadHistoryRepository;
     private readonly IDownloadQueueManager _downloadQueueManager;
+    private readonly IConfigurationProvider _configurationProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekViewDlApiService"/> class.
@@ -43,6 +44,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="subscriptionProcessor">The subscription processor.</param>
     /// <param name="downloadHistoryRepository">The Download History Repo.</param>
     /// <param name="downloadQueueManager">The download queue manager.</param>
+    /// <param name="configurationProvider">The configuration provider.</param>
     public MediathekViewDlApiService(
         ILogger<MediathekViewDlApiService> logger,
         IMediathekViewApiClient apiClient,
@@ -50,7 +52,8 @@ public class MediathekViewDlApiService : ControllerBase
         IFileNameBuilderService fileNameBuilder,
         ISubscriptionProcessor subscriptionProcessor,
         IDownloadHistoryRepository downloadHistoryRepository,
-        IDownloadQueueManager downloadQueueManager)
+        IDownloadQueueManager downloadQueueManager,
+        IConfigurationProvider configurationProvider)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -59,12 +62,8 @@ public class MediathekViewDlApiService : ControllerBase
         _subscriptionProcessor = subscriptionProcessor;
         _downloadHistoryRepository = downloadHistoryRepository;
         _downloadQueueManager = downloadQueueManager;
+        _configurationProvider = configurationProvider;
     }
-
-    /// <summary>
-    /// Gets the plugin configuration.
-    /// </summary>
-    protected virtual PluginConfiguration? Configuration => Plugin.Instance?.Configuration;
 
     /// <summary>
     /// Gets the currently active downloads.
@@ -195,7 +194,7 @@ public class MediathekViewDlApiService : ControllerBase
     [Authorize(Policy = Policies.RequiresElevation)]
     public IActionResult Download([FromBody] ResultItem item)
     {
-        var config = Configuration;
+        var config = _configurationProvider.ConfigurationOrNull;
         if (config == null || string.IsNullOrWhiteSpace(config.DefaultDownloadPath))
         {
             _logger.LogError("Default download path is not configured. Cannot start manual download.");
@@ -259,7 +258,7 @@ public class MediathekViewDlApiService : ControllerBase
     [Authorize(Policy = Policies.RequiresElevation)]
     public IActionResult AdvancedDownload([FromBody] AdvancedDownloadOptions options)
     {
-        var config = Configuration;
+        var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
         {
             _logger.LogError("Plugin configuration is not available. Cannot start advanced download.");
@@ -339,7 +338,7 @@ public class MediathekViewDlApiService : ControllerBase
     [Authorize(Policy = Policies.RequiresElevation)]
     public async Task<ActionResult> ResetProcessedItems([FromQuery] Guid subscriptionId)
     {
-        var config = Configuration;
+        var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
         {
             _logger.LogError("Plugin configuration is not available. Cannot reset processed items.");
@@ -355,7 +354,7 @@ public class MediathekViewDlApiService : ControllerBase
 
         await _downloadHistoryRepository.RemoveBySubscriptionIdAsync(subscriptionId).ConfigureAwait(false);
         subscription.LastDownloadedTimestamp = null; // Also reset the timestamp for consistency
-        Plugin.Instance?.UpdateConfiguration(config);
+        _configurationProvider.TryUpdate(config);
 
         _logger.LogInformation("Processed items list reset for subscription '{SubscriptionName}' (ID: {SubscriptionId}).", subscription.Name, subscriptionId);
         return Ok($"Processed items list reset for subscription '{subscription.Name}'.");

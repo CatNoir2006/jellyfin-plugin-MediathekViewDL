@@ -13,6 +13,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services.Media;
 public class FileNameBuilderService : IFileNameBuilderService
 {
     private readonly ILogger<FileNameBuilderService> _logger;
+    private readonly IConfigurationProvider _configurationProvider;
 
     // Invalid characters for file names on most file systems
     private readonly char[] _invalidFileNameChars = Path.GetInvalidFileNameChars().Concat(new char[] { '<', '>', ':', '"', '/', '\\', '|', '?', '*' }).ToArray();
@@ -23,15 +24,12 @@ public class FileNameBuilderService : IFileNameBuilderService
     /// Initializes a new instance of the <see cref="FileNameBuilderService"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
-    public FileNameBuilderService(ILogger<FileNameBuilderService> logger)
+    /// <param name="configurationProvider">The configuration provider.</param>
+    public FileNameBuilderService(ILogger<FileNameBuilderService> logger, IConfigurationProvider configurationProvider)
     {
         _logger = logger;
+        _configurationProvider = configurationProvider;
     }
-
-    /// <summary>
-    /// Gets the plugin configuration. Protected virtual to allow overriding in tests.
-    /// </summary>
-    protected virtual PluginConfiguration? Configuration => Plugin.Instance?.Configuration;
 
     /// <summary>
     /// Generates all necessary download paths for a given video and subscription.
@@ -88,7 +86,7 @@ public class FileNameBuilderService : IFileNameBuilderService
     /// <returns>The base directory path.</returns>
     public string GetSubscriptionBaseDirectory(Subscription subscription)
     {
-        var config = Configuration;
+        var config = _configurationProvider.ConfigurationOrNull;
         string targetPath;
 
         if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
@@ -178,7 +176,7 @@ public class FileNameBuilderService : IFileNameBuilderService
     /// <returns>The target directory name. Returns an empty string if no valid path is configured.</returns>
     private string BuildDirectoryName(VideoInfo videoInfo, Subscription subscription)
     {
-        var config = Configuration;
+        var config = _configurationProvider.ConfigurationOrNull;
         string targetPath = string.Empty;
         if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
         {

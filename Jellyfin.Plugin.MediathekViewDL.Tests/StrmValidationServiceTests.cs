@@ -12,29 +12,13 @@ using Xunit;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Tests;
 
-// Subclass for testing to override Configuration property
-public class TestableStrmValidationService : StrmValidationService
-{
-    private readonly PluginConfiguration _testConfig;
-
-    public TestableStrmValidationService(
-        ILogger<StrmValidationService> logger, 
-        IHttpClientFactory httpClientFactory,
-        PluginConfiguration testConfig) 
-        : base(logger, httpClientFactory)
-    {
-        _testConfig = testConfig;
-    }
-
-    protected override PluginConfiguration Configuration => _testConfig;
-}
-
 public class StrmValidationServiceTests
 {
     private readonly Mock<ILogger<StrmValidationService>> _loggerMock;
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
-    private readonly TestableStrmValidationService _service;
+    private readonly Mock<IConfigurationProvider> _configProviderMock;
+    private readonly StrmValidationService _service;
     private readonly PluginConfiguration _testConfig;
 
     public StrmValidationServiceTests()
@@ -42,13 +26,15 @@ public class StrmValidationServiceTests
         _loggerMock = new Mock<ILogger<StrmValidationService>>();
         _httpClientFactoryMock = new Mock<IHttpClientFactory>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
+        _configProviderMock = new Mock<IConfigurationProvider>();
         _testConfig = new PluginConfiguration();
+
+        _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(_testConfig);
 
         var client = new HttpClient(_httpMessageHandlerMock.Object);
         _httpClientFactoryMock.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(client);
 
-        // Use the testable subclass
-        _service = new TestableStrmValidationService(_loggerMock.Object, _httpClientFactoryMock.Object, _testConfig);
+        _service = new StrmValidationService(_loggerMock.Object, _httpClientFactoryMock.Object, _configProviderMock.Object);
     }
 
     [Fact]
