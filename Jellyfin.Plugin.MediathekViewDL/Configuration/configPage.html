@@ -131,6 +131,14 @@
 
                         <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
                             <label class="emby-checkbox-label">
+                                <input id="chkAllowHttp" type="checkbox" is="emby-checkbox"/>
+                                <span>HTTP Downloads erlauben</span>
+                            </label>
+                            <div class="fieldDescription">Dies kann notwendig sein, da manche URLs aus irgendeinem Grund kein HTTPS unterstützen. Es wird empfohlen, dies deaktiviert zu lassen und nur zu aktivieren, wenn Probleme auftreten.</div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
                                 <input id="chkScanLibraryAfterDownload" type="checkbox" is="emby-checkbox"/>
                                 <span>Bibliotheks-Scan nach Download</span>
                             </label>
@@ -1314,6 +1322,7 @@
                         document.querySelector('#txtTempDownloadPath').value = config.TempDownloadPath || "";
                         document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
                         document.querySelector('#chkAllowUnknownDomains').checked = config.AllowUnknownDomains;
+                        document.querySelector('#chkAllowHttp').checked = config.AllowHttp;
                         document.querySelector('#chkScanLibraryAfterDownload').checked = config.ScanLibraryAfterDownload;
                         document.querySelector('#chkEnableStrmCleanup').checked = config.EnableStrmCleanup;
                         document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked = config.AllowDownloadOnUnknownDiskSpace;
@@ -1758,6 +1767,7 @@
                         this.currentConfig.TempDownloadPath = document.querySelector('#txtTempDownloadPath').value;
                         this.currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
                         this.currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
+                        this.currentConfig.AllowHttp = document.querySelector('#chkAllowHttp').checked;
                         this.currentConfig.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
                         this.currentConfig.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
                         this.currentConfig.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
