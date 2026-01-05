@@ -516,7 +516,7 @@
                         <span>TMDB Suche (Thema)</span>
                     </button>
                     <button is="emby-button" type="button" class="raised" id="mvpl-btn-google-search">
-                        <span>Google Suche</span>
+                        <span>Auf Google suchen</span>
                     </button>
                     <button is="emby-button" type="button" class="raised button-cancel" id="mvpl-btn-close-adv-download">
                         <span>Abbrechen</span>
@@ -1883,7 +1883,7 @@
                         if (this.currentItemForAdvancedDl) {
                             const topic = this.currentItemForAdvancedDl.topic || '';
                             const title = this.currentItemForAdvancedDl.title || '';
-                            const queryString = (topic + ' ' + title).trim() + ' TMDB';
+                            const queryString = (topic + ' ' + title).trim() + ' "TMDB"';
                             const query = encodeURIComponent(queryString);
                             window.open('https://www.google.com/search?q=' + query, '_blank');
                         }
