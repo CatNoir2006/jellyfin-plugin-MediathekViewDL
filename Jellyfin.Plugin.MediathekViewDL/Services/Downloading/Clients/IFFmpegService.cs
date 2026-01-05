@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -46,4 +47,13 @@ public interface IFFmpegService
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>True if the download was successful, otherwise false.</returns>
     Task<bool> DownloadM3U8Async(string url, string outputPath, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Executes FFmpeg with the specified arguments.
+    /// </summary>
+    /// <param name="args">The arguments to pass to FFmpeg.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <param name="useProbe">If true, uses the ProbePath (ffprobe) instead of EncoderPath (ffmpeg).</param>
+    /// <returns>A tuple containing the exit code, standard output, and standard error.</returns>
+    Task<(int ExitCode, string Output, string Error)> ExecuteFFmpegAsync(IEnumerable<string> args, CancellationToken cancellationToken, bool useProbe = false);
 }
