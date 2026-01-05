@@ -1,9 +1,12 @@
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Handlers;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
+using MediaBrowser.Controller;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -14,13 +17,25 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
     {
         private readonly Mock<ILogger<M3U8DownloadHandler>> _loggerMock;
         private readonly Mock<IFFmpegService> _ffmpegServiceMock;
+        private readonly Mock<IConfigurationProvider> _configProviderMock;
+        private readonly Mock<IServerApplicationPaths> _appPathsMock;
         private readonly M3U8DownloadHandler _handler;
 
         public M3U8DownloadHandlerTests()
         {
             _loggerMock = new Mock<ILogger<M3U8DownloadHandler>>();
             _ffmpegServiceMock = new Mock<IFFmpegService>();
-            _handler = new M3U8DownloadHandler(_loggerMock.Object, _ffmpegServiceMock.Object);
+            _configProviderMock = new Mock<IConfigurationProvider>();
+            _appPathsMock = new Mock<IServerApplicationPaths>();
+
+            _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(new PluginConfiguration());
+            _appPathsMock.Setup(x => x.TempDirectory).Returns(Path.GetTempPath());
+
+            _handler = new M3U8DownloadHandler(
+                _loggerMock.Object, 
+                _configProviderMock.Object, 
+                _appPathsMock.Object, 
+                _ffmpegServiceMock.Object);
         }
 
         [Fact]
@@ -47,7 +62,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             {
                 JobType = DownloadType.M3U8Download,
                 SourceUrl = "https://example.com/stream.m3u8",
-                DestinationPath = "/tmp/video.mp4"
+                DestinationPath = Path.Combine(Path.GetTempPath(), $"video_{Guid.NewGuid()}.mp4")
             };
             var downloadJob = new DownloadJob 
             { 
@@ -57,15 +72,28 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var progressMock = new Mock<IProgress<double>>();
 
             _ffmpegServiceMock
-                .Setup(x => x.DownloadM3U8Async(downloadItem.SourceUrl, downloadItem.DestinationPath, It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(true);
+                .Setup(x => x.DownloadM3U8Async(downloadItem.SourceUrl, It.IsAny<string>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(true)
+                .Callback<string, string, IProgress<double>, CancellationToken>((url, path, prog, token) => 
+                {
+                    // Create a dummy file to simulate download
+                    File.WriteAllText(path, "dummy content");
+                });
 
             // Act
             var result = await _handler.ExecuteAsync(downloadItem, downloadJob, progressMock.Object, CancellationToken.None);
 
             // Assert
             Assert.True(result);
-            _ffmpegServiceMock.Verify(x => x.DownloadM3U8Async(downloadItem.SourceUrl, downloadItem.DestinationPath, It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()), Times.Once);
+            Assert.True(File.Exists(downloadItem.DestinationPath));
+            
+            // Cleanup
+            if (File.Exists(downloadItem.DestinationPath))
+            {
+                File.Delete(downloadItem.DestinationPath);
+            }
+            
+            _ffmpegServiceMock.Verify(x => x.DownloadM3U8Async(downloadItem.SourceUrl, It.IsAny<string>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }
