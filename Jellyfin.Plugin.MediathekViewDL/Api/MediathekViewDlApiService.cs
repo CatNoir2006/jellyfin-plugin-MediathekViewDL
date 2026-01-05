@@ -233,7 +233,7 @@ public class MediathekViewDlApiService : ControllerBase
         {
             SourceUrl = videoUrl,
             DestinationPath = videoDestinationPath,
-            JobType = DownloadType.DirectDownload
+            JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload
         });
 
         if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
@@ -312,7 +312,7 @@ public class MediathekViewDlApiService : ControllerBase
         {
             SourceUrl = videoUrl,
             DestinationPath = videoDestinationPath,
-            JobType = DownloadType.DirectDownload
+            JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload
         });
 
         if (options.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))

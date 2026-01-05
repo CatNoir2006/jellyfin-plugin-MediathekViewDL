@@ -152,7 +152,10 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                     }
                     else
                     {
-                        downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.DirectDownload });
+                        var jobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase)
+                            ? DownloadType.M3U8Download
+                            : DownloadType.DirectDownload;
+                        downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = jobType });
                     }
 
                     break;
