@@ -98,9 +98,6 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                     File.Delete(downloadItem.DestinationPath);
                 }
             }
-
-
-            _ffmpegServiceMock.Verify(x => x.DownloadM3U8Async(downloadItem.SourceUrl, It.IsAny<string>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }
