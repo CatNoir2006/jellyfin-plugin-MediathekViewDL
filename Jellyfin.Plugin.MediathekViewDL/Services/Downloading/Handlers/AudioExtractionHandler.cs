@@ -70,72 +70,76 @@ public class AudioExtractionHandler : IDownloadHandler
     private async Task<bool> DoAudioExtractNew(DownloadItem item, VideoInfo itemInfo, IProgress<double> progress, CancellationToken cancellationToken)
     {
         var tempPath = TempFileHelper.GetTempFilePath(item.DestinationPath, ".mka", _configProvider, _appPaths, _logger);
-        var res = await _ffmpegService.ExtractAudioFromWebAsync(item.SourceUrl, tempPath, itemInfo.Language, itemInfo.Language != "deu", itemInfo.HasAudiodescription, progress, cancellationToken).ConfigureAwait(false);
-        if (res)
+        try
         {
-            try
+            var res = await _ffmpegService.ExtractAudioFromWebAsync(item.SourceUrl, tempPath, itemInfo.Language, itemInfo.Language != "deu", itemInfo.HasAudiodescription, progress, cancellationToken).ConfigureAwait(false);
+            if (!res)
             {
-                File.Move(tempPath, item.DestinationPath);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to move temporary audio file from {TempPath} to {DestinationPath}", tempPath, item.DestinationPath);
                 return false;
             }
-        }
 
-        if (File.Exists(tempPath))
+            File.Move(tempPath, item.DestinationPath);
+            return true;
+        }
+        catch (Exception ex)
         {
-            try
+            _logger.LogError(ex, "Failed to extract or move audio file for {DestinationPath}", item.DestinationPath);
+            return false;
+        }
+        finally
+        {
+            if (File.Exists(tempPath))
             {
-                File.Delete(tempPath);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to delete temporary audio file {TempPath}", tempPath);
+                try
+                {
+                    File.Delete(tempPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete temporary audio file {TempPath}", tempPath);
+                }
             }
         }
-
-        return false;
     }
 
     private async Task<bool> DoAudioExtractOld(DownloadItem item, string language, IProgress<double> progress, CancellationToken cancellationToken)
     {
-        bool success = true;
         var tempVideoPath = TempFileHelper.GetTempFilePath(item.DestinationPath, ".mkv", _configProvider, _appPaths, _logger);
-
-        // Track progress for the download part (0-80%)
-        var downloadProgress = new Progress<double>(p => progress.Report(p * 0.8));
-
-        if (await _fileDownloader.DownloadFileAsync(item.SourceUrl, tempVideoPath, downloadProgress, cancellationToken).ConfigureAwait(false))
+        try
         {
+            // Track progress for the download part (0-80%)
+            var downloadProgress = new Progress<double>(p => progress.Report(p * 0.8));
+
+            if (!await _fileDownloader.DownloadFileAsync(item.SourceUrl, tempVideoPath, downloadProgress, cancellationToken).ConfigureAwait(false))
+            {
+                _logger.LogError("Failed to download temporary video for '{Title}'.", item.DestinationPath);
+                return false;
+            }
+
             progress.Report(85);
             // Track progress for the extraction part (85-100%)
             var extractionProgress = new Progress<double>(p => progress.Report(85 + (p * 0.15)));
 
-            success &= await _ffmpegService.ExtractAudioAsync(tempVideoPath, item.DestinationPath, language, extractionProgress, cancellationToken).ConfigureAwait(false);
-
-            // Clean up
-            try
+            return await _ffmpegService.ExtractAudioAsync(tempVideoPath, item.DestinationPath, language, extractionProgress, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to download and extract audio for {DestinationPath}", item.DestinationPath);
+            return false;
+        }
+        finally
+        {
+            if (File.Exists(tempVideoPath))
             {
-                if (File.Exists(tempVideoPath))
+                try
                 {
                     File.Delete(tempVideoPath);
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to delete temporary file '{TempPath}'.", tempVideoPath);
-                success = false;
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete temporary video file '{TempPath}'.", tempVideoPath);
+                }
             }
         }
-        else
-        {
-            _logger.LogError("Failed to download temporary video for '{Title}'.", item.DestinationPath);
-            success = false;
-        }
-
-        return success;
     }
 }

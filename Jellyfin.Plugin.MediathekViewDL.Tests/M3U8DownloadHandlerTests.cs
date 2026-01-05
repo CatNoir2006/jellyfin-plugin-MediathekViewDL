@@ -32,9 +32,9 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _appPathsMock.Setup(x => x.TempDirectory).Returns(Path.GetTempPath());
 
             _handler = new M3U8DownloadHandler(
-                _loggerMock.Object, 
-                _configProviderMock.Object, 
-                _appPathsMock.Object, 
+                _loggerMock.Object,
+                _configProviderMock.Object,
+                _appPathsMock.Object,
                 _ffmpegServiceMock.Object);
         }
 
@@ -64,35 +64,42 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 SourceUrl = "https://example.com/stream.m3u8",
                 DestinationPath = Path.Combine(Path.GetTempPath(), $"video_{Guid.NewGuid()}.mp4")
             };
-            var downloadJob = new DownloadJob 
-            { 
+            var downloadJob = new DownloadJob
+            {
                 Title = "Test Job",
-                ItemInfo = new Services.Media.VideoInfo() 
+                ItemInfo = new Services.Media.VideoInfo()
             };
             var progressMock = new Mock<IProgress<double>>();
 
             _ffmpegServiceMock
                 .Setup(x => x.DownloadM3U8Async(downloadItem.SourceUrl, It.IsAny<string>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true)
-                .Callback<string, string, IProgress<double>, CancellationToken>((url, path, prog, token) => 
+                .Callback<string, string, IProgress<double>, CancellationToken>((url, path, prog, token) =>
                 {
                     // Create a dummy file to simulate download
                     File.WriteAllText(path, "dummy content");
                 });
 
-            // Act
-            var result = await _handler.ExecuteAsync(downloadItem, downloadJob, progressMock.Object, CancellationToken.None);
-
-            // Assert
-            Assert.True(result);
-            Assert.True(File.Exists(downloadItem.DestinationPath));
-            
-            // Cleanup
-            if (File.Exists(downloadItem.DestinationPath))
+            try
             {
-                File.Delete(downloadItem.DestinationPath);
+                // Act
+                var result = await _handler.ExecuteAsync(downloadItem, downloadJob, progressMock.Object, CancellationToken.None);
+
+                // Assert
+                Assert.True(result);
+                Assert.True(File.Exists(downloadItem.DestinationPath));
+                _ffmpegServiceMock.Verify(x => x.DownloadM3U8Async(downloadItem.SourceUrl, It.IsAny<string>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()), Times.Once);
             }
-            
+            finally
+            {
+                // Cleanup
+                if (File.Exists(downloadItem.DestinationPath))
+                {
+                    File.Delete(downloadItem.DestinationPath);
+                }
+            }
+
+
             _ffmpegServiceMock.Verify(x => x.DownloadM3U8Async(downloadItem.SourceUrl, It.IsAny<string>(), It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }

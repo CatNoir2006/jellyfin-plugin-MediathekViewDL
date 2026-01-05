@@ -51,35 +51,35 @@ public class M3U8DownloadHandler : IDownloadHandler
     {
         _logger.LogInformation("Downloading M3U8 stream for '{Title}' from '{Url}' to '{Path}'.", job.Title, item.SourceUrl, item.DestinationPath);
         var tempPath = TempFileHelper.GetTempFilePath(item.DestinationPath, ".mkv", _configProvider, _appPaths, _logger);
-        var res = await _ffmpegService.DownloadM3U8Async(item.SourceUrl, tempPath, progress, cancellationToken).ConfigureAwait(false);
-        if (res)
-        {
-            try
-            {
-                File.Move(tempPath, item.DestinationPath);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to move temporary video file from {TempPath} to {DestinationPath}", tempPath, item.DestinationPath);
-                return false;
-            }
-        }
-
-        if (!File.Exists(tempPath))
-        {
-            return false;
-        }
-
         try
         {
-            File.Delete(tempPath);
+            var res = await _ffmpegService.DownloadM3U8Async(item.SourceUrl, tempPath, progress, cancellationToken).ConfigureAwait(false);
+            if (!res)
+            {
+                return false;
+            }
+
+            File.Move(tempPath, item.DestinationPath);
+            return true;
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to delete temporary audio file {TempPath}", tempPath);
+            _logger.LogError(ex, "Failed to download or move M3U8 stream for {DestinationPath}", item.DestinationPath);
+            return false;
         }
-
-        return false;
+        finally
+        {
+            if (File.Exists(tempPath))
+            {
+                try
+                {
+                    File.Delete(tempPath);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to delete temporary video file {TempPath}", tempPath);
+                }
+            }
+        }
     }
 }
