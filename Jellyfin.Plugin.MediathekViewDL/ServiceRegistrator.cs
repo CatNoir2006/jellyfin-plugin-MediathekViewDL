@@ -6,6 +6,7 @@ using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Handlers;
 using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
@@ -59,6 +60,13 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddTransient<IFFmpegService, FFmpegService>();
             serviceCollection.AddTransient<IFileDownloader, FileDownloader>();
             serviceCollection.AddTransient<ISubscriptionProcessor, SubscriptionProcessor>();
+
+            // Register Download Handlers
+            serviceCollection.AddTransient<IDownloadHandler, DirectDownloadHandler>();
+            serviceCollection.AddTransient<IDownloadHandler, StreamingUrlHandler>();
+            serviceCollection.AddTransient<IDownloadHandler, AudioExtractionHandler>();
+            serviceCollection.AddTransient<IDownloadHandler, QualityUpgradeHandler>();
+
             serviceCollection.AddTransient<IDownloadManager, DownloadManager>();
             serviceCollection.AddSingleton<IDownloadQueueManager, DownloadQueueManager>();
             serviceCollection.AddSingleton<IStrmValidationService, StrmValidationService>();
