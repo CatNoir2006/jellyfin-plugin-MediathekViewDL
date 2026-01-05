@@ -144,6 +144,12 @@ public class FFmpegService : IFFmpegService
             return null;
         }
 
+        if (string.IsNullOrWhiteSpace(res.Output))
+        {
+            _logger.LogWarning("ffprobe returned empty output for '{UrlOrPath}'.", urlOrPath);
+            return null;
+        }
+
         var result = JsonSerializer.Deserialize<FfprobeOutput>(res.Output);
 
         if (result?.Streams == null || result.Streams.Count == 0)
