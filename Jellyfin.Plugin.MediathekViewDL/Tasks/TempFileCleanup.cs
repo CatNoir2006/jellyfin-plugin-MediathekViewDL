@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
@@ -108,7 +107,7 @@ public class TempFileCleanup : IScheduledTask
             {
                 if (Directory.Exists(dir))
                 {
-                    var files = Directory.GetFiles(dir, "*.mvdl-tmp");
+                    var files = Directory.GetFiles(dir, "*.mvdl-tmp", SearchOption.AllDirectories);
                     foreach (var file in files)
                     {
                         if (cancellationToken.IsCancellationRequested)
@@ -138,6 +137,7 @@ public class TempFileCleanup : IScheduledTask
             progress.Report((double)processedDirs / totalDirs * 100);
         }
 
+        progress.Report(100);
         _logger.LogInformation("Temporary file cleanup finished. Deleted {Count} files.", deletedCount);
         return Task.CompletedTask;
     }
