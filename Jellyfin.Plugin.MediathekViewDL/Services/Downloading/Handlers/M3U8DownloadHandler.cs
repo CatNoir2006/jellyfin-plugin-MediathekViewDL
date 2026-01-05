@@ -36,6 +36,6 @@ public class M3U8DownloadHandler : IDownloadHandler
     public async Task<bool> ExecuteAsync(DownloadItem item, DownloadJob job, IProgress<double> progress, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Downloading M3U8 stream for '{Title}' from '{Url}' to '{Path}'.", job.Title, item.SourceUrl, item.DestinationPath);
-        return await _ffmpegService.DownloadM3U8Async(item.SourceUrl, item.DestinationPath, cancellationToken).ConfigureAwait(false);
+        return await _ffmpegService.DownloadM3U8Async(item.SourceUrl, item.DestinationPath, progress, cancellationToken).ConfigureAwait(false);
     }
 }

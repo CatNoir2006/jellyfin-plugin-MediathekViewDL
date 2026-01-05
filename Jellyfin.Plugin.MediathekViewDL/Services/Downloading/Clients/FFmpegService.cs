@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Services.Library;
@@ -22,6 +24,9 @@ public class FFmpegService : IFFmpegService
     private readonly IMediaEncoder _mediaEncoder;
     private readonly IStrmValidationService _strmValidationService;
 
+    private static readonly Regex DurationRegex = new Regex(@"Duration:\s+(\d{2}:\d{2}:\d{2}\.\d+)", RegexOptions.Compiled);
+    private static readonly Regex TimeRegex = new Regex(@"time=(\d{2}:\d{2}:\d{2}\.\d+)", RegexOptions.Compiled);
+
     /// <summary>
     /// Initializes a new instance of the <see cref="FFmpegService"/> class.
     /// </summary>
@@ -36,7 +41,7 @@ public class FFmpegService : IFFmpegService
     }
 
     /// <inheritdoc />
-    public async Task<bool> ExtractAudioAsync(string tempVideoPath, string outputAudioPath, string languageCode, CancellationToken cancellationToken)
+    public async Task<bool> ExtractAudioAsync(string tempVideoPath, string outputAudioPath, string languageCode, IProgress<double> progress, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Extracting audio from '{Input}' to '{Output}' with language '{Lang}'", tempVideoPath, outputAudioPath, languageCode);
         if (string.IsNullOrWhiteSpace(_mediaEncoder.EncoderPath))
@@ -48,13 +53,13 @@ public class FFmpegService : IFFmpegService
         // Build ffmpeg arguments
         string[] args = ["-i", tempVideoPath, "-vn", "-acodec", "copy", "-metadata:s:a:0", $"language={languageCode}", "-f", "matroska", "-y", outputAudioPath];
         // Execute ffmpeg
-        var res = await ExecuteFFmpegAsync(args, cancellationToken).ConfigureAwait(false);
+        var res = await ExecuteFFmpegAsync(args, cancellationToken, false, progress).ConfigureAwait(false);
 
         return res.ExitCode == 0;
     }
 
     /// <inheritdoc />
-    public async Task<bool> ExtractAudioFromWebAsync(string videoUrl, string outputAudioPath, string languageCode, bool setOriginalLanguageTag, bool isAudioDescription, CancellationToken cancellationToken)
+    public async Task<bool> ExtractAudioFromWebAsync(string videoUrl, string outputAudioPath, string languageCode, bool setOriginalLanguageTag, bool isAudioDescription, IProgress<double> progress, CancellationToken cancellationToken)
     {
         try
         {
@@ -107,7 +112,7 @@ public class FFmpegService : IFFmpegService
         args.Add("-y"); // Force overwrite Temp Path.
         args.Add(outputAudioPath);
 
-        var res = await ExecuteFFmpegAsync(args, cancellationToken).ConfigureAwait(false);
+        var res = await ExecuteFFmpegAsync(args, cancellationToken, false, progress).ConfigureAwait(false);
         return res.ExitCode == 0;
     }
 
@@ -189,7 +194,7 @@ public class FFmpegService : IFFmpegService
     }
 
     /// <inheritdoc />
-    public async Task<bool> DownloadM3U8Async(string url, string outputPath, CancellationToken cancellationToken)
+    public async Task<bool> DownloadM3U8Async(string url, string outputPath, IProgress<double> progress, CancellationToken cancellationToken)
     {
         try
         {
@@ -223,13 +228,13 @@ public class FFmpegService : IFFmpegService
             outputPath
         };
 
-        var res = await ExecuteFFmpegAsync(args, cancellationToken).ConfigureAwait(false);
+        var res = await ExecuteFFmpegAsync(args, cancellationToken, false, progress).ConfigureAwait(false);
 
         return res.ExitCode == 0;
     }
 
     /// <inheritdoc />
-    public async Task<(int ExitCode, string Output, string Error)> ExecuteFFmpegAsync(IEnumerable<string> args, CancellationToken cancellationToken, bool useProbe = false)
+    public async Task<(int ExitCode, string Output, string Error)> ExecuteFFmpegAsync(IEnumerable<string> args, CancellationToken cancellationToken, bool useProbe = false, IProgress<double>? progress = null)
     {
         string? executablePath = useProbe ? _mediaEncoder.ProbePath : _mediaEncoder.EncoderPath;
         string toolName = useProbe ? "FFprobe" : "FFmpeg";
@@ -270,12 +275,45 @@ public class FFmpegService : IFFmpegService
                 KillProcess(process);
             });
 
-            var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-            var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
+            if (progress != null)
+            {
+                var outputBuilder = new StringBuilder();
+                var errorBuilder = new StringBuilder();
+                TimeSpan totalDuration = TimeSpan.Zero;
 
-            await Task.WhenAll(outputTask, errorTask, process.WaitForExitAsync(cancellationToken)).ConfigureAwait(false);
+                process.OutputDataReceived += (sender, e) =>
+                {
+                    if (e.Data != null)
+                    {
+                        outputBuilder.AppendLine(e.Data);
+                    }
+                };
 
-            return (process.ExitCode, await outputTask.ConfigureAwait(false), await errorTask.ConfigureAwait(false));
+                process.ErrorDataReceived += (sender, e) =>
+                {
+                    if (e.Data != null)
+                    {
+                        errorBuilder.AppendLine(e.Data);
+                        ParseProgress(e.Data, progress, ref totalDuration);
+                    }
+                };
+
+                process.BeginOutputReadLine();
+                process.BeginErrorReadLine();
+
+                await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+
+                return (process.ExitCode, outputBuilder.ToString(), errorBuilder.ToString());
+            }
+            else
+            {
+                var outputTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+                var errorTask = process.StandardError.ReadToEndAsync(cancellationToken);
+
+                await Task.WhenAll(outputTask, errorTask, process.WaitForExitAsync(cancellationToken)).ConfigureAwait(false);
+
+                return (process.ExitCode, await outputTask.ConfigureAwait(false), await errorTask.ConfigureAwait(false));
+            }
         }
         catch (OperationCanceledException)
         {
@@ -291,6 +329,41 @@ public class FFmpegService : IFFmpegService
         {
             AppDomain.CurrentDomain.ProcessExit -= onExitHandler;
             KillProcess(process);
+        }
+    }
+
+    private void ParseProgress(string line, IProgress<double> progress, ref TimeSpan totalDuration)
+    {
+        // Check for duration
+        if (totalDuration == TimeSpan.Zero)
+        {
+            var match = DurationRegex.Match(line);
+            if (match.Success)
+            {
+                if (TimeSpan.TryParse(match.Groups[1].Value, CultureInfo.InvariantCulture, out var duration))
+                {
+                    totalDuration = duration;
+                }
+            }
+        }
+
+        // Check for time
+        if (totalDuration != TimeSpan.Zero)
+        {
+            var match = TimeRegex.Match(line);
+            if (match.Success)
+            {
+                 if (TimeSpan.TryParse(match.Groups[1].Value, CultureInfo.InvariantCulture, out var currentTime))
+                {
+                    var percentage = (currentTime.TotalSeconds / totalDuration.TotalSeconds) * 100;
+                    if (percentage > 100)
+                    {
+                        percentage = 100;
+                    }
+
+                    progress.Report(percentage);
+                }
+            }
         }
     }
 

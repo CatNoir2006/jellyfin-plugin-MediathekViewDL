@@ -59,7 +59,6 @@ public class AudioExtractionHandler : IDownloadHandler
 
         if (config.EnableDirectAudioExtraction)
         {
-            // TODO: Add progress bar support
             return await DoAudioExtractNew(item, job.ItemInfo, progress, cancellationToken).ConfigureAwait(false);
         }
         else
@@ -71,7 +70,7 @@ public class AudioExtractionHandler : IDownloadHandler
     private async Task<bool> DoAudioExtractNew(DownloadItem item, VideoInfo itemInfo, IProgress<double> progress, CancellationToken cancellationToken)
     {
         var tempPath = TempFileHelper.GetTempFilePath(item.DestinationPath, ".mka", _configProvider, _appPaths, _logger);
-        var res = await _ffmpegService.ExtractAudioFromWebAsync(item.SourceUrl, tempPath, itemInfo.Language, itemInfo.Language != "deu", itemInfo.HasAudiodescription, cancellationToken).ConfigureAwait(false);
+        var res = await _ffmpegService.ExtractAudioFromWebAsync(item.SourceUrl, tempPath, itemInfo.Language, itemInfo.Language != "deu", itemInfo.HasAudiodescription, progress, cancellationToken).ConfigureAwait(false);
         if (res)
         {
             try
@@ -112,7 +111,10 @@ public class AudioExtractionHandler : IDownloadHandler
         if (await _fileDownloader.DownloadFileAsync(item.SourceUrl, tempVideoPath, downloadProgress, cancellationToken).ConfigureAwait(false))
         {
             progress.Report(85);
-            success &= await _ffmpegService.ExtractAudioAsync(tempVideoPath, item.DestinationPath, language, cancellationToken).ConfigureAwait(false);
+            // Track progress for the extraction part (85-100%)
+            var extractionProgress = new Progress<double>(p => progress.Report(85 + (p * 0.15)));
+
+            success &= await _ffmpegService.ExtractAudioAsync(tempVideoPath, item.DestinationPath, language, extractionProgress, cancellationToken).ConfigureAwait(false);
 
             // Clean up
             try

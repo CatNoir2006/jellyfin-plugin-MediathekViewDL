@@ -57,7 +57,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var progressMock = new Mock<IProgress<double>>();
 
             _ffmpegServiceMock
-                .Setup(x => x.DownloadM3U8Async(downloadItem.SourceUrl, downloadItem.DestinationPath, It.IsAny<CancellationToken>()))
+                .Setup(x => x.DownloadM3U8Async(downloadItem.SourceUrl, downloadItem.DestinationPath, It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);
 
             // Act
@@ -65,7 +65,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             // Assert
             Assert.True(result);
-            _ffmpegServiceMock.Verify(x => x.DownloadM3U8Async(downloadItem.SourceUrl, downloadItem.DestinationPath, It.IsAny<CancellationToken>()), Times.Once);
+            _ffmpegServiceMock.Verify(x => x.DownloadM3U8Async(downloadItem.SourceUrl, downloadItem.DestinationPath, It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }
