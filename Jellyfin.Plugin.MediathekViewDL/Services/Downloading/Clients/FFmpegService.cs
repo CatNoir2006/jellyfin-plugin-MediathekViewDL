@@ -11,7 +11,7 @@ using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using MediaBrowser.Controller.MediaEncoding;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 
 /// <summary>
 /// Service for handling ffmpeg operations.
@@ -67,7 +67,7 @@ public class FFmpegService : IFFmpegService
         using var process = new Process();
         process.StartInfo = startInfo;
         process.Start();
-        string error = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+        var error = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
         await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
 
         if (process.ExitCode != 0)
@@ -173,7 +173,7 @@ public class FFmpegService : IFFmpegService
 
             var errorReadTask = process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
             await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-            string error = await errorReadTask;
+            var error = await errorReadTask;
 
             if (process.ExitCode != 0)
             {
@@ -238,8 +238,8 @@ public class FFmpegService : IFFmpegService
         {
             process.Start();
 
-            string output = await process.StandardOutput.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
-            string error = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+            var output = await process.StandardOutput.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+            var error = await process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
             await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
 
             if (process.ExitCode != 0)
@@ -266,7 +266,7 @@ public class FFmpegService : IFFmpegService
             var format = ffprobeResult.Format;
 
             TimeSpan? duration = null;
-            if (double.TryParse((string?)videoStream.Duration, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var streamDuration))
+            if (double.TryParse(videoStream.Duration, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var streamDuration))
             {
                 duration = TimeSpan.FromSeconds(streamDuration);
             }
@@ -311,6 +311,90 @@ public class FFmpegService : IFFmpegService
         {
             _logger.LogError(ex, "Error getting media info for '{UrlOrPath}': {Message}", urlOrPath, ex.Message);
             return null;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> DownloadM3U8Async(string url, string outputPath, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Downloading M3U8 stream from '{Url}' to '{Output}'", url, outputPath);
+        if (string.IsNullOrWhiteSpace(_mediaEncoder.EncoderPath))
+        {
+            _logger.LogError("FFmpeg encoder path is not configured.");
+            return false;
+        }
+
+        // Build ffmpeg arguments for downloading HLS stream
+        // -protocol_whitelist file,http,https,tcp,tls: Allow necessary protocols
+        var args = new List<string>
+        {
+            "-protocol_whitelist", "file,http,https,tcp,tls",
+            "-i", url,
+            "-c", "copy",
+            "-bsf:a", "aac_adtstoasc", // Often needed for converting ADTS AAC to MP4
+            "-y",
+            outputPath
+        };
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = _mediaEncoder.EncoderPath,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        };
+
+        foreach (var arg in args)
+        {
+            startInfo.ArgumentList.Add(arg);
+        }
+
+        using var process = new Process();
+        process.StartInfo = startInfo;
+
+        var onExitHandler = GetProcessExitHandler(process);
+        try
+        {
+            process.Start();
+
+            AppDomain.CurrentDomain.ProcessExit += onExitHandler;
+
+            using var registration = cancellationToken.Register(() =>
+            {
+                KillProcess(process);
+            });
+
+            // FFmpeg writes progress and logs to stderr
+            var errorReadTask = process.StandardError.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+
+            await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+
+            var error = await errorReadTask;
+
+            if (process.ExitCode != 0)
+            {
+                _logger.LogError("ffmpeg process failed with exit code {ExitCode}. Error: {Error}", process.ExitCode, error);
+                return false;
+            }
+
+            _logger.LogInformation("Successfully downloaded M3U8 stream to '{Output}'", outputPath);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogInformation("Download of M3U8 stream cancelled.");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error downloading M3U8 stream from '{Url}'", url);
+            return false;
+        }
+        finally
+        {
+            AppDomain.CurrentDomain.ProcessExit -= onExitHandler;
+            KillProcess(process);
         }
     }
 

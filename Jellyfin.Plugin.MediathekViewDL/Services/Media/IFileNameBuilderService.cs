@@ -1,5 +1,5 @@
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
-using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Media;
 

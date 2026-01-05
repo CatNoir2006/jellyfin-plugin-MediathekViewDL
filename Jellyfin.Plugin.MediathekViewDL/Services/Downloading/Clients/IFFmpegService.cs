@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 
 /// <summary>
 /// Interface for the FFmpegService.
@@ -37,4 +37,13 @@ public interface IFFmpegService
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The media info, or null if it could not be determined.</returns>
     Task<Library.LocalMediaInfo?> GetMediaInfoAsync(string urlOrPath, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Downloads an M3U8 stream and saves it as a local file.
+    /// </summary>
+    /// <param name="url">The URL of the M3U8 stream.</param>
+    /// <param name="outputPath">The path for the output file.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>True if the download was successful, otherwise false.</returns>
+    Task<bool> DownloadM3U8Async(string url, string outputPath, CancellationToken cancellationToken);
 }

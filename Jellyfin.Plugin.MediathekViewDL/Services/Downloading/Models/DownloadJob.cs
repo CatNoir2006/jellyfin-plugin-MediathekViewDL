@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 
 /// <summary>
 /// Represents a unit of work for the download manager.

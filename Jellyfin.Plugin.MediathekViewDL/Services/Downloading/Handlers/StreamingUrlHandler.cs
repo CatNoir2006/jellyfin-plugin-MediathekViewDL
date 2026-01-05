@@ -1,6 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Handlers;

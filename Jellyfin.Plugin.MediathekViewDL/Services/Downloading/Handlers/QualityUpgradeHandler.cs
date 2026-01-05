@@ -3,6 +3,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Helpers;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 using MediaBrowser.Controller;
 using Microsoft.Extensions.Logging;
 

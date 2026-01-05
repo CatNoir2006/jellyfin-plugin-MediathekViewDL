@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 
 /// <summary>
 /// Service for downloading files from a URL.
@@ -126,7 +126,7 @@ public class FileDownloader : IFileDownloader
             // Check disk space again considering the file size
             if (totalBytes != -1 && diskSpace != null)
             {
-                long requiredSpace = totalBytes + pluginConfig.MinFreeDiskSpaceBytes;
+                var requiredSpace = totalBytes + pluginConfig.MinFreeDiskSpaceBytes;
 
                 if (diskSpace < requiredSpace)
                 {
@@ -155,7 +155,7 @@ public class FileDownloader : IFileDownloader
                 var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
                 if (pluginConfig.MaxBandwidthMBits > 0)
                 {
-                    long bytesPerSecond = (long)pluginConfig.MaxBandwidthMBits * 1_000_000 / 8;
+                    var bytesPerSecond = (long)pluginConfig.MaxBandwidthMBits * 1_000_000 / 8;
                     stream = new ThrottledStream(stream, bytesPerSecond);
                 }
 
@@ -264,7 +264,7 @@ public class FileDownloader : IFileDownloader
     /// <returns>The available free disk space in bytes, or null if it could not be determined.</returns>
     public static long? GetDiskSpace(string path)
     {
-        string directory = path;
+        var directory = path;
 
         if (string.IsNullOrWhiteSpace(directory))
         {

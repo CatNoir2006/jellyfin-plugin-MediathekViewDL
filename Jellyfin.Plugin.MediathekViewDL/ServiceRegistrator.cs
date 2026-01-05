@@ -6,7 +6,9 @@ using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Handlers;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Queue;
 using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
@@ -64,6 +66,7 @@ namespace Jellyfin.Plugin.MediathekViewDL
             // Register Download Handlers
             serviceCollection.AddTransient<IDownloadHandler, DirectDownloadHandler>();
             serviceCollection.AddTransient<IDownloadHandler, StreamingUrlHandler>();
+            serviceCollection.AddTransient<IDownloadHandler, M3U8DownloadHandler>();
             serviceCollection.AddTransient<IDownloadHandler, AudioExtractionHandler>();
             serviceCollection.AddTransient<IDownloadHandler, QualityUpgradeHandler>();
 

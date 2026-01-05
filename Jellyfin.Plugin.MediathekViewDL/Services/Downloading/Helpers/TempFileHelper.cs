@@ -4,7 +4,7 @@ using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using MediaBrowser.Controller;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Helpers;
 
 internal static class TempFileHelper
 {

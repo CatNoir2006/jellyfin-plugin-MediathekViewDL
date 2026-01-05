@@ -7,11 +7,12 @@ using System.Threading.Channels;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 using MediaBrowser.Controller.Library;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Queue;
 
 /// <summary>
 /// Manages the download queue and execution.

@@ -1,4 +1,4 @@
-namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 
 /// <summary>
 /// Defines the type of download job.
@@ -19,6 +19,11 @@ public enum DownloadType
     /// Create a streaming URL file (.strm).
     /// </summary>
     StreamingUrl,
+
+    /// <summary>
+    /// Download an M3U8 stream.
+    /// </summary>
+    M3U8Download,
 
     /// <summary>
     /// Upgrade the quality of an existing file.
