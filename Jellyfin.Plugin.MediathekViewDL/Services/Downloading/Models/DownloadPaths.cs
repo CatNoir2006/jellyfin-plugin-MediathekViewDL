@@ -1,6 +1,6 @@
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 
 /// <summary>
 /// Holds the generated paths for a download item.
@@ -35,5 +35,5 @@ public record DownloadPaths
     /// <summary>
     /// Gets a value indicating whether the paths are valid.
     /// </summary>
-    public bool IsValid => !string.IsNullOrWhiteSpace(DirectoryPath) && (!string.IsNullOrWhiteSpace(MainFilePath));
+    public bool IsValid => !string.IsNullOrWhiteSpace(DirectoryPath) && !string.IsNullOrWhiteSpace(MainFilePath);
 }

@@ -2,7 +2,7 @@ using System;
 using System.Text.Json.Serialization;
 using System.Threading;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 
 /// <summary>
 /// Represents an active or recently active download in the queue.

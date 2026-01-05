@@ -4,7 +4,7 @@ using System.Threading;
 using System.Threading.RateLimiting;
 using System.Threading.Tasks;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 
 /// <summary>
 /// A stream wrapper that throttles the reading speed using a TokenBucketRateLimiter.
@@ -81,7 +81,7 @@ public class ThrottledStream : Stream
         // Simple approach: The limiter will wait until tokens are available.
         // However, TokenBucketRateLimiter will reject requests larger than TokenLimit.
         // So we must clamp the request to the TokenLimit (which we set to bytesPerSecond).
-        int bytesToRead = Math.Min(count, _tokenLimit);
+        var bytesToRead = Math.Min(count, _tokenLimit);
 
         using var lease = await _limiter.AcquireAsync(bytesToRead, cancellationToken).ConfigureAwait(false);
 
@@ -105,7 +105,7 @@ public class ThrottledStream : Stream
     /// <inheritdoc />
     public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
     {
-        int bytesToRead = Math.Min(buffer.Length, _tokenLimit);
+        var bytesToRead = Math.Min(buffer.Length, _tokenLimit);
 
         using var lease = await _limiter.AcquireAsync(bytesToRead, cancellationToken).ConfigureAwait(false);
 

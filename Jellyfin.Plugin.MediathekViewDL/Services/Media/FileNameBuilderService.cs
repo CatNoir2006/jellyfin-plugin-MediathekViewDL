@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
-using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Media;

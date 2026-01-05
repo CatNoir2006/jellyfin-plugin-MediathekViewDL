@@ -8,7 +8,9 @@ using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
 using Jellyfin.Plugin.MediathekViewDL.Services;
-using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Queue;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 using MediaBrowser.Common.Api;
@@ -231,7 +233,7 @@ public class MediathekViewDlApiService : ControllerBase
         {
             SourceUrl = videoUrl,
             DestinationPath = videoDestinationPath,
-            JobType = DownloadType.DirectDownload
+            JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload
         });
 
         if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
@@ -310,7 +312,7 @@ public class MediathekViewDlApiService : ControllerBase
         {
             SourceUrl = videoUrl,
             DestinationPath = videoDestinationPath,
-            JobType = DownloadType.DirectDownload
+            JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload
         });
 
         if (options.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))

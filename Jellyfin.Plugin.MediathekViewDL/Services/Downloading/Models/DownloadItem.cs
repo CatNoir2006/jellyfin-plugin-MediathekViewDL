@@ -1,4 +1,4 @@
-namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 
 /// <summary>
 /// Represents a single download item.

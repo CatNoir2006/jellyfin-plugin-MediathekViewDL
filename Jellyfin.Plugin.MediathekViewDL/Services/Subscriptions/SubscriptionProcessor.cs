@@ -10,7 +10,8 @@ using Jellyfin.Plugin.MediathekViewDL.Api;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
-using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
@@ -151,7 +152,10 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                     }
                     else
                     {
-                        downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.DirectDownload });
+                        var jobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase)
+                            ? DownloadType.M3U8Download
+                            : DownloadType.DirectDownload;
+                        downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = jobType });
                     }
 
                     break;
