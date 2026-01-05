@@ -509,6 +509,15 @@
                     <button is="emby-button" type="submit" class="raised button-submit">
                         <span>Herunterladen</span>
                     </button>
+                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-tmdb-search-title">
+                        <span>TMDB Suche (Titel)</span>
+                    </button>
+                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-tmdb-search-topic">
+                        <span>TMDB Suche (Thema)</span>
+                    </button>
+                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-google-search">
+                        <span>Google Suche</span>
+                    </button>
                     <button is="emby-button" type="button" class="raised button-cancel" id="mvpl-btn-close-adv-download">
                         <span>Abbrechen</span>
                     </button>
@@ -1854,6 +1863,30 @@
 
                     document.getElementById('mvpl-btn-close-adv-download').addEventListener('click', () => {
                         this.closeAdvancedDownloadDialog();
+                    });
+
+                    document.getElementById('mvpl-btn-tmdb-search-title').addEventListener('click', () => {
+                        if (this.currentItemForAdvancedDl && this.currentItemForAdvancedDl.title) {
+                            const query = encodeURIComponent(this.currentItemForAdvancedDl.title);
+                            window.open('https://www.themoviedb.org/search?query=' + query, '_blank');
+                        }
+                    });
+
+                    document.getElementById('mvpl-btn-tmdb-search-topic').addEventListener('click', () => {
+                        if (this.currentItemForAdvancedDl && this.currentItemForAdvancedDl.topic) {
+                            const query = encodeURIComponent(this.currentItemForAdvancedDl.topic);
+                            window.open('https://www.themoviedb.org/search?query=' + query, '_blank');
+                        }
+                    });
+
+                    document.getElementById('mvpl-btn-google-search').addEventListener('click', () => {
+                        if (this.currentItemForAdvancedDl) {
+                            const topic = this.currentItemForAdvancedDl.topic || '';
+                            const title = this.currentItemForAdvancedDl.title || '';
+                            const queryString = (topic + ' ' + title).trim() + ' TMDB';
+                            const query = encodeURIComponent(queryString);
+                            window.open('https://www.google.com/search?q=' + query, '_blank');
+                        }
                     });
                 }
 
