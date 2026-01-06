@@ -163,7 +163,8 @@ public class FileNameBuilderService : IFileNameBuilderService
         string targetPath;
         if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
         {
-            string defaultPath = GetDefaultPathForContext(config, context, videoInfo.IsShow);
+            bool useShowDir = videoInfo.IsShow || subscription.TreatNonEpisodesAsExtras;
+            string defaultPath = GetDefaultPathForContext(config, context, useShowDir);
             string subscriptionPath = SanitizeDirectoryName(subscription.Name);
             if (string.IsNullOrWhiteSpace(defaultPath))
             {

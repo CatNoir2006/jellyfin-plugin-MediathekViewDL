@@ -233,6 +233,14 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 continue;
             }
 
+            var description = item.Description ?? string.Empty;
+            if (description.Length > 100)
+            {
+                description = string.Concat(description.AsSpan(0, 100), "...");
+            }
+
+            item.Description = $"Pfad: {paths.MainFilePath} | {description}";
+
             yield return item;
         }
     }
