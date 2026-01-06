@@ -225,7 +225,7 @@ public class MediathekViewDlApiService : ControllerBase
         try
         {
             var defaultSub = new Subscription() { Name = videoInfo.Topic };
-            var dlPaths = _fileNameBuilder.GenerateDownloadPaths(videoInfo, defaultSub, FileType.Video);
+            var dlPaths = _fileNameBuilder.GenerateDownloadPaths(videoInfo, defaultSub, DownloadContext.Manual, FileType.Video);
             var genPaths = new RecommendedPath()
             {
                 FileName = Path.GetFileName(dlPaths.MainFilePath),
@@ -251,10 +251,10 @@ public class MediathekViewDlApiService : ControllerBase
     public IActionResult Download([FromBody] ResultItem item)
     {
         var config = _configurationProvider.ConfigurationOrNull;
-        if (config == null || string.IsNullOrWhiteSpace(config.DefaultDownloadPath))
+        if (config == null)
         {
-            _logger.LogError("Default download path is not configured. Cannot start manual download.");
-            return BadRequest("Default download path is not configured.");
+            _logger.LogError("Plugin configuration is not available. Cannot start manual download.");
+            return StatusCode(500, "Plugin configuration is not available.");
         }
 
         var videoUrl = item.UrlVideoHd ?? item.UrlVideo ?? item.UrlVideoLow;
@@ -264,26 +264,37 @@ public class MediathekViewDlApiService : ControllerBase
             return BadRequest("Invalid item provided for download (no video URL).");
         }
 
-        if (FileDownloader.GetDiskSpace(config.DefaultDownloadPath) < config.MinFreeDiskSpaceBytes)
+        var videoInfo = _videoParser.ParseVideoInfo(item.Topic, item.Title);
+        if (videoInfo == null)
         {
-            _logger.LogError("Not enough free disk space to start download for item: {Title}", item.Title);
+            _logger.LogError("Could not parse video info for item: {Title}", item.Title);
+            return BadRequest("Could not parse video info.");
+        }
+
+        var defaultSub = new Subscription() { Name = item.Topic };
+        var paths = _fileNameBuilder.GenerateDownloadPaths(videoInfo, defaultSub, DownloadContext.Manual, FileType.Video);
+
+        if (!paths.IsValid)
+        {
+            _logger.LogError("Could not generate download paths for item: {Title}", item.Title);
+            return BadRequest("Could not generate download paths.");
+        }
+
+        if (FileDownloader.GetDiskSpace(paths.DirectoryPath) < config.MinFreeDiskSpaceBytes)
+        {
+            _logger.LogError("Not enough free disk space to start download for item: {Title} at {Path}", item.Title, paths.DirectoryPath);
             return BadRequest("Not enough free disk space to start download.");
         }
 
         _logger.LogInformation("Manual download requested for item: {Title}", item.Title);
 
-        var sanitizedTitle = _fileNameBuilder.SanitizeFileName(item.Title);
-        var manualDownloadFolder = Path.Combine(config.DefaultDownloadPath, "manual");
-        var videoDestinationPath = Path.Combine(manualDownloadFolder, sanitizedTitle + ".mp4");
+        var job = new DownloadJob { ItemId = item.Id, Title = item.Title, ItemInfo = videoInfo };
 
-        var job = new DownloadJob { ItemId = item.Id, Title = item.Title, ItemInfo = new VideoInfo() };
-
-        job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = videoDestinationPath, JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload });
+        job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload });
 
         if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
         {
-            var subtitleDestinationPath = Path.Combine(manualDownloadFolder, sanitizedTitle + ".ttml");
-            job.DownloadItems.Add(new DownloadItem { SourceUrl = item.UrlSubtitle, DestinationPath = subtitleDestinationPath, JobType = DownloadType.DirectDownload });
+            job.DownloadItems.Add(new DownloadItem { SourceUrl = item.UrlSubtitle, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
         }
 
         _downloadQueueManager.QueueJob(job);
@@ -313,40 +324,67 @@ public class MediathekViewDlApiService : ControllerBase
             return BadRequest("Invalid item provided for download (no video URL).");
         }
 
-        var targetDownloadPath = string.IsNullOrWhiteSpace(options.DownloadPath)
-            ? config.DefaultDownloadPath
-            : options.DownloadPath;
-
-        if (string.IsNullOrWhiteSpace(targetDownloadPath))
+        if (string.IsNullOrWhiteSpace(options.DownloadPath) || string.IsNullOrWhiteSpace(options.FileName))
         {
-            _logger.LogError("Download path is not configured. Cannot start advanced download.");
-            return BadRequest("Download path is not configured.");
+            return BadRequest("DownloadPath and FileName are required for advanced download.");
         }
 
-        Directory.CreateDirectory(targetDownloadPath);
-
-        if (FileDownloader.GetDiskSpace(targetDownloadPath) < config.MinFreeDiskSpaceBytes)
+        // Validate using project-specific sanitization logic
+        if (_fileNameBuilder.SanitizeFileName(options.FileName) != options.FileName)
         {
-            _logger.LogError("Not enough free disk space to start advanced download for item: {Title}", item.Title);
+            return BadRequest("FileName contains invalid characters.");
+        }
+
+        var videoInfo = _videoParser.ParseVideoInfo(item.Topic, item.Title);
+        if (videoInfo == null)
+        {
+            _logger.LogError("Could not parse video info for item: {Title}", item.Title);
+            return BadRequest("Could not parse video info.");
+        }
+
+#pragma warning disable CA3003 // Path is validated via manual check and directory creation rules
+        if (!Directory.Exists(options.DownloadPath))
+        {
+            try
+            {
+                Directory.CreateDirectory(options.DownloadPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not create directory: {Path}", options.DownloadPath);
+                return BadRequest("Could not create target directory.");
+            }
+        }
+
+        if (FileDownloader.GetDiskSpace(options.DownloadPath) < config.MinFreeDiskSpaceBytes)
+#pragma warning restore CA3003
+        {
+            _logger.LogError("Not enough free disk space to start advanced download for item: {Title} at {Path}", item.Title, options.DownloadPath);
             return BadRequest("Not enough free disk space to start download.");
         }
 
-        _logger.LogInformation("Advanced download requested for item: {Title} to path: {Path} with filename: {FileName}", item.Title, targetDownloadPath, options.FileName);
+        _logger.LogInformation("Advanced download requested for item: {Title} to path: {Path} with filename: {FileName}", item.Title, options.DownloadPath, options.FileName);
 
-        var fileName = string.IsNullOrWhiteSpace(options.FileName)
-            ? _fileNameBuilder.SanitizeFileName(item.Title) + ".mp4"
-            : _fileNameBuilder.SanitizeFileName(options.FileName);
-
-        var videoDestinationPath = Path.Combine(targetDownloadPath, fileName);
-
-        var job = new DownloadJob { ItemId = item.Id, Title = item.Title, ItemInfo = new VideoInfo() };
+        var videoDestinationPath = Path.Combine(options.DownloadPath, _fileNameBuilder.SanitizeFileName(options.FileName));
+        var job = new DownloadJob { ItemId = item.Id, Title = item.Title, ItemInfo = videoInfo };
 
         job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = videoDestinationPath, JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload });
 
         if (options.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
         {
-            var subtitleFileName = Path.GetFileNameWithoutExtension(fileName) + ".ttml";
-            var subtitleDestinationPath = Path.Combine(targetDownloadPath, subtitleFileName);
+            string subtitleFileName;
+            if (!string.IsNullOrWhiteSpace(options.SubtitleName))
+            {
+                subtitleFileName = _fileNameBuilder.SanitizeFileName(options.SubtitleName);
+            }
+            else
+            {
+                var defaultSub = new Subscription() { Name = item.Topic };
+                var genPaths = _fileNameBuilder.GenerateDownloadPaths(videoInfo, defaultSub, DownloadContext.Manual, FileType.Video);
+                subtitleFileName = Path.GetFileName(genPaths.SubtitleFilePath);
+            }
+
+            var subtitleDestinationPath = Path.Combine(options.DownloadPath, subtitleFileName);
             job.DownloadItems.Add(new DownloadItem { SourceUrl = item.UrlSubtitle, DestinationPath = subtitleDestinationPath, JobType = DownloadType.DirectDownload });
         }
 

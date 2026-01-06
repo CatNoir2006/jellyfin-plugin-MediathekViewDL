@@ -89,7 +89,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 .Returns(videoInfo);
 
             _fileNameBuilderServiceMock
-                .Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<FileType?>()))
+                .Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<DownloadContext>(), It.IsAny<FileType?>()))
                 .Returns(new DownloadPaths { DirectoryPath = "/tmp", MainFilePath = "/tmp/video.mp4" });
 
             // Act
@@ -124,7 +124,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(videoInfo);
 
-            _fileNameBuilderServiceMock.Setup(x => x.GetSubscriptionBaseDirectory(It.IsAny<Subscription>()))
+            _fileNameBuilderServiceMock.Setup(x => x.GetSubscriptionBaseDirectory(It.IsAny<Subscription>(), It.IsAny<DownloadContext>()))
                 .Returns("/tmp/TestSub");
 
             // Simulate local cache containing this item
@@ -194,7 +194,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(videoInfo);
 
-            _fileNameBuilderServiceMock.Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<FileType?>()))
+            _fileNameBuilderServiceMock
+                .Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<DownloadContext>(), It.IsAny<FileType?>()))
                 .Returns(new DownloadPaths { DirectoryPath = "/tmp", MainFilePath = "/tmp/v.mp4", SubtitleFilePath = "/tmp/s.ttml" });
 
             // Act
@@ -233,7 +234,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(videoInfo);
 
-            _fileNameBuilderServiceMock.Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<FileType?>()))
+            _fileNameBuilderServiceMock
+                .Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<DownloadContext>(), It.IsAny<FileType?>()))
                 .Returns(new DownloadPaths { DirectoryPath = "/tmp", MainFilePath = "/tmp/v.mp4" });
             _strmValidationServiceMock
                 .Setup(x => x.ValidateUrlAsync("http://hd.mp4", It.IsAny<CancellationToken>()))
@@ -282,7 +284,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(videoInfo);
 
-            _fileNameBuilderServiceMock.Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<FileType?>()))
+            _fileNameBuilderServiceMock
+                .Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<DownloadContext>(), It.IsAny<FileType?>()))
                 .Returns(new DownloadPaths { DirectoryPath = "/tmp", MainFilePath = "/tmp/v.mp4" });
 
             // Fail all

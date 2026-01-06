@@ -79,7 +79,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         LocalEpisodeCache? localEpisodeCache = null;
         if (subscription.EnhancedDuplicateDetection)
         {
-            var subscriptionBaseDir = _fileNameBuilderService.GetSubscriptionBaseDirectory(subscription);
+            var subscriptionBaseDir = _fileNameBuilderService.GetSubscriptionBaseDirectory(subscription, DownloadContext.Subscription);
             if (!string.IsNullOrWhiteSpace(subscriptionBaseDir))
             {
                 localEpisodeCache = _localMediaScanner.ScanDirectory(subscriptionBaseDir, subscription.Name);
@@ -102,7 +102,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 continue;
             }
 
-            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription);
+            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription, DownloadContext.Subscription);
             if (!paths.IsValid)
             {
                 continue;
@@ -227,7 +227,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 continue;
             }
 
-            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription);
+            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription, DownloadContext.Subscription);
             if (!paths.IsValid)
             {
                 continue;

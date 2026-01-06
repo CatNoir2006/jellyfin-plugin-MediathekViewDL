@@ -32,15 +32,14 @@ public class FileNameBuilderService : IFileNameBuilderService
     }
 
     /// <inheritdoc />
-    public DownloadPaths GenerateDownloadPaths(VideoInfo videoInfo, Subscription subscription, FileType? forceType = null)
+    public DownloadPaths GenerateDownloadPaths(VideoInfo videoInfo, Subscription subscription, DownloadContext context, FileType? forceType = null)
     {
         var paths = new DownloadPaths();
 
-        string targetDirectory = BuildDirectoryName(videoInfo, subscription);
+        string targetDirectory = BuildDirectoryName(videoInfo, subscription, context);
         if (string.IsNullOrWhiteSpace(targetDirectory))
         {
-            // Error already logged in BuildDirectoryName
-            return paths; // Return empty paths object
+            return paths;
         }
 
         paths.MainType = forceType ?? GetTargetMainType(videoInfo, subscription);
@@ -67,14 +66,14 @@ public class FileNameBuilderService : IFileNameBuilderService
     }
 
     /// <inheritdoc />
-    public string GetSubscriptionBaseDirectory(Subscription subscription)
+    public string GetSubscriptionBaseDirectory(Subscription subscription, DownloadContext context)
     {
         var config = _configurationProvider.ConfigurationOrNull;
         string targetPath;
 
         if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
         {
-            string defaultPath = config?.DefaultDownloadPath ?? string.Empty;
+            string defaultPath = GetDefaultPathForContext(config, context, subscription.EnforceSeriesParsing || subscription.AllowAbsoluteEpisodeNumbering);
             string subscriptionPath = SanitizeDirectoryName(subscription.Name);
             if (string.IsNullOrWhiteSpace(defaultPath))
             {
@@ -156,18 +155,19 @@ public class FileNameBuilderService : IFileNameBuilderService
     /// </summary>
     /// <param name="videoInfo">The video information.</param>
     /// <param name="subscription">The subscription settings.</param>
+    /// <param name="context">The download context.</param>
     /// <returns>The target directory name. Returns an empty string if no valid path is configured.</returns>
-    private string BuildDirectoryName(VideoInfo videoInfo, Subscription subscription)
+    private string BuildDirectoryName(VideoInfo videoInfo, Subscription subscription, DownloadContext context)
     {
         var config = _configurationProvider.ConfigurationOrNull;
         string targetPath;
         if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
         {
-            string defaultPath = config?.DefaultDownloadPath ?? string.Empty;
+            string defaultPath = GetDefaultPathForContext(config, context, videoInfo.IsShow);
             string subscriptionPath = SanitizeDirectoryName(subscription.Name);
             if (string.IsNullOrWhiteSpace(defaultPath))
             {
-                _logger.LogError("No default download path configured. Cannot build directory name for subscription '{SubscriptionName}' and item '{Title}'.", subscription.Name, videoInfo.Title);
+                _logger.LogError("No default download path configured for {Context} {Type}. Cannot build directory name for subscription '{SubscriptionName}' and item '{Title}'.", context, videoInfo.IsShow ? "Show" : "Movie", subscription.Name, videoInfo.Title);
                 return string.Empty;
             }
 
@@ -211,6 +211,28 @@ public class FileNameBuilderService : IFileNameBuilderService
         }
 
         return targetPath;
+    }
+
+    private string GetDefaultPathForContext(PluginConfiguration? config, DownloadContext context, bool isShow)
+    {
+        if (config == null)
+        {
+            return string.Empty;
+        }
+
+        string path = context switch
+        {
+            DownloadContext.Manual => isShow ? config.DefaultManualShowPath : config.DefaultManualMoviePath,
+            DownloadContext.Subscription => isShow ? config.DefaultSubscriptionShowPath : config.DefaultSubscriptionMoviePath,
+            _ => string.Empty
+        };
+
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            path = config.DefaultDownloadPath;
+        }
+
+        return path;
     }
 
     private FileType GetTargetMainType(VideoInfo videoInfo, Subscription subscription)
