@@ -1350,10 +1350,10 @@
                         let queryString = (search).trim();
                         if (siteFilter) {
                             queryString += ' ' + siteFilter;
+                        }
                         const query = encodeURIComponent(queryString);
                         const searchUrl = 'https://duckduckgo.com/?q=' + (openPage ? '\\' : '');
                         window.open(searchUrl + query, '_blank');
-                    }
                 }
 
                 // --- Core Logic ---
