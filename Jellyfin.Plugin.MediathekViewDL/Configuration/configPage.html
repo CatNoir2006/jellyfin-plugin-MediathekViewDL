@@ -317,7 +317,7 @@
                             <div class="flex-align-center">
                                 <div class="flex-grow">
                                     <label class="inputLabel" for="subPath">Download Pfad (Optional)</label>
-                                    <input is="emby-input" type="text" id="subPath"/>
+                                    <input is="emby-input" type="text" id="subPath" placeholder="Wenn leer werden die Standardpfade verwendet"/>
                                     <div class="fieldDescription">Leer lassen, um den Standardpfad zu nutzen.</div>
                                 </div>
                                 <button type="button" is="paper-icon-button-light" id="btnSelectSubPath"
@@ -1145,6 +1145,35 @@
                 }
 
                 /**
+                 * Updates the hover text (title attribute) for the subPath input.
+                 */
+                updateSubPathHoverText() {
+                    const el = document.getElementById('subPath');
+                    if (!el) return;
+
+                    if (StringHelper.isNullOrWhitespace(el.value)) {
+                        const defaultMoviePath = document.getElementById('txtDefaultSubscriptionMoviePath').value || 'Nicht konfiguriert';
+                        const defaultShowPath = document.getElementById('txtDefaultSubscriptionShowPath').value || 'Nicht konfiguriert';
+                        const subName = document.getElementById('subName').value || '[AboName]';
+
+                        const joinPath = (path, part) => {
+                            if (!path || path === 'Nicht konfiguriert') return path;
+                            const separator = path.indexOf('\\') !== -1 ? '\\' : '/';
+                            if (path.endsWith('/') || path.endsWith('\\')) {
+                                return path + part;
+                            }
+                            return path + separator + part;
+                        };
+
+                        const resolvedShowPath = joinPath(defaultShowPath, subName);
+
+                        el.title = "Verwendete Pfade:\nFilme: " + defaultMoviePath + "\nSerien: " + resolvedShowPath;
+                    } else {
+                        el.title = "Ausgewählter Pfad für Film und Serie:\n" + el.value;
+                    }
+                }
+
+                /**
                  * Populates the editor form with values from a subscription object.
                  * @param {Object|null} sub - The subscription object or null for a new subscription.
                  */
@@ -1157,6 +1186,7 @@
                         document.getElementById('subMinDuration').value = "";
                         document.getElementById('subMaxDuration').value = "";
                         document.getElementById('subPath').value = "";
+                        this.updateSubPathHoverText();
 
                         document.getElementById('subEnforceSeries').checked = false;
                         document.getElementById('subCreateNfo').checked = false;
@@ -1189,6 +1219,7 @@
                     document.getElementById('subMinDuration').value = sub.MinDurationMinutes || "";
                     document.getElementById('subMaxDuration').value = sub.MaxDurationMinutes || "";
                     document.getElementById('subPath').value = sub.DownloadPath || "";
+                    this.updateSubPathHoverText();
                     document.getElementById('subEnforceSeries').checked = sub.EnforceSeriesParsing;
                     document.getElementById('subCreateNfo').checked = sub.CreateNfo !== undefined ? sub.CreateNfo : false;
                     document.getElementById('subAllowAudioDesc').checked = sub.AllowAudioDescription;
@@ -1991,6 +2022,13 @@
                     // Path selectors in subscription editor
                     document.getElementById('btnSelectSubPath').addEventListener('click', () => {
                         this.openFolderDialog('subPath', 'Abo Pfad wählen');
+                        this.subscriptionEditor.updateSubPathHoverText();
+                    });
+                    document.getElementById('subPath').addEventListener('input', () => {
+                        this.subscriptionEditor.updateSubPathHoverText();
+                    });
+                    document.getElementById('subName').addEventListener('input', () => {
+                        this.subscriptionEditor.updateSubPathHoverText();
                     });
                     // Path selector in advanced download dialog
                     document.getElementById('btnSelectAdvPath').addEventListener('click', () => {
