@@ -210,8 +210,12 @@ class SearchController {
         actions.classList.add('flex-gap-10');
 
         actions.appendChild(this.dom.createIconButton('play_arrow', 'Video abspielen.', () => {
-            const videoUrl = item.url_video_hd ?? item.url_video ?? item.url_video_low;
-            window.open(videoUrl, '_blank');
+            const videoUrl = item.url_video_hd || item.urlVideoHd || item.url_video || item.urlVideo || item.url_video_low || item.urlVideoLow;
+            if (videoUrl) {
+                window.open(videoUrl, '_blank');
+            } else {
+                this.config.showToast("Keine Video-URL verfügbar.");
+            }
         }))
         actions.appendChild(this.dom.createIconButton('search', 'Video über DuckDuckGo suchen', () => {
             const queryString = item.topic + ' ' + item.title;
