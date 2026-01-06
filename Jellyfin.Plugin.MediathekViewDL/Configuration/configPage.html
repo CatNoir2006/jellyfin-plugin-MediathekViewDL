@@ -1672,8 +1672,18 @@
                         type: "POST",
                         url: url,
                         data: JSON.stringify(item),
-                        contentType: 'application/json'
-                    }).then(callback).catch((err) => {
+                        contentType: 'application/json',
+                        dataType: 'json'
+                    }).then((result) => {
+                        if (typeof result === 'string') {
+                            try {
+                                result = JSON.parse(result);
+                            } catch (e) {
+                                console.error("Failed to parse VideoInfo JSON", e);
+                            }
+                        }
+                        callback(result);
+                    }).catch((err) => {
                         console.error("Error parsing video info", err);
                     });
                 }
@@ -1689,8 +1699,18 @@
                         type: "POST",
                         url: url,
                         data: JSON.stringify(videoInfo),
-                        contentType: 'application/json'
-                    }).then(callback).catch((err) => {
+                        contentType: 'application/json',
+                        dataType: 'json'
+                    }).then((result) => {
+                        if (typeof result === 'string') {
+                            try {
+                                result = JSON.parse(result);
+                            } catch (e) {
+                                console.error("Failed to parse RecommendedPath JSON", e);
+                            }
+                        }
+                        callback(result);
+                    }).catch((err) => {
                         console.error("Error getting recommended path", err);
                     });
                 }
@@ -1713,7 +1733,9 @@
                     document.getElementById('advDlFilename').value = proposedFilename;
 
                     this.getVideoInfo(item, (videoInfo) => {
+                        console.log("Got VideoInfo: ", videoInfo);
                         this.getRecommendedPath(videoInfo, (recommended) => {
+                            console.log("Got RecommendedPath: ", recommended);
                             if (recommended) {
                                 if (recommended.FileName) {
                                     document.getElementById('advDlFilename').value = recommended.FileName;
