@@ -230,11 +230,18 @@
 
                         <!-- Container für dynamische Queries -->
                         <div class="inputContainer">
-                            <label class="inputLabel">Suchanfragen</label>
+                            <div class="flex-align-center">
+                                <label class="inputLabel flex-grow" style="margin:0;">Suchanfragen</label>
+                                <button type="button" is="paper-icon-button-light" id="mvpl-btn-search-help"
+                                        title="Hilfe zur Suchlogik (extern)" aria-label="Hilfe zur Suchlogik" class="mvpl-help-button">
+                                    <span class="material-icons help_outline"></span>
+                                </button>
+                            </div>
                             <div id="queriesContainer" class="mvpl-queries-container">
                                 <!-- Query-Zeilen werden hier dynamisch eingefügt -->
                             </div>
-                            <button is="emby-button" type="button" class="raised mvpl-margin-top-10" id="mvpl-btn-add-query">
+                            <button is="emby-button" type="button" class="raised mvpl-margin-top-10" id="mvpl-btn-add-query"
+                                    title="Kombiniert Filter:&#10;- 'ODER' innerhalb einer Zeile (z.B. Titel oder Thema)&#10;- 'ODER' bei identischen Feld-Kombinationen (z.B. Sender vs. Sender)&#10;- 'UND' bei unterschiedlichen Feld-Kombinationen (z.B. Sender vs. Titel)">
                                 <span class="material-icons add"></span>
                                 <span>Anfrage hinzufügen</span>
                             </button>
@@ -509,6 +516,12 @@
                     <button is="emby-button" type="submit" class="raised button-submit">
                         <span>Herunterladen</span>
                     </button>
+                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-duckduckgo-tmdb" title="Video über DuckDuckGo suchen und auf TMDB öffnen">
+                        <span>TMDB</span>
+                    </button>
+                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-duckduckgo" title="Video über DuckDuckGo suchen">
+                        <span>DuckDuckGo</span>
+                    </button>
                     <button is="emby-button" type="button" class="raised button-cancel" id="mvpl-btn-close-adv-download">
                         <span>Abbrechen</span>
                     </button>
@@ -713,13 +726,22 @@
                 }
 
                 createSearchResultItem(item, index) {
-                    const durationStr = Math.floor(item.duration / 60) + " Min";
+                    const durationStr = Math.max(1, Math.floor(item.duration / 60)) + " min"; // Each Video should show up with at least 1 min.
                     const actions = document.createElement('div');
                     actions.classList.add('flex-gap-10');
 
+                    actions.appendChild(this.dom.createIconButton('play_arrow', 'Video abspielen.', () => {
+                        const videoUrl = item.url_video_hd ?? item.url_video ?? item.url_video_low;
+                        window.open(videoUrl, '_blank');
+                    }))
+                    actions.appendChild(this.dom.createIconButton('search', 'Video über DuckDuckGo suchen', () => {
+                        const queryString = item.topic + ' ' + item.title;
+                        window.MediathekViewDL.config.openDuckDuckGoSearch(queryString);
+                    }));
                     actions.appendChild(this.dom.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
                     actions.appendChild(this.dom.createIconButton('settings', 'Erweiterter Download', () => this.config.openAdvancedDownloadDialog(this.currentSearchResults[index])));
                     actions.appendChild(this.dom.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.title, item.channel, item.topic)));
+
 
                     // Build BodyText1
                     const body1 = document.createElement('div');
@@ -1324,6 +1346,16 @@
                     });
                 }
 
+                openDuckDuckGoSearch(search = '', siteFilter = '', openPage = false) {
+                        let queryString = (search).trim();
+                        if (siteFilter) {
+                            queryString += ' ' + siteFilter;
+                        }
+                        const query = encodeURIComponent(queryString);
+                        const searchUrl = 'https://duckduckgo.com/?q=' + (openPage ? '\\' : '');
+                        window.open(searchUrl + query, '_blank');
+                }
+
                 // --- Core Logic ---
 
                 /**
@@ -1832,6 +1864,10 @@
                         this.addQueryRow();
                     });
 
+                    document.getElementById('mvpl-btn-search-help').addEventListener('click', () => {
+                        window.open('https://github.com/mediathekview/mediathekviewweb/blob/master/README.md#suchlogik-anwenden', '_blank');
+                    });
+
                     document.getElementById('mvpl-btn-test-sub').addEventListener('click', () => {
                         this.testSubscription();
                     });
@@ -1854,6 +1890,16 @@
 
                     document.getElementById('mvpl-btn-close-adv-download').addEventListener('click', () => {
                         this.closeAdvancedDownloadDialog();
+                    });
+
+                    document.getElementById('mvpl-btn-duckduckgo-tmdb').addEventListener('click', () => {
+                        const query = this.currentItemForAdvancedDl.topic + ' ' + this.currentItemForAdvancedDl.title;
+                        this.openDuckDuckGoSearch(query, 'site:themoviedb.org', true);
+                    });
+
+                    document.getElementById('mvpl-btn-duckduckgo').addEventListener('click', () => {
+                        const query = this.currentItemForAdvancedDl.topic + ' ' + this.currentItemForAdvancedDl.title;
+                        this.openDuckDuckGoSearch(query);
                     });
                 }
 
@@ -1980,6 +2026,17 @@
             border-top: 1px solid #444;
             margin-top: 20px;
             padding-top: 20px;
+        }
+
+        .mvpl-help-button {
+            margin: 0;
+            padding: 4px;
+            color: #00a4dc;
+            cursor: pointer;
+        }
+
+        .mvpl-help-button:hover {
+            color: #52bdec;
         }
 
         .mvpl-queries-container {
