@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8">
+    <title>MediathekView Plugin Konfiguration</title>
+</head>
+
+<body>
+<div id="MediathekViewDLConfigPage" data-role="page" class="page type-interior pluginConfigurationPage esqConfigurationPage" data-controller="__plugin/MediathekViewDL.js"
+     data-require="emby-input,emby-button,emby-select,emby-checkbox,emby-linkbutton">
+
+    <div data-role="content">
+        <div class="content-primary">
+            <h1>MediathekViewDL</h1>
+            <!-- Tab Navigation -->
+            <div class="mvpl-tabs-spacer" role="tablist">
+                <button type="button" class="paper-icon-button-light selected" id="mvpl-btn-tab-search" role="tab" aria-selected="true" aria-controls="tab-search">
+                    <span class="material-icons search" aria-hidden="true"></span>
+                    <span>Manuelle Suche</span>
+                </button>
+                <button type="button" class="paper-icon-button-light" id="mvpl-btn-tab-settings" role="tab" aria-selected="false" aria-controls="tab-settings">
+                    <span class="material-icons settings" aria-hidden="true"></span>
+                    <span>Einstellungen</span>
+                </button>
+                <button type="button" class="paper-icon-button-light" id="mvpl-btn-tab-subscriptions" role="tab" aria-selected="false" aria-controls="tab-subscriptions">
+                    <span class="material-icons subscriptions" aria-hidden="true"></span>
+                    <span>Abo Verwaltung</span>
+                </button>
+                <button type="button" class="paper-icon-button-light" id="mvpl-btn-tab-downloads" role="tab" aria-selected="false" aria-controls="tab-downloads">
+                    <span class="material-icons file_download" aria-hidden="true"></span>
+                    <span>Downloads</span>
+                </button>
+            </div>
+
+            <!-- TAB 1: Search -->
+            <div id="tab-search" class="mvpl-tab-content" role="tabpanel" aria-labelledby="mvpl-btn-tab-search" style="display:block;">
+                <div class="verticalSection">
+                    <div class="sectionTitleLabel">Mediathek durchsuchen</div>
+                    <p class="sectionDescription">Suche nach Inhalten, um diese direkt herunterzuladen oder ein Abo
+                        zu erstellen.</p>
+
+                    <form id="mvpl-form-search">
+                        <div class="mvpl-search-form-row">
+                            <div class="inputContainer flex-grow">
+                                <label class="inputLabel" for="txtSearchQuery">Suchbegriff</label>
+                                <input is="emby-input" type="text" id="txtSearchQuery" required/>
+                            </div>
+                            <div class="inputContainer mvpl-input-short">
+                                <label class="inputLabel" for="numMinDuration">Min. Dauer (Sek)</label>
+                                <input is="emby-input" type="number" id="numMinDuration"/>
+                            </div>
+                            <div class="inputContainer mvpl-input-short">
+                                <label class="inputLabel" for="numMaxDuration">Max. Dauer (Sek)</label>
+                                <input is="emby-input" type="number" id="numMaxDuration"/>
+                            </div>
+                            <div class="inputContainer">
+                                <button is="emby-button" type="submit" class="raised button-submit block">
+                                    <span>Suchen</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div id="searchResults" class="mvpl-results-container">
+                        <!-- Ergebnisse werden hier gerendert -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: Settings -->
+            <div id="tab-settings" class="mvpl-tab-content" role="tabpanel" aria-labelledby="mvpl-btn-tab-settings" style="display:none;">
+                <div class="verticalSection">
+                    <div class="sectionTitleLabel">Allgemeine Einstellungen</div>
+                    <form id="MediathekGeneralConfigForm">
+
+                        <details>
+                            <summary class="inputLabel mvpl-collapsible-summary">Standard Pfade</summary>
+                            <div class="mvpl-details-content">
+                                <div class="inputContainer">
+                                    <div class="flex-align-center">
+                                        <div class="flex-grow">
+                                            <label class="inputLabel" for="txtDefaultDownloadPath">Globaler Standard Download Pfad (Veraltet)</label>
+                                            <input is="emby-input" type="text" id="txtDefaultDownloadPath"/>
+                                            <div class="fieldDescription">Der globale Fallback-Ordner für alle Downloads, falls kein spezifischer Pfad gesetzt ist. <span style="color: #f44336; font-weight: bold;">Hinweis: Dieser Pfad ist veraltet und wird in einer zukünftigen Version entfernt. Bitte verwenden Sie die spezifischen Pfade weiter unten.</span>
+                                            </div>
+                                        </div>
+                                        <button type="button" is="paper-icon-button-light" id="btnSelectPath"
+                                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                            <span class="material-icons folder_open"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="inputContainer">
+                                    <div class="flex-align-center">
+                                        <div class="flex-grow">
+                                            <label class="inputLabel" for="txtDefaultSubscriptionShowPath">Standard Serien Pfad (Abo)</label>
+                                            <input is="emby-input" type="text" id="txtDefaultSubscriptionShowPath"/>
+                                            <div class="fieldDescription">Standard-Ordner für Serien-Downloads in Abonnements.</div>
+                                        </div>
+                                        <button type="button" is="paper-icon-button-light" id="btnSelectSubscriptionShowPath"
+                                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                            <span class="material-icons folder_open"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="inputContainer">
+                                    <div class="flex-align-center">
+                                        <div class="flex-grow">
+                                            <label class="inputLabel" for="txtDefaultSubscriptionMoviePath">Standard Film Pfad (Abo)</label>
+                                            <input is="emby-input" type="text" id="txtDefaultSubscriptionMoviePath"/>
+                                            <div class="fieldDescription">Standard-Ordner für Film-Downloads in Abonnements.</div>
+                                        </div>
+                                        <button type="button" is="paper-icon-button-light" id="btnSelectSubscriptionMoviePath"
+                                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                            <span class="material-icons folder_open"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="inputContainer">
+                                    <div class="flex-align-center">
+                                        <div class="flex-grow">
+                                            <label class="inputLabel" for="txtDefaultManualShowPath">Standard Serien Pfad (Manuell)</label>
+                                            <input is="emby-input" type="text" id="txtDefaultManualShowPath"/>
+                                            <div class="fieldDescription">Standard-Ordner für manuelle Serien-Downloads.</div>
+                                        </div>
+                                        <button type="button" is="paper-icon-button-light" id="btnSelectManualShowPath"
+                                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                            <span class="material-icons folder_open"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="inputContainer">
+                                    <div class="flex-align-center">
+                                        <div class="flex-grow">
+                                            <label class="inputLabel" for="txtDefaultManualMoviePath">Standard Film Pfad (Manuell)</label>
+                                            <input is="emby-input" type="text" id="txtDefaultManualMoviePath"/>
+                                            <div class="fieldDescription">Standard-Ordner für manuelle Film-Downloads.</div>
+                                        </div>
+                                        <button type="button" is="paper-icon-button-light" id="btnSelectManualMoviePath"
+                                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                            <span class="material-icons folder_open"></span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="inputContainer">
+                                    <div class="flex-align-center">
+                                        <div class="flex-grow">
+                                            <label class="inputLabel" for="txtTempDownloadPath">Temporärer Download Pfad</label>
+                                            <input is="emby-input" type="text" id="txtTempDownloadPath"/>
+                                            <div class="fieldDescription">Ein optionaler Ordner, in dem Downloads zwischengespeichert werden. Dies kann genutzt werden, um SSD-Abnutzung zu reduzieren, indem ein Pfad auf einer HDD gewählt wird (idealerweise auf der gleichen Festplatte wie die Bibliothek, um unnötiges Verschieben zwischen Laufwerken und Spin-Ups zu vermeiden). Leer lassen, um direkt in den Zielordner herunterzuladen.</div>
+                                        </div>
+                                        <button type="button" is="paper-icon-button-light" id="btnSelectTempPath"
+                                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                            <span class="material-icons folder_open"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </details>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkDownloadSubtitles" type="checkbox" is="emby-checkbox"/>
+                                <span>Untertitel herunterladen (wenn verfügbar)</span>
+                            </label>
+                            <div class="fieldDescription">Lädt eine separate VTT- oder TTML-Datei für Untertitel
+                                herunter, falls vom Sender bereitgestellt.
+                            </div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkAllowUnknownDomains" type="checkbox" is="emby-checkbox"/>
+                                <span>Downloads von unbekannten Domains erlauben</span>
+                            </label>
+                            <div class="fieldDescription">Ermöglicht das Herunterladen von Inhalten von Domains,
+                                die
+                                nicht auf der Whitelist stehen. Dies kann nützlich sein, wenn ARD oder ZDF neue CDNs
+                                hinzufügen, die noch nicht berücksichtigt werden. Dies kann jedoch ein
+                                Sicherheitsrisiko darstellen, daher mit Vorsicht verwenden. Falls dadurch manche
+                                Inhalte nicht gefunden werden wäre es schön, wenn auf GitHub ein Issue erstellt wird,
+                                das ich die Whitelist ggf. erweitern kann.
+                            </div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkAllowHttp" type="checkbox" is="emby-checkbox"/>
+                                <span>HTTP Downloads erlauben</span>
+                            </label>
+                            <div class="fieldDescription">Dies kann notwendig sein, da manche URLs aus irgendeinem Grund kein HTTPS unterstützen. Es wird empfohlen, dies deaktiviert zu lassen und nur zu aktivieren, wenn Probleme auftreten.</div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkScanLibraryAfterDownload" type="checkbox" is="emby-checkbox"/>
+                                <span>Bibliotheks-Scan nach Download</span>
+                            </label>
+                            <div class="fieldDescription">Startet automatisch einen Scan der Medienbibliothek, nachdem neue Inhalte heruntergeladen wurden. Wenn deaktiviert, erscheinen neue Inhalte erst nach dem nächsten regulären Scan.</div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkEnableDirectAudioExtraction" type="checkbox" is="emby-checkbox"/>
+                                <span>Direkte Audio-Extraktion aktivieren</span>
+                            </label>
+                            <div class="fieldDescription">Wenn aktiviert, wird versucht, Audio direkt aus der URL zu extrahieren. Hinweis: Die Bandbreitenbegrenzung funktioniert hierbei nicht, aber es müssen generell weniger Daten heruntergeladen werden und der Vorgang sollte schneller sein. (Standard: An)</div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkEnableStrmCleanup" type="checkbox" is="emby-checkbox"/>
+                                <span>Bereinigung ungültiger Streaming-Dateien (.strm) aktivieren</span>
+                            </label>
+                            <div class="fieldDescription">Überprüft regelmäßig (via geplanten Task) alle erstellten .strm Dateien auf Gültigkeit der Links. Wenn ein Link nicht mehr erreichbar ist (z.B. 404), wird die Datei gelöscht, damit ggf. eine aktualisierte Version heruntergeladen werden kann. Beachtet die Einstellung "Downloads von unbekannten Domains erlauben".</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="txtMinFreeDiskSpaceMiB">Mindestfreier Speicherplatz
+                                (MiB)</label>
+                            <input is="emby-input" type="number" id="txtMinFreeDiskSpaceMiB"/>
+                            <div class="fieldDescription">Legt den minimalen freien Speicherplatz fest, der erforderlich ist, um einen neuen Download zu starten.</div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkAllowDownloadOnUnknownDiskSpace" type="checkbox" is="emby-checkbox"/>
+                                <span>Download bei unbekanntem Speicherplatz erlauben</span>
+                            </label>
+                            <div class="fieldDescription">Ermöglicht den Download auch dann, wenn der verfügbare Speicherplatz nicht ermittelt werden kann (z.B. bei manchen Netzwerkfreigaben). Wenn deaktiviert, wird der Download in diesem Fall blockiert.</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="txtMaxBandwidthMBits">Maximale Download-Bandbreite (MBit/s)</label>
+                            <input is="emby-input" type="number" id="txtMaxBandwidthMBits"/>
+                            <div class="fieldDescription">Begrenzt die Download-Geschwindigkeit. 0 bedeutet unbegrenzt.</div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel">Letzter Lauf</label>
+                            <div id="lblLastRun" class="mvpl-last-run-label">Noch nie</div>
+                        </div>
+
+                        <div>
+                            <button is="emby-button" type="submit" class="raised button-submit block">
+                                <span>Speichern</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- TAB 3: Subscription Management -->
+            <div id="tab-subscriptions" class="mvpl-tab-content" role="tabpanel" aria-labelledby="mvpl-btn-tab-subscriptions" style="display:none;">
+                <div class="verticalSection">
+                    <div class="flex-space-between">
+                        <div class="sectionTitleLabel">Aktive Abonnements</div>
+                        <button is="emby-button" type="button" class="raised" id="mvpl-btn-new-sub">
+                            <span class="material-icons add"></span>
+                            <span>Neues Abo</span>
+                        </button>
+                    </div>
+                    <div id="subscriptionList" class="paperList mvpl-margin-top-20">
+                        <!-- Liste wird hier gerendert -->
+                    </div>
+                </div>
+
+                <!-- Modal/Bereich zum Editieren eines Abos (Initial versteckt) -->
+                <div id="subscriptionEditor" class="mvpl-subscription-editor">
+                    <h3 id="subEditorTitle">Abonnement bearbeiten</h3>
+                    <form id="mvpl-form-subscription">
+                        <input type="hidden" id="subId"/>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="subName">Name (Serienname)</label>
+                            <input is="emby-input" type="text" id="subName" required/>
+                        </div>
+
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="subOriginalLanguage">Originalsprache (ISO Code, z.B. 'eng')</label>
+                            <input is="emby-input" type="text" id="subOriginalLanguage" placeholder="Optional: Wird verwendet, wenn 'OV' erkannt wird"/>
+                            <div class="fieldDescription">Falls gesetzt, wird dieser Sprachcode verwendet, wenn der Inhalt als Originalversion (OV/OmU) erkannt wird (statt 'und').</div>
+                        </div>
+
+                        <!-- Container für dynamische Queries -->
+                        <div class="inputContainer">
+                            <div class="flex-align-center">
+                                <label class="inputLabel flex-grow" style="margin:0;">Suchanfragen</label>
+                                <button type="button" is="paper-icon-button-light" id="mvpl-btn-search-help"
+                                        title="Hilfe zur Suchlogik (extern)" aria-label="Hilfe zur Suchlogik" class="mvpl-help-button">
+                                    <span class="material-icons help_outline"></span>
+                                </button>
+                            </div>
+                            <div id="queriesContainer" class="mvpl-queries-container">
+                                <!-- Query-Zeilen werden hier dynamisch eingefügt -->
+                            </div>
+                            <button is="emby-button" type="button" class="raised mvpl-margin-top-10" id="mvpl-btn-add-query"
+                                    title="Kombiniert Filter:&#10;- 'ODER' innerhalb einer Zeile (z.B. Titel oder Thema)&#10;- 'ODER' bei identischen Feld-Kombinationen (z.B. Sender vs. Sender)&#10;- 'UND' bei unterschiedlichen Feld-Kombinationen (z.B. Sender vs. Titel)">
+                                <span class="material-icons add"></span>
+                                <span>Anfrage hinzufügen</span>
+                            </button>
+                        </div>
+
+                        <div class="mvpl-duration-inputs-row">
+                            <div class="inputContainer flex-grow">
+                                <label class="inputLabel" for="subMinDuration">Min. Dauer (Minuten)</label>
+                                <input is="emby-input" type="number" id="subMinDuration"/>
+                            </div>
+                            <div class="inputContainer flex-grow">
+                                <label class="inputLabel" for="subMaxDuration">Max. Dauer (Minuten)</label>
+                                <input is="emby-input" type="number" id="subMaxDuration"/>
+                            </div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <div class="flex-align-center">
+                                <div class="flex-grow">
+                                    <label class="inputLabel" for="subPath">Download Pfad (Optional)</label>
+                                    <input is="emby-input" type="text" id="subPath" placeholder="Wenn leer werden die Standardpfade verwendet"/>
+                                    <div class="fieldDescription">Leer lassen, um den Standardpfad zu nutzen.</div>
+                                </div>
+                                <button type="button" is="paper-icon-button-light" id="btnSelectSubPath"
+                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                    <span class="material-icons folder_open"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Enforce Series Parsing Checkbox -->
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subEnforceSeries" type="checkbox" is="emby-checkbox"/>
+                                <span>Nur Serien herunterladen</span>
+                            </label>
+                            <div class="fieldDescription">Nur Videos herunterladen, die als Serie erkannt werden
+                            </div>
+                        </div>
+
+                        <!-- Allow Absolute Episode Numbering Checkbox -->
+                        <div id="subAllowAbsoluteEpisodeNumberingContainer" class="checkboxContainer checkboxContainer-withDescription mvpl-indented-block">
+                            <label class="emby-checkbox-label">
+                                <input id="subAllowAbsoluteEpisodeNumbering" type="checkbox" is="emby-checkbox"/>
+                                <span>Absolute Episodennummerierung erlauben</span>
+                            </label>
+                            <div class="fieldDescription">Episoden auch herunterladen, wenn nur Absolute
+                                Episodennummerierung vorliegt (z.B. "Episode 5" statt "Staffel 1, Episode 5"). Wird
+                                nur berücksichtigt, wenn "Nur Videos herunterladen, die als Serie erkannt werden"
+                                aktiviert ist.
+                            </div>
+                        </div>
+
+                        <!-- Create NFO Checkbox -->
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subCreateNfo" type="checkbox" is="emby-checkbox"/>
+                                <span>NFO Dateien erstellen</span>
+                            </label>
+                            <div class="fieldDescription">Erstellt eine .nfo Datei mit Metadaten (Beschreibung, Episodennummer) neben der Videodatei.</div>
+                        </div>
+
+                        <!-- Use Streaming-URL Files Checkbox -->
+                        <div id="subUseStreamingUrlFilesContainer" class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subUseStreamingUrlFiles" type="checkbox" is="emby-checkbox"/>
+                                <span>Streaming-URL-Dateien (.strm) verwenden</span>
+                            </label>
+                            <div class="fieldDescription">Verwendet Streaming-URL-Dateien (.strm) anstelle des
+                                Herunterladens der tatsächlichen Videodateien. Es werden keine Videodateien
+                                gespeichert, die Videos werden von ARD/ZDF direkt gestreamt. Untertitel sind hiervon nicht betroffen.
+                            </div>
+                        </div>
+
+                        <!-- Full Video for Secondary Audio Checkbox -->
+                        <div id="subDownloadFullVideoForSecondaryAudioContainer" class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subDownloadFullVideoForSecondaryAudio" type="checkbox" is="emby-checkbox"/>
+                                <span>Vollständiges Video für sekundäre Audiosprachen herunterladen</span>
+                            </label>
+                            <div class="fieldDescription">Wenn aktiviert, wird das vollständige Video heruntergeladen, auch wenn es eine andere Audiosprache als Deutsch enthält. Andernfalls wird nur die Audiospur dieser Sprache extrahiert.</div>
+                        </div>
+
+                        <!-- Treat Non-Episodes as Extras Checkbox -->
+                        <div id="subTreatNonEpisodesAsExtrasContainer" class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subTreatNonEpisodesAsExtras" type="checkbox" is="emby-checkbox"/>
+                                <span>Nicht Episoden als Extras behandeln</span>
+                            </label>
+                            <div class="fieldDescription">Nicht als Episoden erkannte Videos als Extras behandeln.
+                                Wird ignoriert, wenn "Nur Serien herunterladen" aktiviert ist.
+                            </div>
+                        </div>
+
+                        <!-- Container for Extras Saving Options -->
+                        <div class="mvpl-indented-block">
+                            <!-- Save Extras as .strm Checkbox -->
+                            <div id="subSaveExtrasAsStrmContainer" class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="subSaveExtrasAsStrm" type="checkbox" is="emby-checkbox"/>
+                                    <span>Extras als Stream (.strm) speichern</span>
+                                </label>
+                                <div class="fieldDescription">Extras werden als .strm Dateien gespeichert (spart Speicherplatz).</div>
+                            </div>
+
+                            <!-- Save Trailers Checkbox -->
+                            <div id="subSaveTrailersContainer" class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="subSaveTrailers" type="checkbox" is="emby-checkbox"/>
+                                    <span>Trailer speichern</span>
+                                </label>
+                                <div class="fieldDescription">Trailer werden gespeichert.</div>
+                            </div>
+
+                            <!-- Save Interviews Checkbox -->
+                            <div id="subSaveInterviewsContainer" class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="subSaveInterviews" type="checkbox" is="emby-checkbox"/>
+                                    <span>Interviews speichern</span>
+                                </label>
+                                <div class="fieldDescription">Interviews werden gespeichert.</div>
+                            </div>
+
+                            <!-- Save Generic Extras Checkbox -->
+                            <div id="subSaveGenericExtrasContainer" class="checkboxContainer checkboxContainer-withDescription">
+                                <label class="emby-checkbox-label">
+                                    <input id="subSaveGenericExtras" type="checkbox" is="emby-checkbox"/>
+                                    <span>Generische Extras speichern</span>
+                                </label>
+                                <div class="fieldDescription">Alle anderen Extras (nicht Trailer/Interviews) werden gespeichert.</div>
+                            </div>
+                        </div>
+
+                        <!-- Allow Audio Description Checkbox -->
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subAllowAudioDesc" type="checkbox" is="emby-checkbox"/>
+                                <span>Versionen mit Audiodeskription herunterladen</span>
+                            </label>
+                            <div class="fieldDescription">Lädt auch Inhalte mit Audiodeskription herunter (sofern verfügbar).
+                            </div>
+                        </div>
+
+                        <!-- Allow Sign Language Checkbox -->
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subAllowSignLanguage" type="checkbox" is="emby-checkbox"/>
+                                <span>Versionen mit Gebärdensprache herunterladen</span>
+                            </label>
+                            <div class="fieldDescription">Lädt auch Inhalte mit Gebärdensprache herunter. (sofern verfügbar).
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Duplicate Detection Checkbox -->
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subEnhancedDuplicateDetection" type="checkbox" is="emby-checkbox"/>
+                                <span>Erweiterte Duplikaterkennung</span>
+                            </label>
+                            <div class="fieldDescription">Scannt das Zielverzeichnis nach vorhandenen Dateien mit passenden SxxExx-Mustern (oder absoluter Nummerierung), um doppelte Downloads zu vermeiden (auch bei abweichenden Dateinamen).</div>
+                        </div>
+
+                        <!-- Auto Upgrade Quality Checkbox -->
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subAutoUpgradeToHigherQuality" type="checkbox" is="emby-checkbox"/>
+                                <span>Automatisch auf höhere Qualität upgraden</span>
+                            </label>
+                            <div class="fieldDescription">Wenn aktiviert, werden bereits vorhandene Episoden durch eine Version mit höherer Auflösung ersetzt, falls verfügbar.</div>
+                        </div>
+
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subAllowFallbackToLowerQuality" type="checkbox" is="emby-checkbox"/>
+                                <span>Fallback auf niedrigere Qualität erlauben</span>
+                            </label>
+                            <div class="fieldDescription">Wenn aktiviert, wird beim Herunterladen einer Episode geprüft, ob eine niedrigere Qualität verfügbar ist falls die HD-URL nicht gesetzt ist.</div>
+                        </div>
+
+                        <div id="subQualityCheckWithUrlContainer" class="checkboxContainer checkboxContainer-withDescription mvpl-indented-block">
+                            <label class="emby-checkbox-label">
+                                <input id="subQualityCheckWithUrl" type="checkbox" is="emby-checkbox"/>
+                                <span>Prüft ob die URLs gültig ist.</span>
+                            </label>
+                            <div class="fieldDescription">Wenn aktiviert wird auch geprüft, ob die URLs von MediathekView noch verfügbar sind und ggf. die nächst niedrigere versucht. HD → Default → SD</div>
+                        </div>
+
+                        <div class="button-row">
+                            <button is="emby-button" type="submit" class="raised button-submit">
+                                <span>Abo Speichern</span>
+                            </button>
+                            <button is="emby-button" type="button" class="raised" id="mvpl-btn-test-sub">
+                                <span>Abo prüfen (Dry Run)</span>
+                            </button>
+                            <button is="emby-button" type="button" class="raised button-cancel" id="mvpl-btn-cancel-sub">
+                                <span>Abbrechen</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- TAB 4: Downloads -->
+            <div id="tab-downloads" class="mvpl-tab-content" role="tabpanel" aria-labelledby="mvpl-btn-tab-downloads" style="display:none;">
+                <div class="verticalSection">
+                    <div class="sectionTitleLabel">Aktive Downloads</div>
+                    <p class="sectionDescription">Hier werden aktuell laufende und geplante Downloads angezeigt. Die Liste wird automatisch aktualisiert.</p>
+                    <div id="activeDownloadsList" class="paperList mvpl-margin-top-20">
+                        <!-- Liste der aktiven Downloads -->
+                    </div>
+                </div>
+                <div class="verticalSection mvpl-margin-top-20">
+                    <div class="sectionTitleLabel">Download Verlauf</div>
+                    <p class="sectionDescription">Zuletzt erfolgreich abgeschlossene Downloads.</p>
+                    <div id="downloadHistoryList" class="paperList mvpl-margin-top-20">
+                        <!-- Liste des Verlaufs -->
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="testSubscriptionModal" class="mvpl-dialog-host">
+        <div class="mvpl-dialog-content">
+            <h2 id="testSubscriptionTitle" class="mvpl-modal-title">Test Ergebnisse</h2>
+            <div id="testSubscriptionCount" class="mvpl-test-sub-count"></div>
+            <div id="testSubscriptionResults" class="mvpl-test-sub-results">
+                <!-- Ergebnisse werden hier gerendert -->
+            </div>
+            <div class="button-row">
+                <button is="emby-button" type="button" class="raised button-cancel" id="mvpl-btn-close-test-results">
+                    <span>Schließen</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="advancedDownloadModal" class="mvpl-dialog-host">
+        <div class="mvpl-dialog-content">
+            <h2 id="advancedDownloadTitle">Erweiterter Download</h2>
+            <form id="mvpl-adv-download-form">
+                <input type="hidden" id="advancedDownloadIndex"/>
+
+                <div class="inputContainer">
+                    <div class="flex-align-center">
+                        <div class="flex-grow">
+                            <label class="inputLabel" for="advDlPath">Download Pfad</label>
+                            <input is="emby-input" type="text" id="advDlPath"/>
+                        </div>
+                        <button type="button" is="paper-icon-button-light" id="btnSelectAdvPath"
+                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                            <span class="material-icons folder_open"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="inputContainer">
+                    <label class="inputLabel" for="advDlFilename">Dateiname</label>
+                    <input is="emby-input" type="text" id="advDlFilename"/>
+                </div>
+
+                <div class="checkboxContainer checkboxContainer-withDescription">
+                    <label class="emby-checkbox-label">
+                        <input id="advDlSubtitles" type="checkbox" is="emby-checkbox"/>
+                        <span>Untertitel herunterladen</span>
+                    </label>
+                    <div id="advDlSubtitlesDesc" class="fieldDescription"></div>
+                </div>
+
+                <div class="button-row">
+                    <button is="emby-button" type="submit" class="raised button-submit">
+                        <span>Herunterladen</span>
+                    </button>
+                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-duckduckgo-tmdb" title="Video über DuckDuckGo suchen und auf TMDB öffnen">
+                        <span>TMDB</span>
+                    </button>
+                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-duckduckgo" title="Video über DuckDuckGo suchen">
+                        <span>DuckDuckGo</span>
+                    </button>
+                    <button is="emby-button" type="button" class="raised button-cancel" id="mvpl-btn-close-adv-download">
+                        <span>Abbrechen</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <style>
+        .mvpl-tabs-spacer {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+        }
+
+        .mvpl-tabs-spacer button.selected {
+            color: #00a4dc;
+        }
+
+        .mvpl-dialog-host {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .mvpl-dialog-content {
+            background-color: #202020;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 5px;
+            width: 70%;
+            max-width: 800px;
+            max-height: 60vh;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* Helper & Layout Classes */
+        .flex-grow {
+            flex-grow: 1;
+        }
+
+        .flex-align-center {
+            display: flex;
+            align-items: center;
+        }
+
+        .flex-space-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .flex-gap-5 {
+            display: flex;
+            gap: 5px;
+        }
+
+        .flex-gap-10 {
+            display: flex;
+            gap: 10px;
+        }
+
+        .mvpl-margin-top-10 {
+            margin-top: 10px;
+        }
+
+        .mvpl-margin-top-20 {
+            margin-top: 20px;
+        }
+
+        /* Specific Components */
+        .mvpl-search-form-row {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .mvpl-input-short {
+            width: 150px;
+        }
+
+        .mvpl-results-container {
+            margin-top: 20px;
+        }
+
+        .mvpl-folder-button {
+            margin-left: 10px;
+            margin-top: 15px;
+        }
+
+        .mvpl-last-run-label {
+            padding: 10px 0;
+        }
+
+        .mvpl-subscription-editor {
+            display: none;
+            border-top: 1px solid #444;
+            margin-top: 20px;
+            padding-top: 20px;
+        }
+
+        .mvpl-help-button {
+            margin: 0;
+            padding: 4px;
+            color: #00a4dc;
+            cursor: pointer;
+        }
+
+        .mvpl-help-button:hover {
+            color: #52bdec;
+        }
+
+        .mvpl-queries-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .mvpl-query-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            border: 1px solid #333;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .query-checkboxes {
+             display: flex;
+             gap: 15px;
+        }
+
+        .mvpl-duration-inputs-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .mvpl-indented-block {
+            margin-left: 20px;
+        }
+
+        .sub-disabled {
+            opacity: 0.6;
+        }
+
+        .mvpl-modal-title {
+            margin-top: 0;
+        }
+
+        .mvpl-test-sub-count {
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .mvpl-test-sub-results {
+            overflow-y: auto;
+            flex-grow: 1;
+            margin-bottom: 20px;
+        }
+
+        .mvpl-download-status {
+            background-color: #FFF;
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .mvpl-download-status[data-status="Queued"] {
+            background-color: #888;
+            color: black;
+        }
+
+        .mvpl-download-status[data-status="Downloading"] {
+            background-color: #00a4dc;
+            color: black;
+        }
+
+        .mvpl-download-status[data-status="Processing"] {
+            background-color: #00a4dc;
+            color: black;
+        }
+
+        .mvpl-download-status[data-status="Finished"] {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .mvpl-download-status[data-status="Failed"] {
+            background-color: #F44336;
+            color: white;
+        }
+
+        .mvpl-download-status[data-status="Cancelled"] {
+            background-color: #FF9800;
+            color: white;
+        }
+
+        /* Animation Classes */
+        .mvpl-animated-container {
+            transition: opacity 0.3s ease-in-out, max-height 0.3s ease-in-out, margin 0.3s ease-in-out, padding 0.3s ease-in-out;
+            max-height: 200px; /* Sufficient for checkbox containers */
+            opacity: 1;
+            overflow: hidden;
+            display: block; /* Ensure it is not none */
+        }
+
+        .mvpl-hidden {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            pointer-events: none;
+        }
+
+        .mvpl-collapsible-summary {
+            cursor: pointer;
+            font-weight: bold;
+            outline: none;
+            padding: 12px 15px;
+            background-color: #333;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 1em;
+            margin-top: 1em;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .mvpl-collapsible-summary:hover {
+            background-color: #444;
+        }
+
+        /* Hide default marker and add material icon arrow */
+        .mvpl-collapsible-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .mvpl-collapsible-summary::before {
+            content: 'expand_more';
+            font-family: 'Material Icons';
+            margin-right: 10px;
+            font-size: 20px;
+            transition: transform 0.2s;
+            transform: rotate(-90deg);
+        }
+
+        .mvpl-collapsible-summary::after {
+            content: " (Ausklappen)";
+            font-weight: normal;
+            opacity: 0.8;
+            margin-left: 5px;
+        }
+
+        details[open] > .mvpl-collapsible-summary::before {
+            transform: rotate(0deg);
+        }
+
+        details[open] > .mvpl-collapsible-summary::after {
+            content: " (Einklappen)";
+        }
+
+        .mvpl-details-content {
+            padding-left: 5px;
+            border-left: 1px solid #444;
+            margin-left: 10px;
+            margin-bottom: 20px;
+        }
+    </style>
+</div>
+</body>
+</html>
