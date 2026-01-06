@@ -230,11 +230,18 @@
 
                         <!-- Container für dynamische Queries -->
                         <div class="inputContainer">
-                            <label class="inputLabel">Suchanfragen</label>
+                            <div class="flex-align-center">
+                                <label class="inputLabel flex-grow" style="margin:0;">Suchanfragen</label>
+                                <button type="button" is="paper-icon-button-light" id="mvpl-btn-search-help"
+                                        title="Hilfe zur Suchlogik (extern)" aria-label="Hilfe zur Suchlogik" class="mvpl-help-button">
+                                    <span class="material-icons help_outline"></span>
+                                </button>
+                            </div>
                             <div id="queriesContainer" class="mvpl-queries-container">
                                 <!-- Query-Zeilen werden hier dynamisch eingefügt -->
                             </div>
-                            <button is="emby-button" type="button" class="raised mvpl-margin-top-10" id="mvpl-btn-add-query">
+                            <button is="emby-button" type="button" class="raised mvpl-margin-top-10" id="mvpl-btn-add-query" 
+                                    title="Kombiniert Filter:&#10;- 'ODER' innerhalb einer Zeile (z.B. Titel oder Thema)&#10;- 'ODER' bei identischen Feld-Kombinationen (z.B. Sender vs. Sender)&#10;- 'UND' bei unterschiedlichen Feld-Kombinationen (z.B. Sender vs. Titel)">
                                 <span class="material-icons add"></span>
                                 <span>Anfrage hinzufügen</span>
                             </button>
@@ -1848,6 +1855,10 @@
                         this.addQueryRow();
                     });
 
+                    document.getElementById('mvpl-btn-search-help').addEventListener('click', () => {
+                        window.open('https://github.com/mediathekview/mediathekviewweb/blob/master/README.md#suchlogik-anwenden', '_blank');
+                    });
+
                     document.getElementById('mvpl-btn-test-sub').addEventListener('click', () => {
                         this.testSubscription();
                     });
@@ -2016,6 +2027,17 @@
             border-top: 1px solid #444;
             margin-top: 20px;
             padding-top: 20px;
+        }
+
+        .mvpl-help-button {
+            margin: 0;
+            padding: 4px;
+            color: #00a4dc;
+            cursor: pointer;
+        }
+
+        .mvpl-help-button:hover {
+            color: #52bdec;
         }
 
         .mvpl-queries-container {
