@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
 using Microsoft.Extensions.Logging;
@@ -14,7 +16,7 @@ using Polly.CircuitBreaker;
 using Polly.Retry;
 using Polly.Wrap;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Api;
+namespace Jellyfin.Plugin.MediathekViewDL.Api.External;
 
 /// <summary>
 /// A client for the MediathekViewWeb API.
@@ -54,26 +56,64 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     /// Searches for media on the MediathekViewWeb API.
     /// </summary>
     /// <param name="searchQuery">The search query.</param>
+    /// <param name="topic">The topic filter.</param>
+    /// <param name="channel">The channel filter.</param>
     /// <param name="minDuration">Optional minimum duration in seconds.</param>
     /// <param name="maxDuration">Optional maximum duration in seconds.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of result items.</returns>
     /// <exception cref="MediathekException">Thrown when an error occurs while calling the API.</exception>
     public async Task<Collection<ResultItem>> SearchAsync(
-        string searchQuery,
+        string? searchQuery,
+        string? topic,
+        string? channel,
         int? minDuration,
         int? maxDuration,
         CancellationToken cancellationToken)
     {
         var apiQuery = new ApiQuery
         {
-            Queries = new Collection<QueryFields> { new() { Query = searchQuery } },
             Size = 50, // Get a decent number of results
             MinDuration = minDuration,
-            MaxDuration = maxDuration
+            MaxDuration = maxDuration,
+            Queries = new Collection<QueryFields>()
         };
+
+        var queries = SplitAndClean(searchQuery);
+        foreach (var q in queries)
+        {
+            apiQuery.Queries.Add(new QueryFields { Query = q, Fields = ["Title"] });
+        }
+
+        var topics = SplitAndClean(topic);
+        foreach (var t in topics)
+        {
+            apiQuery.Queries.Add(new QueryFields { Query = t, Fields = ["topic"] });
+        }
+
+        var channels = SplitAndClean(channel);
+        foreach (var c in channels)
+        {
+            apiQuery.Queries.Add(new QueryFields { Query = c, Fields = ["channel"] });
+        }
+
+        if (apiQuery.Queries.Count == 0)
+        {
+            return new Collection<ResultItem>();
+        }
+
         var res = await SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
         return res.Results;
+    }
+
+    private static List<string> SplitAndClean(string? input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return new List<string>();
+        }
+
+        return input.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
     }
 
     /// <summary>

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Api;
+namespace Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
 
 #nullable disable
 

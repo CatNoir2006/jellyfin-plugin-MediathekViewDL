@@ -4,6 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Api.External;
+using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
@@ -146,23 +149,27 @@ public class MediathekViewDlApiService : ControllerBase
     /// Searches for media.
     /// </summary>
     /// <param name="query">The search query.</param>
+    /// <param name="topic">The topic filter.</param>
+    /// <param name="channel">The channel filter.</param>
     /// <param name="minDuration">Optional minimum duration in seconds.</param>
     /// <param name="maxDuration">Optional maximum duration in seconds.</param>
     /// <returns>A list of search results.</returns>
     [HttpGet("Search")]
     public async Task<ActionResult<List<ResultItem>>> Search(
-        [FromQuery] string query,
+        [FromQuery] string? query,
+        [FromQuery] string? topic,
+        [FromQuery] string? channel,
         [FromQuery] int? minDuration,
         [FromQuery] int? maxDuration)
     {
-        if (string.IsNullOrWhiteSpace(query))
+        if (string.IsNullOrWhiteSpace(query) && string.IsNullOrWhiteSpace(topic) && string.IsNullOrWhiteSpace(channel))
         {
-            return BadRequest("Search query cannot be empty.");
+            return BadRequest("At least one search parameter (query, topic, or channel) must be provided.");
         }
 
         try
         {
-            var results = await _apiClient.SearchAsync(query, minDuration, maxDuration, CancellationToken.None).ConfigureAwait(false);
+            var results = await _apiClient.SearchAsync(query, topic, channel, minDuration, maxDuration, CancellationToken.None).ConfigureAwait(false);
             return Ok(results);
         }
         catch (MediathekConnectionException ex)

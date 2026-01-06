@@ -1,6 +1,6 @@
-using Jellyfin.Plugin.MediathekViewDL.Api;
+using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Api
+namespace Jellyfin.Plugin.MediathekViewDL.Api.Models
 {
     /// <summary>
     /// Advanced download options. Used for manual downloads.

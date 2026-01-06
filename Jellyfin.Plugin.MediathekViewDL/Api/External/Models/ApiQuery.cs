@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Api;
+namespace Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
 
 /// <summary>
 /// Defines the request body for the MediathekViewWeb API.

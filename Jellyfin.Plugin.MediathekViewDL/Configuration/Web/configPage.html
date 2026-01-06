@@ -7,7 +7,7 @@
 </head>
 
 <body>
-<div id="MediathekViewDLConfigPage" data-role="page" class="page type-interior pluginConfigurationPage esqConfigurationPage" data-controller="__plugin/MediathekViewDL.js"
+<div id="MediathekViewDLConfigPage" data-role="page" class="page pluginConfigurationPage esqConfigurationPage" data-controller="__plugin/MediathekViewDL.js"
      data-require="emby-input,emby-button,emby-select,emby-checkbox,emby-linkbutton">
 
     <div data-role="content">
@@ -43,8 +43,16 @@
                     <form id="mvpl-form-search">
                         <div class="mvpl-search-form-row">
                             <div class="inputContainer flex-grow">
-                                <label class="inputLabel" for="txtSearchQuery">Suchbegriff</label>
-                                <input is="emby-input" type="text" id="txtSearchQuery" required/>
+                                <label class="inputLabel" for="txtSearchQuery">Titel</label>
+                                <input is="emby-input" type="text" id="txtSearchQuery" placeholder="Optional"/>
+                            </div>
+                            <div class="inputContainer flex-grow">
+                                <label class="inputLabel" for="txtSearchTopic">Thema</label>
+                                <input is="emby-input" type="text" id="txtSearchTopic" placeholder="Optional"/>
+                            </div>
+                            <div class="inputContainer mvpl-input-sender">
+                                <label class="inputLabel" for="txtSearchChannel">Sender</label>
+                                <input is="emby-input" type="text" id="txtSearchChannel" placeholder="Optional"/>
                             </div>
                             <div class="inputContainer mvpl-input-short">
                                 <label class="inputLabel" for="numMinDuration">Min. Dauer (Sek)</label>
@@ -590,6 +598,14 @@
         </div>
     </div>
     <style>
+        #MediathekViewDLConfigPage .content-primary {
+            max-width: none !important;
+        }
+
+        #mvpl-form-search {
+            max-width: none !important;
+        }
+
         .mvpl-tabs-spacer {
             margin-bottom: 20px;
             border-bottom: 1px solid #333;
@@ -635,7 +651,8 @@
 
         /* Helper & Layout Classes */
         .flex-grow {
-            flex-grow: 1;
+            flex-grow: 1000;
+            min-width: 200px;
         }
 
         .flex-align-center {
@@ -668,6 +685,10 @@
         }
 
         /* Specific Components */
+        .mvpl-search-form-row .inputContainer {
+            max-width: none;
+        }
+
         .mvpl-search-form-row {
             display: flex;
             gap: 10px;
@@ -676,7 +697,14 @@
         }
 
         .mvpl-input-short {
-            width: 150px;
+            width: 100px;
+            flex-grow: 0;
+            flex-shrink: 0;
+        }
+
+        .mvpl-input-sender {
+            flex-grow: 500;
+            min-width: 150px;
         }
 
         .mvpl-results-container {

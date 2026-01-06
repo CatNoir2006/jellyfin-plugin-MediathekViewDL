@@ -1,4 +1,4 @@
-namespace Jellyfin.Plugin.MediathekViewDL.Api;
+namespace Jellyfin.Plugin.MediathekViewDL.Api.Models;
 
 /// <summary>
 /// Represents the recommended path for a video.
