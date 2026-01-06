@@ -42,15 +42,19 @@
 
                     <form id="mvpl-form-search">
                         <div class="mvpl-search-form-row">
-                            <div class="inputContainer flex-grow">
-                                <label class="inputLabel" for="txtSearchQuery">Titel</label>
+                                                         <div class="inputContainer flex-grow">
+                                                             <label class="inputLabel" for="txtSearchCombined">Combi-Suche</label>
+                                                             <input is="emby-input" type="text" id="txtSearchCombined" placeholder="Titel & Thema"/>
+                                                         </div>
+                                                         
+                                                         <div class="inputContainer flex-grow">                                <label class="inputLabel" for="txtSearchQuery">Titel</label>
                                 <input is="emby-input" type="text" id="txtSearchQuery" placeholder="Optional"/>
                             </div>
                             <div class="inputContainer flex-grow">
                                 <label class="inputLabel" for="txtSearchTopic">Thema</label>
                                 <input is="emby-input" type="text" id="txtSearchTopic" placeholder="Optional"/>
                             </div>
-                            <div class="inputContainer mvpl-input-sender">
+                            <div class="inputContainer" style="flex-grow: 1; min-width: 100px;">
                                 <label class="inputLabel" for="txtSearchChannel">Sender</label>
                                 <input is="emby-input" type="text" id="txtSearchChannel" placeholder="Optional"/>
                             </div>
@@ -267,7 +271,7 @@
             <!-- TAB 3: Subscription Management -->
             <div id="tab-subscriptions" class="mvpl-tab-content" role="tabpanel" aria-labelledby="mvpl-btn-tab-subscriptions" style="display:none;">
                 <div class="verticalSection">
-                    <div class="flex-space-between">
+                    <div class="flex-space- ebetween">
                         <div class="sectionTitleLabel">Aktive Abonnements</div>
                         <button is="emby-button" type="button" class="raised" id="mvpl-btn-new-sub">
                             <span class="material-icons add"></span>

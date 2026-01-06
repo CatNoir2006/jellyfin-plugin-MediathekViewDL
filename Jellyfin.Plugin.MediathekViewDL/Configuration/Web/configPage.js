@@ -143,23 +143,25 @@ class SearchController {
     }
 
     performSearch() {
-        const query = document.getElementById('txtSearchQuery').value;
+        const title = document.getElementById('txtSearchQuery').value;
         const topic = document.getElementById('txtSearchTopic').value;
         const channel = document.getElementById('txtSearchChannel').value;
+        const combinedSearch = document.getElementById('txtSearchCombined').value;
         const minD = document.getElementById('numMinDuration').value;
         const maxD = document.getElementById('numMaxDuration').value;
 
-        if (!query && !topic && !channel) {
-            this.config.showToast("Bitte Suchbegriff, Thema oder Sender eingeben");
+        if (!title && !topic && !channel && !combinedSearch) {
+            this.config.showToast("Bitte Suchbegriff eingeben");
             return;
         }
         // noinspection JSUnresolvedReference
         Dashboard.showLoadingMsg();
         // noinspection JSUnresolvedReference
         let url = ApiClient.getUrl('/' + this.config.pluginName + '/Search');
-        url += '?query=' + encodeURIComponent(query);
+        url += '?title=' + encodeURIComponent(title);
         url += '&topic=' + encodeURIComponent(topic);
         url += '&channel=' + encodeURIComponent(channel);
+        url += '&combinedSearch=' + encodeURIComponent(combinedSearch);
         if (minD) url += '&minDuration=' + minD;
         if (maxD) url += '&maxDuration=' + maxD;
         // noinspection JSUnresolvedReference

@@ -55,18 +55,20 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     /// <summary>
     /// Searches for media on the MediathekViewWeb API.
     /// </summary>
-    /// <param name="searchQuery">The search query.</param>
+    /// <param name="title">The title query.</param>
     /// <param name="topic">The topic filter.</param>
     /// <param name="channel">The channel filter.</param>
+    /// <param name="combinedSearch">The combined search query (Title, Topic).</param>
     /// <param name="minDuration">Optional minimum duration in seconds.</param>
     /// <param name="maxDuration">Optional maximum duration in seconds.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of result items.</returns>
     /// <exception cref="MediathekException">Thrown when an error occurs while calling the API.</exception>
     public async Task<Collection<ResultItem>> SearchAsync(
-        string? searchQuery,
+        string? title,
         string? topic,
         string? channel,
+        string? combinedSearch,
         int? minDuration,
         int? maxDuration,
         CancellationToken cancellationToken)
@@ -79,10 +81,10 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             Queries = new Collection<QueryFields>()
         };
 
-        var queries = SplitAndClean(searchQuery);
-        foreach (var q in queries)
+        var titles = SplitAndClean(title);
+        foreach (var t in titles)
         {
-            apiQuery.Queries.Add(new QueryFields { Query = q, Fields = ["Title"] });
+            apiQuery.Queries.Add(new QueryFields { Query = t, Fields = ["Title"] });
         }
 
         var topics = SplitAndClean(topic);
@@ -95,6 +97,17 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         foreach (var c in channels)
         {
             apiQuery.Queries.Add(new QueryFields { Query = c, Fields = ["channel"] });
+        }
+
+        if (!string.IsNullOrWhiteSpace(combinedSearch))
+        {
+            var fields = new Collection<string> { "title", "topic" };
+
+            var combinedQueries = SplitAndClean(combinedSearch);
+            foreach (var q in combinedQueries)
+            {
+                apiQuery.Queries.Add(new QueryFields { Query = q, Fields = fields });
+            }
         }
 
         if (apiQuery.Queries.Count == 0)

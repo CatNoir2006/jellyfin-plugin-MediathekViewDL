@@ -148,28 +148,33 @@ public class MediathekViewDlApiService : ControllerBase
     /// <summary>
     /// Searches for media.
     /// </summary>
-    /// <param name="query">The search query.</param>
+    /// <param name="title">The title query.</param>
     /// <param name="topic">The topic filter.</param>
     /// <param name="channel">The channel filter.</param>
+    /// <param name="combinedSearch">The combined search query (Title, Topic).</param>
     /// <param name="minDuration">Optional minimum duration in seconds.</param>
     /// <param name="maxDuration">Optional maximum duration in seconds.</param>
     /// <returns>A list of search results.</returns>
     [HttpGet("Search")]
     public async Task<ActionResult<List<ResultItem>>> Search(
-        [FromQuery] string? query,
+        [FromQuery] string? title,
         [FromQuery] string? topic,
         [FromQuery] string? channel,
+        [FromQuery] string? combinedSearch,
         [FromQuery] int? minDuration,
         [FromQuery] int? maxDuration)
     {
-        if (string.IsNullOrWhiteSpace(query) && string.IsNullOrWhiteSpace(topic) && string.IsNullOrWhiteSpace(channel))
+        if (string.IsNullOrWhiteSpace(title) &&
+            string.IsNullOrWhiteSpace(topic) &&
+            string.IsNullOrWhiteSpace(channel) &&
+            string.IsNullOrWhiteSpace(combinedSearch))
         {
-            return BadRequest("At least one search parameter (query, topic, or channel) must be provided.");
+            return BadRequest("At least one search parameter (title, topic, channel, or combinedSearch) must be provided.");
         }
 
         try
         {
-            var results = await _apiClient.SearchAsync(query, topic, channel, minDuration, maxDuration, CancellationToken.None).ConfigureAwait(false);
+            var results = await _apiClient.SearchAsync(title, topic, channel, combinedSearch, minDuration, maxDuration, CancellationToken.None).ConfigureAwait(false);
             return Ok(results);
         }
         catch (MediathekConnectionException ex)
