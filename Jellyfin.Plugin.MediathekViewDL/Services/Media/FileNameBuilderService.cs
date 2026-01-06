@@ -31,13 +31,8 @@ public class FileNameBuilderService : IFileNameBuilderService
         _configurationProvider = configurationProvider;
     }
 
-    /// <summary>
-    /// Generates all necessary download paths for a given video and subscription.
-    /// </summary>
-    /// <param name="videoInfo">The video information.</param>
-    /// <param name="subscription">The subscription settings.</param>
-    /// <returns>A <see cref="DownloadPaths"/> object containing all generated paths.</returns>
-    public DownloadPaths GenerateDownloadPaths(VideoInfo videoInfo, Subscription subscription)
+    /// <inheritdoc />
+    public DownloadPaths GenerateDownloadPaths(VideoInfo videoInfo, Subscription subscription, FileType? forceType = null)
     {
         var paths = new DownloadPaths();
 
@@ -48,7 +43,7 @@ public class FileNameBuilderService : IFileNameBuilderService
             return paths; // Return empty paths object
         }
 
-        paths.MainType = GetTargetMainType(videoInfo, subscription);
+        paths.MainType = forceType ?? GetTargetMainType(videoInfo, subscription);
 
         paths.DirectoryPath = targetDirectory;
         var mainFile = BuildFileName(videoInfo, subscription, paths.MainType);
@@ -59,31 +54,19 @@ public class FileNameBuilderService : IFileNameBuilderService
         return paths;
     }
 
-    /// <summary>
-    /// Sanitizes a string to be used as a file name.
-    /// </summary>
-    /// <param name="fileName">The file name to sanitize.</param>
-    /// <returns>A sanitized file name.</returns>
+    /// <inheritdoc />
     public string SanitizeFileName(string fileName)
     {
         return string.Join("_", fileName.Split(_invalidFileNameChars));
     }
 
-    /// <summary>
-    /// Sanitizes a string to be used as a directory name.
-    /// </summary>
-    /// <param name="directoryName">The directory name to sanitize.</param>
-    /// <returns>A sanitized directory name.</returns>
+    /// <inheritdoc />
     public string SanitizeDirectoryName(string directoryName)
     {
         return string.Join("_", directoryName.Split(_invalidFolderNameChars));
     }
 
-    /// <summary>
-    /// Gets the base directory for a subscription.
-    /// </summary>
-    /// <param name="subscription">The subscription.</param>
-    /// <returns>The base directory path.</returns>
+    /// <inheritdoc />
     public string GetSubscriptionBaseDirectory(Subscription subscription)
     {
         var config = _configurationProvider.ConfigurationOrNull;
@@ -177,7 +160,7 @@ public class FileNameBuilderService : IFileNameBuilderService
     private string BuildDirectoryName(VideoInfo videoInfo, Subscription subscription)
     {
         var config = _configurationProvider.ConfigurationOrNull;
-        string targetPath = string.Empty;
+        string targetPath;
         if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
         {
             string defaultPath = config?.DefaultDownloadPath ?? string.Empty;

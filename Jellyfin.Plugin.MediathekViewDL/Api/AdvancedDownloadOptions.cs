@@ -26,5 +26,10 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api
         /// Gets a value indicating whether to download subtitles.
         /// </summary>
         public bool DownloadSubtitles { get; init; }
+
+        /// <summary>
+        /// Gets the Name of the Subtitle file.
+        /// </summary>
+        public string SubtitleName { get; init; } = string.Empty;
     }
 }

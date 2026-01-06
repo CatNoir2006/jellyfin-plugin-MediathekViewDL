@@ -224,10 +224,14 @@ public class MediathekViewDlApiService : ControllerBase
     {
         try
         {
-            var defaultSub = new Subscription() { DownloadFullVideoForSecondaryAudio = true, Name = videoInfo.Topic };
-            var dlPaths = _fileNameBuilder.GenerateDownloadPaths(videoInfo, defaultSub);
-            var cleanPath = dlPaths.MainFilePath;
-            var genPaths = new RecommendedPath() { FileName = Path.GetFileName(cleanPath), Path = Path.GetDirectoryName(cleanPath)!, };
+            var defaultSub = new Subscription() { Name = videoInfo.Topic };
+            var dlPaths = _fileNameBuilder.GenerateDownloadPaths(videoInfo, defaultSub, FileType.Video);
+            var genPaths = new RecommendedPath()
+            {
+                FileName = Path.GetFileName(dlPaths.MainFilePath),
+                SubtitleName = Path.GetFileName(dlPaths.SubtitleFilePath),
+                Path = Path.GetDirectoryName(dlPaths.MainFilePath)!,
+            };
 
             return Ok(genPaths);
         }
@@ -272,29 +276,14 @@ public class MediathekViewDlApiService : ControllerBase
         var manualDownloadFolder = Path.Combine(config.DefaultDownloadPath, "manual");
         var videoDestinationPath = Path.Combine(manualDownloadFolder, sanitizedTitle + ".mp4");
 
-        var job = new DownloadJob
-        {
-            ItemId = item.Id,
-            Title = item.Title,
-            ItemInfo = new VideoInfo()
-        };
+        var job = new DownloadJob { ItemId = item.Id, Title = item.Title, ItemInfo = new VideoInfo() };
 
-        job.DownloadItems.Add(new DownloadItem
-        {
-            SourceUrl = videoUrl,
-            DestinationPath = videoDestinationPath,
-            JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload
-        });
+        job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = videoDestinationPath, JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload });
 
         if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
         {
             var subtitleDestinationPath = Path.Combine(manualDownloadFolder, sanitizedTitle + ".ttml");
-            job.DownloadItems.Add(new DownloadItem
-            {
-                SourceUrl = item.UrlSubtitle,
-                DestinationPath = subtitleDestinationPath,
-                JobType = DownloadType.DirectDownload
-            });
+            job.DownloadItems.Add(new DownloadItem { SourceUrl = item.UrlSubtitle, DestinationPath = subtitleDestinationPath, JobType = DownloadType.DirectDownload });
         }
 
         _downloadQueueManager.QueueJob(job);
@@ -350,30 +339,15 @@ public class MediathekViewDlApiService : ControllerBase
 
         var videoDestinationPath = Path.Combine(targetDownloadPath, fileName);
 
-        var job = new DownloadJob
-        {
-            ItemId = item.Id,
-            Title = item.Title,
-            ItemInfo = new VideoInfo()
-        };
+        var job = new DownloadJob { ItemId = item.Id, Title = item.Title, ItemInfo = new VideoInfo() };
 
-        job.DownloadItems.Add(new DownloadItem
-        {
-            SourceUrl = videoUrl,
-            DestinationPath = videoDestinationPath,
-            JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload
-        });
+        job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = videoDestinationPath, JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload });
 
         if (options.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
         {
             var subtitleFileName = Path.GetFileNameWithoutExtension(fileName) + ".ttml";
             var subtitleDestinationPath = Path.Combine(targetDownloadPath, subtitleFileName);
-            job.DownloadItems.Add(new DownloadItem
-            {
-                SourceUrl = item.UrlSubtitle,
-                DestinationPath = subtitleDestinationPath,
-                JobType = DownloadType.DirectDownload
-            });
+            job.DownloadItems.Add(new DownloadItem { SourceUrl = item.UrlSubtitle, DestinationPath = subtitleDestinationPath, JobType = DownloadType.DirectDownload });
         }
 
         _downloadQueueManager.QueueJob(job);

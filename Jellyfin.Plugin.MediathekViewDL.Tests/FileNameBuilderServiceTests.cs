@@ -74,7 +74,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             // Assert
             Assert.True(paths.IsValid);
-            Assert.Equal(Path.Combine("/tmp/downloads", "TestSub"), paths.DirectoryPath);
+            Assert.Equal(Path.Combine("/tmp/downloads", "TestSub", "TestVideo"), paths.DirectoryPath);
             Assert.EndsWith("TestVideo.mkv", paths.MainFilePath);
             Assert.EndsWith("TestVideo.deu.ttml", paths.SubtitleFilePath);
         }
@@ -129,7 +129,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var paths = service.GenerateDownloadPaths(videoInfo, subscription);
 
             // Assert
-            Assert.Equal("/custom/path/MyShow", paths.DirectoryPath);
+            Assert.Equal(Path.Combine("/custom/path/MyShow", "Test"), paths.DirectoryPath);
         }
 
         [Fact]

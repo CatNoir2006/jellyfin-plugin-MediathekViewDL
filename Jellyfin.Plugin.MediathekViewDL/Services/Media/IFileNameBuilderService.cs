@@ -13,8 +13,9 @@ public interface IFileNameBuilderService
     /// </summary>
     /// <param name="videoInfo">The video information.</param>
     /// <param name="subscription">The subscription settings.</param>
+    /// <param name="forceType">Forces the usage of a specific file type.</param>
     /// <returns>A <see cref="DownloadPaths"/> object containing all generated paths.</returns>
-    DownloadPaths GenerateDownloadPaths(VideoInfo videoInfo, Subscription subscription);
+    DownloadPaths GenerateDownloadPaths(VideoInfo videoInfo, Subscription subscription, FileType? forceType = null);
 
     /// <summary>
     /// Sanitizes a string to be used as a file name.

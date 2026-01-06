@@ -11,6 +11,11 @@ public record RecommendedPath
     public required string FileName { get; init; }
 
     /// <summary>
+    /// Gets the name of the Subtitle file.
+    /// </summary>
+    public required string SubtitleName { get; init; }
+
+    /// <summary>
     /// Gets the path of the file.
     /// </summary>
     public required string Path { get; init; }
