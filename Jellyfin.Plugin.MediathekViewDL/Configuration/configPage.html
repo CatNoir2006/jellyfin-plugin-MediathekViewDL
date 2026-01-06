@@ -77,13 +77,68 @@
                         <div class="inputContainer">
                             <div class="flex-align-center">
                                 <div class="flex-grow">
-                                    <label class="inputLabel" for="txtDefaultDownloadPath">Standard Download Pfad</label>
+                                    <label class="inputLabel" for="txtDefaultDownloadPath">Globaler Standard Download Pfad (Veraltet)</label>
                                     <input is="emby-input" type="text" id="txtDefaultDownloadPath"/>
-                                    <div class="fieldDescription">Der Standard-Ordner für alle Downloads, sofern im
-                                        Abo nichts anderes definiert ist.
+                                    <div class="fieldDescription">Der globale Fallback-Ordner für alle Downloads, falls kein spezifischer Pfad gesetzt ist. <span style="color: #f44336; font-weight: bold;">Hinweis: Dieser Pfad ist veraltet und wird in einer zukünftigen Version entfernt. Bitte verwenden Sie die spezifischen Pfade weiter unten.</span>
                                     </div>
                                 </div>
                                 <button type="button" is="paper-icon-button-light" id="btnSelectPath"
+                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                    <span class="material-icons folder_open"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <div class="flex-align-center">
+                                <div class="flex-grow">
+                                    <label class="inputLabel" for="txtDefaultSubscriptionShowPath">Standard Serien Pfad (Abo)</label>
+                                    <input is="emby-input" type="text" id="txtDefaultSubscriptionShowPath"/>
+                                    <div class="fieldDescription">Standard-Ordner für Serien-Downloads in Abonnements.</div>
+                                </div>
+                                <button type="button" is="paper-icon-button-light" id="btnSelectSubscriptionShowPath"
+                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                    <span class="material-icons folder_open"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <div class="flex-align-center">
+                                <div class="flex-grow">
+                                    <label class="inputLabel" for="txtDefaultSubscriptionMoviePath">Standard Film Pfad (Abo)</label>
+                                    <input is="emby-input" type="text" id="txtDefaultSubscriptionMoviePath"/>
+                                    <div class="fieldDescription">Standard-Ordner für Film-Downloads in Abonnements.</div>
+                                </div>
+                                <button type="button" is="paper-icon-button-light" id="btnSelectSubscriptionMoviePath"
+                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                    <span class="material-icons folder_open"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <div class="flex-align-center">
+                                <div class="flex-grow">
+                                    <label class="inputLabel" for="txtDefaultManualShowPath">Standard Serien Pfad (Manuell)</label>
+                                    <input is="emby-input" type="text" id="txtDefaultManualShowPath"/>
+                                    <div class="fieldDescription">Standard-Ordner für manuelle Serien-Downloads.</div>
+                                </div>
+                                <button type="button" is="paper-icon-button-light" id="btnSelectManualShowPath"
+                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                    <span class="material-icons folder_open"></span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="inputContainer">
+                            <div class="flex-align-center">
+                                <div class="flex-grow">
+                                    <label class="inputLabel" for="txtDefaultManualMoviePath">Standard Film Pfad (Manuell)</label>
+                                    <input is="emby-input" type="text" id="txtDefaultManualMoviePath"/>
+                                    <div class="fieldDescription">Standard-Ordner für manuelle Film-Downloads.</div>
+                                </div>
+                                <button type="button" is="paper-icon-button-light" id="btnSelectManualMoviePath"
                                         title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
                                     <span class="material-icons folder_open"></span>
                                 </button>
@@ -1369,6 +1424,10 @@
                         this.currentConfig = config;
 
                         document.querySelector('#txtDefaultDownloadPath').value = config.DefaultDownloadPath || "";
+                        document.querySelector('#txtDefaultSubscriptionShowPath').value = config.DefaultSubscriptionShowPath || "";
+                        document.querySelector('#txtDefaultSubscriptionMoviePath').value = config.DefaultSubscriptionMoviePath || "";
+                        document.querySelector('#txtDefaultManualShowPath').value = config.DefaultManualShowPath || "";
+                        document.querySelector('#txtDefaultManualMoviePath').value = config.DefaultManualMoviePath || "";
                         document.querySelector('#txtTempDownloadPath').value = config.TempDownloadPath || "";
                         document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
                         document.querySelector('#chkAllowUnknownDomains').checked = config.AllowUnknownDomains;
@@ -1888,6 +1947,10 @@
                     document.getElementById('MediathekGeneralConfigForm').addEventListener('submit', (e) => {
                         e.preventDefault();
                         this.currentConfig.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
+                        this.currentConfig.DefaultSubscriptionShowPath = document.querySelector('#txtDefaultSubscriptionShowPath').value;
+                        this.currentConfig.DefaultSubscriptionMoviePath = document.querySelector('#txtDefaultSubscriptionMoviePath').value;
+                        this.currentConfig.DefaultManualShowPath = document.querySelector('#txtDefaultManualShowPath').value;
+                        this.currentConfig.DefaultManualMoviePath = document.querySelector('#txtDefaultManualMoviePath').value;
                         this.currentConfig.TempDownloadPath = document.querySelector('#txtTempDownloadPath').value;
                         this.currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
                         this.currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
@@ -1908,7 +1971,19 @@
 
                     // Path selector in main config
                     document.getElementById('btnSelectPath').addEventListener('click', () => {
-                        this.openFolderDialog('txtDefaultDownloadPath', 'Standard Download Pfad wählen');
+                        this.openFolderDialog('txtDefaultDownloadPath', 'Globalen Standard Download Pfad wählen');
+                    });
+                    document.getElementById('btnSelectSubscriptionShowPath').addEventListener('click', () => {
+                        this.openFolderDialog('txtDefaultSubscriptionShowPath', 'Standard Serien Pfad (Abo) wählen');
+                    });
+                    document.getElementById('btnSelectSubscriptionMoviePath').addEventListener('click', () => {
+                        this.openFolderDialog('txtDefaultSubscriptionMoviePath', 'Standard Film Pfad (Abo) wählen');
+                    });
+                    document.getElementById('btnSelectManualShowPath').addEventListener('click', () => {
+                        this.openFolderDialog('txtDefaultManualShowPath', 'Standard Serien Pfad (Manuell) wählen');
+                    });
+                    document.getElementById('btnSelectManualMoviePath').addEventListener('click', () => {
+                        this.openFolderDialog('txtDefaultManualMoviePath', 'Standard Film Pfad (Manuell) wählen');
                     });
                     document.getElementById('btnSelectTempPath').addEventListener('click', () => {
                         this.openFolderDialog('txtTempDownloadPath', 'Temporären Download Pfad wählen');
