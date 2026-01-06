@@ -509,14 +509,11 @@
                     <button is="emby-button" type="submit" class="raised button-submit">
                         <span>Herunterladen</span>
                     </button>
-                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-tmdb-search-title">
-                        <span>TMDB Suche (Titel)</span>
+                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-duckduckgo-tmdb" title="Video über DuckDuckGo suchen und auf TMDB öffnen">
+                        <span>TMDB</span>
                     </button>
-                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-tmdb-search-topic">
-                        <span>TMDB Suche (Thema)</span>
-                    </button>
-                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-google-search">
-                        <span>Auf Google suchen</span>
+                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-duckduckgo" title="Video über DuckDuckGo suchen">
+                        <span>DuckDuckGo</span>
                     </button>
                     <button is="emby-button" type="button" class="raised button-cancel" id="mvpl-btn-close-adv-download">
                         <span>Abbrechen</span>
@@ -722,13 +719,23 @@
                 }
 
                 createSearchResultItem(item, index) {
-                    const durationStr = Math.floor(item.duration / 60) + " Min";
+                    const durationStr = Math.max(1, Math.floor(item.duration / 60)) + " min"; // Each Video should show up with at least 1 min.
                     const actions = document.createElement('div');
                     actions.classList.add('flex-gap-10');
 
+                    actions.appendChild(this.dom.createIconButton('play_arrow', 'Video abspielen.', () => {
+                        const videoUrl = item.url_video_hd ?? item.url_video ?? item.url_video_low;
+                        window.open(videoUrl, '_blank');
+                    }))
+                    actions.appendChild(this.dom.createIconButton('search', 'Video über DuckDuckGo suchen', () => {
+                        const queryString = (item.topic + ' ' + item.title).trim();
+                        const query = encodeURIComponent(queryString);
+                        window.open('https://duckduckgo.com/?q=' + query, '_blank');
+                    }));
                     actions.appendChild(this.dom.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
                     actions.appendChild(this.dom.createIconButton('settings', 'Erweiterter Download', () => this.config.openAdvancedDownloadDialog(this.currentSearchResults[index])));
                     actions.appendChild(this.dom.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.title, item.channel, item.topic)));
+
 
                     // Build BodyText1
                     const body1 = document.createElement('div');
@@ -1865,27 +1872,23 @@
                         this.closeAdvancedDownloadDialog();
                     });
 
-                    document.getElementById('mvpl-btn-tmdb-search-title').addEventListener('click', () => {
-                        if (this.currentItemForAdvancedDl && this.currentItemForAdvancedDl.title) {
-                            const query = encodeURIComponent(this.currentItemForAdvancedDl.title);
-                            window.open('https://www.themoviedb.org/search?query=' + query, '_blank');
-                        }
-                    });
-
-                    document.getElementById('mvpl-btn-tmdb-search-topic').addEventListener('click', () => {
-                        if (this.currentItemForAdvancedDl && this.currentItemForAdvancedDl.topic) {
-                            const query = encodeURIComponent(this.currentItemForAdvancedDl.topic);
-                            window.open('https://www.themoviedb.org/search?query=' + query, '_blank');
-                        }
-                    });
-
-                    document.getElementById('mvpl-btn-google-search').addEventListener('click', () => {
+                    document.getElementById('mvpl-btn-duckduckgo-tmdb').addEventListener('click', () => {
                         if (this.currentItemForAdvancedDl) {
                             const topic = this.currentItemForAdvancedDl.topic || '';
                             const title = this.currentItemForAdvancedDl.title || '';
-                            const queryString = (topic + ' ' + title).trim() + ' "TMDB"';
+                            const queryString = (topic + ' ' + title).trim() + ' site:themoviedb.org';
                             const query = encodeURIComponent(queryString);
-                            window.open('https://www.google.com/search?q=' + query, '_blank');
+                            window.open('https://duckduckgo.com/?q=\\' + query, '_blank');
+                        }
+                    });
+
+                    document.getElementById('mvpl-btn-duckduckgo').addEventListener('click', () => {
+                        if (this.currentItemForAdvancedDl) {
+                            const topic = this.currentItemForAdvancedDl.topic || '';
+                            const title = this.currentItemForAdvancedDl.title || '';
+                            const queryString = (topic + ' ' + title).trim() + ' site:themoviedb.org';
+                            const query = encodeURIComponent(queryString);
+                            window.open('https://duckduckgo.com/?q=' + query, '_blank');
                         }
                     });
                 }
