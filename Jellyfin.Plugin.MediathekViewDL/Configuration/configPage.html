@@ -74,90 +74,95 @@
                     <div class="sectionTitleLabel">Allgemeine Einstellungen</div>
                     <form id="MediathekGeneralConfigForm">
 
-                        <div class="inputContainer">
-                            <div class="flex-align-center">
-                                <div class="flex-grow">
-                                    <label class="inputLabel" for="txtDefaultDownloadPath">Globaler Standard Download Pfad (Veraltet)</label>
-                                    <input is="emby-input" type="text" id="txtDefaultDownloadPath"/>
-                                    <div class="fieldDescription">Der globale Fallback-Ordner für alle Downloads, falls kein spezifischer Pfad gesetzt ist. <span style="color: #f44336; font-weight: bold;">Hinweis: Dieser Pfad ist veraltet und wird in einer zukünftigen Version entfernt. Bitte verwenden Sie die spezifischen Pfade weiter unten.</span>
+                        <details>
+                            <summary class="inputLabel mvpl-collapsible-summary">Standard Pfade</summary>
+                            <div class="mvpl-details-content">
+                                <div class="inputContainer">
+                                    <div class="flex-align-center">
+                                        <div class="flex-grow">
+                                            <label class="inputLabel" for="txtDefaultDownloadPath">Globaler Standard Download Pfad (Veraltet)</label>
+                                            <input is="emby-input" type="text" id="txtDefaultDownloadPath"/>
+                                            <div class="fieldDescription">Der globale Fallback-Ordner für alle Downloads, falls kein spezifischer Pfad gesetzt ist. <span style="color: #f44336; font-weight: bold;">Hinweis: Dieser Pfad ist veraltet und wird in einer zukünftigen Version entfernt. Bitte verwenden Sie die spezifischen Pfade weiter unten.</span>
+                                            </div>
+                                        </div>
+                                        <button type="button" is="paper-icon-button-light" id="btnSelectPath"
+                                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                            <span class="material-icons folder_open"></span>
+                                        </button>
                                     </div>
                                 </div>
-                                <button type="button" is="paper-icon-button-light" id="btnSelectPath"
-                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
-                                    <span class="material-icons folder_open"></span>
-                                </button>
-                            </div>
-                        </div>
 
-                        <div class="inputContainer">
-                            <div class="flex-align-center">
-                                <div class="flex-grow">
-                                    <label class="inputLabel" for="txtDefaultSubscriptionShowPath">Standard Serien Pfad (Abo)</label>
-                                    <input is="emby-input" type="text" id="txtDefaultSubscriptionShowPath"/>
-                                    <div class="fieldDescription">Standard-Ordner für Serien-Downloads in Abonnements.</div>
+                                <div class="inputContainer">
+                                    <div class="flex-align-center">
+                                        <div class="flex-grow">
+                                            <label class="inputLabel" for="txtDefaultSubscriptionShowPath">Standard Serien Pfad (Abo)</label>
+                                            <input is="emby-input" type="text" id="txtDefaultSubscriptionShowPath"/>
+                                            <div class="fieldDescription">Standard-Ordner für Serien-Downloads in Abonnements.</div>
+                                        </div>
+                                        <button type="button" is="paper-icon-button-light" id="btnSelectSubscriptionShowPath"
+                                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                            <span class="material-icons folder_open"></span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <button type="button" is="paper-icon-button-light" id="btnSelectSubscriptionShowPath"
-                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
-                                    <span class="material-icons folder_open"></span>
-                                </button>
-                            </div>
-                        </div>
 
-                        <div class="inputContainer">
-                            <div class="flex-align-center">
-                                <div class="flex-grow">
-                                    <label class="inputLabel" for="txtDefaultSubscriptionMoviePath">Standard Film Pfad (Abo)</label>
-                                    <input is="emby-input" type="text" id="txtDefaultSubscriptionMoviePath"/>
-                                    <div class="fieldDescription">Standard-Ordner für Film-Downloads in Abonnements.</div>
+                                <div class="inputContainer">
+                                    <div class="flex-align-center">
+                                        <div class="flex-grow">
+                                            <label class="inputLabel" for="txtDefaultSubscriptionMoviePath">Standard Film Pfad (Abo)</label>
+                                            <input is="emby-input" type="text" id="txtDefaultSubscriptionMoviePath"/>
+                                            <div class="fieldDescription">Standard-Ordner für Film-Downloads in Abonnements.</div>
+                                        </div>
+                                        <button type="button" is="paper-icon-button-light" id="btnSelectSubscriptionMoviePath"
+                                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                            <span class="material-icons folder_open"></span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <button type="button" is="paper-icon-button-light" id="btnSelectSubscriptionMoviePath"
-                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
-                                    <span class="material-icons folder_open"></span>
-                                </button>
-                            </div>
-                        </div>
 
-                        <div class="inputContainer">
-                            <div class="flex-align-center">
-                                <div class="flex-grow">
-                                    <label class="inputLabel" for="txtDefaultManualShowPath">Standard Serien Pfad (Manuell)</label>
-                                    <input is="emby-input" type="text" id="txtDefaultManualShowPath"/>
-                                    <div class="fieldDescription">Standard-Ordner für manuelle Serien-Downloads.</div>
+                                <div class="inputContainer">
+                                    <div class="flex-align-center">
+                                        <div class="flex-grow">
+                                            <label class="inputLabel" for="txtDefaultManualShowPath">Standard Serien Pfad (Manuell)</label>
+                                            <input is="emby-input" type="text" id="txtDefaultManualShowPath"/>
+                                            <div class="fieldDescription">Standard-Ordner für manuelle Serien-Downloads.</div>
+                                        </div>
+                                        <button type="button" is="paper-icon-button-light" id="btnSelectManualShowPath"
+                                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                            <span class="material-icons folder_open"></span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <button type="button" is="paper-icon-button-light" id="btnSelectManualShowPath"
-                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
-                                    <span class="material-icons folder_open"></span>
-                                </button>
-                            </div>
-                        </div>
 
-                        <div class="inputContainer">
-                            <div class="flex-align-center">
-                                <div class="flex-grow">
-                                    <label class="inputLabel" for="txtDefaultManualMoviePath">Standard Film Pfad (Manuell)</label>
-                                    <input is="emby-input" type="text" id="txtDefaultManualMoviePath"/>
-                                    <div class="fieldDescription">Standard-Ordner für manuelle Film-Downloads.</div>
+                                <div class="inputContainer">
+                                    <div class="flex-align-center">
+                                        <div class="flex-grow">
+                                            <label class="inputLabel" for="txtDefaultManualMoviePath">Standard Film Pfad (Manuell)</label>
+                                            <input is="emby-input" type="text" id="txtDefaultManualMoviePath"/>
+                                            <div class="fieldDescription">Standard-Ordner für manuelle Film-Downloads.</div>
+                                        </div>
+                                        <button type="button" is="paper-icon-button-light" id="btnSelectManualMoviePath"
+                                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                            <span class="material-icons folder_open"></span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <button type="button" is="paper-icon-button-light" id="btnSelectManualMoviePath"
-                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
-                                    <span class="material-icons folder_open"></span>
-                                </button>
-                            </div>
-                        </div>
 
-                        <div class="inputContainer">
-                            <div class="flex-align-center">
-                                <div class="flex-grow">
-                                    <label class="inputLabel" for="txtTempDownloadPath">Temporärer Download Pfad</label>
-                                    <input is="emby-input" type="text" id="txtTempDownloadPath"/>
-                                    <div class="fieldDescription">Ein optionaler Ordner, in dem Downloads zwischengespeichert werden. Dies kann genutzt werden, um SSD-Abnutzung zu reduzieren, indem ein Pfad auf einer HDD gewählt wird (idealerweise auf der gleichen Festplatte wie die Bibliothek, um unnötiges Verschieben zwischen Laufwerken und Spin-Ups zu vermeiden). Leer lassen, um direkt in den Zielordner herunterzuladen.</div>
+                                <div class="inputContainer">
+                                    <div class="flex-align-center">
+                                        <div class="flex-grow">
+                                            <label class="inputLabel" for="txtTempDownloadPath">Temporärer Download Pfad</label>
+                                            <input is="emby-input" type="text" id="txtTempDownloadPath"/>
+                                            <div class="fieldDescription">Ein optionaler Ordner, in dem Downloads zwischengespeichert werden. Dies kann genutzt werden, um SSD-Abnutzung zu reduzieren, indem ein Pfad auf einer HDD gewählt wird (idealerweise auf der gleichen Festplatte wie die Bibliothek, um unnötiges Verschieben zwischen Laufwerken und Spin-Ups zu vermeiden). Leer lassen, um direkt in den Zielordner herunterzuladen.</div>
+                                        </div>
+                                        <button type="button" is="paper-icon-button-light" id="btnSelectTempPath"
+                                                title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
+                                            <span class="material-icons folder_open"></span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <button type="button" is="paper-icon-button-light" id="btnSelectTempPath"
-                                        title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
-                                    <span class="material-icons folder_open"></span>
-                                </button>
                             </div>
-                        </div>
+                        </details>
 
                         <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
                             <label class="emby-checkbox-label">
@@ -1152,8 +1157,8 @@
                     if (!el) return;
 
                     if (StringHelper.isNullOrWhitespace(el.value)) {
-                        const defaultMoviePath = document.getElementById('txtDefaultSubscriptionMoviePath').value || 'Nicht konfiguriert';
-                        const defaultShowPath = document.getElementById('txtDefaultSubscriptionShowPath').value || 'Nicht konfiguriert';
+                        const defaultMoviePath = window.MediathekViewDL.config.currentConfig.DefaultSubscriptionMoviePath || 'Nicht konfiguriert';
+                        const defaultShowPath = window.MediathekViewDL.config.currentConfig.DefaultSubscriptionShowPath || 'Nicht konfiguriert';
                         const subName = document.getElementById('subName').value || '[AboName]';
 
                         const joinPath = (path, part) => {
@@ -2006,6 +2011,7 @@
                         const maxBandwidth = parseInt(document.querySelector('#txtMaxBandwidthMBits').value, 10);
                         this.currentConfig.MaxBandwidthMBits = isNaN(maxBandwidth) ? 0 : maxBandwidth;
 
+                        this.subscriptionEditor.updateSubPathHoverText();
                         this.saveGlobalConfig();
                         return false;
                     });
@@ -2342,6 +2348,61 @@
             padding-top: 0 !important;
             padding-bottom: 0 !important;
             pointer-events: none;
+        }
+
+        .mvpl-collapsible-summary {
+            cursor: pointer;
+            font-weight: bold;
+            outline: none;
+            padding: 12px 15px;
+            background-color: #333;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 1em;
+            margin-top: 1em;
+            user-select: none;
+            transition: background-color 0.2s;
+        }
+
+        .mvpl-collapsible-summary:hover {
+            background-color: #444;
+        }
+
+        /* Hide default marker and add material icon arrow */
+        .mvpl-collapsible-summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .mvpl-collapsible-summary::before {
+            content: 'expand_more';
+            font-family: 'Material Icons';
+            margin-right: 10px;
+            font-size: 20px;
+            transition: transform 0.2s;
+            transform: rotate(-90deg);
+        }
+
+        .mvpl-collapsible-summary::after {
+            content: " (Ausklappen)";
+            font-weight: normal;
+            opacity: 0.8;
+            margin-left: 5px;
+        }
+
+        details[open] > .mvpl-collapsible-summary::before {
+            transform: rotate(0deg);
+        }
+
+        details[open] > .mvpl-collapsible-summary::after {
+            content: " (Einklappen)";
+        }
+
+        .mvpl-details-content {
+            padding-left: 5px;
+            border-left: 1px solid #444;
+            margin-left: 10px;
+            margin-bottom: 20px;
         }
     </style>
 </div>
