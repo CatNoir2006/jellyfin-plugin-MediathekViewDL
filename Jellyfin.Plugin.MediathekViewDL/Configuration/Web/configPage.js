@@ -164,8 +164,8 @@ class SearchController {
         if (topic) params.push('topic=' + encodeURIComponent(topic));
         if (channel) params.push('channel=' + encodeURIComponent(channel));
         if (combinedSearch) params.push('combinedSearch=' + encodeURIComponent(combinedSearch));
-        if (minD) params.push('minDuration=' + minD);
-        if (maxD) params.push('maxDuration=' + maxD);
+        if (minD) params.push('minDuration=' + (parseInt(minD) * 60));
+        if (maxD) params.push('maxDuration=' + (parseInt(maxD) * 60));
         
         if (params.length > 0) {
             url += '?' + params.join('&');
