@@ -1166,11 +1166,21 @@
                         };
 
                         const resolvedShowPath = joinPath(defaultShowPath, subName);
-
+                        this.updatePathPlaceholderText(defaultMoviePath, resolvedShowPath);
                         el.title = "Verwendete Pfade:\nFilme: " + defaultMoviePath + "\nSerien: " + resolvedShowPath;
                     } else {
                         el.title = "Ausgewählter Pfad für Film und Serie:\n" + el.value;
                     }
+                }
+
+                updatePathPlaceholderText(defaultMoviePath = '-', defaultShowPath = '-'){
+                    const el = document.getElementById('subPath');
+                    if (!el) return;
+
+                    let message = 'Standartpfad wird verwendet:';
+                    message += '  Serie: "' + defaultShowPath + '"';
+                    message += '  Film: "' + defaultMoviePath + '"';
+                    el.placeholder = message;
                 }
 
                 /**
