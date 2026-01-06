@@ -1661,6 +1661,44 @@
                     });
                 }
 
+                /**
+                 * Parses a search item into video information.
+                 * @param {Object} item - The search result item.
+                 * @param {Function} callback - The callback function to handle the result.
+                 */
+                getVideoInfo(item, callback) {
+                    const url = ApiClient.getUrl('/' + this.pluginName + '/Items/Parse');
+                    ApiClient.ajax({
+                        type: "POST",
+                        url: url,
+                        data: JSON.stringify(item),
+                        contentType: 'application/json'
+                    }).then(callback).catch((err) => {
+                        console.error("Error parsing video info", err);
+                    });
+                }
+
+                /**
+                 * Gets the recommended download path for a given video info.
+                 * @param {Object} videoInfo - The parsed video information.
+                 * @param {Function} callback - The callback function to handle the result.
+                 */
+                getRecommendedPath(videoInfo, callback) {
+                    const url = ApiClient.getUrl('/' + this.pluginName + '/Items/RecommendedPath');
+                    ApiClient.ajax({
+                        type: "POST",
+                        url: url,
+                        data: JSON.stringify(videoInfo),
+                        contentType: 'application/json'
+                    }).then(callback).catch((err) => {
+                        console.error("Error getting recommended path", err);
+                    });
+                }
+
+                /**
+                 * Opens the advanced download dialog for a search item.
+                 * @param {Object} item - The search result item.
+                 */
                 openAdvancedDownloadDialog(item) {
                     this.currentItemForAdvancedDl = item;
                     if (!this.currentItemForAdvancedDl) return;
@@ -1673,6 +1711,19 @@
                     let proposedFilename = (this.currentItemForAdvancedDl.topic || 'video') + " - " + (this.currentItemForAdvancedDl.title || 'video');
                     proposedFilename = proposedFilename.replace(/["\/\\?%*:|<>]/g, '-') + '.mp4';
                     document.getElementById('advDlFilename').value = proposedFilename;
+
+                    this.getVideoInfo(item, (videoInfo) => {
+                        this.getRecommendedPath(videoInfo, (recommended) => {
+                            if (recommended) {
+                                if (recommended.FileName) {
+                                    document.getElementById('advDlFilename').value = recommended.FileName;
+                                }
+                                if (recommended.Path) {
+                                    document.getElementById('advDlPath').value = recommended.Path;
+                                }
+                            }
+                        });
+                    });
 
 
                     let advDlSub = document.getElementById('advDlSubtitles');

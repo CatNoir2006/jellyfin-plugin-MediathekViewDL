@@ -113,6 +113,7 @@ public class VideoParser : IVideoParser
         var videoInfo = new VideoInfo
         {
             Title = mediaTitle, // Initialize with original title as fallback
+            Topic = topic ?? string.Empty
         };
         string processedMediaTitle = mediaTitle;
 

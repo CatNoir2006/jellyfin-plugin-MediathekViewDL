@@ -26,6 +26,11 @@ public record VideoInfo
     public string Title { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the topic of the video.
+    /// </summary>
+    public string Topic { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets the detected 3-letter ISO language code (e.g., 'deu', 'eng').
     /// </summary>
     public string Language { get; set; } = "deu";

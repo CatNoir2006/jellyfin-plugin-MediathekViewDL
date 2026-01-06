@@ -25,6 +25,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api;
 /// </summary>
 [ApiController]
 [Route("MediathekViewDL")]
+[Authorize(Policy = Policies.RequiresElevation)]
 public class MediathekViewDlApiService : ControllerBase
 {
     private readonly IMediathekViewApiClient _apiClient;
@@ -35,6 +36,7 @@ public class MediathekViewDlApiService : ControllerBase
     private readonly IDownloadHistoryRepository _downloadHistoryRepository;
     private readonly IDownloadQueueManager _downloadQueueManager;
     private readonly IConfigurationProvider _configurationProvider;
+    private readonly IVideoParser _videoParser;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekViewDlApiService"/> class.
@@ -47,6 +49,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="downloadHistoryRepository">The Download History Repo.</param>
     /// <param name="downloadQueueManager">The download queue manager.</param>
     /// <param name="configurationProvider">The configuration provider.</param>
+    /// <param name="videoParser">The video parser.</param>
     public MediathekViewDlApiService(
         ILogger<MediathekViewDlApiService> logger,
         IMediathekViewApiClient apiClient,
@@ -55,7 +58,8 @@ public class MediathekViewDlApiService : ControllerBase
         ISubscriptionProcessor subscriptionProcessor,
         IDownloadHistoryRepository downloadHistoryRepository,
         IDownloadQueueManager downloadQueueManager,
-        IConfigurationProvider configurationProvider)
+        IConfigurationProvider configurationProvider,
+        IVideoParser videoParser)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -65,6 +69,7 @@ public class MediathekViewDlApiService : ControllerBase
         _downloadHistoryRepository = downloadHistoryRepository;
         _downloadQueueManager = downloadQueueManager;
         _configurationProvider = configurationProvider;
+        _videoParser = videoParser;
     }
 
     /// <summary>
@@ -72,7 +77,6 @@ public class MediathekViewDlApiService : ControllerBase
     /// </summary>
     /// <returns>A list of active downloads.</returns>
     [HttpGet("Downloads/Active")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public ActionResult<IEnumerable<ActiveDownload>> GetActiveDownloads()
     {
         return Ok(_downloadQueueManager.GetActiveDownloads());
@@ -84,7 +88,6 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="limit">The maximum number of entries to return.</param>
     /// <returns>A list of download history entries.</returns>
     [HttpGet("Downloads/History")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public async Task<ActionResult<IEnumerable<DownloadHistoryEntry>>> GetDownloadHistory([FromQuery] int limit = 50)
     {
         var history = await _downloadHistoryRepository.GetRecentHistoryAsync(limit).ConfigureAwait(false);
@@ -121,7 +124,6 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="subscription">The subscription configuration to test.</param>
     /// <returns>A list of items that would be downloaded.</returns>
     [HttpPost("TestSubscription")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public async Task<ActionResult<List<ResultItem>>> TestSubscription([FromBody] Subscription? subscription)
     {
         if (subscription == null)
@@ -148,7 +150,6 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="maxDuration">Optional maximum duration in seconds.</param>
     /// <returns>A list of search results.</returns>
     [HttpGet("Search")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public async Task<ActionResult<List<ResultItem>>> Search(
         [FromQuery] string query,
         [FromQuery] int? minDuration,
@@ -188,12 +189,61 @@ public class MediathekViewDlApiService : ControllerBase
     }
 
     /// <summary>
+    /// Parses a search item into video information.
+    /// </summary>
+    /// <param name="item">The search result item to parse.</param>
+    /// <returns>The parsed video info.</returns>
+    [HttpPost("Items/Parse")]
+    public ActionResult<VideoInfo> ParseSearchItem([FromBody] ResultItem item)
+    {
+        try
+        {
+            var parsed = _videoParser.ParseVideoInfo(item.Topic, item.Title);
+            if (parsed == null)
+            {
+                _logger.LogError("Could not parse the Item: {Item}", item);
+                return BadRequest("Could not parse the Item");
+            }
+
+            return Ok(parsed);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Could not parse the Item: {Item}", item);
+            return BadRequest("Could not parse the Item");
+        }
+    }
+
+    /// <summary>
+    /// Gets the recommended download path for a given video info.
+    /// </summary>
+    /// <param name="videoInfo">The video info to generate a path for.</param>
+    /// <returns>The recommended path.</returns>
+    [HttpPost("Items/RecommendedPath")]
+    public ActionResult<RecommendedPath> GetRecommendedPath([FromBody] VideoInfo videoInfo)
+    {
+        try
+        {
+            var defaultSub = new Subscription() { DownloadFullVideoForSecondaryAudio = true, Name = videoInfo.Topic };
+            var dlPaths = _fileNameBuilder.GenerateDownloadPaths(videoInfo, defaultSub);
+            var cleanPath = dlPaths.MainFilePath;
+            var genPaths = new RecommendedPath() { FileName = Path.GetFileName(cleanPath), Path = Path.GetDirectoryName(cleanPath)!, };
+
+            return Ok(genPaths);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Could not create RecommendedPaths for: {VideoInfo}", videoInfo);
+            return BadRequest("Could not create RecommendedPaths");
+        }
+    }
+
+    /// <summary>
     /// Triggers a download for a single item.
     /// </summary>
     /// <param name="item">The item to download.</param>
     /// <returns>An OK result.</returns>
     [HttpPost("Download")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public IActionResult Download([FromBody] ResultItem item)
     {
         var config = _configurationProvider.ConfigurationOrNull;
@@ -257,7 +307,6 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="options">The advanced download options.</param>
     /// <returns>An OK result.</returns>
     [HttpPost("AdvancedDownload")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public IActionResult AdvancedDownload([FromBody] AdvancedDownloadOptions options)
     {
         var config = _configurationProvider.ConfigurationOrNull;
@@ -337,7 +386,6 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="subscriptionId">The ID of the subscription to reset.</param>
     /// <returns>An OK result if successful, or BadRequest/NotFound if an error occurs.</returns>
     [HttpPost("ResetProcessedItems")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public async Task<ActionResult> ResetProcessedItems([FromQuery] Guid subscriptionId)
     {
         var config = _configurationProvider.ConfigurationOrNull;
