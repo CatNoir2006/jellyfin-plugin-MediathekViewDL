@@ -158,12 +158,19 @@ class SearchController {
         Dashboard.showLoadingMsg();
         // noinspection JSUnresolvedReference
         let url = ApiClient.getUrl('/' + this.config.pluginName + '/Search');
-        url += '?title=' + encodeURIComponent(title);
-        url += '&topic=' + encodeURIComponent(topic);
-        url += '&channel=' + encodeURIComponent(channel);
-        url += '&combinedSearch=' + encodeURIComponent(combinedSearch);
-        if (minD) url += '&minDuration=' + minD;
-        if (maxD) url += '&maxDuration=' + maxD;
+        
+        const params = [];
+        if (title) params.push('title=' + encodeURIComponent(title));
+        if (topic) params.push('topic=' + encodeURIComponent(topic));
+        if (channel) params.push('channel=' + encodeURIComponent(channel));
+        if (combinedSearch) params.push('combinedSearch=' + encodeURIComponent(combinedSearch));
+        if (minD) params.push('minDuration=' + minD);
+        if (maxD) params.push('maxDuration=' + maxD);
+        
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+
         // noinspection JSUnresolvedReference
         ApiClient.getJSON(url).then((results) => {
             this.currentSearchResults = results;
@@ -858,6 +865,63 @@ class MediathekPluginConfig {
         });
     }
 
+    setupAutoGrowInputs() {
+        const inputs = [
+            'txtSearchCombined',
+            'txtSearchQuery',
+            'txtSearchTopic',
+            'txtSearchChannel'
+        ];
+
+        inputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                this.enableAutoGrow(el);
+            }
+        });
+    }
+
+    enableAutoGrow(input) {
+        if (!input) return;
+        const minWidth = 150; // Match duration field width
+
+        // Create measuring span if not exists
+        if (!this.measureSpan) {
+            this.measureSpan = document.createElement('span');
+            this.measureSpan.style.visibility = 'hidden';
+            this.measureSpan.style.position = 'absolute';
+            this.measureSpan.style.whiteSpace = 'pre';
+            this.measureSpan.style.top = '-9999px';
+            document.body.appendChild(this.measureSpan);
+        }
+
+        const updateWidth = () => {
+            // Copy styles that affect width
+            const styles = window.getComputedStyle(input);
+            this.measureSpan.style.fontFamily = styles.fontFamily;
+            this.measureSpan.style.fontSize = styles.fontSize;
+            this.measureSpan.style.fontWeight = styles.fontWeight;
+            this.measureSpan.style.letterSpacing = styles.letterSpacing;
+            this.measureSpan.style.textTransform = styles.textTransform;
+
+            const text = input.value || input.placeholder || '';
+            this.measureSpan.textContent = text;
+
+            // Add some padding (e.g. 25px) to account for internal padding of input
+            let newWidth = Math.max(minWidth, this.measureSpan.offsetWidth + 25);
+            newWidth = Math.min(newWidth, 500);
+            input.style.width = newWidth + 'px';
+            input.style.flexGrow = '0'; // Ensure it doesn't grow via flex
+        };
+
+        input.addEventListener('input', updateWidth);
+        // Also update on change or blur just in case
+        input.addEventListener('change', updateWidth);
+
+        // Initial update
+        setTimeout(updateWidth, 0);
+    }
+
     openDuckDuckGoSearch(search = '', siteFilter = '', openPage = false) {
         let queryString = (search).trim();
         if (siteFilter) {
@@ -1518,6 +1582,7 @@ class MediathekPluginConfig {
         this.bindEvents();
         this.searchController.init();
         this.dependencyManager.init();
+        this.setupAutoGrowInputs();
     }
 }
 

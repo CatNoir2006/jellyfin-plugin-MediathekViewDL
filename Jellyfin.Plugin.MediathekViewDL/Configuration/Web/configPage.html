@@ -42,21 +42,21 @@
 
                     <form id="mvpl-form-search">
                         <div class="mvpl-search-form-row">
-                                                         <div class="inputContainer flex-grow">
-                                                             <label class="inputLabel" for="txtSearchCombined">Combi-Suche</label>
-                                                             <input is="emby-input" type="text" id="txtSearchCombined" placeholder="Titel & Thema"/>
-                                                         </div>
-                                                         
-                                                         <div class="inputContainer flex-grow">                                <label class="inputLabel" for="txtSearchQuery">Titel</label>
-                                <input is="emby-input" type="text" id="txtSearchQuery" placeholder="Optional"/>
+                            <div class="inputContainer">
+                                <label class="inputLabel" for="txtSearchCombined">Combi-Suche</label>
+                                <input is="emby-input" type="text" id="txtSearchCombined" placeholder="Titel & Thema"/>
                             </div>
-                            <div class="inputContainer flex-grow">
+                            <div class="inputContainer">
+                                <label class="inputLabel" for="txtSearchQuery">Titel</label>
+                                <input is="emby-input" type="text" id="txtSearchQuery" placeholder="z.B. Folge 1"/>
+                            </div>
+                            <div class="inputContainer">
                                 <label class="inputLabel" for="txtSearchTopic">Thema</label>
-                                <input is="emby-input" type="text" id="txtSearchTopic" placeholder="Optional"/>
+                                <input is="emby-input" type="text" id="txtSearchTopic" placeholder="z.B. Tagesschau"/>
                             </div>
-                            <div class="inputContainer" style="flex-grow: 1; min-width: 100px;">
+                            <div class="inputContainer">
                                 <label class="inputLabel" for="txtSearchChannel">Sender</label>
-                                <input is="emby-input" type="text" id="txtSearchChannel" placeholder="Optional"/>
+                                <input is="emby-input" type="text" id="txtSearchChannel" placeholder="z.B. ARD"/>
                             </div>
                             <div class="inputContainer mvpl-input-short">
                                 <label class="inputLabel" for="numMinDuration">Min. Dauer (Sek)</label>
