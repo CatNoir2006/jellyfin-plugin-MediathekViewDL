@@ -158,7 +158,7 @@ class SearchController {
         Dashboard.showLoadingMsg();
         // noinspection JSUnresolvedReference
         let url = ApiClient.getUrl('/' + this.config.pluginName + '/Search');
-        
+
         const params = [];
         if (title) params.push('title=' + encodeURIComponent(title));
         if (topic) params.push('topic=' + encodeURIComponent(topic));
@@ -166,7 +166,7 @@ class SearchController {
         if (combinedSearch) params.push('combinedSearch=' + encodeURIComponent(combinedSearch));
         if (minD) params.push('minDuration=' + (parseInt(minD) * 60));
         if (maxD) params.push('maxDuration=' + (parseInt(maxD) * 60));
-        
+
         if (params.length > 0) {
             url += '?' + params.join('&');
         }
@@ -581,6 +581,7 @@ class SubscriptionEditor {
         if (StringHelper.isNullOrWhitespace(el.value)) {
             const defaultMoviePath = window.MediathekViewDL.config.currentConfig.DefaultSubscriptionMoviePath || 'Nicht konfiguriert';
             const defaultShowPath = window.MediathekViewDL.config.currentConfig.DefaultSubscriptionShowPath || 'Nicht konfiguriert';
+            const useTopicForMoviePath = window.MediathekViewDL.config.currentConfig.UseTopicForMoviePath;
             const subName = document.getElementById('subName').value || '[AboName]';
 
             const joinPath = (path, part) => {
@@ -592,9 +593,10 @@ class SubscriptionEditor {
                 return path + separator + part;
             };
 
+            const resolvedMoviePath = useTopicForMoviePath ? joinPath(defaultMoviePath, subName) : defaultMoviePath;
             const resolvedShowPath = joinPath(defaultShowPath, subName);
-            this.updatePathPlaceholderText(defaultMoviePath, resolvedShowPath);
-            el.title = "Verwendete Pfade:\nFilme: " + defaultMoviePath + "\nSerien: " + resolvedShowPath;
+            this.updatePathPlaceholderText(resolvedMoviePath, resolvedShowPath);
+            el.title = "Verwendete Pfade:\nFilme: " + resolvedMoviePath + "\nSerien: " + resolvedShowPath;
         } else {
             el.title = "Ausgewählter Pfad für Film und Serie:\n" + el.value;
         }
@@ -964,6 +966,7 @@ class MediathekPluginConfig {
             document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
             document.querySelector('#txtMaxBandwidthMBits').value = config.MaxBandwidthMBits || 0;
             document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
+            document.querySelector('#chkMoviePathWithTopic').checked = config.UseTopicForMoviePath;
 
             this.renderSubscriptionsList();
             // noinspection JSUnresolvedReference
@@ -1484,6 +1487,7 @@ class MediathekPluginConfig {
             this.currentConfig.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
             const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
             this.currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
+            this.currentConfig.UseTopicForMoviePath = document.querySelector('#chkMoviePathWithTopic').checked;
 
             const maxBandwidth = parseInt(document.querySelector('#txtMaxBandwidthMBits').value, 10);
             this.currentConfig.MaxBandwidthMBits = isNaN(maxBandwidth) ? 0 : maxBandwidth;
@@ -1512,6 +1516,12 @@ class MediathekPluginConfig {
         document.getElementById('btnSelectTempPath').addEventListener('click', () => {
             this.openFolderDialog('txtTempDownloadPath', 'Temporären Download Pfad wählen');
         });
+
+        document.getElementById('chkMoviePathWithTopic').addEventListener('change', (e) => {
+            this.currentConfig.UseTopicForMoviePath = e.target.checked;
+            this.subscriptionEditor.updateSubPathHoverText();
+        });
+
         // Path selectors in subscription editor
         document.getElementById('btnSelectSubPath').addEventListener('click', () => {
             this.openFolderDialog('subPath', 'Abo Pfad wählen');

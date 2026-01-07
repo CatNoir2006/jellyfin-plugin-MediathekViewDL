@@ -39,7 +39,8 @@ public class FileNameBuilderService : IFileNameBuilderService
         string targetDirectory = BuildDirectoryName(videoInfo, subscription, context);
         if (string.IsNullOrWhiteSpace(targetDirectory))
         {
-            return paths;
+            _logger.LogError("Target directory is empty.");
+            throw new ArgumentException("Target directory is empty.");
         }
 
         paths.MainType = forceType ?? GetTargetMainType(videoInfo, subscription);
@@ -160,6 +161,13 @@ public class FileNameBuilderService : IFileNameBuilderService
     private string BuildDirectoryName(VideoInfo videoInfo, Subscription subscription, DownloadContext context)
     {
         var config = _configurationProvider.ConfigurationOrNull;
+
+        if (config == null)
+        {
+            _logger.LogWarning("Plugin configuration not avilable. Cant build config paths.");
+            return string.Empty;
+        }
+
         string targetPath;
         if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
         {
@@ -172,7 +180,14 @@ public class FileNameBuilderService : IFileNameBuilderService
                 return string.Empty;
             }
 
-            targetPath = Path.Combine(defaultPath, subscriptionPath);
+            if (useShowDir || config.UseTopicForMoviePath)
+            {
+                targetPath = Path.Combine(defaultPath, subscriptionPath);
+            }
+            else
+            {
+                targetPath = defaultPath;
+            }
         }
         else
         {

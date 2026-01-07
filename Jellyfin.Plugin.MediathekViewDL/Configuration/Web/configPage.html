@@ -87,8 +87,21 @@
                     <form id="MediathekGeneralConfigForm">
 
                         <details>
-                            <summary class="inputLabel mvpl-collapsible-summary">Standard Pfade</summary>
+                            <summary class="inputLabel mvpl-collapsible-summary">Pfade-Einstellugen</summary>
                             <div class="mvpl-details-content">
+                                <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                                    <label class="emby-checkbox-label">
+                                        <input id="chkMoviePathWithTopic" type="checkbox" is="emby-checkbox"/>
+                                        <span>Beim Film Downloads Ordner für das Thema erstellen.</span>
+                                    </label>
+                                    <div class="fieldDescription">
+                                        Beim Film Downloads einen Ordner für das Thema (bzw. den Abo-Namen bei Abonnements) erstellen.
+                                        <br>
+                                        z.B. Wenn an: /Filme/Filme im Ersten/Filmname/Filmname.mkv (oder /Filme/[Abo-Name]/Filmname/Filmname.mkv)
+                                        <br>
+                                        Wenn aus: /Filme/Filmname/Filmname.mkv
+                                    </div>
+                                </div>
                                 <div class="inputContainer">
                                     <div class="flex-align-center">
                                         <div class="flex-grow">
@@ -296,7 +309,7 @@
 
                         <div class="inputContainer">
                             <label class="inputLabel" for="subOriginalLanguage">Originalsprache (ISO Code, z.B. 'eng')</label>
-                            <input is="emby-input" type="text" id="subOriginalLanguage" placeholder="Optional: Wird verwendet, wenn 'OV' erkannt wird"/>
+                            <input is="emby-input" type="text" id="subOriginalLanguage" placeholder="z.B. eng oder fra"/>
                             <div class="fieldDescription">Falls gesetzt, wird dieser Sprachcode verwendet, wenn der Inhalt als Originalversion (OV/OmU) erkannt wird (statt 'und').</div>
                         </div>
 
@@ -330,13 +343,13 @@
                             </div>
                         </div>
 
-                        <div class="inputContainer">
-                            <div class="flex-align-center">
-                                <div class="flex-grow">
-                                    <label class="inputLabel" for="subPath">Download Pfad (Optional)</label>
-                                    <input is="emby-input" type="text" id="subPath" placeholder="Wenn leer werden die Standardpfade verwendet"/>
-                                    <div class="fieldDescription">Leer lassen, um den Standardpfad zu nutzen.</div>
-                                </div>
+                                <div class="inputContainer">
+                                    <div class="flex-align-center">
+                                        <div class="flex-grow">
+                                            <label class="inputLabel" for="subPath">Download Pfad (Optional)</label>
+                                            <input is="emby-input" type="text" id="subPath" placeholder="Wenn leer werden die Standardpfade verwendet"/>
+                                            <div class="fieldDescription">Leer lassen, um den Standardpfad zu nutzen. Bei Serien wird automatisch ein Unterordner mit dem Abo-Namen erstellt. Bei Filmen wird ein Unterordner mit dem Abo-Namen nur erstellt, wenn die Option "Ordner für das Thema erstellen" in den Einstellungen aktiviert ist.</div>
+                                        </div>
                                 <button type="button" is="paper-icon-button-light" id="btnSelectSubPath"
                                         title="Ordner auswählen" aria-label="Ordner auswählen" class="mvpl-folder-button">
                                     <span class="material-icons folder_open"></span>
@@ -755,8 +768,8 @@
         }
 
         .query-checkboxes {
-             display: flex;
-             gap: 15px;
+            display: flex;
+            gap: 15px;
         }
 
         .mvpl-duration-inputs-row {

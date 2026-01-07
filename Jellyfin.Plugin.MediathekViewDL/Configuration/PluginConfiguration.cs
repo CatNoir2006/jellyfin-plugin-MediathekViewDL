@@ -16,16 +16,13 @@ public class PluginConfiguration : BasePluginConfiguration
     public PluginConfiguration()
     {
         Subscriptions = new Collection<Subscription>();
-        DefaultDownloadPath = string.Empty;
-        DownloadSubtitles = true;
-        EnableDirectAudioExtraction = true;
     }
 
     /// <summary>
     /// Gets or sets the default path where completed downloads are stored.
     /// Can be overridden by a subscription.
     /// </summary>
-    public string DefaultDownloadPath { get; set; }
+    public string DefaultDownloadPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the default path for show downloads in subscriptions.
@@ -54,14 +51,19 @@ public class PluginConfiguration : BasePluginConfiguration
     public string TempDownloadPath { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets a value indicating whether Paths for movies should contain the 'Topic' of the Movie.
+    /// </summary>
+    public bool UseTopicForMoviePath { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether subtitles should be downloaded if available.
     /// </summary>
-    public bool DownloadSubtitles { get; set; }
+    public bool DownloadSubtitles { get; set; } = true;
 
     /// <summary>
     /// Gets or sets a value indicating whether direct audio extraction from URL is enabled.
     /// </summary>
-    public bool EnableDirectAudioExtraction { get; set; }
+    public bool EnableDirectAudioExtraction { get; set; } = true;
 
     /// <summary>
     /// Gets or sets the minimum free disk space in bytes required to start a new download.
