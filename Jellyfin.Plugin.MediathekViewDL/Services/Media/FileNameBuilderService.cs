@@ -48,8 +48,7 @@ public class FileNameBuilderService : IFileNameBuilderService
         string targetDirectory = BuildDirectoryName(videoInfo, subscription, context);
         if (string.IsNullOrWhiteSpace(targetDirectory))
         {
-            _logger.LogError("Target directory is empty.");
-            throw new ArgumentException("Target directory is empty.");
+            return paths;
         }
 
         paths.MainType = forceType ?? GetTargetMainType(videoInfo, subscription);

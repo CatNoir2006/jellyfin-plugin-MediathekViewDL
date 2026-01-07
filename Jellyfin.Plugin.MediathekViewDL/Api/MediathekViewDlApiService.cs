@@ -362,19 +362,6 @@ public class MediathekViewDlApiService : ControllerBase
         }
 
 #pragma warning disable CA3003 // Path is validated via manual check and directory creation rules
-        if (!Directory.Exists(options.DownloadPath))
-        {
-            try
-            {
-                Directory.CreateDirectory(options.DownloadPath);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Could not create directory: {Path}", options.DownloadPath);
-                return BadRequest("Could not create target directory.");
-            }
-        }
-
         if (FileDownloader.GetDiskSpace(options.DownloadPath) < config.MinFreeDiskSpaceBytes)
 #pragma warning restore CA3003
         {
