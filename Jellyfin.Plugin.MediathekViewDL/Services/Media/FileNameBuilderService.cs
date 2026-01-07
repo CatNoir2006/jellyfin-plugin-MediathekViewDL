@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Model.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Media;
@@ -14,6 +17,7 @@ public class FileNameBuilderService : IFileNameBuilderService
 {
     private readonly ILogger<FileNameBuilderService> _logger;
     private readonly IConfigurationProvider _configurationProvider;
+    private readonly ILibraryManager _libraryManager;
 
     // Invalid characters for file names on most file systems
     private readonly char[] _invalidFileNameChars = Path.GetInvalidFileNameChars().Concat(new char[] { '<', '>', ':', '"', '/', '\\', '|', '?', '*' }).ToArray();
@@ -25,10 +29,15 @@ public class FileNameBuilderService : IFileNameBuilderService
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="configurationProvider">The configuration provider.</param>
-    public FileNameBuilderService(ILogger<FileNameBuilderService> logger, IConfigurationProvider configurationProvider)
+    /// <param name="libraryManager">The library manager.</param>
+    public FileNameBuilderService(
+        ILogger<FileNameBuilderService> logger,
+        IConfigurationProvider configurationProvider,
+        ILibraryManager libraryManager)
     {
         _logger = logger;
         _configurationProvider = configurationProvider;
+        _libraryManager = libraryManager;
     }
 
     /// <inheritdoc />
@@ -266,5 +275,87 @@ public class FileNameBuilderService : IFileNameBuilderService
         }
 
         return FileType.Audio;
+    }
+
+    /// <inheritdoc />
+    public bool IsPathSafe(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        var config = _configurationProvider.ConfigurationOrNull;
+        if (config == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var normalizedPath = Path.GetFullPath(path);
+            var normalizedPathWithSeparator = normalizedPath.EndsWith(Path.DirectorySeparatorChar)
+                ? normalizedPath
+                : normalizedPath + Path.DirectorySeparatorChar;
+
+            var allowedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // Add paths from configuration
+            void AddIfNotNull(string? p)
+            {
+                if (!string.IsNullOrWhiteSpace(p))
+                {
+                    try
+                    {
+                        var fullPath = Path.GetFullPath(p);
+                        if (!fullPath.EndsWith(Path.DirectorySeparatorChar))
+                        {
+                            fullPath += Path.DirectorySeparatorChar;
+                        }
+
+                        allowedPaths.Add(fullPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Error adding config path {Path} to allowed paths.", p);
+                    }
+                }
+            }
+
+            AddIfNotNull(config.DefaultDownloadPath);
+            AddIfNotNull(config.DefaultSubscriptionShowPath);
+            AddIfNotNull(config.DefaultSubscriptionMoviePath);
+            AddIfNotNull(config.DefaultManualShowPath);
+            AddIfNotNull(config.DefaultManualMoviePath);
+            AddIfNotNull(config.TempDownloadPath);
+
+            foreach (var sub in config.Subscriptions)
+            {
+                AddIfNotNull(sub.DownloadPath);
+            }
+
+            // Add paths from Jellyfin libraries
+            var virtualFolders = _libraryManager.GetVirtualFolders(false);
+            if (virtualFolders != null)
+            {
+                foreach (var folder in virtualFolders)
+                {
+                    if (folder?.Locations != null && folder.CollectionType != CollectionTypeOptions.boxsets)
+                    {
+                        foreach (var folderPath in folder.Locations)
+                        {
+                            AddIfNotNull(folderPath);
+                        }
+                    }
+                }
+            }
+
+            return allowedPaths.Any(allowed => normalizedPathWithSeparator.StartsWith(allowed, StringComparison.OrdinalIgnoreCase));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating path safety for: {Path}", path);
+            return false;
+        }
     }
 }

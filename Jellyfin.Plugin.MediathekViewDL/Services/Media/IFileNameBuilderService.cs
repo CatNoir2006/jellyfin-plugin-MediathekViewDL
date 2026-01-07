@@ -39,4 +39,11 @@ public interface IFileNameBuilderService
     /// <param name="context">The download context.</param>
     /// <returns>The base directory path.</returns>
     string GetSubscriptionBaseDirectory(Subscription subscription, DownloadContext context);
+
+    /// <summary>
+    /// Validates if a path is safe to write to (within configured download directories or Jellyfin libraries).
+    /// </summary>
+    /// <param name="path">The path to validate.</param>
+    /// <returns>True if the path is safe, false otherwise.</returns>
+    bool IsPathSafe(string path);
 }

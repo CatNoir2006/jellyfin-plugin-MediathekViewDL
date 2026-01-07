@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Model.Entities;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
@@ -13,18 +16,21 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
     {
         private readonly Mock<ILogger<FileNameBuilderService>> _loggerMock;
         private readonly Mock<IConfigurationProvider> _configProviderMock;
+        private readonly Mock<ILibraryManager> _libraryManagerMock;
 
         public FileNameBuilderServiceTests()
         {
             _loggerMock = new Mock<ILogger<FileNameBuilderService>>();
             _configProviderMock = new Mock<IConfigurationProvider>();
+            _libraryManagerMock = new Mock<ILibraryManager>();
+            _libraryManagerMock.Setup(x => x.GetVirtualFolders(It.IsAny<bool>())).Returns(new List<VirtualFolderInfo>());
         }
 
         [Fact]
         public void SanitizeFileName_ShouldRemoveInvalidCharacters()
         {
             // Arrange
-            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
             string unsafeName = "File/Name:With*Invalid?Chars";
 
             // Act
@@ -41,7 +47,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public void SanitizeDirectoryName_ShouldRemoveInvalidCharacters()
         {
             // Arrange
-            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
             string unsafeName = "Folder/Name:With*Invalid?Chars";
 
             // Act
@@ -60,7 +66,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             // Arrange
             var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
-            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
             var videoInfo = new VideoInfo
             {
@@ -90,7 +96,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 UseTopicForMoviePath = true
             };
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
-            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
             var videoInfo = new VideoInfo
             {
@@ -114,7 +120,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             // Arrange
             var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
-            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
             var videoInfo = new VideoInfo
             {
@@ -145,7 +151,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             // Arrange
             var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
-            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
             var videoInfo = new VideoInfo { Title = "Test" };
             var subscription = new Subscription 
@@ -167,7 +173,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             // Arrange
             var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
-            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
             var videoInfo = new VideoInfo { Title = "Trailer", IsTrailer = true };
             var subscription = new Subscription 
@@ -189,7 +195,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             // Arrange
             var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
-            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
             var videoInfo = new VideoInfo 
             { 
@@ -215,7 +221,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             // Arrange
             var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
-            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
             var videoInfo = new VideoInfo 
             { 
@@ -248,7 +254,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 DefaultManualMoviePath = "/manual/movies"
             };
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
-            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
             var showInfo = new VideoInfo { Title = "Show", IsShow = true };
             var movieInfo = new VideoInfo { Title = "Movie", IsShow = false };
@@ -265,6 +271,65 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             Assert.StartsWith("/tmp/movies", subMoviePaths.DirectoryPath);
             Assert.StartsWith("/manual/shows", manualShowPaths.DirectoryPath);
             Assert.StartsWith("/manual/movies", manualMoviePaths.DirectoryPath);
+        }
+
+        [Fact]
+        public void IsPathSafe_ShouldReturnTrue_ForPathsInsideAllowedDirectories()
+        {
+            // Arrange
+            var tempBase = Path.GetTempPath();
+            var allowedDir = Path.Combine(tempBase, "Allowed");
+            Directory.CreateDirectory(allowedDir);
+
+            var config = new PluginConfiguration { DefaultDownloadPath = allowedDir };
+            _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
+
+            // Act & Assert
+            Assert.True(service.IsPathSafe(Path.Combine(allowedDir, "Subfolder")));
+            Assert.True(service.IsPathSafe(allowedDir));
+        }
+
+        [Fact]
+        public void IsPathSafe_ShouldReturnFalse_ForPathsOutsideAllowedDirectories()
+        {
+            // Arrange
+            var tempBase = Path.GetTempPath();
+            var allowedDir = Path.Combine(tempBase, "Allowed");
+            var unsafeDir = Path.Combine(tempBase, "Unsafe");
+            Directory.CreateDirectory(allowedDir);
+            Directory.CreateDirectory(unsafeDir);
+
+            var config = new PluginConfiguration { DefaultDownloadPath = allowedDir };
+            _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
+
+            // Act & Assert
+            Assert.False(service.IsPathSafe(unsafeDir));
+            Assert.False(service.IsPathSafe(Path.Combine(allowedDir, "..", "Unsafe")));
+        }
+
+        [Fact]
+        public void IsPathSafe_ShouldReturnTrue_ForJellyfinLibraryPaths()
+        {
+            // Arrange
+            var tempBase = Path.GetTempPath();
+            var libraryDir = Path.Combine(tempBase, "Library");
+            Directory.CreateDirectory(libraryDir);
+
+            var config = new PluginConfiguration();
+            _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+            
+            _libraryManagerMock.Setup(x => x.GetVirtualFolders(It.IsAny<bool>()))
+                .Returns(new List<VirtualFolderInfo> 
+                { 
+                    new VirtualFolderInfo { Locations = new[] { libraryDir } } 
+                });
+
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
+
+            // Act & Assert
+            Assert.True(service.IsPathSafe(Path.Combine(libraryDir, "MyShow")));
         }
     }
 }

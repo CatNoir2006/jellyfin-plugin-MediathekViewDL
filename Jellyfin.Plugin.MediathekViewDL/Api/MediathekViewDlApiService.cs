@@ -341,6 +341,13 @@ public class MediathekViewDlApiService : ControllerBase
             return BadRequest("DownloadPath and FileName are required for advanced download.");
         }
 
+        // Security check: Validate path traversal
+        if (!_fileNameBuilder.IsPathSafe(options.DownloadPath))
+        {
+            _logger.LogWarning("Blocked advanced download request to unsafe path: {Path}", options.DownloadPath);
+            return BadRequest("The provided download path is not allowed. Please use a path within your library or configured download directories.");
+        }
+
         // Validate using project-specific sanitization logic
         if (_fileNameBuilder.SanitizeFileName(options.FileName) != options.FileName)
         {
