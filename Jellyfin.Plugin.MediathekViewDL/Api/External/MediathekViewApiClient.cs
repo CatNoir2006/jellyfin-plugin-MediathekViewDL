@@ -84,7 +84,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         var titles = SplitAndClean(title);
         foreach (var t in titles)
         {
-            apiQuery.Queries.Add(new QueryFields { Query = t, Fields = ["Title"] });
+            apiQuery.Queries.Add(new QueryFields { Query = t, Fields = ["title"] });
         }
 
         var topics = SplitAndClean(topic);

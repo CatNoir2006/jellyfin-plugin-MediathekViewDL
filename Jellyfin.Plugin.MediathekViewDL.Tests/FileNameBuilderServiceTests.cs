@@ -75,9 +75,37 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             // Assert
             Assert.True(paths.IsValid);
-            Assert.Equal(Path.Combine("/tmp/downloads", "TestSub", "TestVideo"), paths.DirectoryPath);
+            Assert.Equal(Path.Combine("/tmp/downloads", "TestVideo"), paths.DirectoryPath);
             Assert.EndsWith("TestVideo.mkv", paths.MainFilePath);
             Assert.EndsWith("TestVideo.deu.ttml", paths.SubtitleFilePath);
+        }
+
+        [Fact]
+        public void GenerateDownloadPaths_ShouldIncludeTopicFolder_ForMovie_WhenEnabled()
+        {
+            // Arrange
+            var config = new PluginConfiguration 
+            { 
+                DefaultDownloadPath = "/tmp/downloads",
+                UseTopicForMoviePath = true
+            };
+            _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+            var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object);
+
+            var videoInfo = new VideoInfo
+            {
+                Title = "TestMovie",
+                IsShow = false,
+                Language = "deu"
+            };
+
+            var subscription = new Subscription { Name = "TestTopic" };
+
+            // Act
+            var paths = service.GenerateDownloadPaths(videoInfo, subscription, DownloadContext.Subscription);
+
+            // Assert
+            Assert.Equal(Path.Combine("/tmp/downloads", "TestTopic", "TestMovie"), paths.DirectoryPath);
         }
 
         [Fact]
