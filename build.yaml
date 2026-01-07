@@ -1,7 +1,7 @@
 ---
 name: "Mediathek Downloader"
 guid: "a31b415a-5264-419d-b152-8c8192a54994"
-version: "0.7.0.0"
+version: "0.7.1.0"
 targetAbi: "10.11.0.0"
 framework: "net9.0"
 overview: "Sucht und lädt Inhalte aus den Mediatheken über die MediathekViewWeb-API."
