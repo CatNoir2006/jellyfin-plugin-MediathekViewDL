@@ -931,7 +931,7 @@ class MediathekPluginConfig {
     openDuckDuckGoSearch(search = '', siteFilter = '', openPage = false) {
         let queryString = (search).trim();
         if (siteFilter) {
-            queryString += ' ' + siteFilter;
+            queryString += ' site:' + siteFilter;
         }
         const query = encodeURIComponent(queryString);
         const searchUrl = 'https://duckduckgo.com/?q=' + (openPage ? '\\' : '');
@@ -1583,12 +1583,12 @@ class MediathekPluginConfig {
 
         document.getElementById('mvpl-btn-duckduckgo-tmdb').addEventListener('click', () => {
             const query = this.currentItemForAdvancedDl.topic + ' ' + this.currentItemForAdvancedDl.title;
-            this.openDuckDuckGoSearch(query, 'site:themoviedb.org', true);
+            this.openDuckDuckGoSearch(query, 'themoviedb.org', true);
         });
 
         document.getElementById('mvpl-btn-duckduckgo').addEventListener('click', () => {
             const query = this.currentItemForAdvancedDl.topic + ' ' + this.currentItemForAdvancedDl.title;
-            this.openDuckDuckGoSearch(query);
+            this.openDuckDuckGoSearch(query, 'themoviedb.org');
         });
     }
 
