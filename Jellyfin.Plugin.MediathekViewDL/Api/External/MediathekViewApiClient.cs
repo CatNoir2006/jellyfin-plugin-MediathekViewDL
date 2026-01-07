@@ -82,21 +82,21 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         };
 
         var titles = SplitAndClean(title);
-        foreach (var t in titles)
+        foreach (var titleItem in titles)
         {
-            apiQuery.Queries.Add(new QueryFields { Query = t, Fields = ["title"] });
+            apiQuery.Queries.Add(new QueryFields { Query = titleItem, Fields = ["title"] });
         }
 
         var topics = SplitAndClean(topic);
-        foreach (var t in topics)
+        foreach (var topicItem in topics)
         {
-            apiQuery.Queries.Add(new QueryFields { Query = t, Fields = ["topic"] });
+            apiQuery.Queries.Add(new QueryFields { Query = topicItem, Fields = ["topic"] });
         }
 
         var channels = SplitAndClean(channel);
-        foreach (var c in channels)
+        foreach (var channelItem in channels)
         {
-            apiQuery.Queries.Add(new QueryFields { Query = c, Fields = ["channel"] });
+            apiQuery.Queries.Add(new QueryFields { Query = channelItem, Fields = ["channel"] });
         }
 
         if (!string.IsNullOrWhiteSpace(combinedSearch))
@@ -104,9 +104,9 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             var fields = new Collection<string> { "title", "topic" };
 
             var combinedQueries = SplitAndClean(combinedSearch);
-            foreach (var q in combinedQueries)
+            foreach (var combinedQueryItem in combinedQueries)
             {
-                apiQuery.Queries.Add(new QueryFields { Query = q, Fields = fields });
+                apiQuery.Queries.Add(new QueryFields { Query = combinedQueryItem, Fields = fields });
             }
         }
 
