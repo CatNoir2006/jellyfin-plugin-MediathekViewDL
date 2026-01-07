@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
+using MediaBrowser.Controller.Library;
+using MediaBrowser.Model.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Media;
@@ -14,6 +17,7 @@ public class FileNameBuilderService : IFileNameBuilderService
 {
     private readonly ILogger<FileNameBuilderService> _logger;
     private readonly IConfigurationProvider _configurationProvider;
+    private readonly ILibraryManager _libraryManager;
 
     // Invalid characters for file names on most file systems
     private readonly char[] _invalidFileNameChars = Path.GetInvalidFileNameChars().Concat(new char[] { '<', '>', ':', '"', '/', '\\', '|', '?', '*' }).ToArray();
@@ -25,30 +29,29 @@ public class FileNameBuilderService : IFileNameBuilderService
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="configurationProvider">The configuration provider.</param>
-    public FileNameBuilderService(ILogger<FileNameBuilderService> logger, IConfigurationProvider configurationProvider)
+    /// <param name="libraryManager">The library manager.</param>
+    public FileNameBuilderService(
+        ILogger<FileNameBuilderService> logger,
+        IConfigurationProvider configurationProvider,
+        ILibraryManager libraryManager)
     {
         _logger = logger;
         _configurationProvider = configurationProvider;
+        _libraryManager = libraryManager;
     }
 
-    /// <summary>
-    /// Generates all necessary download paths for a given video and subscription.
-    /// </summary>
-    /// <param name="videoInfo">The video information.</param>
-    /// <param name="subscription">The subscription settings.</param>
-    /// <returns>A <see cref="DownloadPaths"/> object containing all generated paths.</returns>
-    public DownloadPaths GenerateDownloadPaths(VideoInfo videoInfo, Subscription subscription)
+    /// <inheritdoc />
+    public DownloadPaths GenerateDownloadPaths(VideoInfo videoInfo, Subscription subscription, DownloadContext context, FileType? forceType = null)
     {
         var paths = new DownloadPaths();
 
-        string targetDirectory = BuildDirectoryName(videoInfo, subscription);
+        string targetDirectory = BuildDirectoryName(videoInfo, subscription, context);
         if (string.IsNullOrWhiteSpace(targetDirectory))
         {
-            // Error already logged in BuildDirectoryName
-            return paths; // Return empty paths object
+            return paths;
         }
 
-        paths.MainType = GetTargetMainType(videoInfo, subscription);
+        paths.MainType = forceType ?? GetTargetMainType(videoInfo, subscription);
 
         paths.DirectoryPath = targetDirectory;
         var mainFile = BuildFileName(videoInfo, subscription, paths.MainType);
@@ -59,39 +62,27 @@ public class FileNameBuilderService : IFileNameBuilderService
         return paths;
     }
 
-    /// <summary>
-    /// Sanitizes a string to be used as a file name.
-    /// </summary>
-    /// <param name="fileName">The file name to sanitize.</param>
-    /// <returns>A sanitized file name.</returns>
+    /// <inheritdoc />
     public string SanitizeFileName(string fileName)
     {
         return string.Join("_", fileName.Split(_invalidFileNameChars));
     }
 
-    /// <summary>
-    /// Sanitizes a string to be used as a directory name.
-    /// </summary>
-    /// <param name="directoryName">The directory name to sanitize.</param>
-    /// <returns>A sanitized directory name.</returns>
+    /// <inheritdoc />
     public string SanitizeDirectoryName(string directoryName)
     {
         return string.Join("_", directoryName.Split(_invalidFolderNameChars));
     }
 
-    /// <summary>
-    /// Gets the base directory for a subscription.
-    /// </summary>
-    /// <param name="subscription">The subscription.</param>
-    /// <returns>The base directory path.</returns>
-    public string GetSubscriptionBaseDirectory(Subscription subscription)
+    /// <inheritdoc />
+    public string GetSubscriptionBaseDirectory(Subscription subscription, DownloadContext context)
     {
         var config = _configurationProvider.ConfigurationOrNull;
         string targetPath;
 
         if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
         {
-            string defaultPath = config?.DefaultDownloadPath ?? string.Empty;
+            string defaultPath = GetDefaultPathForContext(config, context, subscription.EnforceSeriesParsing || subscription.AllowAbsoluteEpisodeNumbering);
             string subscriptionPath = SanitizeDirectoryName(subscription.Name);
             if (string.IsNullOrWhiteSpace(defaultPath))
             {
@@ -173,22 +164,38 @@ public class FileNameBuilderService : IFileNameBuilderService
     /// </summary>
     /// <param name="videoInfo">The video information.</param>
     /// <param name="subscription">The subscription settings.</param>
+    /// <param name="context">The download context.</param>
     /// <returns>The target directory name. Returns an empty string if no valid path is configured.</returns>
-    private string BuildDirectoryName(VideoInfo videoInfo, Subscription subscription)
+    private string BuildDirectoryName(VideoInfo videoInfo, Subscription subscription, DownloadContext context)
     {
         var config = _configurationProvider.ConfigurationOrNull;
-        string targetPath = string.Empty;
+
+        if (config == null)
+        {
+            _logger.LogWarning("Plugin configuration not avilable. Cant build config paths.");
+            return string.Empty;
+        }
+
+        string targetPath;
         if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
         {
-            string defaultPath = config?.DefaultDownloadPath ?? string.Empty;
+            bool useShowDir = videoInfo.IsShow || subscription.TreatNonEpisodesAsExtras;
+            string defaultPath = GetDefaultPathForContext(config, context, useShowDir);
             string subscriptionPath = SanitizeDirectoryName(subscription.Name);
             if (string.IsNullOrWhiteSpace(defaultPath))
             {
-                _logger.LogError("No default download path configured. Cannot build directory name for subscription '{SubscriptionName}' and item '{Title}'.", subscription.Name, videoInfo.Title);
+                _logger.LogError("No default download path configured for {Context} {Type}. Cannot build directory name for subscription '{SubscriptionName}' and item '{Title}'.", context, videoInfo.IsShow ? "Show" : "Movie", subscription.Name, videoInfo.Title);
                 return string.Empty;
             }
 
-            targetPath = Path.Combine(defaultPath, subscriptionPath);
+            if (useShowDir || config.UseTopicForMoviePath)
+            {
+                targetPath = Path.Combine(defaultPath, subscriptionPath);
+            }
+            else
+            {
+                targetPath = defaultPath;
+            }
         }
         else
         {
@@ -222,7 +229,34 @@ public class FileNameBuilderService : IFileNameBuilderService
             }
         }
 
+        if (!subscription.TreatNonEpisodesAsExtras && !videoInfo.IsShow)
+        {
+            targetPath = Path.Combine(targetPath, videoInfo.Title);
+        }
+
         return targetPath;
+    }
+
+    private string GetDefaultPathForContext(PluginConfiguration? config, DownloadContext context, bool isShow)
+    {
+        if (config == null)
+        {
+            return string.Empty;
+        }
+
+        string path = context switch
+        {
+            DownloadContext.Manual => isShow ? config.DefaultManualShowPath : config.DefaultManualMoviePath,
+            DownloadContext.Subscription => isShow ? config.DefaultSubscriptionShowPath : config.DefaultSubscriptionMoviePath,
+            _ => string.Empty
+        };
+
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            path = config.DefaultDownloadPath;
+        }
+
+        return path;
     }
 
     private FileType GetTargetMainType(VideoInfo videoInfo, Subscription subscription)
@@ -240,5 +274,87 @@ public class FileNameBuilderService : IFileNameBuilderService
         }
 
         return FileType.Audio;
+    }
+
+    /// <inheritdoc />
+    public bool IsPathSafe(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        var config = _configurationProvider.ConfigurationOrNull;
+        if (config == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            var normalizedPath = Path.GetFullPath(path);
+            var normalizedPathWithSeparator = normalizedPath.EndsWith(Path.DirectorySeparatorChar)
+                ? normalizedPath
+                : normalizedPath + Path.DirectorySeparatorChar;
+
+            var allowedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // Add paths from configuration
+            void AddIfNotNull(string? p)
+            {
+                if (!string.IsNullOrWhiteSpace(p))
+                {
+                    try
+                    {
+                        var fullPath = Path.GetFullPath(p);
+                        if (!fullPath.EndsWith(Path.DirectorySeparatorChar))
+                        {
+                            fullPath += Path.DirectorySeparatorChar;
+                        }
+
+                        allowedPaths.Add(fullPath);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Error adding config path {Path} to allowed paths.", p);
+                    }
+                }
+            }
+
+            AddIfNotNull(config.DefaultDownloadPath);
+            AddIfNotNull(config.DefaultSubscriptionShowPath);
+            AddIfNotNull(config.DefaultSubscriptionMoviePath);
+            AddIfNotNull(config.DefaultManualShowPath);
+            AddIfNotNull(config.DefaultManualMoviePath);
+            AddIfNotNull(config.TempDownloadPath);
+
+            foreach (var sub in config.Subscriptions)
+            {
+                AddIfNotNull(sub.DownloadPath);
+            }
+
+            // Add paths from Jellyfin libraries
+            var virtualFolders = _libraryManager.GetVirtualFolders(false);
+            if (virtualFolders != null)
+            {
+                foreach (var folder in virtualFolders)
+                {
+                    if (folder?.Locations != null && folder.CollectionType != CollectionTypeOptions.boxsets)
+                    {
+                        foreach (var folderPath in folder.Locations)
+                        {
+                            AddIfNotNull(folderPath);
+                        }
+                    }
+                }
+            }
+
+            return allowedPaths.Any(allowed => normalizedPathWithSeparator.StartsWith(allowed, StringComparison.OrdinalIgnoreCase));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating path safety for: {Path}", path);
+            return false;
+        }
     }
 }

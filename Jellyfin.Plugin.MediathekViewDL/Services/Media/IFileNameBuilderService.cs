@@ -13,8 +13,10 @@ public interface IFileNameBuilderService
     /// </summary>
     /// <param name="videoInfo">The video information.</param>
     /// <param name="subscription">The subscription settings.</param>
+    /// <param name="context">The download context.</param>
+    /// <param name="forceType">Forces the usage of a specific file type.</param>
     /// <returns>A <see cref="DownloadPaths"/> object containing all generated paths.</returns>
-    DownloadPaths GenerateDownloadPaths(VideoInfo videoInfo, Subscription subscription);
+    DownloadPaths GenerateDownloadPaths(VideoInfo videoInfo, Subscription subscription, DownloadContext context, FileType? forceType = null);
 
     /// <summary>
     /// Sanitizes a string to be used as a file name.
@@ -34,6 +36,14 @@ public interface IFileNameBuilderService
     /// Gets the base directory for a subscription.
     /// </summary>
     /// <param name="subscription">The subscription.</param>
+    /// <param name="context">The download context.</param>
     /// <returns>The base directory path.</returns>
-    string GetSubscriptionBaseDirectory(Subscription subscription);
+    string GetSubscriptionBaseDirectory(Subscription subscription, DownloadContext context);
+
+    /// <summary>
+    /// Validates if a path is safe to write to (within configured download directories or Jellyfin libraries).
+    /// </summary>
+    /// <param name="path">The path to validate.</param>
+    /// <returns>True if the path is safe, false otherwise.</returns>
+    bool IsPathSafe(string path);
 }

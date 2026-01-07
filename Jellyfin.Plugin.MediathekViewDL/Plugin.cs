@@ -45,14 +45,10 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// <inheritdoc />
     public IEnumerable<PluginPageInfo> GetPages()
     {
-        return
-        [
-            new PluginPageInfo
-            {
-                Name = Name,
-                EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.configPage.html", GetType().Namespace),
-                EnableInMainMenu = true,
-            }
-        ];
+        var prefix = GetType().Namespace;
+        yield return
+            new PluginPageInfo { Name = Name, EmbeddedResourcePath = prefix + ".Configuration.Web.configPage.html", EnableInMainMenu = true, };
+        yield return
+            new PluginPageInfo { Name = "MediathekViewDL.js", EmbeddedResourcePath = prefix + ".Configuration.Web.configPage.js" };
     }
 }

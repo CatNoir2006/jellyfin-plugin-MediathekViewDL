@@ -4,6 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Api.External;
+using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
@@ -25,6 +28,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api;
 /// </summary>
 [ApiController]
 [Route("MediathekViewDL")]
+[Authorize(Policy = Policies.RequiresElevation)]
 public class MediathekViewDlApiService : ControllerBase
 {
     private readonly IMediathekViewApiClient _apiClient;
@@ -35,6 +39,7 @@ public class MediathekViewDlApiService : ControllerBase
     private readonly IDownloadHistoryRepository _downloadHistoryRepository;
     private readonly IDownloadQueueManager _downloadQueueManager;
     private readonly IConfigurationProvider _configurationProvider;
+    private readonly IVideoParser _videoParser;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekViewDlApiService"/> class.
@@ -47,6 +52,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="downloadHistoryRepository">The Download History Repo.</param>
     /// <param name="downloadQueueManager">The download queue manager.</param>
     /// <param name="configurationProvider">The configuration provider.</param>
+    /// <param name="videoParser">The video parser.</param>
     public MediathekViewDlApiService(
         ILogger<MediathekViewDlApiService> logger,
         IMediathekViewApiClient apiClient,
@@ -55,7 +61,8 @@ public class MediathekViewDlApiService : ControllerBase
         ISubscriptionProcessor subscriptionProcessor,
         IDownloadHistoryRepository downloadHistoryRepository,
         IDownloadQueueManager downloadQueueManager,
-        IConfigurationProvider configurationProvider)
+        IConfigurationProvider configurationProvider,
+        IVideoParser videoParser)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -65,6 +72,7 @@ public class MediathekViewDlApiService : ControllerBase
         _downloadHistoryRepository = downloadHistoryRepository;
         _downloadQueueManager = downloadQueueManager;
         _configurationProvider = configurationProvider;
+        _videoParser = videoParser;
     }
 
     /// <summary>
@@ -72,7 +80,6 @@ public class MediathekViewDlApiService : ControllerBase
     /// </summary>
     /// <returns>A list of active downloads.</returns>
     [HttpGet("Downloads/Active")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public ActionResult<IEnumerable<ActiveDownload>> GetActiveDownloads()
     {
         return Ok(_downloadQueueManager.GetActiveDownloads());
@@ -84,7 +91,6 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="limit">The maximum number of entries to return.</param>
     /// <returns>A list of download history entries.</returns>
     [HttpGet("Downloads/History")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public async Task<ActionResult<IEnumerable<DownloadHistoryEntry>>> GetDownloadHistory([FromQuery] int limit = 50)
     {
         var history = await _downloadHistoryRepository.GetRecentHistoryAsync(limit).ConfigureAwait(false);
@@ -121,7 +127,6 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="subscription">The subscription configuration to test.</param>
     /// <returns>A list of items that would be downloaded.</returns>
     [HttpPost("TestSubscription")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public async Task<ActionResult<List<ResultItem>>> TestSubscription([FromBody] Subscription? subscription)
     {
         if (subscription == null)
@@ -143,25 +148,33 @@ public class MediathekViewDlApiService : ControllerBase
     /// <summary>
     /// Searches for media.
     /// </summary>
-    /// <param name="query">The search query.</param>
+    /// <param name="title">The title query.</param>
+    /// <param name="topic">The topic filter.</param>
+    /// <param name="channel">The channel filter.</param>
+    /// <param name="combinedSearch">The combined search query (Title, Topic).</param>
     /// <param name="minDuration">Optional minimum duration in seconds.</param>
     /// <param name="maxDuration">Optional maximum duration in seconds.</param>
     /// <returns>A list of search results.</returns>
     [HttpGet("Search")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public async Task<ActionResult<List<ResultItem>>> Search(
-        [FromQuery] string query,
+        [FromQuery] string? title,
+        [FromQuery] string? topic,
+        [FromQuery] string? channel,
+        [FromQuery] string? combinedSearch,
         [FromQuery] int? minDuration,
         [FromQuery] int? maxDuration)
     {
-        if (string.IsNullOrWhiteSpace(query))
+        if (string.IsNullOrWhiteSpace(title) &&
+            string.IsNullOrWhiteSpace(topic) &&
+            string.IsNullOrWhiteSpace(channel) &&
+            string.IsNullOrWhiteSpace(combinedSearch))
         {
-            return BadRequest("Search query cannot be empty.");
+            return BadRequest("At least one search parameter (title, topic, channel, or combinedSearch) must be provided.");
         }
 
         try
         {
-            var results = await _apiClient.SearchAsync(query, minDuration, maxDuration, CancellationToken.None).ConfigureAwait(false);
+            var results = await _apiClient.SearchAsync(title, topic, channel, combinedSearch, minDuration, maxDuration, CancellationToken.None).ConfigureAwait(false);
             return Ok(results);
         }
         catch (MediathekConnectionException ex)
@@ -188,19 +201,72 @@ public class MediathekViewDlApiService : ControllerBase
     }
 
     /// <summary>
+    /// Parses a search item into video information.
+    /// </summary>
+    /// <param name="item">The search result item to parse.</param>
+    /// <returns>The parsed video info.</returns>
+    [HttpPost("Items/Parse")]
+    public ActionResult<VideoInfo> ParseSearchItem([FromBody] ResultItem item)
+    {
+        try
+        {
+            var parsed = _videoParser.ParseVideoInfo(item.Topic, item.Title);
+            if (parsed == null)
+            {
+                _logger.LogError("Could not parse the Item: {Item}", item);
+                return BadRequest("Could not parse the Item");
+            }
+
+            return Ok(parsed);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Could not parse the Item: {Item}", item);
+            return BadRequest("Could not parse the Item");
+        }
+    }
+
+    /// <summary>
+    /// Gets the recommended download path for a given video info.
+    /// </summary>
+    /// <param name="videoInfo">The video info to generate a path for.</param>
+    /// <returns>The recommended path.</returns>
+    [HttpPost("Items/RecommendedPath")]
+    public ActionResult<RecommendedPath> GetRecommendedPath([FromBody] VideoInfo videoInfo)
+    {
+        try
+        {
+            var defaultSub = new Subscription() { Name = videoInfo.Topic };
+            var dlPaths = _fileNameBuilder.GenerateDownloadPaths(videoInfo, defaultSub, DownloadContext.Manual, FileType.Video);
+            var genPaths = new RecommendedPath()
+            {
+                FileName = Path.GetFileName(dlPaths.MainFilePath),
+                SubtitleName = Path.GetFileName(dlPaths.SubtitleFilePath),
+                Path = Path.GetDirectoryName(dlPaths.MainFilePath)!,
+            };
+
+            return Ok(genPaths);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Could not create RecommendedPaths for: {VideoInfo}", videoInfo);
+            return BadRequest("Could not create RecommendedPaths");
+        }
+    }
+
+    /// <summary>
     /// Triggers a download for a single item.
     /// </summary>
     /// <param name="item">The item to download.</param>
     /// <returns>An OK result.</returns>
     [HttpPost("Download")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public IActionResult Download([FromBody] ResultItem item)
     {
         var config = _configurationProvider.ConfigurationOrNull;
-        if (config == null || string.IsNullOrWhiteSpace(config.DefaultDownloadPath))
+        if (config == null)
         {
-            _logger.LogError("Default download path is not configured. Cannot start manual download.");
-            return BadRequest("Default download path is not configured.");
+            _logger.LogError("Plugin configuration is not available. Cannot start manual download.");
+            return StatusCode(500, "Plugin configuration is not available.");
         }
 
         var videoUrl = item.UrlVideoHd ?? item.UrlVideo ?? item.UrlVideoLow;
@@ -210,41 +276,37 @@ public class MediathekViewDlApiService : ControllerBase
             return BadRequest("Invalid item provided for download (no video URL).");
         }
 
-        if (FileDownloader.GetDiskSpace(config.DefaultDownloadPath) < config.MinFreeDiskSpaceBytes)
+        var videoInfo = _videoParser.ParseVideoInfo(item.Topic, item.Title);
+        if (videoInfo == null)
         {
-            _logger.LogError("Not enough free disk space to start download for item: {Title}", item.Title);
+            _logger.LogError("Could not parse video info for item: {Title}", item.Title);
+            return BadRequest("Could not parse video info.");
+        }
+
+        var defaultSub = new Subscription() { Name = item.Topic };
+        var paths = _fileNameBuilder.GenerateDownloadPaths(videoInfo, defaultSub, DownloadContext.Manual, FileType.Video);
+
+        if (!paths.IsValid)
+        {
+            _logger.LogError("Could not generate download paths for item: {Title}", item.Title);
+            return BadRequest("Could not generate download paths.");
+        }
+
+        if (FileDownloader.GetDiskSpace(paths.DirectoryPath) < config.MinFreeDiskSpaceBytes)
+        {
+            _logger.LogError("Not enough free disk space to start download for item: {Title} at {Path}", item.Title, paths.DirectoryPath);
             return BadRequest("Not enough free disk space to start download.");
         }
 
         _logger.LogInformation("Manual download requested for item: {Title}", item.Title);
 
-        var sanitizedTitle = _fileNameBuilder.SanitizeFileName(item.Title);
-        var manualDownloadFolder = Path.Combine(config.DefaultDownloadPath, "manual");
-        var videoDestinationPath = Path.Combine(manualDownloadFolder, sanitizedTitle + ".mp4");
+        var job = new DownloadJob { ItemId = item.Id, Title = item.Title, ItemInfo = videoInfo };
 
-        var job = new DownloadJob
-        {
-            ItemId = item.Id,
-            Title = item.Title,
-            ItemInfo = new VideoInfo()
-        };
-
-        job.DownloadItems.Add(new DownloadItem
-        {
-            SourceUrl = videoUrl,
-            DestinationPath = videoDestinationPath,
-            JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload
-        });
+        job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload });
 
         if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
         {
-            var subtitleDestinationPath = Path.Combine(manualDownloadFolder, sanitizedTitle + ".ttml");
-            job.DownloadItems.Add(new DownloadItem
-            {
-                SourceUrl = item.UrlSubtitle,
-                DestinationPath = subtitleDestinationPath,
-                JobType = DownloadType.DirectDownload
-            });
+            job.DownloadItems.Add(new DownloadItem { SourceUrl = item.UrlSubtitle, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
         }
 
         _downloadQueueManager.QueueJob(job);
@@ -257,7 +319,6 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="options">The advanced download options.</param>
     /// <returns>An OK result.</returns>
     [HttpPost("AdvancedDownload")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public IActionResult AdvancedDownload([FromBody] AdvancedDownloadOptions options)
     {
         var config = _configurationProvider.ConfigurationOrNull;
@@ -275,56 +336,62 @@ public class MediathekViewDlApiService : ControllerBase
             return BadRequest("Invalid item provided for download (no video URL).");
         }
 
-        var targetDownloadPath = string.IsNullOrWhiteSpace(options.DownloadPath)
-            ? config.DefaultDownloadPath
-            : options.DownloadPath;
-
-        if (string.IsNullOrWhiteSpace(targetDownloadPath))
+        if (string.IsNullOrWhiteSpace(options.DownloadPath) || string.IsNullOrWhiteSpace(options.FileName))
         {
-            _logger.LogError("Download path is not configured. Cannot start advanced download.");
-            return BadRequest("Download path is not configured.");
+            return BadRequest("DownloadPath and FileName are required for advanced download.");
         }
 
-        Directory.CreateDirectory(targetDownloadPath);
-
-        if (FileDownloader.GetDiskSpace(targetDownloadPath) < config.MinFreeDiskSpaceBytes)
+        // Security check: Validate path traversal
+        if (!_fileNameBuilder.IsPathSafe(options.DownloadPath))
         {
-            _logger.LogError("Not enough free disk space to start advanced download for item: {Title}", item.Title);
+            _logger.LogWarning("Blocked advanced download request to unsafe path: {Path}", options.DownloadPath);
+            return BadRequest("The provided download path is not allowed. Please use a path within your library or configured download directories.");
+        }
+
+        // Validate using project-specific sanitization logic
+        if (_fileNameBuilder.SanitizeFileName(options.FileName) != options.FileName)
+        {
+            return BadRequest("FileName contains invalid characters.");
+        }
+
+        var videoInfo = _videoParser.ParseVideoInfo(item.Topic, item.Title);
+        if (videoInfo == null)
+        {
+            _logger.LogError("Could not parse video info for item: {Title}", item.Title);
+            return BadRequest("Could not parse video info.");
+        }
+
+#pragma warning disable CA3003 // Path is validated via manual check and directory creation rules
+        if (FileDownloader.GetDiskSpace(options.DownloadPath) < config.MinFreeDiskSpaceBytes)
+#pragma warning restore CA3003
+        {
+            _logger.LogError("Not enough free disk space to start advanced download for item: {Title} at {Path}", item.Title, options.DownloadPath);
             return BadRequest("Not enough free disk space to start download.");
         }
 
-        _logger.LogInformation("Advanced download requested for item: {Title} to path: {Path} with filename: {FileName}", item.Title, targetDownloadPath, options.FileName);
+        _logger.LogInformation("Advanced download requested for item: {Title} to path: {Path} with filename: {FileName}", item.Title, options.DownloadPath, options.FileName);
 
-        var fileName = string.IsNullOrWhiteSpace(options.FileName)
-            ? _fileNameBuilder.SanitizeFileName(item.Title) + ".mp4"
-            : _fileNameBuilder.SanitizeFileName(options.FileName);
+        var videoDestinationPath = Path.Combine(options.DownloadPath, _fileNameBuilder.SanitizeFileName(options.FileName));
+        var job = new DownloadJob { ItemId = item.Id, Title = item.Title, ItemInfo = videoInfo };
 
-        var videoDestinationPath = Path.Combine(targetDownloadPath, fileName);
-
-        var job = new DownloadJob
-        {
-            ItemId = item.Id,
-            Title = item.Title,
-            ItemInfo = new VideoInfo()
-        };
-
-        job.DownloadItems.Add(new DownloadItem
-        {
-            SourceUrl = videoUrl,
-            DestinationPath = videoDestinationPath,
-            JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload
-        });
+        job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = videoDestinationPath, JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload });
 
         if (options.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
         {
-            var subtitleFileName = Path.GetFileNameWithoutExtension(fileName) + ".ttml";
-            var subtitleDestinationPath = Path.Combine(targetDownloadPath, subtitleFileName);
-            job.DownloadItems.Add(new DownloadItem
+            string subtitleFileName;
+            if (!string.IsNullOrWhiteSpace(options.SubtitleName))
             {
-                SourceUrl = item.UrlSubtitle,
-                DestinationPath = subtitleDestinationPath,
-                JobType = DownloadType.DirectDownload
-            });
+                subtitleFileName = _fileNameBuilder.SanitizeFileName(options.SubtitleName);
+            }
+            else
+            {
+                var defaultSub = new Subscription() { Name = item.Topic };
+                var genPaths = _fileNameBuilder.GenerateDownloadPaths(videoInfo, defaultSub, DownloadContext.Manual, FileType.Video);
+                subtitleFileName = Path.GetFileName(genPaths.SubtitleFilePath);
+            }
+
+            var subtitleDestinationPath = Path.Combine(options.DownloadPath, subtitleFileName);
+            job.DownloadItems.Add(new DownloadItem { SourceUrl = item.UrlSubtitle, DestinationPath = subtitleDestinationPath, JobType = DownloadType.DirectDownload });
         }
 
         _downloadQueueManager.QueueJob(job);
@@ -337,7 +404,6 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="subscriptionId">The ID of the subscription to reset.</param>
     /// <returns>An OK result if successful, or BadRequest/NotFound if an error occurs.</returns>
     [HttpPost("ResetProcessedItems")]
-    [Authorize(Policy = Policies.RequiresElevation)]
     public async Task<ActionResult> ResetProcessedItems([FromQuery] Guid subscriptionId)
     {
         var config = _configurationProvider.ConfigurationOrNull;

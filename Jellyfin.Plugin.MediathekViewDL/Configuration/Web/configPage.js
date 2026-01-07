@@ -1,0 +1,1614 @@
+/**
+ * Helper class for DOM manipulation to reduce verbosity.
+ */
+class DomHelper {
+    /**
+     * Creates an HTML element with specified options.
+     * @param {string} tag - The HTML tag name.
+     * @param {Object} [options] - Options for the element.
+     * @param {string} [options.className] - CSS class names (space separated).
+     * @param {string} [options.text] - Text content.
+     * @param {string} [options.id] - Element ID.
+     * @param {Object} [options.attributes] - Key-value pair of attributes.
+     * @param {string} [options.type] - Input type (if tag is input/button).
+     * @param {string} [options.value] - Input value.
+     * @param {boolean} [options.checked] - Checkbox state.
+     * @param {Function} [options.onClick] - Click handler.
+     * @param {HTMLElement[]} [options.children] - Array of child elements to append.
+     * @returns {HTMLElement} The created element.
+     */
+    create(tag, options = {}) {
+        const el = document.createElement(tag);
+        if (options.className) el.className = options.className;
+        if (options.text) el.textContent = options.text;
+        if (options.id) el.id = options.id;
+        if (options.type) el.type = options.type;
+        if (options.value) el.value = options.value;
+        if (options.checked) el.checked = true;
+
+        if (options.attributes) {
+            for (const [key, val] of Object.entries(options.attributes)) {
+                el.setAttribute(key, val);
+            }
+        }
+
+        if (options.onClick) {
+            el.addEventListener('click', options.onClick);
+        }
+
+        if (options.children) {
+            options.children.forEach(child => {
+                if (child) el.appendChild(child);
+            });
+        }
+
+        return el;
+    }
+
+    createIconButton(icon, title, onClick, id, ariaLabel) {
+        const span = this.create('span', {
+            className: 'material-icons ' + icon,
+            attributes: {'aria-hidden': 'true'}
+        });
+
+        const btnOptions = {
+            type: 'button',
+            className: 'paper-icon-button-light',
+            attributes: {
+                'is': 'emby-button',
+                'title': title,
+                'aria-label': ariaLabel || title
+            },
+            onClick: onClick,
+            children: [span]
+        };
+        if (id) btnOptions.id = id;
+
+        return this.create('button', btnOptions);
+    }
+
+    createCheckbox(label, checked, options = {}) {
+        const {id, value, description, className, onChange} = options;
+
+        const inputOptions = {
+            type: 'checkbox',
+            checked: checked,
+            attributes: {'is': 'emby-checkbox'}
+        };
+        if (id) inputOptions.id = id;
+        if (value) inputOptions.value = value;
+        if (className) inputOptions.className = className;
+
+        const input = this.create('input', inputOptions);
+        if (onChange) input.addEventListener('change', onChange);
+
+        const span = this.create('span', {text: label});
+
+        const labelEl = this.create('label', {
+            className: 'emby-checkbox-label',
+            children: [input, span]
+        });
+
+        if (description) {
+            const descEl = this.create('div', {
+                className: 'fieldDescription',
+                text: description
+            });
+            return this.create('div', {
+                className: 'checkboxContainer checkboxContainer-withDescription',
+                children: [labelEl, descEl]
+            });
+        }
+
+        return labelEl;
+    }
+}
+
+class StringHelper {
+    /**
+     * Sanitizes a string to be safe for use as a filename.
+     * @param {string} input - The input string.
+     * @returns {string} The sanitized filename.
+     */
+    static sanitizeForFilename(input) {
+        return input.replace(/[\/\\?%*:|"<>]/g, '_').trim();
+    }
+
+    /**
+     * Checks if a string is null, undefined, or consists only of whitespace.
+     * @param {string} input - The input string.
+     * @returns {boolean} True if null/whitespace, false otherwise.
+     */
+    static isNullOrWhitespace(input) {
+        return !input || !input.trim?.();
+    }
+}
+
+/**
+ * Handles search operations.
+ */
+class SearchController {
+    constructor(config) {
+        this.config = config;
+        this.dom = config.dom;
+        this.currentSearchResults = [];
+    }
+
+    init() {
+        document.getElementById('mvpl-form-search').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.performSearch();
+            return false;
+        });
+    }
+
+    performSearch() {
+        const title = document.getElementById('txtSearchQuery').value;
+        const topic = document.getElementById('txtSearchTopic').value;
+        const channel = document.getElementById('txtSearchChannel').value;
+        const combinedSearch = document.getElementById('txtSearchCombined').value;
+        const minD = document.getElementById('numMinDuration').value;
+        const maxD = document.getElementById('numMaxDuration').value;
+
+        if (!title && !topic && !channel && !combinedSearch) {
+            this.config.showToast("Bitte Suchbegriff eingeben");
+            return;
+        }
+        // noinspection JSUnresolvedReference
+        Dashboard.showLoadingMsg();
+        // noinspection JSUnresolvedReference
+        let url = ApiClient.getUrl('/' + this.config.pluginName + '/Search');
+
+        const params = [];
+        if (title) params.push('title=' + encodeURIComponent(title));
+        if (topic) params.push('topic=' + encodeURIComponent(topic));
+        if (channel) params.push('channel=' + encodeURIComponent(channel));
+        if (combinedSearch) params.push('combinedSearch=' + encodeURIComponent(combinedSearch));
+        if (minD) params.push('minDuration=' + (parseInt(minD) * 60));
+        if (maxD) params.push('maxDuration=' + (parseInt(maxD) * 60));
+
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+
+        // noinspection JSUnresolvedReference
+        ApiClient.getJSON(url).then((results) => {
+            this.currentSearchResults = results;
+            this.renderSearchResults();
+            // noinspection JSUnresolvedReference
+            Dashboard.hideLoadingMsg();
+        }).catch((err) => {
+            // noinspection JSUnresolvedReference
+            Dashboard.hideLoadingMsg();
+            this.config.showToast("Fehler bei der Suche: " + err);
+        });
+    }
+
+    renderSearchResults() {
+        const container = document.getElementById('searchResults');
+        container.textContent = "";
+
+        if (!this.currentSearchResults || this.currentSearchResults.length === 0) {
+            const noRes = document.createElement('p');
+            noRes.textContent = "Keine Ergebnisse gefunden.";
+            container.appendChild(noRes);
+            return;
+        }
+
+        const paperList = document.createElement('div');
+        paperList.classList.add('paperList');
+
+        this.currentSearchResults.forEach((item, index) => {
+            paperList.appendChild(this.createSearchResultItem(item, index));
+        });
+        container.appendChild(paperList);
+    }
+
+    createSearchResultItem(item, index) {
+        const durationStr = Math.max(1, Math.floor(item.duration / 60)) + " min"; // Each Video should show up with at least 1 min.
+        const actions = document.createElement('div');
+        actions.classList.add('flex-gap-10');
+
+        actions.appendChild(this.dom.createIconButton('play_arrow', 'Video abspielen.', () => {
+            const videoUrl = item.url_video_hd || item.urlVideoHd || item.url_video || item.urlVideo || item.url_video_low || item.urlVideoLow;
+            if (videoUrl) {
+                window.open(videoUrl, '_blank');
+            } else {
+                this.config.showToast("Keine Video-URL verfügbar.");
+            }
+        }))
+        actions.appendChild(this.dom.createIconButton('search', 'Video über DuckDuckGo suchen', () => {
+            const queryString = item.topic + ' ' + item.title;
+            window.MediathekViewDL.config.openDuckDuckGoSearch(queryString);
+        }));
+        actions.appendChild(this.dom.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
+        actions.appendChild(this.dom.createIconButton('settings', 'Erweiterter Download', () => this.config.openAdvancedDownloadDialog(this.currentSearchResults[index])));
+        actions.appendChild(this.dom.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.title, item.channel, item.topic)));
+
+
+        // Build BodyText1
+        const body1 = document.createElement('div');
+        body1.classList.add('flex-align-center');
+        body1.style.gap = '8px';
+        const textSpan = document.createElement('span');
+        textSpan.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
+        body1.appendChild(textSpan);
+
+        if (item.url_subtitle) {
+            const sep = document.createElement('span');
+            sep.textContent = ' | ';
+            body1.appendChild(sep);
+            const icon = document.createElement('span');
+            icon.classList.add('material-icons', 'closed_caption');
+            icon.title = 'Untertitel verfügbar';
+            body1.appendChild(icon);
+        }
+
+        const bodyText2 = item.description || '';
+
+        return this.config.createListItem(item.title, body1, bodyText2, actions);
+    }
+
+    downloadItem(index) {
+        const item = this.currentSearchResults[index];
+        if (!item) return;
+        // noinspection JSUnresolvedReference
+        const url = ApiClient.getUrl('/' + this.config.pluginName + '/Download');
+        // noinspection JSUnresolvedReference
+        Dashboard.showLoadingMsg();
+        // noinspection JSUnresolvedReference
+        ApiClient.ajax({
+            type: "POST",
+            url: url,
+            data: JSON.stringify(item),
+            contentType: 'application/json'
+        }).then((result) => {
+            // noinspection JSUnresolvedReference
+            Dashboard.hideLoadingMsg();
+            this.config.showToast("Download für '" + item.title + "' in Warteschlange.");
+        }).catch((err) => {
+            // noinspection JSUnresolvedReference
+            Dashboard.hideLoadingMsg();
+            this.config.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+        });
+    }
+
+    createSubFromSearch(btn, title, channel, topic) {
+        this.config.switchTab('subscriptions');
+        const newSub = {
+            Id: null,
+            Name: topic,
+            Queries: [
+                {fields: ["title"], query: title},
+                {fields: ["channel"], query: channel},
+                {fields: ["topic"], query: topic}
+            ],
+            MinDurationMinutes: null,
+            MaxDurationMinutes: null,
+            DownloadPath: "",
+            EnforceSeriesParsing: false,
+            AllowAudioDescription: false
+        };
+        this.config.subscriptionEditor.show(newSub);
+    }
+}
+
+class DownloadsController {
+    constructor(config) {
+        this.config = config;
+        this.dom = config.dom;
+        this.pollTimeout = null;
+        this.isPolling = false;
+        this.statusMapping = {
+            'Queued': {text: 'Warteschlange'}, // Queued
+            'Downloading': {text: 'Herunterladen...'}, // Downloading
+            'Processing': {text: 'Verarbeiten...'}, // Processing
+            'Finished': {text: 'Fertig'}, // Finished
+            'Failed': {text: 'Fehler'}, // Failed
+            'Cancelled': {text: 'Abgebrochen'} // Cancelled
+        };
+    }
+
+    init() {
+        // Initial load handled by switchTab
+    }
+
+    startPolling() {
+        this.stopPolling();
+        this.poll();
+    }
+
+    stopPolling() {
+        if (this.pollTimeout) {
+            clearTimeout(this.pollTimeout);
+            this.pollTimeout = null;
+        }
+        this.isPolling = false;
+    }
+
+    poll() {
+        this.isPolling = true;
+        this.refreshData().finally(() => {
+            if (this.isPolling) {
+                this.pollTimeout = setTimeout(() => this.poll(), 3000);
+            }
+        });
+    }
+
+    refreshData() {
+        // Return a promise that resolves when both requests are done
+        return Promise.all([this.fetchActive(), this.fetchHistory()]);
+    }
+
+    fetchActive() {
+        const url = ApiClient.getUrl('/' + this.config.pluginName + '/Downloads/Active');
+        return ApiClient.getJSON(url).then((downloads) => {
+            this.renderActive(downloads);
+        }).catch((err) => {
+            console.error("Error fetching active downloads", err);
+        });
+    }
+
+    fetchHistory() {
+        const url = ApiClient.getUrl('/' + this.config.pluginName + '/Downloads/History?limit=20');
+        return ApiClient.getJSON(url).then((history) => {
+            this.renderHistory(history);
+        }).catch((err) => {
+            console.error("Error fetching download history", err);
+        });
+    }
+
+    renderActive(downloads) {
+        const container = document.getElementById('activeDownloadsList');
+        container.textContent = "";
+
+        if (!downloads || downloads.length === 0) {
+            const noRes = document.createElement('p');
+            noRes.textContent = "Keine aktiven Downloads.";
+            container.appendChild(noRes);
+            return;
+        }
+
+        downloads.forEach((dl) => {
+            const statusInfo = this.statusMapping[dl.Status] || {text: 'Unbekannt'};
+            const progress = dl.Status === 'Downloading' ? Math.round(dl.Progress || 0) + '%' : '-';
+
+            const actions = document.createElement('div');
+            actions.classList.add('flex-gap-10');
+
+            // Show cancel button only if not finished/failed/cancelled
+            if (['Queued', 'Downloading', 'Processing'].includes(dl.Status)) {
+                actions.appendChild(this.dom.createIconButton('cancel', 'Abbrechen', () => this.cancelDownload(dl.Id)));
+            }
+
+            const statusBadge = document.createElement('span');
+            statusBadge.classList.add('mvpl-download-status');
+            statusBadge.setAttribute('data-status', dl.Status);
+            statusBadge.textContent = statusInfo.text;
+
+
+            const body1 = document.createElement('div');
+            body1.classList.add('flex-align-center');
+            body1.appendChild(document.createTextNode('Fortschritt: ' + progress));
+            body1.appendChild(statusBadge);
+
+            if (dl.ErrorMessage) {
+                const errorText = document.createElement('div');
+                errorText.style.color = '#F44336';
+                errorText.style.fontSize = '0.85em';
+                errorText.style.marginTop = '4px';
+                errorText.textContent = dl.ErrorMessage;
+                body1.appendChild(errorText);
+            }
+
+            const createdAt = new Date(dl.CreatedAt).toLocaleString();
+
+            let downloadTrigger = ' (Manuell)';
+            if (!StringHelper.isNullOrWhitespace(dl.SubscriptionId)) {
+                const sub = this.config.currentConfig?.Subscriptions?.find(s => s.Id === dl.SubscriptionId);
+                if (sub) {
+                    downloadTrigger = ' (Abo: ' + sub.Name + ')'
+                } else {
+                    downloadTrigger = ' (Abo)';
+                }
+            }
+
+            const body2 = 'Hinzugefügt: ' + createdAt + downloadTrigger;
+
+            container.appendChild(this.config.createListItem(dl.Job.Title, body1, body2, actions));
+        });
+    }
+
+    renderHistory(history) {
+        const container = document.getElementById('downloadHistoryList');
+        container.textContent = "";
+
+        if (!history || history.length === 0) {
+            const noRes = document.createElement('p');
+            noRes.textContent = "Kein Verlauf verfügbar.";
+            container.appendChild(noRes);
+            return;
+        }
+
+        history.forEach((entry) => {
+            const timestamp = new Date(entry.Timestamp).toLocaleString();
+            const body1 = 'Pfad: ' + entry.DownloadPath;
+
+            let downloadTrigger = ' (Manuell)';
+            if (!StringHelper.isNullOrWhitespace(entry.SubscriptionId)) {
+                const sub = this.config.currentConfig?.Subscriptions?.find(s => s.Id === entry.SubscriptionId);
+                if (sub) {
+                    downloadTrigger = ' (Abo: ' + sub.Name + ')';
+                } else {
+                    downloadTrigger = ' (Abo)';
+                }
+            }
+
+            const body2 = 'Datum: ' + timestamp + downloadTrigger;
+            const fileName = entry.DownloadPath.split(/[\\\/]/).pop();
+            const title = StringHelper.isNullOrWhitespace(entry.Title) ? fileName : entry.Title;
+            container.appendChild(this.config.createListItem(title, body1, body2, null));
+        });
+    }
+
+    cancelDownload(id) {
+        const url = ApiClient.getUrl('/' + this.config.pluginName + '/Downloads/' + id);
+        ApiClient.ajax({
+            type: "DELETE",
+            url: url
+        }).then(() => {
+            this.config.showToast("Abbruch angefordert.");
+            this.refreshData();
+        }).catch((err) => {
+            this.config.showToast("Fehler beim Abbrechen: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+        });
+    }
+}
+
+/**
+ * Manages UI dependencies (showing/hiding fields based on others).
+ */
+class DependencyManager {
+    constructor() {
+        this.rules = [
+            {
+                controllerId: 'subTreatNonEpisodesAsExtras',
+                dependentId: 'subSaveTrailersContainer',
+                showWhen: true,
+                disableWhenHidden: true
+            },
+            {
+                controllerId: 'subTreatNonEpisodesAsExtras',
+                dependentId: 'subSaveInterviewsContainer',
+                showWhen: true,
+                disableWhenHidden: true
+            },
+            {
+                controllerId: 'subTreatNonEpisodesAsExtras',
+                dependentId: 'subSaveGenericExtrasContainer',
+                showWhen: true,
+                disableWhenHidden: true
+            },
+            {
+                controllerId: 'subTreatNonEpisodesAsExtras',
+                dependentId: 'subSaveExtrasAsStrmContainer',
+                showWhen: true,
+                disableWhenHidden: true
+            },
+            {
+                controllerId: 'subEnforceSeries',
+                dependentId: 'subAllowAbsoluteEpisodeNumberingContainer',
+                showWhen: true,
+                disableWhenHidden: true
+            },
+            {
+                controllerId: 'subUseStreamingUrlFiles',
+                dependentId: 'subDownloadFullVideoForSecondaryAudioContainer',
+                showWhen: false,
+                disableWhenHidden: true
+            },
+            {
+                controllerId: 'subDownloadFullVideoForSecondaryAudio',
+                dependentId: 'subUseStreamingUrlFilesContainer',
+                showWhen: false,
+                disableWhenHidden: true
+            },
+            {
+                controllerId: 'subAllowFallbackToLowerQuality',
+                dependentId: 'subQualityCheckWithUrlContainer',
+                showWhen: true,
+                disableWhenHidden: true
+            }
+        ];
+    }
+
+    init() {
+        const controllerIds = [...new Set(this.rules.map(rule => rule.controllerId))];
+        controllerIds.forEach(id => {
+            const controller = document.getElementById(id);
+            if (controller) {
+                controller.addEventListener('change', () => this.applyDependencies());
+            }
+        });
+    }
+
+    applyDependencies() {
+        this.rules.forEach(rule => {
+            const controller = document.getElementById(rule.controllerId);
+            const dependentContainer = document.getElementById(rule.dependentId);
+
+            if (controller && dependentContainer) {
+                const shouldShow = controller.checked === rule.showWhen;
+
+                // Ensure the container has the base animation class
+                dependentContainer.classList.add('mvpl-animated-container');
+
+                if (shouldShow) {
+                    dependentContainer.classList.remove('mvpl-hidden');
+                } else {
+                    dependentContainer.classList.add('mvpl-hidden');
+                }
+
+                if (rule.disableWhenHidden && !shouldShow) {
+                    const dependentInput = dependentContainer.querySelector('input[type="checkbox"]');
+                    if (dependentInput) {
+                        dependentInput.checked = false;
+                    }
+                }
+            }
+        });
+    }
+}
+
+/**
+ * Handles subscription editor logic, populating fields and gathering values.
+ */
+class SubscriptionEditor {
+    /**
+     * @param {MediathekPluginConfig} configInstance
+     */
+    constructor(configInstance) {
+        this.config = configInstance;
+    }
+
+    /**
+     * Updates the hover text (title attribute) for the subPath input.
+     */
+    updateSubPathHoverText() {
+        const el = document.getElementById('subPath');
+        if (!el) return;
+
+        if (StringHelper.isNullOrWhitespace(el.value)) {
+            const defaultMoviePath = window.MediathekViewDL.config.currentConfig.DefaultSubscriptionMoviePath || 'Nicht konfiguriert';
+            const defaultShowPath = window.MediathekViewDL.config.currentConfig.DefaultSubscriptionShowPath || 'Nicht konfiguriert';
+            const useTopicForMoviePath = window.MediathekViewDL.config.currentConfig.UseTopicForMoviePath;
+            const subName = document.getElementById('subName').value || '[AboName]';
+
+            const joinPath = (path, part) => {
+                if (!path || path === 'Nicht konfiguriert') return path;
+                const separator = path.indexOf('\\') !== -1 ? '\\' : '/';
+                if (path.endsWith('/') || path.endsWith('\\')) {
+                    return path + part;
+                }
+                return path + separator + part;
+            };
+
+            const resolvedMoviePath = useTopicForMoviePath ? joinPath(defaultMoviePath, subName) : defaultMoviePath;
+            const resolvedShowPath = joinPath(defaultShowPath, subName);
+            this.updatePathPlaceholderText(resolvedMoviePath, resolvedShowPath);
+            el.title = "Verwendete Pfade:\nFilme: " + resolvedMoviePath + "\nSerien: " + resolvedShowPath;
+        } else {
+            el.title = "Ausgewählter Pfad für Film und Serie:\n" + el.value;
+        }
+    }
+
+    updatePathPlaceholderText(defaultMoviePath = '-', defaultShowPath = '-') {
+        const el = document.getElementById('subPath');
+        if (!el) return;
+
+        let message = 'Standartpfad wird verwendet:';
+        message += '  Serie: "' + defaultShowPath + '"';
+        message += '  Film: "' + defaultMoviePath + '"';
+        el.placeholder = message;
+    }
+
+    /**
+     * Populates the editor form with values from a subscription object.
+     * @param {Object|null} sub - The subscription object or null for a new subscription.
+     */
+    setEditorValues(sub) {
+        if (!sub) {
+            // Reset values
+            document.getElementById('subId').value = "";
+            document.getElementById('subName').value = "";
+            document.getElementById('subOriginalLanguage').value = "";
+            document.getElementById('subMinDuration').value = "";
+            document.getElementById('subMaxDuration').value = "";
+            document.getElementById('subPath').value = "";
+            this.updateSubPathHoverText();
+
+            document.getElementById('subEnforceSeries').checked = false;
+            document.getElementById('subCreateNfo').checked = false;
+            document.getElementById('subAllowAudioDesc').checked = false;
+            document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = false;
+            document.getElementById('subAllowSignLanguage').checked = false;
+            document.getElementById('subTreatNonEpisodesAsExtras').checked = false;
+            document.getElementById('subSaveTrailers').checked = true;
+            document.getElementById('subSaveInterviews').checked = true;
+            document.getElementById('subSaveGenericExtras').checked = true;
+            document.getElementById('subSaveExtrasAsStrm').checked = false;
+            document.getElementById('subUseStreamingUrlFiles').checked = false;
+            document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = false;
+            document.getElementById('subEnhancedDuplicateDetection').checked = false;
+            document.getElementById('subAutoUpgradeToHigherQuality').checked = false;
+            document.getElementById('subAllowFallbackToLowerQuality').checked = true;
+            document.getElementById('subQualityCheckWithUrl').checked = false;
+
+            document.getElementById('queriesContainer').textContent = '';
+            this.config.addQueryRow(null);
+
+            // Force update dependencies to hide unchecked dependent fields
+            this.config.dependencyManager.applyDependencies();
+            return;
+        }
+
+        document.getElementById('subId').value = sub.Id || "";
+        document.getElementById('subName').value = sub.Name;
+        document.getElementById('subOriginalLanguage').value = sub.OriginalLanguage || "";
+        document.getElementById('subMinDuration').value = sub.MinDurationMinutes || "";
+        document.getElementById('subMaxDuration').value = sub.MaxDurationMinutes || "";
+        document.getElementById('subPath').value = sub.DownloadPath || "";
+        this.updateSubPathHoverText();
+        document.getElementById('subEnforceSeries').checked = sub.EnforceSeriesParsing;
+        document.getElementById('subCreateNfo').checked = sub.CreateNfo !== undefined ? sub.CreateNfo : false;
+        document.getElementById('subAllowAudioDesc').checked = sub.AllowAudioDescription;
+        document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = sub.AllowAbsoluteEpisodeNumbering;
+        document.getElementById('subAllowSignLanguage').checked = sub.AllowSignLanguage;
+        document.getElementById('subEnhancedDuplicateDetection').checked = sub.EnhancedDuplicateDetection;
+        document.getElementById('subAutoUpgradeToHigherQuality').checked = sub.AutoUpgradeToHigherQuality !== undefined ? sub.AutoUpgradeToHigherQuality : false;
+        document.getElementById('subTreatNonEpisodesAsExtras').checked = sub.TreatNonEpisodesAsExtras;
+        document.getElementById('subSaveTrailers').checked = sub.SaveTrailers;
+        document.getElementById('subSaveInterviews').checked = sub.SaveInterviews;
+        document.getElementById('subSaveGenericExtras').checked = sub.SaveGenericExtras;
+        document.getElementById('subSaveExtrasAsStrm').checked = sub.SaveExtrasAsStrm;
+        document.getElementById('subUseStreamingUrlFiles').checked = sub.UseStreamingUrlFiles;
+        document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = sub.DownloadFullVideoForSecondaryAudio;
+        document.getElementById('subAllowFallbackToLowerQuality').checked = sub.AllowFallbackToLowerQuality !== undefined ? sub.AllowFallbackToLowerQuality : true;
+        document.getElementById('subQualityCheckWithUrl').checked = sub.QualityCheckWithUrl !== undefined ? sub.QualityCheckWithUrl : false;
+
+
+        const queriesContainer = document.getElementById('queriesContainer');
+        queriesContainer.textContent = '';
+        if (sub.Queries && sub.Queries.length > 0) {
+            sub.Queries.forEach((q) => {
+                this.config.addQueryRow(q);
+            });
+        } else {
+            this.config.addQueryRow(null);
+        }
+    }
+
+    /**
+     * Collects values from the editor form to create a subscription object.
+     * @returns {Object} The subscription object.
+     */
+    getEditorValues() {
+        const id = document.getElementById('subId').value;
+        const name = document.getElementById('subName').value;
+        const originalLanguage = document.getElementById('subOriginalLanguage').value;
+        const minDuration = document.getElementById('subMinDuration').value;
+        const maxDuration = document.getElementById('subMaxDuration').value;
+        const path = document.getElementById('subPath').value;
+        const enforce = document.getElementById('subEnforceSeries').checked;
+        const createNfo = document.getElementById('subCreateNfo').checked;
+        const allowAudio = document.getElementById('subAllowAudioDesc').checked;
+        const allowAbsolute = document.getElementById('subAllowAbsoluteEpisodeNumbering').checked;
+        const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
+        const enhancedDuplicateDetection = document.getElementById('subEnhancedDuplicateDetection').checked;
+        const autoUpgradeToHigherQuality = document.getElementById('subAutoUpgradeToHigherQuality').checked;
+        const treatNonEpisodesAsExtras = document.getElementById('subTreatNonEpisodesAsExtras').checked;
+        const saveTrailers = document.getElementById('subSaveTrailers').checked;
+        const saveInterviews = document.getElementById('subSaveInterviews').checked;
+        const saveGenericExtras = document.getElementById('subSaveGenericExtras').checked;
+        const saveExtrasAsStrm = document.getElementById('subSaveExtrasAsStrm').checked;
+        const useStreamingUrlFiles = document.getElementById('subUseStreamingUrlFiles').checked;
+        const downloadFullVideoForSecondaryAudio = document.getElementById('subDownloadFullVideoForSecondaryAudio').checked;
+        const allowFallbackToLowerQuality = document.getElementById('subAllowFallbackToLowerQuality').checked;
+        const qualityCheckWithUrl = document.getElementById('subQualityCheckWithUrl').checked;
+
+        const queries = [];
+        document.querySelectorAll('#queriesContainer .mvpl-query-row').forEach(function (row) {
+            const queryText = row.querySelector('.subQueryText').value;
+            if (queryText) {
+                const fields = [];
+                row.querySelectorAll('.subQueryField:checked').forEach(function (fieldCheckbox) {
+                    fields.push(fieldCheckbox.value);
+                });
+                queries.push({query: queryText, fields: fields});
+            }
+        });
+
+        return {
+            Id: id,
+            Name: name,
+            OriginalLanguage: originalLanguage,
+            Queries: queries,
+            MinDurationMinutes: minDuration ? parseInt(minDuration, 10) : null,
+            MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
+            DownloadPath: path,
+            EnforceSeriesParsing: enforce,
+            CreateNfo: createNfo,
+            AllowAudioDescription: allowAudio,
+            AllowAbsoluteEpisodeNumbering: allowAbsolute,
+            AllowSignLanguage: allowSignLanguage,
+            EnhancedDuplicateDetection: enhancedDuplicateDetection,
+            AutoUpgradeToHigherQuality: autoUpgradeToHigherQuality,
+            TreatNonEpisodesAsExtras: treatNonEpisodesAsExtras,
+            SaveTrailers: saveTrailers,
+            SaveInterviews: saveInterviews,
+            SaveGenericExtras: saveGenericExtras,
+            SaveExtrasAsStrm: saveExtrasAsStrm,
+            UseStreamingUrlFiles: useStreamingUrlFiles,
+            DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio,
+            AllowFallbackToLowerQuality: allowFallbackToLowerQuality,
+            QualityCheckWithUrl: qualityCheckWithUrl,
+        };
+    }
+
+    /**
+     * Opens the subscription editor modal.
+     * @param {Object|null} sub - The subscription to edit or null for new.
+     * @param {string|null} titleText - Optional title override.
+     */
+    show(sub, titleText) {
+        const editor = document.getElementById('subscriptionEditor');
+        const title = document.getElementById('subEditorTitle');
+
+        if (titleText) {
+            title.innerText = titleText;
+        } else {
+            title.innerText = sub ? "Abonnement bearbeiten" : "Neues Abonnement erstellen";
+        }
+
+        this.setEditorValues(sub);
+        this.config.dependencyManager.applyDependencies();
+
+        editor.style.display = 'block';
+        editor.scrollIntoView({behavior: 'smooth'});
+    }
+
+    /**
+     * Closes the subscription editor modal.
+     */
+    close() {
+        document.getElementById('subscriptionEditor').style.display = 'none';
+    }
+}
+
+/**
+ * Main configuration class for the plugin.
+ */
+class MediathekPluginConfig {
+    constructor() {
+        this.pluginId = "a31b415a-5264-419d-b152-8c8192a54994";
+        this.pluginName = "MediathekViewDL";
+        this.dom = new DomHelper();
+        this.searchController = new SearchController(this);
+        this.downloadsController = new DownloadsController(this);
+        this.dependencyManager = new DependencyManager();
+        this.currentConfig = null;
+        this.currentItemForAdvancedDl = null;
+        this.subscriptionEditor = new SubscriptionEditor(this);
+    }
+
+    // --- Helper Functions ---
+
+    confirmationPopup(message, title, resultCallback) {
+        // noinspection JSUnresolvedReference
+        if (typeof Dashboard !== 'undefined' && typeof Dashboard.confirm === 'function') {
+            // noinspection JSUnresolvedReference,JSCheckFunctionSignatures
+            Dashboard.confirm(message, title, resultCallback);
+        } else {
+            const result = confirm(title + "\n\n" + message);
+            resultCallback(result);
+        }
+    }
+
+    showToast(message) {
+        // noinspection JSUnresolvedReference
+        if (typeof Dashboard !== 'undefined' && typeof Dashboard.alert === 'function') {
+            // noinspection JSUnresolvedReference
+            Dashboard.alert(message);
+        } else {
+            alert(message);
+        }
+    }
+
+    openFolderDialog(inputId, headerText) {
+        try {
+            // noinspection JSUnresolvedReference
+            if (typeof Dashboard !== 'undefined' && Dashboard.DirectoryBrowser) {
+                // noinspection JSUnresolvedReference
+                const picker = new Dashboard.DirectoryBrowser();
+                picker.show({
+                    header: headerText,
+                    includeDirectories: true,
+                    includeFiles: false,
+                    callback: (path) => {
+                        if (path) {
+                            document.getElementById(inputId).value = path;
+                        }
+                        picker.close();
+                    }
+                });
+            } else {
+                let currentValue = document.getElementById(inputId).value;
+                let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
+                if (newPath !== null && newPath.trim() !== '') {
+                    document.getElementById(inputId).value = newPath.trim();
+                }
+            }
+        } catch (e) {
+            console.error('Error opening folder dialog:', e);
+            let currentValue = document.getElementById(inputId).value;
+            let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
+            if (newPath !== null && newPath.trim() !== '') {
+                document.getElementById(inputId).value = newPath.trim();
+            }
+        }
+    }
+
+    genUUID() {
+        try {
+            return crypto.randomUUID();
+        } catch (e) {
+            console.error('Error generating UUID using crypto.randomUUID():', e);
+        }
+        console.warn('Falling back to manual UUID generation.');
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            let r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    setupAutoGrowInputs() {
+        const inputs = [
+            'txtSearchCombined',
+            'txtSearchQuery',
+            'txtSearchTopic',
+            'txtSearchChannel'
+        ];
+
+        inputs.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                this.enableAutoGrow(el);
+            }
+        });
+    }
+
+    enableAutoGrow(input) {
+        if (!input) return;
+        const minWidth = 150; // Match duration field width
+
+        // Create measuring span if not exists
+        if (!this.measureSpan) {
+            this.measureSpan = document.createElement('span');
+            this.measureSpan.style.visibility = 'hidden';
+            this.measureSpan.style.position = 'absolute';
+            this.measureSpan.style.whiteSpace = 'pre';
+            this.measureSpan.style.top = '-9999px';
+            document.body.appendChild(this.measureSpan);
+        }
+
+        const updateWidth = () => {
+            // Copy styles that affect width
+            const styles = window.getComputedStyle(input);
+            this.measureSpan.style.fontFamily = styles.fontFamily;
+            this.measureSpan.style.fontSize = styles.fontSize;
+            this.measureSpan.style.fontWeight = styles.fontWeight;
+            this.measureSpan.style.letterSpacing = styles.letterSpacing;
+            this.measureSpan.style.textTransform = styles.textTransform;
+
+            const text = input.value || input.placeholder || '';
+            this.measureSpan.textContent = text;
+
+            // Add some padding (e.g. 25px) to account for internal padding of input
+            let newWidth = Math.max(minWidth, this.measureSpan.offsetWidth + 25);
+            newWidth = Math.min(newWidth, 500);
+            input.style.width = newWidth + 'px';
+            input.style.flexGrow = '0'; // Ensure it doesn't grow via flex
+        };
+
+        input.addEventListener('input', updateWidth);
+        // Also update on change or blur just in case
+        input.addEventListener('change', updateWidth);
+
+        // Initial update
+        setTimeout(updateWidth, 0);
+    }
+
+    openDuckDuckGoSearch(search = '', siteFilter = '', openPage = false) {
+        let queryString = (search).trim();
+        if (siteFilter) {
+            queryString += ' site:' + siteFilter;
+        }
+        const query = encodeURIComponent(queryString);
+        const searchUrl = 'https://duckduckgo.com/?q=' + (openPage ? '\\' : '');
+        window.open(searchUrl + query, '_blank');
+    }
+
+    // --- Core Logic ---
+
+    /**
+     * Loads the configuration from the server.
+     */
+    loadConfig() {
+        // noinspection JSUnresolvedReference
+        Dashboard.showLoadingMsg();
+        // noinspection JSUnresolvedReference
+        ApiClient.getPluginConfiguration(this.pluginId).then((config) => {
+            this.currentConfig = config;
+
+            document.querySelector('#txtDefaultDownloadPath').value = config.DefaultDownloadPath || "";
+            document.querySelector('#txtDefaultSubscriptionShowPath').value = config.DefaultSubscriptionShowPath || "";
+            document.querySelector('#txtDefaultSubscriptionMoviePath').value = config.DefaultSubscriptionMoviePath || "";
+            document.querySelector('#txtDefaultManualShowPath').value = config.DefaultManualShowPath || "";
+            document.querySelector('#txtDefaultManualMoviePath').value = config.DefaultManualMoviePath || "";
+            document.querySelector('#txtTempDownloadPath').value = config.TempDownloadPath || "";
+            document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
+            document.querySelector('#chkAllowUnknownDomains').checked = config.AllowUnknownDomains;
+            document.querySelector('#chkAllowHttp').checked = config.AllowHttp;
+            document.querySelector('#chkScanLibraryAfterDownload').checked = config.ScanLibraryAfterDownload;
+            document.querySelector('#chkEnableDirectAudioExtraction').checked = config.EnableDirectAudioExtraction;
+            document.querySelector('#chkEnableStrmCleanup').checked = config.EnableStrmCleanup;
+            document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked = config.AllowDownloadOnUnknownDiskSpace;
+            document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
+            document.querySelector('#txtMaxBandwidthMBits').value = config.MaxBandwidthMBits || 0;
+            document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
+            document.querySelector('#chkMoviePathWithTopic').checked = config.UseTopicForMoviePath;
+
+            this.renderSubscriptionsList();
+            // noinspection JSUnresolvedReference
+            Dashboard.hideLoadingMsg();
+        });
+    }
+
+    /**
+     * Saves the global configuration to the server.
+     */
+    saveGlobalConfig() {
+        // noinspection JSUnresolvedReference
+        Dashboard.showLoadingMsg();
+        // noinspection JSUnresolvedReference
+        ApiClient.updatePluginConfiguration(this.pluginId, this.currentConfig).then((result) => {
+            // noinspection JSUnresolvedReference
+            Dashboard.processPluginConfigurationUpdateResult(result);
+            this.showToast("Einstellungen gespeichert.");
+            this.loadConfig();
+        });
+    }
+
+    /**
+     * Switches the visible tab.
+     * @param {string} tabId - The ID suffix of the tab to show ('search', 'settings', 'subscriptions').
+     */
+    switchTab(tabId) {
+        document.querySelectorAll('.mvpl-tab-content').forEach(el => el.style.display = 'none');
+        document.getElementById('tab-' + tabId).style.display = 'block';
+
+        const buttons = document.querySelectorAll('.mvpl-tabs-spacer button');
+        buttons.forEach(btn => {
+            btn.classList.remove('selected');
+            btn.setAttribute('aria-selected', 'false');
+        });
+
+        const selectedBtn = document.getElementById('mvpl-btn-tab-' + tabId);
+        if (selectedBtn) {
+            selectedBtn.classList.add('selected');
+            selectedBtn.setAttribute('aria-selected', 'true');
+        }
+
+        if (tabId === 'downloads') {
+            this.downloadsController.startPolling();
+        } else {
+            this.downloadsController.stopPolling();
+        }
+    }
+
+    // --- SEARCH LOGIC ---
+
+    createListItem(title, bodyText1, bodyText2, actions) {
+        const listItem = document.createElement('div');
+        listItem.classList.add('listItem', 'listItem-border');
+
+        const body = document.createElement('div');
+        body.classList.add('listItemBody', 'two-line');
+
+        const titleEl = document.createElement('h3');
+        titleEl.classList.add('listItemBodyText');
+        titleEl.textContent = title;
+
+        const text1El = document.createElement('div');
+        text1El.classList.add('listItemBodyText', 'secondary');
+        if (typeof bodyText1 === 'string') {
+            text1El.textContent = bodyText1;
+        } else if (bodyText1 instanceof Node) {
+            text1El.appendChild(bodyText1);
+        }
+
+        const text2El = document.createElement('div');
+        text2El.classList.add('listItemBodyText', 'secondary');
+        if (typeof bodyText2 === 'string') {
+            text2El.textContent = bodyText2;
+        } else if (bodyText2 instanceof Node) {
+            text2El.appendChild(bodyText2);
+        }
+
+        body.appendChild(titleEl);
+        body.appendChild(text1El);
+        body.appendChild(text2El);
+
+        listItem.appendChild(body);
+
+        if (actions) {
+            listItem.appendChild(actions);
+        }
+
+        return listItem;
+    }
+
+
+    // ---SUBSCRIPTION LOGIC ---
+    renderSubscriptionsList() {
+        const list = document.getElementById('subscriptionList');
+        list.textContent = "";
+
+        if (!this.currentConfig.Subscriptions || this.currentConfig.Subscriptions.length === 0) {
+            const noSubs = document.createElement('p');
+            noSubs.textContent = "Keine aktiven Abonnements.";
+            list.appendChild(noSubs);
+            return;
+        }
+
+        this.currentConfig.Subscriptions.forEach((sub) => {
+            // Handle IsEnabled default true if undefined
+            if (sub.IsEnabled === undefined) sub.IsEnabled = true;
+
+            const queriesSummary = (sub.Queries || []).map(function (q) {
+                return q.query;
+            }).join(', ');
+            const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
+
+            const actions = document.createElement('div');
+            actions.classList.add('flex-gap-5');
+
+            // Toggle Button
+            const toggleIcon = sub.IsEnabled ? 'pause_circle_outline' : 'play_circle_outline';
+            const toggleTitle = sub.IsEnabled ? 'Deaktivieren' : 'Aktivieren';
+            actions.appendChild(this.dom.createIconButton(toggleIcon, toggleTitle, () => this.toggleSubscription(sub.Id)));
+
+            actions.appendChild(this.dom.createIconButton('refresh', 'Verarbeitete Items zurücksetzen', () => this.resetProcessedItems(sub.Id)));
+            actions.appendChild(this.dom.createIconButton('edit', 'Bearbeiten', () => this.subscriptionEditor.show(sub)));
+            actions.appendChild(this.dom.createIconButton('delete', 'Löschen', () => this.deleteSubscription(sub.Id)));
+
+            // Add Status to title
+            const statusText = sub.IsEnabled ? "" : " (Deaktiviert)";
+            const title = sub.Name + statusText;
+            const bodyText1 = 'Queries: ' + queriesSummary;
+            const bodyText2 = 'Letzter Download: ' + lastDownloadText;
+
+            const listItem = this.createListItem(title, bodyText1, bodyText2, actions);
+
+            // Visual cue for disabled state
+            if (!sub.IsEnabled) {
+                listItem.classList.add('sub-disabled');
+            }
+
+            list.appendChild(listItem);
+        });
+    }
+
+    toggleSubscription(id) {
+        const idx = this.currentConfig.Subscriptions.findIndex(function (s) {
+            return s.Id === id;
+        });
+        if (idx > -1) {
+            // Toggle
+            if (this.currentConfig.Subscriptions[idx].IsEnabled === undefined) {
+                this.currentConfig.Subscriptions[idx].IsEnabled = false; // Was true (implicit), now false
+            } else {
+                this.currentConfig.Subscriptions[idx].IsEnabled = !this.currentConfig.Subscriptions[idx].IsEnabled;
+            }
+
+            this.saveGlobalConfig();
+        }
+    }
+
+    resetProcessedItems(id) {
+        this.confirmationPopup("Dies wird die Liste der bereits verarbeiteten Items für dieses Abonnement zurücksetzen. Es kann dazu führen, dass bereits heruntergeladene Inhalte erneut heruntergeladen werden, wenn sie noch in den Suchergebnissen der MediathekView API erscheinen. Fortfahren?", "Verarbeitete Items zurücksetzen", (confirmed) => {
+            if (confirmed) {
+                // noinspection JSUnresolvedReference
+                Dashboard.showLoadingMsg();
+                // noinspection JSUnresolvedReference
+                ApiClient.ajax({
+                    type: "POST",
+                    url: ApiClient.getUrl('/' + this.pluginName + '/ResetProcessedItems?subscriptionId=' + id),
+                }).then((result) => {
+                    // noinspection JSUnresolvedReference
+                    Dashboard.hideLoadingMsg();
+                    this.showToast("Verarbeitete Items für Abonnement zurückgesetzt.");
+                    this.loadConfig(); // Refresh the configuration to update the UI
+                }).catch((err) => {
+                    // noinspection JSUnresolvedReference
+                    Dashboard.hideLoadingMsg();
+                    this.showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                });
+            }
+        });
+    }
+
+    addQueryRow(query) {
+        if (query == null) {
+            query = {query: '', fields: ['title', 'topic']};
+        }
+        const queryText = query ? query.query : '';
+        const fields = query ? query.fields : ['title', 'topic'];
+
+        const input = this.dom.create('input', {
+            type: 'text',
+            className: 'subQueryText',
+            value: queryText,
+            attributes: {
+                'is': 'emby-input',
+                'placeholder': 'Suchtext',
+                'required': 'true'
+            }
+        });
+
+        const cbTitle = this.dom.createCheckbox('Titel', fields.includes('title'), {
+            value: 'title',
+            className: 'subQueryField'
+        });
+        const cbTopic = this.dom.createCheckbox('Thema', fields.includes('topic'), {
+            value: 'topic',
+            className: 'subQueryField'
+        });
+        const cbChannel = this.dom.createCheckbox('Sender', fields.includes('channel'), {
+            value: 'channel',
+            className: 'subQueryField'
+        });
+
+        const removeBtn = this.dom.createIconButton('remove_circle_outline', 'Anfrage entfernen', (e) => {
+            e.target.closest('.mvpl-query-row').remove();
+        });
+        removeBtn.classList.add('btnRemoveQuery');
+
+        const newRow = this.dom.create('div', {
+            className: 'mvpl-query-row',
+            children: [
+                this.dom.create('div', {className: 'flex-grow', children: [input]}),
+                this.dom.create('div', {
+                    className: 'query-checkboxes',
+                    children: [cbTitle, cbTopic, cbChannel]
+                }),
+                removeBtn
+            ]
+        });
+
+        document.getElementById('queriesContainer').appendChild(newRow);
+    }
+
+    saveSubscription() {
+        const subData = this.subscriptionEditor.getEditorValues();
+
+        if (subData.Queries.length === 0) {
+            this.showToast("Bitte mindestens eine Suchanfrage definieren.");
+            return;
+        }
+
+        if (!this.currentConfig.Subscriptions) this.currentConfig.Subscriptions = [];
+
+        if (subData.Id) {
+            const idx = this.currentConfig.Subscriptions.findIndex(function (s) {
+                return s.Id === subData.Id;
+            });
+            if (idx > -1) {
+                // Keep existing ID logic if needed, but here subData already has ID from hidden input if set
+                var existingId = this.currentConfig.Subscriptions[idx].Id;
+
+                // Preserve IsEnabled state
+                var existingIsEnabled = this.currentConfig.Subscriptions[idx].IsEnabled;
+                if (existingIsEnabled === undefined) existingIsEnabled = true;
+
+                this.currentConfig.Subscriptions[idx] = subData;
+                this.currentConfig.Subscriptions[idx].Id = existingId; // Ensure ID consistency
+                this.currentConfig.Subscriptions[idx].IsEnabled = existingIsEnabled;
+            }
+        } else {
+            subData.Id = this.genUUID();
+            subData.IsEnabled = true; // Default enabled for new subs
+            this.currentConfig.Subscriptions.push(subData);
+        }
+
+        this.saveGlobalConfig();
+        this.subscriptionEditor.close();
+        this.renderSubscriptionsList();
+    }
+
+    deleteSubscription(id) {
+        this.confirmationPopup("Soll dieses Abonnement wirklich gelöscht werden?", "Löschen bestätigen", (confirmed) => {
+            if (confirmed) {
+                this.currentConfig.Subscriptions = this.currentConfig.Subscriptions.filter(function (s) {
+                    return s.Id !== id;
+                });
+                this.saveGlobalConfig();
+                this.renderSubscriptionsList();
+            }
+        });
+    }
+
+    /**
+     * Parses a search item into video information.
+     * @param {Object} item - The search result item.
+     * @param {Function} callback - The callback function to handle the result.
+     */
+    getVideoInfo(item, callback) {
+        const url = ApiClient.getUrl('/' + this.pluginName + '/Items/Parse');
+        ApiClient.ajax({
+            type: "POST",
+            url: url,
+            data: JSON.stringify(item),
+            contentType: 'application/json',
+            dataType: 'json'
+        }).then((result) => {
+            if (typeof result === 'string') {
+                try {
+                    result = JSON.parse(result);
+                } catch (e) {
+                    console.error("Failed to parse VideoInfo JSON", e);
+                }
+            }
+            callback(result);
+        }).catch((err) => {
+            console.error("Error parsing video info", err);
+        });
+    }
+
+    /**
+     * Gets the recommended download path for a given video info.
+     * @param {Object} videoInfo - The parsed video information.
+     * @param {Function} callback - The callback function to handle the result.
+     */
+    getRecommendedPath(videoInfo, callback) {
+        const url = ApiClient.getUrl('/' + this.pluginName + '/Items/RecommendedPath');
+        ApiClient.ajax({
+            type: "POST",
+            url: url,
+            data: JSON.stringify(videoInfo),
+            contentType: 'application/json',
+            dataType: 'json'
+        }).then((result) => {
+            if (typeof result === 'string') {
+                try {
+                    result = JSON.parse(result);
+                } catch (e) {
+                    console.error("Failed to parse RecommendedPath JSON", e);
+                }
+            }
+            callback(result);
+        }).catch((err) => {
+            console.error("Error getting recommended path", err);
+        });
+    }
+
+    /**
+     * Opens the advanced download dialog for a search item.
+     * @param {Object} item - The search result item.
+     */
+    openAdvancedDownloadDialog(item) {
+        this.currentItemForAdvancedDl = item;
+        if (!this.currentItemForAdvancedDl) return;
+
+        document.getElementById('advancedDownloadTitle').innerText = 'Erweiterter Download: ' + this.currentItemForAdvancedDl.title;
+        document.getElementById('advancedDownloadIndex').value = ""; // Not needed anymore contextually but keeping element
+
+        document.getElementById('advDlPath').value = this.currentConfig.DefaultDownloadPath || '';
+
+        let proposedFilename = (this.currentItemForAdvancedDl.topic || 'video') + " - " + (this.currentItemForAdvancedDl.title || 'video');
+        proposedFilename = proposedFilename.replace(/["\/\\?%*:|<>]/g, '-') + '.mp4';
+        document.getElementById('advDlFilename').value = proposedFilename;
+
+        this.getVideoInfo(item, (videoInfo) => {
+            console.log("Got VideoInfo: ", videoInfo);
+            this.getRecommendedPath(videoInfo, (recommended) => {
+                console.log("Got RecommendedPath: ", recommended);
+                if (recommended) {
+                    if (recommended.FileName) {
+                        document.getElementById('advDlFilename').value = recommended.FileName;
+                    }
+                    if (recommended.Path) {
+                        document.getElementById('advDlPath').value = recommended.Path;
+                    }
+                }
+            });
+        });
+
+
+        let advDlSub = document.getElementById('advDlSubtitles');
+        let advDlSubDesc = document.getElementById('advDlSubtitlesDesc');
+        if (!this.currentItemForAdvancedDl.url_subtitle) {
+            advDlSub.checked = false;
+            advDlSub.disabled = true;
+            advDlSubDesc.textContent = "Keine Untertitel verfügbar für dieses Video.";
+        } else {
+            advDlSub.disabled = false;
+            advDlSubDesc.textContent = "";
+        }
+
+
+        document.getElementById('advancedDownloadModal').style.display = 'flex';
+    }
+
+    closeAdvancedDownloadDialog() {
+        document.getElementById('advancedDownloadModal').style.display = 'none';
+    }
+
+    performAdvancedDownload() {
+        if (!this.currentItemForAdvancedDl) return;
+
+        const downloadOptions = {
+            item: this.currentItemForAdvancedDl,
+            downloadPath: document.getElementById('advDlPath').value,
+            fileName: document.getElementById('advDlFilename').value,
+            downloadSubtitles: document.getElementById('advDlSubtitles').checked
+        };
+
+        const url = ApiClient.getUrl('/' + this.pluginName + '/AdvancedDownload');
+
+        Dashboard.showLoadingMsg();
+        ApiClient.ajax({
+            type: "POST",
+            url: url,
+            data: JSON.stringify(downloadOptions),
+            contentType: 'application/json'
+        }).then((result) => {
+            Dashboard.hideLoadingMsg();
+            this.closeAdvancedDownloadDialog();
+            this.showToast("Download für '" + this.currentItemForAdvancedDl.title + "' gestartet.");
+        }).catch((err) => {
+            Dashboard.hideLoadingMsg();
+            this.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+        });
+    }
+
+    testSubscription() {
+        const subData = this.subscriptionEditor.getEditorValues();
+        if (subData.Queries.length === 0) {
+            this.showToast("Bitte mindestens eine Suchanfrage definieren.");
+            return;
+        }
+
+        // If ID is empty (new subscription), generate a temporary one for the backend to accept the object
+        if (!subData.Id) {
+            subData.Id = this.genUUID();
+        }
+
+        const url = ApiClient.getUrl('/' + this.pluginName + '/TestSubscription');
+
+        Dashboard.showLoadingMsg();
+        ApiClient.ajax({
+            type: "POST",
+            url: url,
+            data: JSON.stringify(subData),
+            contentType: 'application/json',
+            dataType: 'json'
+        }).then((results) => {
+            Dashboard.hideLoadingMsg();
+            if (typeof results === 'string') {
+                try {
+                    results = JSON.parse(results);
+                } catch (e) {
+                    console.error("Failed to parse JSON results", e);
+                }
+            }
+            this.renderTestResults(results);
+            document.getElementById('testSubscriptionModal').style.display = 'flex';
+        }).catch((err) => {
+            Dashboard.hideLoadingMsg();
+            console.error("Test subscription error:", err);
+            this.showToast("Fehler beim Testen des Abos: " + (err.responseJSON ? err.responseJSON.detail : (err.message || "Unbekannter Fehler")));
+        });
+    }
+
+    closeTestSubscriptionDialog() {
+        document.getElementById('testSubscriptionModal').style.display = 'none';
+    }
+
+    renderTestResults(results) {
+        const container = document.getElementById('testSubscriptionResults');
+        const countContainer = document.getElementById('testSubscriptionCount');
+        container.textContent = "";
+        countContainer.textContent = "";
+
+        if (!results || results.length === 0) {
+            const noRes = document.createElement('p');
+            noRes.textContent = "Keine Treffer für diese Konfiguration.";
+            container.appendChild(noRes);
+            return;
+        }
+
+        countContainer.textContent = results.length + " Einträge gefunden, die heruntergeladen würden:";
+
+        const paperList = document.createElement('div');
+        paperList.classList.add('paperList');
+
+        results.forEach((item) => {
+            const durationStr = Math.floor(item.duration / 60) + " Min";
+            const title = item.title;
+            const bodyText1 = item.channel + ' | ' + item.topic + ' | ' + durationStr;
+            const bodyText2 = item.description || '';
+
+            paperList.appendChild(this.createListItem(title, bodyText1, bodyText2, null));
+        });
+        container.appendChild(paperList);
+    }
+
+    /**
+     * Binds all event listeners for static HTML elements.
+     */
+    bindEvents() {
+        // Page Show
+        document.querySelector('#MediathekViewDLConfigPage').addEventListener('pageshow', () => {
+            this.loadConfig();
+        });
+
+        // Tab Navigation
+        document.getElementById('mvpl-btn-tab-search').addEventListener('click', () => this.switchTab('search'));
+        document.getElementById('mvpl-btn-tab-settings').addEventListener('click', () => this.switchTab('settings'));
+        document.getElementById('mvpl-btn-tab-subscriptions').addEventListener('click', () => this.switchTab('subscriptions'));
+        document.getElementById('mvpl-btn-tab-downloads').addEventListener('click', () => this.switchTab('downloads'));
+
+        // Main Config Form
+        document.getElementById('MediathekGeneralConfigForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.currentConfig.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
+            this.currentConfig.DefaultSubscriptionShowPath = document.querySelector('#txtDefaultSubscriptionShowPath').value;
+            this.currentConfig.DefaultSubscriptionMoviePath = document.querySelector('#txtDefaultSubscriptionMoviePath').value;
+            this.currentConfig.DefaultManualShowPath = document.querySelector('#txtDefaultManualShowPath').value;
+            this.currentConfig.DefaultManualMoviePath = document.querySelector('#txtDefaultManualMoviePath').value;
+            this.currentConfig.TempDownloadPath = document.querySelector('#txtTempDownloadPath').value;
+            this.currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
+            this.currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
+            this.currentConfig.AllowHttp = document.querySelector('#chkAllowHttp').checked;
+            this.currentConfig.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
+            this.currentConfig.EnableDirectAudioExtraction = document.querySelector('#chkEnableDirectAudioExtraction').checked;
+            this.currentConfig.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
+            this.currentConfig.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
+            const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
+            this.currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
+            this.currentConfig.UseTopicForMoviePath = document.querySelector('#chkMoviePathWithTopic').checked;
+
+            const maxBandwidth = parseInt(document.querySelector('#txtMaxBandwidthMBits').value, 10);
+            this.currentConfig.MaxBandwidthMBits = isNaN(maxBandwidth) ? 0 : maxBandwidth;
+
+            this.subscriptionEditor.updateSubPathHoverText();
+            this.saveGlobalConfig();
+            return false;
+        });
+
+        // Path selector in main config
+        document.getElementById('btnSelectPath').addEventListener('click', () => {
+            this.openFolderDialog('txtDefaultDownloadPath', 'Globalen Standard Download Pfad wählen');
+        });
+        document.getElementById('btnSelectSubscriptionShowPath').addEventListener('click', () => {
+            this.openFolderDialog('txtDefaultSubscriptionShowPath', 'Standard Serien Pfad (Abo) wählen');
+        });
+        document.getElementById('btnSelectSubscriptionMoviePath').addEventListener('click', () => {
+            this.openFolderDialog('txtDefaultSubscriptionMoviePath', 'Standard Film Pfad (Abo) wählen');
+        });
+        document.getElementById('btnSelectManualShowPath').addEventListener('click', () => {
+            this.openFolderDialog('txtDefaultManualShowPath', 'Standard Serien Pfad (Manuell) wählen');
+        });
+        document.getElementById('btnSelectManualMoviePath').addEventListener('click', () => {
+            this.openFolderDialog('txtDefaultManualMoviePath', 'Standard Film Pfad (Manuell) wählen');
+        });
+        document.getElementById('btnSelectTempPath').addEventListener('click', () => {
+            this.openFolderDialog('txtTempDownloadPath', 'Temporären Download Pfad wählen');
+        });
+
+        document.getElementById('chkMoviePathWithTopic').addEventListener('change', (e) => {
+            this.currentConfig.UseTopicForMoviePath = e.target.checked;
+            this.subscriptionEditor.updateSubPathHoverText();
+        });
+
+        // Path selectors in subscription editor
+        document.getElementById('btnSelectSubPath').addEventListener('click', () => {
+            this.openFolderDialog('subPath', 'Abo Pfad wählen');
+            this.subscriptionEditor.updateSubPathHoverText();
+        });
+        document.getElementById('subPath').addEventListener('input', () => {
+            this.subscriptionEditor.updateSubPathHoverText();
+        });
+        document.getElementById('subName').addEventListener('input', () => {
+            this.subscriptionEditor.updateSubPathHoverText();
+        });
+        // Path selector in advanced download dialog
+        document.getElementById('btnSelectAdvPath').addEventListener('click', () => {
+            this.openFolderDialog('advDlPath', 'Download Pfad wählen');
+        });
+
+        // Subscription Management
+        document.getElementById('mvpl-btn-new-sub').addEventListener('click', () => {
+            this.subscriptionEditor.show(null);
+        });
+
+        document.getElementById('mvpl-form-subscription').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.saveSubscription();
+            return false;
+        });
+
+        document.getElementById('mvpl-btn-add-query').addEventListener('click', () => {
+            this.addQueryRow();
+        });
+
+        document.getElementById('mvpl-btn-search-help').addEventListener('click', () => {
+            window.open('https://github.com/mediathekview/mediathekviewweb/blob/master/README.md#suchlogik-anwenden', '_blank');
+        });
+
+        document.getElementById('mvpl-btn-test-sub').addEventListener('click', () => {
+            this.testSubscription();
+        });
+
+        document.getElementById('mvpl-btn-cancel-sub').addEventListener('click', () => {
+            this.subscriptionEditor.close();
+        });
+
+        // Test Results
+        document.getElementById('mvpl-btn-close-test-results').addEventListener('click', () => {
+            this.closeTestSubscriptionDialog();
+        });
+
+        // Advanced Download
+        document.getElementById('mvpl-adv-download-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.performAdvancedDownload();
+            return false;
+        });
+
+        document.getElementById('mvpl-btn-close-adv-download').addEventListener('click', () => {
+            this.closeAdvancedDownloadDialog();
+        });
+
+        document.getElementById('mvpl-btn-duckduckgo-tmdb').addEventListener('click', () => {
+            const query = this.currentItemForAdvancedDl.topic + ' ' + this.currentItemForAdvancedDl.title;
+            this.openDuckDuckGoSearch(query, 'themoviedb.org', true);
+        });
+
+        document.getElementById('mvpl-btn-duckduckgo').addEventListener('click', () => {
+            const query = this.currentItemForAdvancedDl.topic + ' ' + this.currentItemForAdvancedDl.title;
+            this.openDuckDuckGoSearch(query, 'themoviedb.org');
+        });
+    }
+
+    init() {
+        this.bindEvents();
+        this.searchController.init();
+        this.dependencyManager.init();
+        this.setupAutoGrowInputs();
+    }
+}
+
+// 2. Der Haupteinstiegspunkt für das System
+export default function (view, params) {
+    const mediathekConfig = new MediathekPluginConfig();
+    window.MediathekViewDL = {
+        config: mediathekConfig,
+        editor: mediathekConfig.subscriptionEditor
+    };
+    // Events binden, wenn die Seite angezeigt wird
+    view.addEventListener('viewshow', function () {
+        mediathekConfig.init();
+    });
+}

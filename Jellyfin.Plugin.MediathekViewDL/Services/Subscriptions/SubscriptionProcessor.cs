@@ -6,7 +6,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.MediathekViewDL.Api;
+using Jellyfin.Plugin.MediathekViewDL.Api.External;
+using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
@@ -79,7 +80,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         LocalEpisodeCache? localEpisodeCache = null;
         if (subscription.EnhancedDuplicateDetection)
         {
-            var subscriptionBaseDir = _fileNameBuilderService.GetSubscriptionBaseDirectory(subscription);
+            var subscriptionBaseDir = _fileNameBuilderService.GetSubscriptionBaseDirectory(subscription, DownloadContext.Subscription);
             if (!string.IsNullOrWhiteSpace(subscriptionBaseDir))
             {
                 localEpisodeCache = _localMediaScanner.ScanDirectory(subscriptionBaseDir, subscription.Name);
@@ -102,7 +103,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 continue;
             }
 
-            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription);
+            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription, DownloadContext.Subscription);
             if (!paths.IsValid)
             {
                 continue;
@@ -227,11 +228,19 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 continue;
             }
 
-            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription);
+            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription, DownloadContext.Subscription);
             if (!paths.IsValid)
             {
                 continue;
             }
+
+            var description = item.Description ?? string.Empty;
+            if (description.Length > 100)
+            {
+                description = string.Concat(description.AsSpan(0, 100), "...");
+            }
+
+            item.Description = $"Pfad: {paths.MainFilePath} | {description}";
 
             yield return item;
         }
