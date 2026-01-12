@@ -7,7 +7,10 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Api.Converters;
 using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
 using Microsoft.Extensions.Logging;
@@ -64,7 +67,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of result items.</returns>
     /// <exception cref="MediathekException">Thrown when an error occurs while calling the API.</exception>
-    public async Task<Collection<ResultItem>> SearchAsync(
+    public async Task<IReadOnlyCollection<ResultItemDto>> SearchAsync(
         string? title,
         string? topic,
         string? channel,
@@ -73,46 +76,43 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         int? maxDuration,
         CancellationToken cancellationToken)
     {
-        var apiQuery = new ApiQuery
+        var apiQuery = new ApiQueryDto
         {
             Size = 50, // Get a decent number of results
             MinDuration = minDuration,
             MaxDuration = maxDuration,
-            Queries = new Collection<QueryFields>()
         };
 
         var titles = SplitAndClean(title);
         foreach (var titleItem in titles)
         {
-            apiQuery.Queries.Add(new QueryFields { Query = titleItem, Fields = ["title"] });
+            apiQuery.Queries.Add(new QueryFieldsDto { Query = titleItem, Fields = QueryFieldType.Title });
         }
 
         var topics = SplitAndClean(topic);
         foreach (var topicItem in topics)
         {
-            apiQuery.Queries.Add(new QueryFields { Query = topicItem, Fields = ["topic"] });
+            apiQuery.Queries.Add(new QueryFieldsDto { Query = topicItem, Fields = QueryFieldType.Topic });
         }
 
         var channels = SplitAndClean(channel);
         foreach (var channelItem in channels)
         {
-            apiQuery.Queries.Add(new QueryFields { Query = channelItem, Fields = ["channel"] });
+            apiQuery.Queries.Add(new QueryFieldsDto { Query = channelItem, Fields = QueryFieldType.Channel });
         }
 
         if (!string.IsNullOrWhiteSpace(combinedSearch))
         {
-            var fields = new Collection<string> { "title", "topic" };
-
             var combinedQueries = SplitAndClean(combinedSearch);
             foreach (var combinedQueryItem in combinedQueries)
             {
-                apiQuery.Queries.Add(new QueryFields { Query = combinedQueryItem, Fields = fields });
+                apiQuery.Queries.Add(new QueryFieldsDto { Query = combinedQueryItem, Fields = QueryFieldType.Title | QueryFieldType.Topic });
             }
         }
 
         if (apiQuery.Queries.Count == 0)
         {
-            return new Collection<ResultItem>();
+            return new List<ResultItemDto>();
         }
 
         var res = await SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
@@ -132,16 +132,17 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     /// <summary>
     /// Searches for media on the MediathekViewWeb API using a specified query.
     /// </summary>
-    /// <param name="apiQuery">The api query.</param>
+    /// <param name="apiQueryDto">The api query.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An API result.</returns>
     /// <exception cref="MediathekException">Thrown when an error occurs while calling the API.</exception>
-    public async Task<ResultChannels> SearchAsync(
-        ApiQuery apiQuery,
+    public async Task<QueryResultDto> SearchAsync(
+        ApiQueryDto apiQueryDto,
         CancellationToken cancellationToken)
     {
         try
         {
+            var apiQuery = apiQueryDto.ToModel();
             var json = JsonSerializer.Serialize(apiQuery);
             _logger.LogDebug("Performing API search with payload: {Json}", json);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -166,7 +167,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
 
             _logger.LogInformation("API search returned {Count} results", apiResult.Result.Results.Count);
             ChannelUrlHttpsUpgrade(apiResult.Result);
-            return apiResult.Result;
+            return apiResult.Result.ToDto();
         }
         catch (HttpRequestException ex)
         {

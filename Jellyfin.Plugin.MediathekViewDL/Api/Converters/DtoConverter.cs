@@ -1,18 +1,79 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
 using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models.ResourceItem;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Api.Converters;
 
 /// <summary>
-/// Static converter class for mapping external API models to internal DTOs.
+/// Static converter class for mapping external API models to internal DTOs and vice versa.
 /// </summary>
 public static class DtoConverter
 {
+    /// <summary>
+    /// Converts a <see cref="ApiQueryDto"/> to a <see cref="ApiQuery"/>.
+    /// </summary>
+    /// <param name="dto">The DTO to convert.</param>
+    /// <returns>The converted model.</returns>
+    public static ApiQuery ToModel(this ApiQueryDto dto)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+
+        return new ApiQuery
+        {
+            Future = dto.Future,
+            MaxDuration = dto.MaxDuration,
+            MinDuration = dto.MinDuration,
+            Offset = dto.Offset,
+            Size = dto.Size,
+            SortBy = dto.SortBy.ToString().ToLowerInvariant(),
+            SortOrder = dto.SortOrder.ToString().ToLowerInvariant(),
+            Queries = new Collection<QueryFields>(dto.Queries.Select(ToModel).ToList())
+        };
+    }
+
+    /// <summary>
+    /// Converts a <see cref="QueryFieldsDto"/> to a <see cref="QueryFields"/>.
+    /// </summary>
+    /// <param name="dto">The DTO to convert.</param>
+    /// <returns>The converted model.</returns>
+    public static QueryFields ToModel(this QueryFieldsDto dto)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+
+        var fields = new Collection<string>();
+        if (dto.Fields.HasFlag(QueryFieldType.Title))
+        {
+            fields.Add("title");
+        }
+
+        if (dto.Fields.HasFlag(QueryFieldType.Topic))
+        {
+            fields.Add("topic");
+        }
+
+        if (dto.Fields.HasFlag(QueryFieldType.Description))
+        {
+            fields.Add("description");
+        }
+
+        if (dto.Fields.HasFlag(QueryFieldType.Channel))
+        {
+            fields.Add("channel");
+        }
+
+        return new QueryFields
+        {
+            Query = dto.Query,
+            Fields = fields
+        };
+    }
+
     /// <summary>
     /// Converts a <see cref="QueryInfo"/> to a <see cref="QueryInfoDto"/>.
     /// </summary>

@@ -2,7 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Xml.Serialization;
 using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Configuration;
 
@@ -39,7 +43,15 @@ public class Subscription
     /// <summary>
     /// Gets the search query for the MediathekViewWeb API.
     /// </summary>
-    public Collection<QueryFields> Queries { get; init; } = new();
+    [Obsolete("Use Criteria instead.")]
+    public Collection<QueryFields> Queries { get; set; } = new();
+
+    /// <summary>
+    /// Gets the search criteria.
+    /// </summary>
+    public Collection<QueryFieldsDto> Criteria { get; set; } = new();
+}
+
 
     /// <summary>
     /// Gets or sets the specific download path for this subscription. Overrides the default path if set.

@@ -10,7 +10,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
 public class QueryFields
 {
     /// <summary>
-    /// Gets the fields to search in.
+    /// Gets the fields to search in. Possible values are "title", "topic", "description", and "channel".
     /// </summary>
     [JsonPropertyName("fields")]
     public Collection<string> Fields { get; init; } = new() { };

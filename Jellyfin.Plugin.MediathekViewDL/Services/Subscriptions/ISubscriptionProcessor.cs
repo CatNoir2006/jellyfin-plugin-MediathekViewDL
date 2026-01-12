@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 
@@ -30,7 +30,7 @@ public interface ISubscriptionProcessor
     /// <param name="subscription">The subscription to test.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A list of items that would be downloaded.</returns>
-    IAsyncEnumerable<ResultItem> TestSubscriptionAsync(
+    IAsyncEnumerable<ResultItemDto> TestSubscriptionAsync(
         Subscription subscription,
         CancellationToken cancellationToken);
 }

@@ -1,7 +1,7 @@
-using System.Collections.ObjectModel;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Api.External;
 
@@ -22,7 +22,7 @@ public interface IMediathekViewApiClient
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of result items.</returns>
     /// <exception cref="Exceptions.ExternalApi.MediathekException">Thrown when an error occurs while calling the API.</exception>
-    Task<Collection<ResultItem>> SearchAsync(
+    Task<IReadOnlyCollection<ResultItemDto>> SearchAsync(
         string? title,
         string? topic,
         string? channel,
@@ -34,9 +34,9 @@ public interface IMediathekViewApiClient
     /// <summary>
     /// Searches for media on the MediathekViewWeb API using a specified query.
     /// </summary>
-    /// <param name="apiQuery">The api query.</param>
+    /// <param name="apiQueryDto">The api query.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An API result.</returns>
     /// <exception cref="Exceptions.ExternalApi.MediathekException">Thrown when an error occurs while calling the API.</exception>
-    Task<ResultChannels> SearchAsync(ApiQuery apiQuery, CancellationToken cancellationToken);
+    Task<QueryResultDto> SearchAsync(ApiQueryDto apiQueryDto, CancellationToken cancellationToken);
 }
