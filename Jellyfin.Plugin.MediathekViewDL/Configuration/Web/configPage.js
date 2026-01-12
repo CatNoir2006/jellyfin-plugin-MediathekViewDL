@@ -301,10 +301,10 @@ class SearchController {
         const newSub = {
             Id: null,
             Name: topic,
-            Queries: [
-                {fields: ["title"], query: title},
-                {fields: ["channel"], query: channel},
-                {fields: ["topic"], query: topic}
+            Criteria: [
+                {Fields: "Title", Query: title},
+                {Fields: "Channel", Query: channel},
+                {Fields: "Topic", Query: topic}
             ],
             MinDurationMinutes: null,
             MaxDurationMinutes: null,
@@ -702,9 +702,10 @@ class SubscriptionEditor {
 
         const queriesContainer = document.getElementById('queriesContainer');
         queriesContainer.textContent = '';
-        if (sub.Queries && sub.Queries.length > 0) {
-            sub.Queries.forEach((q) => {
-                this.config.addQueryRow(q);
+        const criteria = sub.Criteria || [];
+        if (criteria.length > 0) {
+            criteria.forEach((c) => {
+                this.config.addQueryRow(c);
             });
         } else {
             this.config.addQueryRow(null);
@@ -739,7 +740,7 @@ class SubscriptionEditor {
         const allowFallbackToLowerQuality = document.getElementById('subAllowFallbackToLowerQuality').checked;
         const qualityCheckWithUrl = document.getElementById('subQualityCheckWithUrl').checked;
 
-        const queries = [];
+        const criteria = [];
         document.querySelectorAll('#queriesContainer .mvpl-query-row').forEach(function (row) {
             const queryText = row.querySelector('.subQueryText').value;
             if (queryText) {
@@ -747,7 +748,7 @@ class SubscriptionEditor {
                 row.querySelectorAll('.subQueryField:checked').forEach(function (fieldCheckbox) {
                     fields.push(fieldCheckbox.value);
                 });
-                queries.push({query: queryText, fields: fields});
+                criteria.push({Query: queryText, Fields: fields.join(', ')});
             }
         });
 
@@ -755,7 +756,7 @@ class SubscriptionEditor {
             Id: id,
             Name: name,
             OriginalLanguage: originalLanguage,
-            Queries: queries,
+            Criteria: criteria,
             MinDurationMinutes: minDuration ? parseInt(minDuration, 10) : null,
             MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
             DownloadPath: path,
@@ -1098,8 +1099,9 @@ class MediathekPluginConfig {
             // Handle IsEnabled default true if undefined
             if (sub.IsEnabled === undefined) sub.IsEnabled = true;
 
-            const queriesSummary = (sub.Queries || []).map(function (q) {
-                return q.query;
+            const criteria = sub.Criteria || [];
+            const queriesSummary = criteria.map(function (c) {
+                return c.Query || c.query;
             }).join(', ');
             const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
 
@@ -1171,12 +1173,20 @@ class MediathekPluginConfig {
         });
     }
 
-    addQueryRow(query) {
-        if (query == null) {
-            query = {query: '', fields: ['title', 'topic']};
+    addQueryRow(criteriaItem) {
+        if (criteriaItem == null) {
+            criteriaItem = { Query: '', Fields: 'Title, Topic' };
         }
-        const queryText = query ? query.query : '';
-        const fields = query ? query.fields : ['title', 'topic'];
+        const queryText = criteriaItem.Query || criteriaItem.query || '';
+        let fields = criteriaItem.Fields || criteriaItem.fields || '';
+
+        // Ensure fields is an array of lowercase strings for easy checking
+        let fieldList = [];
+        if (Array.isArray(fields)) {
+            fieldList = fields.map(f => f.toLowerCase());
+        } else if (typeof fields === 'string') {
+            fieldList = fields.split(',').map(f => f.trim().toLowerCase());
+        }
 
         const input = this.dom.create('input', {
             type: 'text',
@@ -1189,16 +1199,20 @@ class MediathekPluginConfig {
             }
         });
 
-        const cbTitle = this.dom.createCheckbox('Titel', fields.includes('title'), {
-            value: 'title',
+        const cbTitle = this.dom.createCheckbox('Titel', fieldList.includes('title'), {
+            value: 'Title',
             className: 'subQueryField'
         });
-        const cbTopic = this.dom.createCheckbox('Thema', fields.includes('topic'), {
-            value: 'topic',
+        const cbTopic = this.dom.createCheckbox('Thema', fieldList.includes('topic'), {
+            value: 'Topic',
             className: 'subQueryField'
         });
-        const cbChannel = this.dom.createCheckbox('Sender', fields.includes('channel'), {
-            value: 'channel',
+        const cbDescription = this.dom.createCheckbox('Beschreibung', fieldList.includes('description'), {
+            value: 'Description',
+            className: 'subQueryField'
+        });
+        const cbChannel = this.dom.createCheckbox('Sender', fieldList.includes('channel'), {
+            value: 'Channel',
             className: 'subQueryField'
         });
 
@@ -1213,7 +1227,7 @@ class MediathekPluginConfig {
                 this.dom.create('div', {className: 'flex-grow', children: [input]}),
                 this.dom.create('div', {
                     className: 'query-checkboxes',
-                    children: [cbTitle, cbTopic, cbChannel]
+                    children: [cbTitle, cbTopic, cbDescription, cbChannel]
                 }),
                 removeBtn
             ]
@@ -1225,7 +1239,7 @@ class MediathekPluginConfig {
     saveSubscription() {
         const subData = this.subscriptionEditor.getEditorValues();
 
-        if (subData.Queries.length === 0) {
+        if (subData.Criteria.length === 0) {
             this.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
@@ -1408,7 +1422,7 @@ class MediathekPluginConfig {
 
     testSubscription() {
         const subData = this.subscriptionEditor.getEditorValues();
-        if (subData.Queries.length === 0) {
+        if (subData.Criteria.length === 0) {
             this.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
