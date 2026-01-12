@@ -47,24 +47,9 @@ public static class DtoConverter
         ArgumentNullException.ThrowIfNull(dto);
 
         var fields = new Collection<string>();
-        if (dto.Fields.HasFlag(QueryFieldType.Title))
+        foreach (var field in dto.Fields)
         {
-            fields.Add("title");
-        }
-
-        if (dto.Fields.HasFlag(QueryFieldType.Topic))
-        {
-            fields.Add("topic");
-        }
-
-        if (dto.Fields.HasFlag(QueryFieldType.Description))
-        {
-            fields.Add("description");
-        }
-
-        if (dto.Fields.HasFlag(QueryFieldType.Channel))
-        {
-            fields.Add("channel");
+            fields.Add(field.ToString().ToLowerInvariant());
         }
 
         return new QueryFields
@@ -130,8 +115,7 @@ public static class DtoConverter
                 Url = resultItem.UrlVideoLow,
                 Quality = 1, // Low
                 Size = null, // Individual size unknown
-                Language = null,
-                Flags = ItemFeatures.None
+                Language = null
             });
         }
 
@@ -142,8 +126,7 @@ public static class DtoConverter
                 Url = resultItem.UrlVideo,
                 Quality = 2, // Standard
                 Size = resultItem.Size, // Assume main size applies here roughly, or unknown
-                Language = null,
-                Flags = ItemFeatures.None
+                Language = null
             });
         }
 
@@ -154,8 +137,7 @@ public static class DtoConverter
                 Url = resultItem.UrlVideoHd,
                 Quality = 3, // HD
                 Size = null,
-                Language = null,
-                Flags = ItemFeatures.None
+                Language = null
             });
         }
 
@@ -166,8 +148,7 @@ public static class DtoConverter
             {
                 Url = resultItem.UrlSubtitle,
                 Type = DetermineSubtitleType(resultItem.UrlSubtitle),
-                Language = null, // Unknown language
-                Flags = ItemFeatures.None
+                Language = null // Unknown language
             });
         }
 

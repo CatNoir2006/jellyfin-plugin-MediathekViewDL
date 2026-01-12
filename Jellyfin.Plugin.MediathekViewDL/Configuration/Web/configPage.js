@@ -216,6 +216,7 @@ class SearchController {
         const paperList = document.createElement('div');
         paperList.classList.add('paperList');
 
+        this.config.debugLog("Suchergebnisse: ", this.currentSearchResults);
         this.currentSearchResults.forEach((item, index) => {
             paperList.appendChild(this.createSearchResultItem(item, index));
         });
@@ -223,16 +224,16 @@ class SearchController {
     }
 
     createSearchResultItem(item, index) {
-        const durationSeconds = StringHelper.parseTimeSpan(item.duration || item.Duration);
+        const durationSeconds = StringHelper.parseTimeSpan(item.Duration);
         const durationStr = Math.max(1, Math.floor(durationSeconds / 60)) + " min"; // Each Video should show up with at least 1 min.
         const actions = document.createElement('div');
         actions.classList.add('flex-gap-10');
 
         actions.appendChild(this.dom.createIconButton('play_arrow', 'Video abspielen.', () => {
-            const videoUrls = item.videoUrls || item.VideoUrls || [];
+            const videoUrls = item.VideoUrls;
             // Sort by quality descending and get the first one
-            const bestVideo = [...videoUrls].sort((a, b) => (b.quality || 0) - (a.quality || 0))[0];
-            const videoUrl = bestVideo ? bestVideo.url : null;
+            const bestVideo = [...videoUrls].sort((a, b) => (b.Quality || 0) - (a.Quality || 0))[0];
+            const videoUrl = bestVideo ? bestVideo.Url : null;
             if (videoUrl) {
                 window.open(videoUrl, '_blank');
             } else {
@@ -240,12 +241,12 @@ class SearchController {
             }
         }))
         actions.appendChild(this.dom.createIconButton('search', 'Video über DuckDuckGo suchen', () => {
-            const queryString = item.topic + ' ' + item.title;
+            const queryString = item.Topic + ' ' + item.Title;
             window.MediathekViewDL.config.openDuckDuckGoSearch(queryString);
         }));
         actions.appendChild(this.dom.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
         actions.appendChild(this.dom.createIconButton('settings', 'Erweiterter Download', () => this.config.openAdvancedDownloadDialog(this.currentSearchResults[index])));
-        actions.appendChild(this.dom.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.title, item.channel, item.topic)));
+        actions.appendChild(this.dom.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.Title, item.channel, item.Topic)));
 
 
         // Build BodyText1
@@ -253,10 +254,10 @@ class SearchController {
         body1.classList.add('flex-align-center');
         body1.style.gap = '8px';
         const textSpan = document.createElement('span');
-        textSpan.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
+        textSpan.textContent = item.Channel + ' | ' + item.Topic + ' | ' + durationStr;
         body1.appendChild(textSpan);
 
-        const subtitleUrls = item.subtitleUrls || item.SubtitleUrls || [];
+        const subtitleUrls = item.SubtitleUrls || [];
         if (subtitleUrls.length > 0) {
             const sep = document.createElement('span');
             sep.textContent = ' | ';
@@ -267,9 +268,9 @@ class SearchController {
             body1.appendChild(icon);
         }
 
-        const bodyText2 = item.description || '';
+        const bodyText2 = item.Description || '';
 
-        return this.config.createListItem(item.title, body1, bodyText2, actions);
+        return this.config.createListItem(item.Title, body1, bodyText2, actions);
     }
 
     downloadItem(index) {
@@ -288,7 +289,7 @@ class SearchController {
         }).then((result) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            this.config.showToast("Download für '" + item.title + "' in Warteschlange.");
+            this.config.showToast("Download für '" + item.Title + "' in Warteschlange.");
         }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
@@ -748,7 +749,7 @@ class SubscriptionEditor {
                 row.querySelectorAll('.subQueryField:checked').forEach(function (fieldCheckbox) {
                     fields.push(fieldCheckbox.value);
                 });
-                criteria.push({Query: queryText, Fields: fields.join(', ')});
+                criteria.push({Query: queryText, Fields: fields});
             }
         });
 
@@ -814,6 +815,7 @@ class SubscriptionEditor {
  */
 class MediathekPluginConfig {
     constructor() {
+        this.debug = false;
         this.pluginId = "a31b415a-5264-419d-b152-8c8192a54994";
         this.pluginName = "MediathekViewDL";
         this.dom = new DomHelper();
@@ -826,6 +828,11 @@ class MediathekPluginConfig {
     }
 
     // --- Helper Functions ---
+    debugLog(message, ...optionalParams) {
+        if (this.debug) {
+            console.log("[MediathekViewDL DEBUG] " + message, ...optionalParams);
+        }
+    }
 
     confirmationPopup(message, title, resultCallback) {
         // noinspection JSUnresolvedReference
@@ -1482,11 +1489,11 @@ class MediathekPluginConfig {
         paperList.classList.add('paperList');
 
         results.forEach((item) => {
-            const durationSeconds = StringHelper.parseTimeSpan(item.duration || item.Duration);
+            const durationSeconds = StringHelper.parseTimeSpan(item.Duration);
             const durationStr = Math.floor(durationSeconds / 60) + " Min";
-            const title = item.title;
-            const bodyText1 = item.channel + ' | ' + item.topic + ' | ' + durationStr;
-            const bodyText2 = item.description || '';
+            const title = item.Title;
+            const bodyText1 = item.Channel + ' | ' + item.Topic + ' | ' + durationStr;
+            const bodyText2 = item.Description || '';
 
             paperList.appendChild(this.createListItem(title, bodyText1, bodyText2, null));
         });
@@ -1621,12 +1628,12 @@ class MediathekPluginConfig {
         });
 
         document.getElementById('mvpl-btn-duckduckgo-tmdb').addEventListener('click', () => {
-            const query = this.currentItemForAdvancedDl.topic + ' ' + this.currentItemForAdvancedDl.title;
+            const query = this.currentItemForAdvancedDl.Topic + ' ' + this.currentItemForAdvancedDl.Title;
             this.openDuckDuckGoSearch(query, 'themoviedb.org', true);
         });
 
         document.getElementById('mvpl-btn-duckduckgo').addEventListener('click', () => {
-            const query = this.currentItemForAdvancedDl.topic + ' ' + this.currentItemForAdvancedDl.title;
+            const query = this.currentItemForAdvancedDl.Topic + ' ' + this.currentItemForAdvancedDl.Title;
             this.openDuckDuckGoSearch(query, 'themoviedb.org');
         });
     }

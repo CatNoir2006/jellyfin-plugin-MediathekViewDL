@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Api.Models;
@@ -8,9 +9,9 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api.Models;
 public record QueryFieldsDto
 {
     /// <summary>
-    /// Gets or sets the fields to search in.
+    /// Gets the fields to search in.
     /// </summary>
-    public QueryFieldType Fields { get; set; }
+    public Collection<QueryFieldType> Fields { get; init; } = new();
 
     /// <summary>
     /// Gets or sets the search query.

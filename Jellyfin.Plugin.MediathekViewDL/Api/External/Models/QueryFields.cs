@@ -19,5 +19,5 @@ public class QueryFields
     /// Gets or sets the search query.
     /// </summary>
     [JsonPropertyName("query")]
-    public required string Query { get; set; }
+    public string Query { get; set; } = string.Empty;
 }

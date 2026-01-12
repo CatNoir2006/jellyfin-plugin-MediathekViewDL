@@ -1,5 +1,3 @@
-using Jellyfin.Plugin.MediathekViewDL.Api.Models;
-
 namespace Jellyfin.Plugin.MediathekViewDL.Api.Models.ResourceItem;
 
 /// <summary>
@@ -16,9 +14,4 @@ public abstract record ResourceBaseItem
     /// Gets the language of the resource.
     /// </summary>
     public string? Language { get; init; }
-
-    /// <summary>
-    /// Gets the features associated with the item.
-    /// </summary>
-    public ItemFeatures Flags { get; init; }
 }
