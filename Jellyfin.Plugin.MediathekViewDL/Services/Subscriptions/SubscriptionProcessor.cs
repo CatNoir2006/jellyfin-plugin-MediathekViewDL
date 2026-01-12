@@ -180,7 +180,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             jobs.Add(downloadJob);
 
             // Subtitle Job
-            var subtitleUrl = item.SubtitleUrls.FirstOrDefault()?.Url;
+            var subtitleUrl = item.SubtitleUrls.OrderByDescending(x => x.Type).FirstOrDefault()?.Url;
             if (downloadSubtitles && !string.IsNullOrWhiteSpace(subtitleUrl))
             {
                 downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = subtitleUrl, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
@@ -242,9 +242,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 description = string.Concat(description.AsSpan(0, 100), "...");
             }
 
-            item.Description = $"Pfad: {paths.MainFilePath} | {description}";
-
-            yield return item;
+            yield return item with { Description = $"Pfad: {paths.MainFilePath} | {description}" };
         }
     }
 
@@ -493,7 +491,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         var hdUrl = item.VideoUrls.FirstOrDefault(v => v.Quality == 3)?.Url;
         var stdUrl = item.VideoUrls.FirstOrDefault(v => v.Quality == 2)?.Url;
         var lowUrl = item.VideoUrls.FirstOrDefault(v => v.Quality == 1)?.Url;
-        
+
         // If no fallback is allowed, return HD URL if available
         if (!subscription.AllowFallbackToLowerQuality)
         {

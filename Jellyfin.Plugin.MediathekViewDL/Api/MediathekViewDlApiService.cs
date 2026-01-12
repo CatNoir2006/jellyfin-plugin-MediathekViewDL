@@ -127,16 +127,16 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="subscription">The subscription configuration to test.</param>
     /// <returns>A list of items that would be downloaded.</returns>
     [HttpPost("TestSubscription")]
-    public async Task<ActionResult<List<ResultItem>>> TestSubscription([FromBody] Subscription? subscription)
+    public async Task<ActionResult<List<ResultItemDto>>> TestSubscription([FromBody] Subscription? subscription)
     {
         if (subscription == null)
         {
             return BadRequest("Subscription configuration is required.");
         }
 
-        _logger.LogInformation("Testing subscription '{Name}' with {QueryCount} queries.", subscription.Name, subscription.Queries.Count);
+        _logger.LogInformation("Testing subscription '{Name}' with {QueryCount} queries.", subscription.Name, subscription.Criteria.Count);
 
-        var results = new List<ResultItem>();
+        var results = new List<ResultItemDto>();
         await foreach (var item in _subscriptionProcessor.TestSubscriptionAsync(subscription, CancellationToken.None).ConfigureAwait(false))
         {
             results.Add(item);
@@ -329,7 +329,7 @@ public class MediathekViewDlApiService : ControllerBase
         }
 
         var item = options.Item;
-        var videoUrl = item.UrlVideoHd ?? item.UrlVideo ?? item.UrlVideoLow;
+        var videoUrl = item.GetVideoByQuality()?.Url;
 
         if (item == null || string.IsNullOrWhiteSpace(videoUrl))
         {
@@ -376,7 +376,8 @@ public class MediathekViewDlApiService : ControllerBase
 
         job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = videoDestinationPath, JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload });
 
-        if (options.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
+        var subtitle = item.GetSubtitle();
+        if (options.DownloadSubtitles && !string.IsNullOrWhiteSpace(subtitle?.Url))
         {
             string subtitleFileName;
             if (!string.IsNullOrWhiteSpace(options.SubtitleName))
@@ -391,7 +392,7 @@ public class MediathekViewDlApiService : ControllerBase
             }
 
             var subtitleDestinationPath = Path.Combine(options.DownloadPath, subtitleFileName);
-            job.DownloadItems.Add(new DownloadItem { SourceUrl = item.UrlSubtitle, DestinationPath = subtitleDestinationPath, JobType = DownloadType.DirectDownload });
+            job.DownloadItems.Add(new DownloadItem { SourceUrl = subtitle.Url, DestinationPath = subtitleDestinationPath, JobType = DownloadType.DirectDownload });
         }
 
         _downloadQueueManager.QueueJob(job);

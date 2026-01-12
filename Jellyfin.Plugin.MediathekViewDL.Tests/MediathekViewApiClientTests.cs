@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api.External;
 using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -38,7 +39,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             { 
                 Result = new ResultChannels 
                 { 
-                    Results = new System.Collections.ObjectModel.Collection<ResultItem>() 
+                    Results = new System.Collections.ObjectModel.Collection<ResultItem>(),
+                    QueryInfo = new QueryInfo()
                 } 
             };
             var json = JsonSerializer.Serialize(validResponse);
@@ -57,7 +59,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var client = new MediathekViewApiClient(httpClient, mockLogger.Object, mockConfigProvider.Object);
 
             // Act
-            await client.SearchAsync(new ApiQuery(), CancellationToken.None);
+            await client.SearchAsync(new ApiQueryDto(), CancellationToken.None);
 
             // Assert
             // Verify that SendAsync was called 3 times (2 failures + 1 success)

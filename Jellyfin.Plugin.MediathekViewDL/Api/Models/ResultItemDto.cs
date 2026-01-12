@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models.ResourceItem;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Api.Models;
@@ -63,4 +64,36 @@ public record ResultItemDto
     /// Gets the list of external IDs.
     /// </summary>
     public required IReadOnlyList<ExternalId> ExternalIds { get; init; }
+
+    /// <summary>
+    /// Retrieves the preferred subtitle URL based on type priority.
+    /// </summary>
+    /// <returns>The Subtitle.</returns>
+    public SubtitleUrlDto? GetSubtitle()
+    {
+        int GetSortNumber(SubtitleType type)
+        {
+            return type switch
+            {
+                SubtitleType.WEBVTT => 1,
+                SubtitleType.TTML => 2,
+                _ => 3,
+            };
+        }
+
+        return SubtitleUrls
+            .OrderBy(s => GetSortNumber(s.Type))
+            .FirstOrDefault();
+    }
+
+    /// <summary>
+    /// Gets the video URL by specified quality. Defaults to quality 3 (HD).
+    /// </summary>
+    /// <param name="quality">The Target Quality.</param>
+    /// <returns>The VideoURL.</returns>
+    public VideoUrlDto? GetVideoByQuality(int quality = 3)
+    {
+        var video = VideoUrls.FirstOrDefault(v => v.Quality == quality);
+        return video ?? VideoUrls.OrderByDescending(v => v.Quality).FirstOrDefault();
+    }
 }

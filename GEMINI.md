@@ -69,7 +69,11 @@ EnableEfDesign=true dotnet tool run dotnet-ef migrations add <MigrationName> --p
 *   **Verification:** Before considering a task complete, I **must** run `dotnet build Jellyfin.Plugin.MediathekViewDL.sln`. The main plugin project (`Jellyfin.Plugin.MediathekViewDL`) treats warnings as errors, so the build must pass without any warnings to be considered successful.
 *   **HTML (configPage.html) Conventions:** When editing `configPage.html`, **do not use string templates** like `` `S${season}E${Episode}` ``. Instead, use string concatenation like `'S'+season+'E'+Episode`. Jellyfin treats string templates as translation keys, which can lead to unexpected behavior.
 *   **Coding Style:** The project uses standard C# and .NET conventions (e.g., `PascalCase` for classes, methods, and properties). It enforces a strict code style using analyzers like StyleCop (`StyleCop.Analyzers`).
+*   **Records:** Use `record` types for DTOs and immutable types where suitable.
+*   **Documentation:** All public members must have XML summary comments unless they inherit them.
 *   **Nullability:** The project has nullable reference types enabled (`<Nullable>enable</Nullable>`), requiring explicit handling of `null` values.
+*   **Environment:** Development and command execution happen exclusively on Windows. All shell commands must be compatible with PowerShell.
+*   **Command Chaining:** When executing multiple commands in a single `run_shell_command` call, use the PowerShell separator `;`.
 *   **Logging:** Structured logging is used via the `Microsoft.Extensions.Logging.ILogger` interface, which is provided by Jellyfin's runtime.
 *   **Task Understanding:** If I am not sure I understand a task correctly, I must ask for clarification.
 *   **Research:** For Jellyfin-specific topics, I should search the web or look at the code of other existing Jellyfin plugins for examples and best practices.

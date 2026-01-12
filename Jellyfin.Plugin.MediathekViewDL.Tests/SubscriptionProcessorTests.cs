@@ -4,8 +4,10 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Api.Converters;
 using Jellyfin.Plugin.MediathekViewDL.Api.External;
 using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
@@ -81,8 +83,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             };
 
             _apiClientMock
-                .Setup(x => x.SearchAsync(It.IsAny<ApiQuery>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(resultChannels);
+                .Setup(x => x.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultChannels.ToDto());
 
             var videoInfo = new VideoInfo { Title = "TestTitle", Language = "deu" };
             _videoParserMock
@@ -118,8 +120,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 QueryInfo = new QueryInfo { TotalResults = 1 }
             };
 
-            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQuery>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(resultChannels);
+            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultChannels.ToDto());
 
             var videoInfo = new VideoInfo { Title = "ExistingTitle", Language = "deu" };
             _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
@@ -157,8 +159,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 Results = new Collection<ResultItem> { item },
                 QueryInfo = new QueryInfo { TotalResults = 1 }
             };
-            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQuery>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(resultChannels);
+            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultChannels.ToDto());
 
             var videoInfo = new VideoInfo { Title = "AD Content", HasAudiodescription = true };
             _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
@@ -188,8 +190,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 Results = new Collection<ResultItem> { item },
                 QueryInfo = new QueryInfo { TotalResults = 1 }
             };
-            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQuery>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(resultChannels);
+            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultChannels.ToDto());
 
             var videoInfo = new VideoInfo { Title = "Test", Language = "deu" };
             _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
@@ -228,8 +230,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 QueryInfo = new QueryInfo { TotalResults = 1 }
             };
 
-            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQuery>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(resultChannels);
+            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultChannels.ToDto());
 
             var videoInfo = new VideoInfo { Title = "Test", Language = "deu" };
             _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
@@ -278,8 +280,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 QueryInfo = new QueryInfo { TotalResults = 1 }
             };
 
-            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQuery>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(resultChannels);
+            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultChannels.ToDto());
 
             var videoInfo = new VideoInfo { Title = "Test", Language = "deu" };
             _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
