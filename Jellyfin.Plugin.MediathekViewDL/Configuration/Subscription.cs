@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Text.Json.Serialization;
 using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 
@@ -39,6 +40,7 @@ public class Subscription
     /// Gets the search query for the MediathekViewWeb API.
     /// </summary>
     [Obsolete("Use Criteria instead. This property will be removed in future versions. It is kept for migration purposes.")]
+    [JsonIgnore] // This property should no longer be serialized/deserialized
     public Collection<QueryFields> Queries { get; init; } = new();
 
     /// <summary>
