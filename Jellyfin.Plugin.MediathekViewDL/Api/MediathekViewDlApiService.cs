@@ -156,7 +156,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="maxDuration">Optional maximum duration in seconds.</param>
     /// <returns>A list of search results.</returns>
     [HttpGet("Search")]
-    public async Task<ActionResult<List<ResultItem>>> Search(
+    public async Task<ActionResult<IEnumerable<ResultItemDto>>> Search(
         [FromQuery] string? title,
         [FromQuery] string? topic,
         [FromQuery] string? channel,
@@ -206,7 +206,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="item">The search result item to parse.</param>
     /// <returns>The parsed video info.</returns>
     [HttpPost("Items/Parse")]
-    public ActionResult<VideoInfo> ParseSearchItem([FromBody] ResultItem item)
+    public ActionResult<VideoInfo> ParseSearchItem([FromBody] ResultItemDto item)
     {
         try
         {
@@ -260,7 +260,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="item">The item to download.</param>
     /// <returns>An OK result.</returns>
     [HttpPost("Download")]
-    public IActionResult Download([FromBody] ResultItem item)
+    public IActionResult Download([FromBody] ResultItemDto item)
     {
         var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
@@ -269,7 +269,7 @@ public class MediathekViewDlApiService : ControllerBase
             return StatusCode(500, "Plugin configuration is not available.");
         }
 
-        var videoUrl = item.UrlVideoHd ?? item.UrlVideo ?? item.UrlVideoLow;
+        var videoUrl = item.GetVideoByQuality()?.Url;
 
         if (item == null || string.IsNullOrWhiteSpace(videoUrl))
         {
@@ -304,9 +304,10 @@ public class MediathekViewDlApiService : ControllerBase
 
         job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload });
 
-        if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
+        var subtitle = item.GetSubtitle();
+        if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(subtitle?.Url))
         {
-            job.DownloadItems.Add(new DownloadItem { SourceUrl = item.UrlSubtitle, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
+            job.DownloadItems.Add(new DownloadItem { SourceUrl = subtitle.Url, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
         }
 
         _downloadQueueManager.QueueJob(job);

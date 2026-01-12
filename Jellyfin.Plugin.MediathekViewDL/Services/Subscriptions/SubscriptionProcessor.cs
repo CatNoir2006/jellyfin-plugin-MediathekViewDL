@@ -489,21 +489,19 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     {
         // Quality: 3=HD, 2=Std, 1=Low
         var hdUrl = item.VideoUrls.FirstOrDefault(v => v.Quality == 3)?.Url;
-        var stdUrl = item.VideoUrls.FirstOrDefault(v => v.Quality == 2)?.Url;
-        var lowUrl = item.VideoUrls.FirstOrDefault(v => v.Quality == 1)?.Url;
 
         // If no fallback is allowed, return HD URL if available
         if (!subscription.AllowFallbackToLowerQuality)
         {
-            return string.IsNullOrWhiteSpace(hdUrl) ? null : hdUrl;
+            return hdUrl;
         }
 
-        List<string?> candidateUrls = [hdUrl, stdUrl, lowUrl];
+        List<string> candidateUrls = item.VideoUrls.OrderByDescending(s => s.Quality).Select(s => s.Url).ToList();
 
-        // If no url availability check is required, return the first non-empty URL
+        // If no url availability check is required, return the first URL
         if (!subscription.QualityCheckWithUrl)
         {
-            return candidateUrls.FirstOrDefault(u => !string.IsNullOrWhiteSpace(u));
+            return candidateUrls.Count > 0 ? candidateUrls[0] : null;
         }
 
         string? candidateUrl = null;

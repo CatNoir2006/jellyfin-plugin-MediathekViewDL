@@ -122,6 +122,24 @@ class StringHelper {
     static isNullOrWhitespace(input) {
         return !input || !input.trim?.();
     }
+
+    /**
+     * Parses a .NET TimeSpan string (e.g., "01:30:00" or "1.01:30:00") into seconds.
+     * @param {string} ts - The TimeSpan string or seconds as number.
+     * @returns {number} Seconds.
+     */
+    static parseTimeSpan(ts) {
+        if (!ts) return 0;
+        if (typeof ts === 'number') return ts;
+        // Handle ISO 8601 duration or .NET TimeSpan format
+        const match = ts.match(/(?:(\d+)\.)?(\d+):(\d+):(\d+)/);
+        if (!match) return 0;
+        const days = parseInt(match[1] || 0, 10);
+        const hours = parseInt(match[2], 10);
+        const minutes = parseInt(match[3], 10);
+        const seconds = parseInt(match[4], 10);
+        return days * 86400 + hours * 3600 + minutes * 60 + seconds;
+    }
 }
 
 /**
@@ -205,12 +223,16 @@ class SearchController {
     }
 
     createSearchResultItem(item, index) {
-        const durationStr = Math.max(1, Math.floor(item.duration / 60)) + " min"; // Each Video should show up with at least 1 min.
+        const durationSeconds = StringHelper.parseTimeSpan(item.duration || item.Duration);
+        const durationStr = Math.max(1, Math.floor(durationSeconds / 60)) + " min"; // Each Video should show up with at least 1 min.
         const actions = document.createElement('div');
         actions.classList.add('flex-gap-10');
 
         actions.appendChild(this.dom.createIconButton('play_arrow', 'Video abspielen.', () => {
-            const videoUrl = item.url_video_hd || item.urlVideoHd || item.url_video || item.urlVideo || item.url_video_low || item.urlVideoLow;
+            const videoUrls = item.videoUrls || item.VideoUrls || [];
+            // Sort by quality descending and get the first one
+            const bestVideo = [...videoUrls].sort((a, b) => (b.quality || 0) - (a.quality || 0))[0];
+            const videoUrl = bestVideo ? bestVideo.url : null;
             if (videoUrl) {
                 window.open(videoUrl, '_blank');
             } else {
@@ -234,7 +256,8 @@ class SearchController {
         textSpan.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
         body1.appendChild(textSpan);
 
-        if (item.url_subtitle) {
+        const subtitleUrls = item.subtitleUrls || item.SubtitleUrls || [];
+        if (subtitleUrls.length > 0) {
             const sep = document.createElement('span');
             sep.textContent = ' | ';
             body1.appendChild(sep);
@@ -1337,7 +1360,8 @@ class MediathekPluginConfig {
 
         let advDlSub = document.getElementById('advDlSubtitles');
         let advDlSubDesc = document.getElementById('advDlSubtitlesDesc');
-        if (!this.currentItemForAdvancedDl.url_subtitle) {
+        const subtitleUrls = this.currentItemForAdvancedDl.subtitleUrls || this.currentItemForAdvancedDl.SubtitleUrls || [];
+        if (subtitleUrls.length === 0) {
             advDlSub.checked = false;
             advDlSub.disabled = true;
             advDlSubDesc.textContent = "Keine Untertitel verfügbar für dieses Video.";
@@ -1444,7 +1468,8 @@ class MediathekPluginConfig {
         paperList.classList.add('paperList');
 
         results.forEach((item) => {
-            const durationStr = Math.floor(item.duration / 60) + " Min";
+            const durationSeconds = StringHelper.parseTimeSpan(item.duration || item.Duration);
+            const durationStr = Math.floor(durationSeconds / 60) + " Min";
             const title = item.title;
             const bodyText1 = item.channel + ' | ' + item.topic + ' | ' + durationStr;
             const bodyText2 = item.description || '';
