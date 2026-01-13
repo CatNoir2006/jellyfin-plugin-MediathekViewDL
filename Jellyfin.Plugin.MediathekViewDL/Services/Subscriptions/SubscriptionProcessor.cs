@@ -556,7 +556,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         {
             var apiQuery = new ApiQueryDto
             {
-                Queries = subscription.Queries,
+                Queries = subscription.Criteria,
                 Size = pageSize,
                 Offset = currentPage * pageSize,
                 MinDuration = subscription.MinDurationMinutes * 60,

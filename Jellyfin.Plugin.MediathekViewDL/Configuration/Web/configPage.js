@@ -302,7 +302,7 @@ class SearchController {
         const newSub = {
             Id: null,
             Name: topic,
-            Queries: [
+            Criteria: [
                 {Fields: ["Title"], Query: title},
                 {Fields: ["Channel"], Query: channel},
                 {Fields: ["Topic"], Query: topic}
@@ -1106,7 +1106,7 @@ class MediathekPluginConfig {
             // Handle IsEnabled default true if undefined
             if (sub.IsEnabled === undefined) sub.IsEnabled = true;
 
-            const queriesSummary = (sub.Queries || []).map(function (q) {
+            const equeriesSummary = (sub.Criteria || []).map(function (q) {
                 return q.query;
             }).join(', ');
             const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
@@ -1237,7 +1237,7 @@ class MediathekPluginConfig {
     saveSubscription() {
         const subData = this.subscriptionEditor.getEditorValues();
 
-        if (subData.Queries.length === 0) {
+        if (subData.Criteria.length === 0) {
             this.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
@@ -1420,7 +1420,7 @@ class MediathekPluginConfig {
 
     testSubscription() {
         const subData = this.subscriptionEditor.getEditorValues();
-        if (subData.Queries.length === 0) {
+        if (subData.Criteria.length === 0) {
             this.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
