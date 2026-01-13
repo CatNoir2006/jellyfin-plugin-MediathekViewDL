@@ -6,6 +6,7 @@ using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services;
 
@@ -16,16 +17,19 @@ public class MigrationHostedService : IHostedService
 {
     private readonly DatabaseMigrator _migrator;
     private readonly IConfigurationProvider _configProvider;
+    private readonly ILogger<MigrationHostedService> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MigrationHostedService"/> class.
     /// </summary>
     /// <param name="migrator">The database migrator.</param>
     /// <param name="configProvider">The configuration provider.</param>
-    public MigrationHostedService(DatabaseMigrator migrator, IConfigurationProvider configProvider)
+    /// <param name="logger">The Logger.</param>
+    public MigrationHostedService(DatabaseMigrator migrator, IConfigurationProvider configProvider, ILogger<MigrationHostedService> logger)
     {
         _migrator = migrator;
         _configProvider = configProvider;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -52,10 +56,7 @@ public class MigrationHostedService : IHostedService
             {
                 foreach (var oldQuery in subscription.Queries)
                 {
-                    var newCriteria = new QueryFieldsDto
-                    {
-                        Query = oldQuery.Query
-                    };
+                    var newCriteria = new QueryFieldsDto { Query = oldQuery.Query };
 
                     foreach (var field in oldQuery.Fields)
                     {
@@ -78,16 +79,15 @@ public class MigrationHostedService : IHostedService
                     }
 
                     if (newCriteria.Fields.Count == 0)
-					if (newCriteria.Fields.Count == 0)
-					{
-						_logger.LogWarning(
-							"Subscription '{SubscriptionName}' (ID: {SubscriptionId}) has a query with no valid fields after migration. Disabling subscription to prevent unexpected behavior. Query: '{QueryText}'",
-							subscription.Name,
-							subscription.Id,
-							oldQuery.Query);
-						subscription.IsEnabled = false;
-						continue;
-					}
+                    {
+                        _logger.LogWarning(
+                            "Subscription '{SubscriptionName}' (ID: {SubscriptionId}) has a query with no valid fields after migration. Disabling subscription to prevent unexpected behavior. Query: '{QueryText}'",
+                            subscription.Name,
+                            subscription.Id,
+                            oldQuery.Query);
+                        subscription.IsEnabled = false;
+                        continue;
+                    }
 
                     subscription.Criteria.Add(newCriteria);
                 }
