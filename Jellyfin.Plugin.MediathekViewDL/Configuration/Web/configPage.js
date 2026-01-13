@@ -131,7 +131,7 @@ class StringHelper {
     static parseTimeSpan(ts) {
         if (!ts) return 0;
         if (typeof ts === 'number') return ts;
-        // Handle ISO 8601 duration or .NET TimeSpan format
+        // Handle .NET TimeSpan format
         const match = ts.match(/(?:(\d+)\.)?(\d+):(\d+):(\d+)/);
         if (!match) return 0;
         const days = parseInt(match[1] || 0, 10);
