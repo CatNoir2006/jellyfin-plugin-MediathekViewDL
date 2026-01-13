@@ -134,7 +134,7 @@ public class MediathekViewDlApiService : ControllerBase
             return BadRequest("Subscription configuration is required.");
         }
 
-        _logger.LogInformation("Testing subscription '{Name}' with {QueryCount} queries.", subscription.Name, subscription.Criteria.Count);
+        _logger.LogInformation("Testing subscription '{Name}' with {QueryCount} queries.", subscription.Name, subscription.Queries.Count);
 
         var results = new List<ResultItemDto>();
         await foreach (var item in _subscriptionProcessor.TestSubscriptionAsync(subscription, CancellationToken.None).ConfigureAwait(false))

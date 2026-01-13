@@ -556,11 +556,11 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         {
             var apiQuery = new ApiQueryDto
             {
-                Queries = subscription.Criteria,
+                Queries = subscription.Queries,
                 Size = pageSize,
                 Offset = currentPage * pageSize,
-                MinDuration = subscription.MinDurationMinutes.HasValue ? subscription.MinDurationMinutes * 60 : null,
-                MaxDuration = subscription.MaxDurationMinutes.HasValue ? subscription.MaxDurationMinutes * 60 : null
+                MinDuration = subscription.MinDurationMinutes * 60,
+                MaxDuration = subscription.MaxDurationMinutes * 60
             };
 
             QueryResultDto result;
