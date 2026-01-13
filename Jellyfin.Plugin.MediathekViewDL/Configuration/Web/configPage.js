@@ -1106,8 +1106,8 @@ class MediathekPluginConfig {
             // Handle IsEnabled default true if undefined
             if (sub.IsEnabled === undefined) sub.IsEnabled = true;
 
-            const equeriesSummary = (sub.Criteria || []).map(function (q) {
-                return q.query;
+            const queriesSummary = (sub.Criteria || []).map(function (q) {
+                return q.Query;
             }).join(', ');
             const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
 
@@ -1181,10 +1181,10 @@ class MediathekPluginConfig {
 
     addQueryRow(query) {
         if (query == null) {
-            query = {query: '', fields: ['Title', 'Topic']};
+            query = {Query: '', Fields: ['Title', 'Topic']};
         }
-        const queryText = query ? query.query : '';
-        const fields = query ? query.fields : ['Title', 'Topic'];
+        const queryText = query ? query.Query : '';
+        const fields = query ? query.Fields : ['Title', 'Topic'];
 
         const input = this.dom.create('input', {
             type: 'text',
@@ -1345,12 +1345,12 @@ class MediathekPluginConfig {
         this.currentItemForAdvancedDl = item;
         if (!this.currentItemForAdvancedDl) return;
 
-        document.getElementById('advancedDownloadTitle').innerText = 'Erweiterter Download: ' + this.currentItemForAdvancedDl.title;
+        document.getElementById('advancedDownloadTitle').innerText = 'Erweiterter Download: ' + this.currentItemForAdvancedDl.Title;
         document.getElementById('advancedDownloadIndex').value = ""; // Not needed anymore contextually but keeping element
 
         document.getElementById('advDlPath').value = this.currentConfig.DefaultDownloadPath || '';
 
-        let proposedFilename = (this.currentItemForAdvancedDl.topic || 'video') + " - " + (this.currentItemForAdvancedDl.title || 'video');
+        let proposedFilename = (this.currentItemForAdvancedDl.Topic || 'video') + " - " + (this.currentItemForAdvancedDl.Title || 'video');
         proposedFilename = proposedFilename.replace(/["\/\\?%*:|<>]/g, '-') + '.mp4';
         document.getElementById('advDlFilename').value = proposedFilename;
 
@@ -1411,7 +1411,7 @@ class MediathekPluginConfig {
         }).then((result) => {
             Dashboard.hideLoadingMsg();
             this.closeAdvancedDownloadDialog();
-            this.showToast("Download für '" + this.currentItemForAdvancedDl.title + "' gestartet.");
+            this.showToast("Download für '" + this.currentItemForAdvancedDl.Title + "' gestartet.");
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
             this.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
