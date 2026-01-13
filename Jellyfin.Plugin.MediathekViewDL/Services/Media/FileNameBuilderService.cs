@@ -231,7 +231,8 @@ public class FileNameBuilderService : IFileNameBuilderService
 
         if (!subscription.TreatNonEpisodesAsExtras && !videoInfo.IsShow)
         {
-            targetPath = Path.Combine(targetPath, videoInfo.Title);
+            var sanitizedTitle = SanitizeDirectoryName(videoInfo.Title);
+            targetPath = Path.Combine(targetPath, sanitizedTitle);
         }
 
         return targetPath;

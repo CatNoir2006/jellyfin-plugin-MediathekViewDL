@@ -107,6 +107,12 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool EnableStrmCleanup { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to fetch the stream size for search results.
+    /// This requires an additional HTTP request per result and may slow down the search.
+    /// </summary>
+    public bool FetchStreamSizes { get; set; }
+
+    /// <summary>
     /// Gets the list of download subscriptions.
     /// </summary>
     public Collection<Subscription> Subscriptions { get; init; }

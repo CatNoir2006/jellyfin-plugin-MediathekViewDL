@@ -7,7 +7,10 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Api.Converters;
 using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
 using Microsoft.Extensions.Logging;
@@ -23,7 +26,9 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api.External;
 /// </summary>
 public class MediathekViewApiClient : IMediathekViewApiClient
 {
-    private const string ApiUrl = "https://mediathekviewweb.de/api/query";
+    private const string BaseApiUrl = "https://mediathekviewweb.de/api";
+    private const string SearchEndpoint = BaseApiUrl + "/query";
+    private const string StreamSizeEndpoint = BaseApiUrl + "/content-length?url=";
     private readonly HttpClient _httpClient;
     private readonly ILogger<MediathekViewApiClient> _logger;
     private readonly IConfigurationProvider _configurationProvider;
@@ -64,7 +69,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A collection of result items.</returns>
     /// <exception cref="MediathekException">Thrown when an error occurs while calling the API.</exception>
-    public async Task<Collection<ResultItem>> SearchAsync(
+    public async Task<IReadOnlyCollection<ResultItemDto>> SearchAsync(
         string? title,
         string? topic,
         string? channel,
@@ -73,46 +78,52 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         int? maxDuration,
         CancellationToken cancellationToken)
     {
-        var apiQuery = new ApiQuery
+        var apiQuery = new ApiQueryDto
         {
             Size = 50, // Get a decent number of results
             MinDuration = minDuration,
             MaxDuration = maxDuration,
-            Queries = new Collection<QueryFields>()
         };
 
         var titles = SplitAndClean(title);
         foreach (var titleItem in titles)
         {
-            apiQuery.Queries.Add(new QueryFields { Query = titleItem, Fields = ["title"] });
+            var query = new QueryFieldsDto { Query = titleItem };
+            query.Fields.Add(QueryFieldType.Title);
+            apiQuery.Queries.Add(query);
         }
 
         var topics = SplitAndClean(topic);
         foreach (var topicItem in topics)
         {
-            apiQuery.Queries.Add(new QueryFields { Query = topicItem, Fields = ["topic"] });
+            var query = new QueryFieldsDto { Query = topicItem };
+            query.Fields.Add(QueryFieldType.Topic);
+            apiQuery.Queries.Add(query);
         }
 
         var channels = SplitAndClean(channel);
         foreach (var channelItem in channels)
         {
-            apiQuery.Queries.Add(new QueryFields { Query = channelItem, Fields = ["channel"] });
+            var query = new QueryFieldsDto { Query = channelItem };
+            query.Fields.Add(QueryFieldType.Channel);
+            apiQuery.Queries.Add(query);
         }
 
         if (!string.IsNullOrWhiteSpace(combinedSearch))
         {
-            var fields = new Collection<string> { "title", "topic" };
-
             var combinedQueries = SplitAndClean(combinedSearch);
             foreach (var combinedQueryItem in combinedQueries)
             {
-                apiQuery.Queries.Add(new QueryFields { Query = combinedQueryItem, Fields = fields });
+                var query = new QueryFieldsDto { Query = combinedQueryItem };
+                query.Fields.Add(QueryFieldType.Title);
+                query.Fields.Add(QueryFieldType.Topic);
+                apiQuery.Queries.Add(query);
             }
         }
 
         if (apiQuery.Queries.Count == 0)
         {
-            return new Collection<ResultItem>();
+            return new List<ResultItemDto>();
         }
 
         var res = await SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
@@ -132,22 +143,23 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     /// <summary>
     /// Searches for media on the MediathekViewWeb API using a specified query.
     /// </summary>
-    /// <param name="apiQuery">The api query.</param>
+    /// <param name="apiQueryDto">The api query.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An API result.</returns>
     /// <exception cref="MediathekException">Thrown when an error occurs while calling the API.</exception>
-    public async Task<ResultChannels> SearchAsync(
-        ApiQuery apiQuery,
+    public async Task<QueryResultDto> SearchAsync(
+        ApiQueryDto apiQueryDto,
         CancellationToken cancellationToken)
     {
         try
         {
+            var apiQuery = apiQueryDto.ToModel();
             var json = JsonSerializer.Serialize(apiQuery);
             _logger.LogDebug("Performing API search with payload: {Json}", json);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _resiliencePolicy.ExecuteAsync(
-                async ct => await _httpClient.PostAsync(ApiUrl, content, ct).ConfigureAwait(false),
+                async ct => await _httpClient.PostAsync(SearchEndpoint, content, ct).ConfigureAwait(false),
                 cancellationToken).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
@@ -166,7 +178,81 @@ public class MediathekViewApiClient : IMediathekViewApiClient
 
             _logger.LogInformation("API search returned {Count} results", apiResult.Result.Results.Count);
             ChannelUrlHttpsUpgrade(apiResult.Result);
-            return apiResult.Result;
+
+            var dto = apiResult.Result.ToDto();
+
+            if (_configurationProvider.ConfigurationOrNull?.FetchStreamSizes == true)
+            {
+                var newResults = new List<ResultItemDto>();
+                foreach (var item in dto.Results)
+                {
+                    var videoUrlTasks = item.VideoUrls.Select(async v =>
+                    {
+                        try
+                        {
+                            var size = await GetStreamSizeAsync(v.Url, cancellationToken).ConfigureAwait(false);
+                            return v with { Size = size };
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to retrieve size for video URL: {Url}", v.Url);
+                            return v;
+                        }
+                    });
+
+                    var newVideoUrls = await Task.WhenAll(videoUrlTasks).ConfigureAwait(false);
+                    newResults.Add(item with { VideoUrls = newVideoUrls.ToList() });
+                }
+
+                return dto with { Results = newResults };
+            }
+
+            return dto;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "A network error occurred while calling the MediathekViewWeb API");
+            throw new MediathekConnectionException("A network error occurred while calling the MediathekViewWeb API", ex);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "A parsing error occurred while deserializing the MediathekViewWeb API response");
+            throw new MediathekParsingException("A parsing error occurred while deserializing the MediathekViewWeb API response", ex);
+        }
+        catch (Exception ex) when (ex is not MediathekException)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while calling the MediathekViewWeb API");
+            throw new MediathekApiException("An unexpected error occurred while calling the MediathekViewWeb API", ex);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<long> GetStreamSizeAsync(string streamUrl, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogDebug("Retrieving stream size for URL: {StreamUrl}", streamUrl);
+            var url = StreamSizeEndpoint + Uri.EscapeDataString(streamUrl);
+
+            var response = await _resiliencePolicy.ExecuteAsync(
+                async ct => await _httpClient.GetAsync(url, ct).ConfigureAwait(false),
+                cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("API request failed with status code {StatusCode}", response.StatusCode);
+                throw new MediathekApiException($"API request failed with status code {response.StatusCode}", response.StatusCode);
+            }
+
+            var responseStream = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+            if (!long.TryParse(responseStream, out var fileSize))
+            {
+                _logger.LogError("Failed to parse stream size from response: {Response}", responseStream);
+                throw new MediathekParsingException("Failed to parse stream size from API response.");
+            }
+
+            return fileSize;
         }
         catch (HttpRequestException ex)
         {

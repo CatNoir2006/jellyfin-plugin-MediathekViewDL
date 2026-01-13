@@ -246,6 +246,14 @@
                             <div class="fieldDescription">Überprüft regelmäßig (via geplanten Task) alle erstellten .strm Dateien auf Gültigkeit der Links. Wenn ein Link nicht mehr erreichbar ist (z.B. 404), wird die Datei gelöscht, damit ggf. eine aktualisierte Version heruntergeladen werden kann. Beachtet die Einstellung "Downloads von unbekannten Domains erlauben".</div>
                         </div>
 
+                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                            <label class="emby-checkbox-label">
+                                <input id="chkFetchStreamSizes" type="checkbox" is="emby-checkbox"/>
+                                <span>Größe des Streams abrufen</span>
+                            </label>
+                            <div class="fieldDescription">Wenn aktiviert, wird die Größe der Video-Dateien bei der Suche abgerufen. Dies verlangsamt die Suche erheblich, da für jedes Ergebnis eine zusätzliche Anfrage gesendet werden muss.</div>
+                        </div>
+
                         <div class="inputContainer">
                             <label class="inputLabel" for="txtMinFreeDiskSpaceMiB">Mindestfreier Speicherplatz
                                 (MiB)</label>

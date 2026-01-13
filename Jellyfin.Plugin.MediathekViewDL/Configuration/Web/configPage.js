@@ -122,6 +122,24 @@ class StringHelper {
     static isNullOrWhitespace(input) {
         return !input || !input.trim?.();
     }
+
+    /**
+     * Parses a .NET TimeSpan string (e.g., "01:30:00" or "1.01:30:00") into seconds.
+     * @param {string} ts - The TimeSpan string or seconds as number.
+     * @returns {number} Seconds.
+     */
+    static parseTimeSpan(ts) {
+        if (!ts) return 0;
+        if (typeof ts === 'number') return ts;
+        // Handle .NET TimeSpan format
+        const match = ts.match(/(?:(\d+)\.)?(\d+):(\d+):(\d+)/);
+        if (!match) return 0;
+        const days = parseInt(match[1] || 0, 10);
+        const hours = parseInt(match[2], 10);
+        const minutes = parseInt(match[3], 10);
+        const seconds = parseInt(match[4], 10);
+        return days * 86400 + hours * 3600 + minutes * 60 + seconds;
+    }
 }
 
 /**
@@ -198,6 +216,7 @@ class SearchController {
         const paperList = document.createElement('div');
         paperList.classList.add('paperList');
 
+        this.config.debugLog("Suchergebnisse: ", this.currentSearchResults);
         this.currentSearchResults.forEach((item, index) => {
             paperList.appendChild(this.createSearchResultItem(item, index));
         });
@@ -205,12 +224,16 @@ class SearchController {
     }
 
     createSearchResultItem(item, index) {
-        const durationStr = Math.max(1, Math.floor(item.duration / 60)) + " min"; // Each Video should show up with at least 1 min.
+        const durationSeconds = StringHelper.parseTimeSpan(item.Duration);
+        const durationStr = Math.max(1, Math.floor(durationSeconds / 60)) + " min"; // Each Video should show up with at least 1 min.
         const actions = document.createElement('div');
         actions.classList.add('flex-gap-10');
 
         actions.appendChild(this.dom.createIconButton('play_arrow', 'Video abspielen.', () => {
-            const videoUrl = item.url_video_hd || item.urlVideoHd || item.url_video || item.urlVideo || item.url_video_low || item.urlVideoLow;
+            const videoUrls = item.VideoUrls;
+            // Sort by quality descending and get the first one
+            const bestVideo = [...videoUrls].sort((a, b) => (b.Quality || 0) - (a.Quality || 0))[0];
+            const videoUrl = bestVideo ? bestVideo.Url : null;
             if (videoUrl) {
                 window.open(videoUrl, '_blank');
             } else {
@@ -218,12 +241,12 @@ class SearchController {
             }
         }))
         actions.appendChild(this.dom.createIconButton('search', 'Video über DuckDuckGo suchen', () => {
-            const queryString = item.topic + ' ' + item.title;
+            const queryString = item.Topic + ' ' + item.Title;
             window.MediathekViewDL.config.openDuckDuckGoSearch(queryString);
         }));
         actions.appendChild(this.dom.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
         actions.appendChild(this.dom.createIconButton('settings', 'Erweiterter Download', () => this.config.openAdvancedDownloadDialog(this.currentSearchResults[index])));
-        actions.appendChild(this.dom.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.title, item.channel, item.topic)));
+        actions.appendChild(this.dom.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.Title, item.Channel, item.Topic)));
 
 
         // Build BodyText1
@@ -231,10 +254,11 @@ class SearchController {
         body1.classList.add('flex-align-center');
         body1.style.gap = '8px';
         const textSpan = document.createElement('span');
-        textSpan.textContent = item.channel + ' | ' + item.topic + ' | ' + durationStr;
+        textSpan.textContent = item.Channel + ' | ' + item.Topic + ' | ' + durationStr;
         body1.appendChild(textSpan);
 
-        if (item.url_subtitle) {
+        const subtitleUrls = item.SubtitleUrls || [];
+        if (subtitleUrls.length > 0) {
             const sep = document.createElement('span');
             sep.textContent = ' | ';
             body1.appendChild(sep);
@@ -244,9 +268,9 @@ class SearchController {
             body1.appendChild(icon);
         }
 
-        const bodyText2 = item.description || '';
+        const bodyText2 = item.Description || '';
 
-        return this.config.createListItem(item.title, body1, bodyText2, actions);
+        return this.config.createListItem(item.Title, body1, bodyText2, actions);
     }
 
     downloadItem(index) {
@@ -265,7 +289,7 @@ class SearchController {
         }).then((result) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            this.config.showToast("Download für '" + item.title + "' in Warteschlange.");
+            this.config.showToast("Download für '" + item.Title + "' in Warteschlange.");
         }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
@@ -278,10 +302,10 @@ class SearchController {
         const newSub = {
             Id: null,
             Name: topic,
-            Queries: [
-                {fields: ["title"], query: title},
-                {fields: ["channel"], query: channel},
-                {fields: ["topic"], query: topic}
+            Criteria: [
+                {Fields: ["Title"], Query: title},
+                {Fields: ["Channel"], Query: channel},
+                {Fields: ["Topic"], Query: topic}
             ],
             MinDurationMinutes: null,
             MaxDurationMinutes: null,
@@ -679,9 +703,10 @@ class SubscriptionEditor {
 
         const queriesContainer = document.getElementById('queriesContainer');
         queriesContainer.textContent = '';
-        if (sub.Queries && sub.Queries.length > 0) {
-            sub.Queries.forEach((q) => {
-                this.config.addQueryRow(q);
+        const criteria = sub.Criteria || [];
+        if (criteria.length > 0) {
+            criteria.forEach((c) => {
+                this.config.addQueryRow(c);
             });
         } else {
             this.config.addQueryRow(null);
@@ -716,7 +741,7 @@ class SubscriptionEditor {
         const allowFallbackToLowerQuality = document.getElementById('subAllowFallbackToLowerQuality').checked;
         const qualityCheckWithUrl = document.getElementById('subQualityCheckWithUrl').checked;
 
-        const queries = [];
+        const criteria = [];
         document.querySelectorAll('#queriesContainer .mvpl-query-row').forEach(function (row) {
             const queryText = row.querySelector('.subQueryText').value;
             if (queryText) {
@@ -724,7 +749,7 @@ class SubscriptionEditor {
                 row.querySelectorAll('.subQueryField:checked').forEach(function (fieldCheckbox) {
                     fields.push(fieldCheckbox.value);
                 });
-                queries.push({query: queryText, fields: fields});
+                criteria.push({Query: queryText, Fields: fields});
             }
         });
 
@@ -732,7 +757,7 @@ class SubscriptionEditor {
             Id: id,
             Name: name,
             OriginalLanguage: originalLanguage,
-            Queries: queries,
+            Criteria: criteria,
             MinDurationMinutes: minDuration ? parseInt(minDuration, 10) : null,
             MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
             DownloadPath: path,
@@ -790,6 +815,7 @@ class SubscriptionEditor {
  */
 class MediathekPluginConfig {
     constructor() {
+        this.debug = false;
         this.pluginId = "a31b415a-5264-419d-b152-8c8192a54994";
         this.pluginName = "MediathekViewDL";
         this.dom = new DomHelper();
@@ -802,6 +828,11 @@ class MediathekPluginConfig {
     }
 
     // --- Helper Functions ---
+    debugLog(message, ...optionalParams) {
+        if (this.debug) {
+            console.log("[MediathekViewDL DEBUG] " + message, ...optionalParams);
+        }
+    }
 
     confirmationPopup(message, title, resultCallback) {
         // noinspection JSUnresolvedReference
@@ -962,6 +993,7 @@ class MediathekPluginConfig {
             document.querySelector('#chkScanLibraryAfterDownload').checked = config.ScanLibraryAfterDownload;
             document.querySelector('#chkEnableDirectAudioExtraction').checked = config.EnableDirectAudioExtraction;
             document.querySelector('#chkEnableStrmCleanup').checked = config.EnableStrmCleanup;
+            document.querySelector('#chkFetchStreamSizes').checked = config.FetchStreamSizes;
             document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked = config.AllowDownloadOnUnknownDiskSpace;
             document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
             document.querySelector('#txtMaxBandwidthMBits').value = config.MaxBandwidthMBits || 0;
@@ -1075,8 +1107,8 @@ class MediathekPluginConfig {
             // Handle IsEnabled default true if undefined
             if (sub.IsEnabled === undefined) sub.IsEnabled = true;
 
-            const queriesSummary = (sub.Queries || []).map(function (q) {
-                return q.query;
+            const queriesSummary = (sub.Criteria || []).map(function (q) {
+                return q.Query;
             }).join(', ');
             const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
 
@@ -1150,10 +1182,10 @@ class MediathekPluginConfig {
 
     addQueryRow(query) {
         if (query == null) {
-            query = {query: '', fields: ['title', 'topic']};
+            query = {Query: '', Fields: ['Title', 'Topic']};
         }
-        const queryText = query ? query.query : '';
-        const fields = query ? query.fields : ['title', 'topic'];
+        const queryText = query ? query.Query : '';
+        const fields = query ? query.Fields : ['Title', 'Topic'];
 
         const input = this.dom.create('input', {
             type: 'text',
@@ -1166,16 +1198,20 @@ class MediathekPluginConfig {
             }
         });
 
-        const cbTitle = this.dom.createCheckbox('Titel', fields.includes('title'), {
-            value: 'title',
+        const cbTitle = this.dom.createCheckbox('Titel', fields.includes('Title'), {
+            value: 'Title',
             className: 'subQueryField'
         });
-        const cbTopic = this.dom.createCheckbox('Thema', fields.includes('topic'), {
-            value: 'topic',
+        const cbTopic = this.dom.createCheckbox('Thema', fields.includes('Topic'), {
+            value: 'Topic',
             className: 'subQueryField'
         });
-        const cbChannel = this.dom.createCheckbox('Sender', fields.includes('channel'), {
-            value: 'channel',
+        const cbDescription = this.dom.createCheckbox('Beschreibung', fields.includes('Description'), {
+            value: 'Description',
+            className: 'subQueryField'
+        });
+        const cbChannel = this.dom.createCheckbox('Sender', fields.includes('Channel'), {
+            value: 'Channel',
             className: 'subQueryField'
         });
 
@@ -1190,7 +1226,7 @@ class MediathekPluginConfig {
                 this.dom.create('div', {className: 'flex-grow', children: [input]}),
                 this.dom.create('div', {
                     className: 'query-checkboxes',
-                    children: [cbTitle, cbTopic, cbChannel]
+                    children: [cbTitle, cbTopic, cbDescription, cbChannel]
                 }),
                 removeBtn
             ]
@@ -1202,7 +1238,7 @@ class MediathekPluginConfig {
     saveSubscription() {
         const subData = this.subscriptionEditor.getEditorValues();
 
-        if (subData.Queries.length === 0) {
+        if (subData.Criteria.length === 0) {
             this.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
@@ -1310,12 +1346,12 @@ class MediathekPluginConfig {
         this.currentItemForAdvancedDl = item;
         if (!this.currentItemForAdvancedDl) return;
 
-        document.getElementById('advancedDownloadTitle').innerText = 'Erweiterter Download: ' + this.currentItemForAdvancedDl.title;
+        document.getElementById('advancedDownloadTitle').innerText = 'Erweiterter Download: ' + this.currentItemForAdvancedDl.Title;
         document.getElementById('advancedDownloadIndex').value = ""; // Not needed anymore contextually but keeping element
 
         document.getElementById('advDlPath').value = this.currentConfig.DefaultDownloadPath || '';
 
-        let proposedFilename = (this.currentItemForAdvancedDl.topic || 'video') + " - " + (this.currentItemForAdvancedDl.title || 'video');
+        let proposedFilename = (this.currentItemForAdvancedDl.Topic || 'video') + " - " + (this.currentItemForAdvancedDl.Title || 'video');
         proposedFilename = proposedFilename.replace(/["\/\\?%*:|<>]/g, '-') + '.mp4';
         document.getElementById('advDlFilename').value = proposedFilename;
 
@@ -1337,7 +1373,8 @@ class MediathekPluginConfig {
 
         let advDlSub = document.getElementById('advDlSubtitles');
         let advDlSubDesc = document.getElementById('advDlSubtitlesDesc');
-        if (!this.currentItemForAdvancedDl.url_subtitle) {
+        const subtitleUrls = this.currentItemForAdvancedDl.SubtitleUrls || [];
+        if (subtitleUrls.length === 0) {
             advDlSub.checked = false;
             advDlSub.disabled = true;
             advDlSubDesc.textContent = "Keine Untertitel verfügbar für dieses Video.";
@@ -1375,7 +1412,7 @@ class MediathekPluginConfig {
         }).then((result) => {
             Dashboard.hideLoadingMsg();
             this.closeAdvancedDownloadDialog();
-            this.showToast("Download für '" + this.currentItemForAdvancedDl.title + "' gestartet.");
+            this.showToast("Download für '" + this.currentItemForAdvancedDl.Title + "' gestartet.");
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
             this.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
@@ -1384,7 +1421,7 @@ class MediathekPluginConfig {
 
     testSubscription() {
         const subData = this.subscriptionEditor.getEditorValues();
-        if (subData.Queries.length === 0) {
+        if (subData.Criteria.length === 0) {
             this.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
@@ -1444,10 +1481,11 @@ class MediathekPluginConfig {
         paperList.classList.add('paperList');
 
         results.forEach((item) => {
-            const durationStr = Math.floor(item.duration / 60) + " Min";
-            const title = item.title;
-            const bodyText1 = item.channel + ' | ' + item.topic + ' | ' + durationStr;
-            const bodyText2 = item.description || '';
+            const durationSeconds = StringHelper.parseTimeSpan(item.Duration);
+            const durationStr = Math.floor(durationSeconds / 60) + " Min";
+            const title = item.Title;
+            const bodyText1 = item.Channel + ' | ' + item.Topic + ' | ' + durationStr;
+            const bodyText2 = item.Description || '';
 
             paperList.appendChild(this.createListItem(title, bodyText1, bodyText2, null));
         });
@@ -1484,6 +1522,7 @@ class MediathekPluginConfig {
             this.currentConfig.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
             this.currentConfig.EnableDirectAudioExtraction = document.querySelector('#chkEnableDirectAudioExtraction').checked;
             this.currentConfig.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
+            this.currentConfig.FetchStreamSizes = document.querySelector('#chkFetchStreamSizes').checked;
             this.currentConfig.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
             const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
             this.currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
@@ -1582,12 +1621,12 @@ class MediathekPluginConfig {
         });
 
         document.getElementById('mvpl-btn-duckduckgo-tmdb').addEventListener('click', () => {
-            const query = this.currentItemForAdvancedDl.topic + ' ' + this.currentItemForAdvancedDl.title;
+            const query = this.currentItemForAdvancedDl.Topic + ' ' + this.currentItemForAdvancedDl.Title;
             this.openDuckDuckGoSearch(query, 'themoviedb.org', true);
         });
 
         document.getElementById('mvpl-btn-duckduckgo').addEventListener('click', () => {
-            const query = this.currentItemForAdvancedDl.topic + ' ' + this.currentItemForAdvancedDl.title;
+            const query = this.currentItemForAdvancedDl.Topic + ' ' + this.currentItemForAdvancedDl.Title;
             this.openDuckDuckGoSearch(query, 'themoviedb.org');
         });
     }

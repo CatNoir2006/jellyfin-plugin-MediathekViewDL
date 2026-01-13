@@ -1,59 +1,50 @@
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Text.Json.Serialization;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
 
-namespace Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
+namespace Jellyfin.Plugin.MediathekViewDL.Api.Models;
 
 /// <summary>
-/// Defines the request body for the MediathekViewWeb API.
+/// Defines the DTO for the MediathekViewWeb API query.
 /// </summary>
-public class ApiQuery
+public record ApiQueryDto
 {
     /// <summary>
     /// Gets the list of queries to filter the search.
     /// </summary>
-    [JsonPropertyName("queries")]
-    public Collection<QueryFields> Queries { get; init; } = new();
+    public Collection<QueryFieldsDto> Queries { get; init; } = new();
 
     /// <summary>
-    /// Gets or sets the field to sort by. Possible values: "timestamp", "duration", "channel".
+    /// Gets or sets the field to sort by.
     /// </summary>
-    [JsonPropertyName("sortBy")]
-    public string SortBy { get; set; } = "timestamp";
+    public SortBy SortBy { get; set; } = SortBy.Timestamp;
 
     /// <summary>
-    /// Gets or sets the sort order. Possible values: "asc", "desc".
+    /// Gets or sets the sort order.
     /// </summary>
-    [JsonPropertyName("sortOrder")]
-    public string SortOrder { get; set; } = "desc";
+    public SortOrder SortOrder { get; set; } = SortOrder.Desc;
 
     /// <summary>
     /// Gets or sets a value indicating whether to include future broadcasts.
     /// </summary>
-    [JsonPropertyName("future")]
     public bool Future { get; set; }
 
     /// <summary>
     /// Gets or sets the offset for pagination.
     /// </summary>
-    [JsonPropertyName("offset")]
     public int Offset { get; set; }
 
     /// <summary>
     /// Gets or sets the number of results to return.
     /// </summary>
-    [JsonPropertyName("size")]
     public int Size { get; set; } = 25;
 
     /// <summary>
     /// Gets or sets the minimum duration in seconds for search results.
     /// </summary>
-    [JsonPropertyName("duration_min")]
     public int? MinDuration { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum duration in seconds for search results.
     /// </summary>
-    [JsonPropertyName("duration_max")]
     public int? MaxDuration { get; set; }
 }

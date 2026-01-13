@@ -1,5 +1,3 @@
-using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
-
 namespace Jellyfin.Plugin.MediathekViewDL.Api.Models
 {
     /// <summary>
@@ -10,7 +8,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api.Models
         /// <summary>
         /// Gets the item to download.
         /// </summary>
-        public required ResultItem Item { get; init; }
+        public required ResultItemDto Item { get; init; }
 
         /// <summary>
         /// Gets the download path.

@@ -7,7 +7,8 @@ using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api.External;
-using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
@@ -179,9 +180,16 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             jobs.Add(downloadJob);
 
             // Subtitle Job
-            if (downloadSubtitles && !string.IsNullOrWhiteSpace(item.UrlSubtitle))
+            var subtitleUrl = item.SubtitleUrls.OrderByDescending(x => x.Type).FirstOrDefault();
+            if (downloadSubtitles && !string.IsNullOrWhiteSpace(subtitleUrl?.Url))
             {
-                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = item.UrlSubtitle, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
+                // Some subtitles are WEBVTT, change extension accordingly
+                if (subtitleUrl.Type == SubtitleType.WEBVTT)
+                {
+                    paths.SubtitleFilePath = Path.ChangeExtension(paths.SubtitleFilePath, ".vtt");
+                }
+
+                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = subtitleUrl.Url, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
             }
 
             if (subscription.CreateNfo)
@@ -198,8 +206,8 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                     Id = item.Id,
                     FilePath = paths.NfoFilePath,
                     Studio = item.Channel,
-                    RunTime = TimeSpan.FromSeconds(item.Duration),
-                    AirDate = DateTimeOffset.FromUnixTimeSeconds(item.Timestamp).DateTime,
+                    RunTime = item.Duration,
+                    AirDate = item.Timestamp.DateTime,
                     Set = string.Empty
                 };
             }
@@ -209,7 +217,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     }
 
     /// <inheritdoc/>
-    public async IAsyncEnumerable<ResultItem> TestSubscriptionAsync(
+    public async IAsyncEnumerable<ResultItemDto> TestSubscriptionAsync(
         Subscription subscription,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
@@ -240,9 +248,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 description = string.Concat(description.AsSpan(0, 100), "...");
             }
 
-            item.Description = $"Pfad: {paths.MainFilePath} | {description}";
-
-            yield return item;
+            yield return item with { Description = $"Pfad: {paths.MainFilePath} | {description}" };
         }
     }
 
@@ -250,7 +256,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// Applies filtering rules to determine if the item should be processed.
     /// </summary>
     /// <returns>True if the item passes all filters; otherwise, false.</returns>
-    private async Task<bool> MatchesSubCriteriaAsync([NotNullWhen(true)] VideoInfo? tempVideoInfo, Subscription subscription, ResultItem item, LocalEpisodeCache? localEpisodeCache)
+    private async Task<bool> MatchesSubCriteriaAsync([NotNullWhen(true)] VideoInfo? tempVideoInfo, Subscription subscription, ResultItemDto item, LocalEpisodeCache? localEpisodeCache)
     {
         if (tempVideoInfo == null)
         {
@@ -485,20 +491,23 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="subscription">The subscription.</param>
     /// <param name="cancellationToken">The cancellationToken.</param>
     /// <returns>The best URL candidate, or null if none found.</returns>
-    private async Task<string?> GetUrlCandidate(ResultItem item, Subscription subscription, CancellationToken cancellationToken = default)
+    private async Task<string?> GetUrlCandidate(ResultItemDto item, Subscription subscription, CancellationToken cancellationToken = default)
     {
+        // Quality: 3=HD, 2=Std, 1=Low
+        var hdUrl = item.VideoUrls.FirstOrDefault(v => v.Quality == 3)?.Url;
+
         // If no fallback is allowed, return HD URL if available
         if (!subscription.AllowFallbackToLowerQuality)
         {
-            return string.IsNullOrWhiteSpace(item.UrlVideoHd) ? null : item.UrlVideoHd;
+            return hdUrl;
         }
 
-        List<string?> candidateUrls = [item.UrlVideoHd, item.UrlVideo, item.UrlVideoLow];
+        List<string> candidateUrls = item.VideoUrls.OrderByDescending(s => s.Quality).Select(s => s.Url).ToList();
 
-        // If no url availability check is required, return the first non-empty URL
+        // If no url availability check is required, return the first URL
         if (!subscription.QualityCheckWithUrl)
         {
-            return candidateUrls.FirstOrDefault(u => !string.IsNullOrWhiteSpace(u));
+            return candidateUrls.Count > 0 ? candidateUrls[0] : null;
         }
 
         string? candidateUrl = null;
@@ -544,23 +553,23 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="maxPages">The maximum number of pages to retrieve.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The collection of result items retrieved from the API.</returns>
-    private async IAsyncEnumerable<ResultItem> QueryApiAsync(Subscription subscription, int pageSize = 50, int maxPages = 20, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    private async IAsyncEnumerable<ResultItemDto> QueryApiAsync(Subscription subscription, int pageSize = 50, int maxPages = 20, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var currentPage = 0;
         var hasMoreResults = true;
 
         while (hasMoreResults && currentPage < maxPages)
         {
-            var apiQuery = new ApiQuery
+            var apiQuery = new ApiQueryDto
             {
-                Queries = subscription.Queries,
+                Queries = subscription.Criteria,
                 Size = pageSize,
                 Offset = currentPage * pageSize,
-                MinDuration = subscription.MinDurationMinutes.HasValue ? subscription.MinDurationMinutes * 60 : null,
-                MaxDuration = subscription.MaxDurationMinutes.HasValue ? subscription.MaxDurationMinutes * 60 : null
+                MinDuration = subscription.MinDurationMinutes * 60,
+                MaxDuration = subscription.MaxDurationMinutes * 60
             };
 
-            ResultChannels result;
+            QueryResultDto result;
             try
             {
                 result = await _apiClient.SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
