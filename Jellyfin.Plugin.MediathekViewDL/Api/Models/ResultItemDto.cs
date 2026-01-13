@@ -73,6 +73,7 @@ public record ResultItemDto
     {
         int GetSortNumber(SubtitleType type)
         {
+            // WebVTT is preferred as its better supported, then TTML, then others.
             return type switch
             {
                 SubtitleType.WEBVTT => 1,

@@ -180,10 +180,16 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             jobs.Add(downloadJob);
 
             // Subtitle Job
-            var subtitleUrl = item.SubtitleUrls.OrderByDescending(x => x.Type).FirstOrDefault()?.Url;
-            if (downloadSubtitles && !string.IsNullOrWhiteSpace(subtitleUrl))
+            var subtitleUrl = item.SubtitleUrls.OrderByDescending(x => x.Type).FirstOrDefault();
+            if (downloadSubtitles && !string.IsNullOrWhiteSpace(subtitleUrl?.Url))
             {
-                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = subtitleUrl, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
+                // Some subtitles are WEBVTT, change extension accordingly
+                if (subtitleUrl.Type == SubtitleType.WEBVTT)
+                {
+                    paths.SubtitleFilePath = Path.ChangeExtension(paths.SubtitleFilePath, ".vtt");
+                }
+
+                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = subtitleUrl.Url, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
             }
 
             if (subscription.CreateNfo)
