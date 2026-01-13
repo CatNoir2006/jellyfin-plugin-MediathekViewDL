@@ -246,7 +246,7 @@ class SearchController {
         }));
         actions.appendChild(this.dom.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
         actions.appendChild(this.dom.createIconButton('settings', 'Erweiterter Download', () => this.config.openAdvancedDownloadDialog(this.currentSearchResults[index])));
-        actions.appendChild(this.dom.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.Title, item.channel, item.Topic)));
+        actions.appendChild(this.dom.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.Title, item.Channel, item.Topic)));
 
 
         // Build BodyText1
@@ -302,10 +302,10 @@ class SearchController {
         const newSub = {
             Id: null,
             Name: topic,
-            Criteria: [
-                {Fields: "Title", Query: title},
-                {Fields: "Channel", Query: channel},
-                {Fields: "Topic", Query: topic}
+            Queries: [
+                {Fields: ["Title"], Query: title},
+                {Fields: ["Channel"], Query: channel},
+                {Fields: ["Topic"], Query: topic}
             ],
             MinDurationMinutes: null,
             MaxDurationMinutes: null,
@@ -1106,9 +1106,8 @@ class MediathekPluginConfig {
             // Handle IsEnabled default true if undefined
             if (sub.IsEnabled === undefined) sub.IsEnabled = true;
 
-            const criteria = sub.Criteria || [];
-            const queriesSummary = criteria.map(function (c) {
-                return c.Query || c.query;
+            const queriesSummary = (sub.Queries || []).map(function (q) {
+                return q.query;
             }).join(', ');
             const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
 
@@ -1180,20 +1179,12 @@ class MediathekPluginConfig {
         });
     }
 
-    addQueryRow(criteriaItem) {
-        if (criteriaItem == null) {
-            criteriaItem = { Query: '', Fields: 'Title, Topic' };
+    addQueryRow(query) {
+        if (query == null) {
+            query = {query: '', fields: ['Title', 'Topic']};
         }
-        const queryText = criteriaItem.Query || criteriaItem.query || '';
-        let fields = criteriaItem.Fields || criteriaItem.fields || '';
-
-        // Ensure fields is an array of lowercase strings for easy checking
-        let fieldList = [];
-        if (Array.isArray(fields)) {
-            fieldList = fields.map(f => f.toLowerCase());
-        } else if (typeof fields === 'string') {
-            fieldList = fields.split(',').map(f => f.trim().toLowerCase());
-        }
+        const queryText = query ? query.query : '';
+        const fields = query ? query.fields : ['Title', 'Topic'];
 
         const input = this.dom.create('input', {
             type: 'text',
@@ -1206,19 +1197,19 @@ class MediathekPluginConfig {
             }
         });
 
-        const cbTitle = this.dom.createCheckbox('Titel', fieldList.includes('title'), {
+        const cbTitle = this.dom.createCheckbox('Titel', fields.includes('Title'), {
             value: 'Title',
             className: 'subQueryField'
         });
-        const cbTopic = this.dom.createCheckbox('Thema', fieldList.includes('topic'), {
+        const cbTopic = this.dom.createCheckbox('Thema', fields.includes('Topic'), {
             value: 'Topic',
             className: 'subQueryField'
         });
-        const cbDescription = this.dom.createCheckbox('Beschreibung', fieldList.includes('description'), {
+        const cbDescription = this.dom.createCheckbox('Beschreibung', fields.includes('Description'), {
             value: 'Description',
             className: 'subQueryField'
         });
-        const cbChannel = this.dom.createCheckbox('Sender', fieldList.includes('channel'), {
+        const cbChannel = this.dom.createCheckbox('Sender', fields.includes('Channel'), {
             value: 'Channel',
             className: 'subQueryField'
         });
@@ -1246,7 +1237,7 @@ class MediathekPluginConfig {
     saveSubscription() {
         const subData = this.subscriptionEditor.getEditorValues();
 
-        if (subData.Criteria.length === 0) {
+        if (subData.Queries.length === 0) {
             this.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
@@ -1381,7 +1372,7 @@ class MediathekPluginConfig {
 
         let advDlSub = document.getElementById('advDlSubtitles');
         let advDlSubDesc = document.getElementById('advDlSubtitlesDesc');
-        const subtitleUrls = this.currentItemForAdvancedDl.subtitleUrls || this.currentItemForAdvancedDl.SubtitleUrls || [];
+        const subtitleUrls = this.currentItemForAdvancedDl.SubtitleUrls || [];
         if (subtitleUrls.length === 0) {
             advDlSub.checked = false;
             advDlSub.disabled = true;
@@ -1429,7 +1420,7 @@ class MediathekPluginConfig {
 
     testSubscription() {
         const subData = this.subscriptionEditor.getEditorValues();
-        if (subData.Criteria.length === 0) {
+        if (subData.Queries.length === 0) {
             this.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
