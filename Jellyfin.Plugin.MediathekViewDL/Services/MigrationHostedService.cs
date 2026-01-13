@@ -78,12 +78,16 @@ public class MigrationHostedService : IHostedService
                     }
 
                     if (newCriteria.Fields.Count == 0)
-                    {
-                        // No valid fields, skip this query, this should not happen though (hoppfully).
-                        // But to be safe, we disable the subscription to avoid unexpected behavior.
-                        subscription.IsEnabled = false;
-                        continue;
-                    }
+					if (newCriteria.Fields.Count == 0)
+					{
+						_logger.LogWarning(
+							"Subscription '{SubscriptionName}' (ID: {SubscriptionId}) has a query with no valid fields after migration. Disabling subscription to prevent unexpected behavior. Query: '{QueryText}'",
+							subscription.Name,
+							subscription.Id,
+							oldQuery.Query);
+						subscription.IsEnabled = false;
+						continue;
+					}
 
                     subscription.Criteria.Add(newCriteria);
                 }
