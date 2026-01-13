@@ -26,7 +26,9 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api.External;
 /// </summary>
 public class MediathekViewApiClient : IMediathekViewApiClient
 {
-    private const string ApiUrl = "https://mediathekviewweb.de/api/query";
+    private const string BaseApiUrl = "https://mediathekviewweb.de/api";
+    private const string SearchEndpoint = BaseApiUrl + "/query";
+    private const string StreamSizeEndpoint = BaseApiUrl + "/content-length?url=";
     private readonly HttpClient _httpClient;
     private readonly ILogger<MediathekViewApiClient> _logger;
     private readonly IConfigurationProvider _configurationProvider;
@@ -157,7 +159,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             var response = await _resiliencePolicy.ExecuteAsync(
-                async ct => await _httpClient.PostAsync(ApiUrl, content, ct).ConfigureAwait(false),
+                async ct => await _httpClient.PostAsync(SearchEndpoint, content, ct).ConfigureAwait(false),
                 cancellationToken).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
@@ -176,7 +178,81 @@ public class MediathekViewApiClient : IMediathekViewApiClient
 
             _logger.LogInformation("API search returned {Count} results", apiResult.Result.Results.Count);
             ChannelUrlHttpsUpgrade(apiResult.Result);
-            return apiResult.Result.ToDto();
+
+            var dto = apiResult.Result.ToDto();
+
+            if (_configurationProvider.ConfigurationOrNull?.FetchStreamSizes == true)
+            {
+                var newResults = new List<ResultItemDto>();
+                foreach (var item in dto.Results)
+                {
+                    var videoUrlTasks = item.VideoUrls.Select(async v =>
+                    {
+                        try
+                        {
+                            var size = await GetStreamSizeAsync(v.Url, cancellationToken).ConfigureAwait(false);
+                            return v with { Size = size };
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to retrieve size for video URL: {Url}", v.Url);
+                            return v;
+                        }
+                    });
+
+                    var newVideoUrls = await Task.WhenAll(videoUrlTasks).ConfigureAwait(false);
+                    newResults.Add(item with { VideoUrls = newVideoUrls.ToList() });
+                }
+
+                return dto with { Results = newResults };
+            }
+
+            return dto;
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "A network error occurred while calling the MediathekViewWeb API");
+            throw new MediathekConnectionException("A network error occurred while calling the MediathekViewWeb API", ex);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "A parsing error occurred while deserializing the MediathekViewWeb API response");
+            throw new MediathekParsingException("A parsing error occurred while deserializing the MediathekViewWeb API response", ex);
+        }
+        catch (Exception ex) when (ex is not MediathekException)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while calling the MediathekViewWeb API");
+            throw new MediathekApiException("An unexpected error occurred while calling the MediathekViewWeb API", ex);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<long> GetStreamSizeAsync(string streamUrl, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogDebug("Retrieving stream size for URL: {StreamUrl}", streamUrl);
+            var url = StreamSizeEndpoint + Uri.EscapeDataString(streamUrl);
+
+            var response = await _resiliencePolicy.ExecuteAsync(
+                async ct => await _httpClient.GetAsync(url, ct).ConfigureAwait(false),
+                cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("API request failed with status code {StatusCode}", response.StatusCode);
+                throw new MediathekApiException($"API request failed with status code {response.StatusCode}", response.StatusCode);
+            }
+
+            var responseStream = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+            if (!long.TryParse(responseStream, out var fileSize))
+            {
+                _logger.LogError("Failed to parse stream size from response: {Response}", responseStream);
+                throw new MediathekParsingException("Failed to parse stream size from API response.");
+            }
+
+            return fileSize;
         }
         catch (HttpRequestException ex)
         {

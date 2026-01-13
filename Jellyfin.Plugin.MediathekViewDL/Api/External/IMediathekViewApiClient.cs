@@ -39,4 +39,12 @@ public interface IMediathekViewApiClient
     /// <returns>An API result.</returns>
     /// <exception cref="Exceptions.ExternalApi.MediathekException">Thrown when an error occurs while calling the API.</exception>
     Task<QueryResultDto> SearchAsync(ApiQueryDto apiQueryDto, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Gets the size of a media stream from a given URL.
+    /// </summary>
+    /// <param name="streamUrl">The Url to get size of.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The fileSize of the MediaItem in Bytes.</returns>
+    Task<long> GetStreamSizeAsync(string streamUrl, CancellationToken cancellationToken);
 }

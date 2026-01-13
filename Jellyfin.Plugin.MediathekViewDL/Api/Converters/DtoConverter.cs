@@ -125,7 +125,7 @@ public static class DtoConverter
             {
                 Url = resultItem.UrlVideo,
                 Quality = 2, // Standard
-                Size = resultItem.Size, // Assume main size applies here roughly, or unknown
+                Size = null, // Assume main size applies here roughly, or unknown
                 Language = null
             });
         }
