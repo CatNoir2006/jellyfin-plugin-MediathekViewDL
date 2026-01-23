@@ -130,6 +130,16 @@ public class Subscription
     public int? MaxDurationMinutes { get; set; }
 
     /// <summary>
+    /// Gets or sets the minimum broadcast date for search results.
+    /// </summary>
+    public DateTimeOffset? MinBroadcastDate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum broadcast date for search results.
+    /// </summary>
+    public DateTimeOffset? MaxBroadcastDate { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether to use streaming URL files (.strm) instead of downloading the actual video files.
     /// </summary>
     public bool UseStreamingUrlFiles { get; set; }

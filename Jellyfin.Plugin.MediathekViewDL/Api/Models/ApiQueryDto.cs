@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
 
@@ -47,4 +48,14 @@ public record ApiQueryDto
     /// Gets or sets the maximum duration in seconds for search results.
     /// </summary>
     public int? MaxDuration { get; set; }
+
+    /// <summary>
+    /// Gets or sets the minimum broadcast date for search results.
+    /// </summary>
+    public DateTimeOffset? MinBroadcastDate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum broadcast date for search results.
+    /// </summary>
+    public DateTimeOffset? MaxBroadcastDate { get; set; }
 }

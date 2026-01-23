@@ -567,7 +567,9 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 Size = pageSize,
                 Offset = currentPage * pageSize,
                 MinDuration = subscription.MinDurationMinutes * 60,
-                MaxDuration = subscription.MaxDurationMinutes * 60
+                MaxDuration = subscription.MaxDurationMinutes * 60,
+                MinBroadcastDate = subscription.MinBroadcastDate,
+                MaxBroadcastDate = subscription.MaxBroadcastDate,
             };
 
             QueryResultDto result;
