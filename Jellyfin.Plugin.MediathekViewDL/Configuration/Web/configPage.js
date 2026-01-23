@@ -167,6 +167,8 @@ class SearchController {
         const combinedSearch = document.getElementById('txtSearchCombined').value;
         const minD = document.getElementById('numMinDuration').value;
         const maxD = document.getElementById('numMaxDuration').value;
+        const minDate = document.getElementById('dateMinBroadcast').value;
+        const maxDate = document.getElementById('dateMaxBroadcast').value;
 
         if (!title && !topic && !channel && !combinedSearch) {
             this.config.showToast("Bitte Suchbegriff eingeben");
@@ -184,6 +186,8 @@ class SearchController {
         if (combinedSearch) params.push('combinedSearch=' + encodeURIComponent(combinedSearch));
         if (minD) params.push('minDuration=' + (parseInt(minD) * 60));
         if (maxD) params.push('maxDuration=' + (parseInt(maxD) * 60));
+        if (minDate) params.push('minBroadcastDate=' + encodeURIComponent(new Date(minDate).toISOString()));
+        if (maxDate) params.push('maxBroadcastDate=' + encodeURIComponent(new Date(maxDate).toISOString()));
 
         if (params.length > 0) {
             url += '?' + params.join('&');
@@ -648,6 +652,8 @@ class SubscriptionEditor {
             document.getElementById('subOriginalLanguage').value = "";
             document.getElementById('subMinDuration').value = "";
             document.getElementById('subMaxDuration').value = "";
+            document.getElementById('subMinBroadcastDate').value = "";
+            document.getElementById('subMaxBroadcastDate').value = "";
             document.getElementById('subPath').value = "";
             this.updateSubPathHoverText();
 
@@ -681,6 +687,8 @@ class SubscriptionEditor {
         document.getElementById('subOriginalLanguage').value = sub.OriginalLanguage || "";
         document.getElementById('subMinDuration').value = sub.MinDurationMinutes || "";
         document.getElementById('subMaxDuration').value = sub.MaxDurationMinutes || "";
+        document.getElementById('subMinBroadcastDate').value = sub.MinBroadcastDate ? sub.MinBroadcastDate.split('T')[0] : "";
+        document.getElementById('subMaxBroadcastDate').value = sub.MaxBroadcastDate ? sub.MaxBroadcastDate.split('T')[0] : "";
         document.getElementById('subPath').value = sub.DownloadPath || "";
         this.updateSubPathHoverText();
         document.getElementById('subEnforceSeries').checked = sub.EnforceSeriesParsing;
@@ -723,6 +731,8 @@ class SubscriptionEditor {
         const originalLanguage = document.getElementById('subOriginalLanguage').value;
         const minDuration = document.getElementById('subMinDuration').value;
         const maxDuration = document.getElementById('subMaxDuration').value;
+        const minBroadcastDate = document.getElementById('subMinBroadcastDate').value;
+        const maxBroadcastDate = document.getElementById('subMaxBroadcastDate').value;
         const path = document.getElementById('subPath').value;
         const enforce = document.getElementById('subEnforceSeries').checked;
         const createNfo = document.getElementById('subCreateNfo').checked;
@@ -760,6 +770,8 @@ class SubscriptionEditor {
             Criteria: criteria,
             MinDurationMinutes: minDuration ? parseInt(minDuration, 10) : null,
             MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
+            MinBroadcastDate: minBroadcastDate ? new Date(minBroadcastDate).toISOString() : null,
+            MaxBroadcastDate: maxBroadcastDate ? new Date(maxBroadcastDate).toISOString() : null,
             DownloadPath: path,
             EnforceSeriesParsing: enforce,
             CreateNfo: createNfo,

@@ -66,6 +66,14 @@
                                 <label class="inputLabel" for="numMaxDuration">Max. Dauer (Min)</label>
                                 <input is="emby-input" type="number" id="numMaxDuration" placeholder="Optional"/>
                             </div>
+                            <div class="inputContainer mvpl-input-short">
+                                <label class="inputLabel" for="dateMinBroadcast">Min. Datum</label>
+                                <input is="emby-input" type="date" id="dateMinBroadcast" />
+                            </div>
+                            <div class="inputContainer mvpl-input-short">
+                                <label class="inputLabel" for="dateMaxBroadcast">Max. Datum</label>
+                                <input is="emby-input" type="date" id="dateMaxBroadcast" />
+                            </div>
                             <div class="inputContainer">
                                 <button is="emby-button" type="submit" class="raised button-submit block">
                                     <span>Suchen</span>
@@ -348,6 +356,17 @@
                             <div class="inputContainer flex-grow">
                                 <label class="inputLabel" for="subMaxDuration">Max. Dauer (Minuten)</label>
                                 <input is="emby-input" type="number" id="subMaxDuration"/>
+                            </div>
+                        </div>
+
+                        <div class="mvpl-duration-inputs-row">
+                            <div class="inputContainer flex-grow">
+                                <label class="inputLabel" for="subMinBroadcastDate">Min. Sendedatum</label>
+                                <input is="emby-input" type="date" id="subMinBroadcastDate"/>
+                            </div>
+                            <div class="inputContainer flex-grow">
+                                <label class="inputLabel" for="subMaxBroadcastDate">Max. Sendedatum</label>
+                                <input is="emby-input" type="date" id="subMaxBroadcastDate"/>
                             </div>
                         </div>
 
