@@ -52,11 +52,7 @@ public static class DtoConverter
             fields.Add(field.ToString().ToLowerInvariant());
         }
 
-        return new QueryFields
-        {
-            Query = dto.Query,
-            Fields = fields
-        };
+        return new QueryFields { Query = dto.Query, Fields = fields };
     }
 
     /// <summary>
@@ -101,8 +97,9 @@ public static class DtoConverter
     /// Converts a <see cref="ResultItem"/> to a <see cref="ResultItemDto"/>.
     /// </summary>
     /// <param name="resultItem">The result item to convert.</param>
+    /// <param name="upgradeToHttps">If http should be upgraded to https.</param>
     /// <returns>The converted DTO.</returns>
-    public static ResultItemDto ToDto(this ResultItem resultItem)
+    public static ResultItemDto ToDto(this ResultItem resultItem, bool upgradeToHttps)
     {
         ArgumentNullException.ThrowIfNull(resultItem);
 
@@ -110,9 +107,10 @@ public static class DtoConverter
 
         if (!string.IsNullOrEmpty(resultItem.UrlVideoLow))
         {
+            var videoUrl = resultItem.UrlVideoLow;
             videoUrls.Add(new VideoUrlDto
             {
-                Url = resultItem.UrlVideoLow,
+                Url = upgradeToHttps ? UrlHttpsUpgrade(videoUrl) : videoUrl,
                 Quality = 1, // Low
                 Size = null, // Individual size unknown
                 Language = null
@@ -121,9 +119,10 @@ public static class DtoConverter
 
         if (!string.IsNullOrEmpty(resultItem.UrlVideo))
         {
+            var videoUrl = resultItem.UrlVideo;
             videoUrls.Add(new VideoUrlDto
             {
-                Url = resultItem.UrlVideo,
+                Url = upgradeToHttps ? UrlHttpsUpgrade(videoUrl) : videoUrl,
                 Quality = 2, // Standard
                 Size = null, // Assume main size applies here roughly, or unknown
                 Language = null
@@ -132,9 +131,10 @@ public static class DtoConverter
 
         if (!string.IsNullOrEmpty(resultItem.UrlVideoHd))
         {
+            var videoUrl = resultItem.UrlVideoHd;
             videoUrls.Add(new VideoUrlDto
             {
-                Url = resultItem.UrlVideoHd,
+                Url = upgradeToHttps ? UrlHttpsUpgrade(videoUrl) : videoUrl,
                 Quality = 3, // HD
                 Size = null,
                 Language = null
@@ -146,9 +146,7 @@ public static class DtoConverter
         {
             subtitleUrls.Add(new SubtitleUrlDto
             {
-                Url = resultItem.UrlSubtitle,
-                Type = DetermineSubtitleType(resultItem.UrlSubtitle),
-                Language = null // Unknown language
+                Url = resultItem.UrlSubtitle, Type = DetermineSubtitleType(resultItem.UrlSubtitle), Language = null // Unknown language
             });
         }
 
@@ -172,22 +170,33 @@ public static class DtoConverter
     /// Converts a <see cref="ResultChannels"/> to a <see cref="QueryResultDto"/>.
     /// </summary>
     /// <param name="resultChannels">The result channels object.</param>
+    /// <param name="apiQueryDto">The API Query.</param>
+    /// <param name="upgradeToHttps">If upgrade to https should be performed.</param>
     /// <returns>The converted DTO.</returns>
-    public static QueryResultDto ToDto(this ResultChannels resultChannels)
+    public static QueryResultDto ToDto(this ResultChannels resultChannels, ApiQueryDto apiQueryDto, bool upgradeToHttps)
     {
         ArgumentNullException.ThrowIfNull(resultChannels);
 
         var itemDtos = new List<ResultItemDto>();
         if (resultChannels.Results != null)
         {
-            itemDtos.AddRange(resultChannels.Results.Select(ToDto));
+            itemDtos.AddRange(resultChannels.Results.Select(r => r.ToDto(upgradeToHttps)).Where(r =>
+            {
+                if (apiQueryDto.MinBroadcastDate.HasValue && r.Timestamp < apiQueryDto.MinBroadcastDate.Value)
+                {
+                    return false;
+                }
+
+                if (apiQueryDto.MaxBroadcastDate.HasValue && r.Timestamp > apiQueryDto.MaxBroadcastDate.Value)
+                {
+                    return false;
+                }
+
+                return true;
+            }));
         }
 
-        return new QueryResultDto
-        {
-            QueryInfo = resultChannels.QueryInfo.ToDto(),
-            Results = itemDtos
-        };
+        return new QueryResultDto { QueryInfo = resultChannels.QueryInfo.ToDto(), Results = itemDtos };
     }
 
     private static SubtitleType DetermineSubtitleType(string url)
@@ -221,5 +230,16 @@ public static class DtoConverter
         }
 
         return SubtitleType.Unknown;
+    }
+
+    private static string UrlHttpsUpgrade(string uri)
+    {
+        if (Uri.TryCreate(uri, UriKind.Absolute, out var uriRes) && uriRes.Scheme == Uri.UriSchemeHttp)
+        {
+            var builder = new UriBuilder(uriRes) { Scheme = Uri.UriSchemeHttps };
+            return builder.ToString();
+        }
+
+        return uri;
     }
 }

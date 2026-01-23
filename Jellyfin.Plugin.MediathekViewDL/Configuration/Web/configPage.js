@@ -167,6 +167,8 @@ class SearchController {
         const combinedSearch = document.getElementById('txtSearchCombined').value;
         const minD = document.getElementById('numMinDuration').value;
         const maxD = document.getElementById('numMaxDuration').value;
+        const minDate = document.getElementById('dateMinBroadcast').value;
+        const maxDate = document.getElementById('dateMaxBroadcast').value;
 
         if (!title && !topic && !channel && !combinedSearch) {
             this.config.showToast("Bitte Suchbegriff eingeben");
@@ -184,6 +186,12 @@ class SearchController {
         if (combinedSearch) params.push('combinedSearch=' + encodeURIComponent(combinedSearch));
         if (minD) params.push('minDuration=' + (parseInt(minD) * 60));
         if (maxD) params.push('maxDuration=' + (parseInt(maxD) * 60));
+        if (minDate) params.push('minBroadcastDate=' + encodeURIComponent(new Date(minDate).toISOString()));
+        if (maxDate) {
+            const d = new Date(maxDate);
+            d.setHours(23, 59, 59, 999);
+            params.push('maxBroadcastDate=' + encodeURIComponent(d.toISOString()));
+        }
 
         if (params.length > 0) {
             url += '?' + params.join('&');
@@ -542,6 +550,12 @@ class DependencyManager {
                 dependentId: 'subQualityCheckWithUrlContainer',
                 showWhen: true,
                 disableWhenHidden: true
+            },
+            {
+                controllerId: 'subAppendDateToTitle',
+                dependentId: 'subAppendTimeToTitleContainer',
+                showWhen: true,
+                disableWhenHidden: true
             }
         ];
     }
@@ -648,6 +662,8 @@ class SubscriptionEditor {
             document.getElementById('subOriginalLanguage').value = "";
             document.getElementById('subMinDuration').value = "";
             document.getElementById('subMaxDuration').value = "";
+            document.getElementById('subMinBroadcastDate').value = "";
+            document.getElementById('subMaxBroadcastDate').value = "";
             document.getElementById('subPath').value = "";
             this.updateSubPathHoverText();
 
@@ -655,6 +671,8 @@ class SubscriptionEditor {
             document.getElementById('subCreateNfo').checked = false;
             document.getElementById('subAllowAudioDesc').checked = false;
             document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = false;
+            document.getElementById('subAppendDateToTitle').checked = false;
+            document.getElementById('subAppendTimeToTitle').checked = false;
             document.getElementById('subAllowSignLanguage').checked = false;
             document.getElementById('subTreatNonEpisodesAsExtras').checked = false;
             document.getElementById('subSaveTrailers').checked = true;
@@ -681,12 +699,16 @@ class SubscriptionEditor {
         document.getElementById('subOriginalLanguage').value = sub.OriginalLanguage || "";
         document.getElementById('subMinDuration').value = sub.MinDurationMinutes || "";
         document.getElementById('subMaxDuration').value = sub.MaxDurationMinutes || "";
+        document.getElementById('subMinBroadcastDate').value = sub.MinBroadcastDate ? sub.MinBroadcastDate.split('T')[0] : "";
+        document.getElementById('subMaxBroadcastDate').value = sub.MaxBroadcastDate ? sub.MaxBroadcastDate.split('T')[0] : "";
         document.getElementById('subPath').value = sub.DownloadPath || "";
         this.updateSubPathHoverText();
         document.getElementById('subEnforceSeries').checked = sub.EnforceSeriesParsing;
         document.getElementById('subCreateNfo').checked = sub.CreateNfo !== undefined ? sub.CreateNfo : false;
         document.getElementById('subAllowAudioDesc').checked = sub.AllowAudioDescription;
         document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = sub.AllowAbsoluteEpisodeNumbering;
+        document.getElementById('subAppendDateToTitle').checked = sub.AppendDateToTitle !== undefined ? sub.AppendDateToTitle : false;
+        document.getElementById('subAppendTimeToTitle').checked = sub.AppendTimeToTitle !== undefined ? sub.AppendTimeToTitle : false;
         document.getElementById('subAllowSignLanguage').checked = sub.AllowSignLanguage;
         document.getElementById('subEnhancedDuplicateDetection').checked = sub.EnhancedDuplicateDetection;
         document.getElementById('subAutoUpgradeToHigherQuality').checked = sub.AutoUpgradeToHigherQuality !== undefined ? sub.AutoUpgradeToHigherQuality : false;
@@ -723,11 +745,15 @@ class SubscriptionEditor {
         const originalLanguage = document.getElementById('subOriginalLanguage').value;
         const minDuration = document.getElementById('subMinDuration').value;
         const maxDuration = document.getElementById('subMaxDuration').value;
+        const minBroadcastDate = document.getElementById('subMinBroadcastDate').value;
+        const maxBroadcastDate = document.getElementById('subMaxBroadcastDate').value;
         const path = document.getElementById('subPath').value;
         const enforce = document.getElementById('subEnforceSeries').checked;
         const createNfo = document.getElementById('subCreateNfo').checked;
         const allowAudio = document.getElementById('subAllowAudioDesc').checked;
         const allowAbsolute = document.getElementById('subAllowAbsoluteEpisodeNumbering').checked;
+        const appendDateToTitle = document.getElementById('subAppendDateToTitle').checked;
+        const appendTimeToTitle = document.getElementById('subAppendTimeToTitle').checked;
         const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
         const enhancedDuplicateDetection = document.getElementById('subEnhancedDuplicateDetection').checked;
         const autoUpgradeToHigherQuality = document.getElementById('subAutoUpgradeToHigherQuality').checked;
@@ -760,11 +786,19 @@ class SubscriptionEditor {
             Criteria: criteria,
             MinDurationMinutes: minDuration ? parseInt(minDuration, 10) : null,
             MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
+            MinBroadcastDate: minBroadcastDate ? new Date(minBroadcastDate).toISOString() : null,
+            MaxBroadcastDate: maxBroadcastDate ? (() => {
+                const d = new Date(maxBroadcastDate);
+                d.setHours(23, 59, 59, 999);
+                return d.toISOString();
+            })() : null,
             DownloadPath: path,
             EnforceSeriesParsing: enforce,
             CreateNfo: createNfo,
             AllowAudioDescription: allowAudio,
             AllowAbsoluteEpisodeNumbering: allowAbsolute,
+            AppendDateToTitle: appendDateToTitle,
+            AppendTimeToTitle: appendTimeToTitle,
             AllowSignLanguage: allowSignLanguage,
             EnhancedDuplicateDetection: enhancedDuplicateDetection,
             AutoUpgradeToHigherQuality: autoUpgradeToHigherQuality,

@@ -66,6 +66,14 @@
                                 <label class="inputLabel" for="numMaxDuration">Max. Dauer (Min)</label>
                                 <input is="emby-input" type="number" id="numMaxDuration" placeholder="Optional"/>
                             </div>
+                            <div class="inputContainer mvpl-input-short">
+                                <label class="inputLabel" for="dateMinBroadcast">Min. Datum</label>
+                                <input is="emby-input" type="date" id="dateMinBroadcast" />
+                            </div>
+                            <div class="inputContainer mvpl-input-short">
+                                <label class="inputLabel" for="dateMaxBroadcast">Max. Datum</label>
+                                <input is="emby-input" type="date" id="dateMaxBroadcast" />
+                            </div>
                             <div class="inputContainer">
                                 <button is="emby-button" type="submit" class="raised button-submit block">
                                     <span>Suchen</span>
@@ -351,6 +359,17 @@
                             </div>
                         </div>
 
+                        <div class="mvpl-duration-inputs-row">
+                            <div class="inputContainer flex-grow">
+                                <label class="inputLabel" for="subMinBroadcastDate">Min. Sendedatum</label>
+                                <input is="emby-input" type="date" id="subMinBroadcastDate"/>
+                            </div>
+                            <div class="inputContainer flex-grow">
+                                <label class="inputLabel" for="subMaxBroadcastDate">Max. Sendedatum</label>
+                                <input is="emby-input" type="date" id="subMaxBroadcastDate"/>
+                            </div>
+                        </div>
+
                                 <div class="inputContainer">
                                     <div class="flex-align-center">
                                         <div class="flex-grow">
@@ -386,6 +405,24 @@
                                 nur berücksichtigt, wenn "Nur Videos herunterladen, die als Serie erkannt werden"
                                 aktiviert ist.
                             </div>
+                        </div>
+
+                        <!-- Append Date to Title Checkbox -->
+                        <div class="checkboxContainer checkboxContainer-withDescription">
+                            <label class="emby-checkbox-label">
+                                <input id="subAppendDateToTitle" type="checkbox" is="emby-checkbox"/>
+                                <span>Datum an Titel anhängen</span>
+                            </label>
+                            <div class="fieldDescription">Hängt das Sendedatum an den Titel an (z.B. "Titel - 2026-01-01") und erzwingt die Erkennung als Serie. Nützlich für Sendungen wie "Tagesschau in 100 Sekunden", die kein Release-Datum im Titel haben.</div>
+                        </div>
+
+                        <!-- Append Time to Title Checkbox -->
+                        <div id="subAppendTimeToTitleContainer" class="checkboxContainer checkboxContainer-withDescription mvpl-indented-block">
+                            <label class="emby-checkbox-label">
+                                <input id="subAppendTimeToTitle" type="checkbox" is="emby-checkbox"/>
+                                <span>Uhrzeit an Titel anhängen</span>
+                            </label>
+                            <div class="fieldDescription">Hängt die Uhrzeit an den Titel an (z.B. "Titel - 2026-01-01 20-00").</div>
                         </div>
 
                         <!-- Create NFO Checkbox -->

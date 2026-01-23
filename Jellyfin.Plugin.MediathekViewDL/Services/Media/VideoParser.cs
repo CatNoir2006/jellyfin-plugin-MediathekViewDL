@@ -24,6 +24,7 @@ public class VideoParser : IVideoParser
     private readonly List<Regex> _seasonEpisodePatterns;
     private readonly List<Regex> _absoluteNumberingPatterns;
     private readonly List<Regex> _seasonOnlyPatterns;
+    private readonly Regex _dateRegex;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="VideoParser"/> class.
@@ -56,6 +57,12 @@ public class VideoParser : IVideoParser
         // Compile regex for Interview
         _interviewRegex = new Regex(
             @"\b(Interview)\b",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled,
+            TimeSpan.FromSeconds(1));
+
+        // Compile regex for Date (DD.MM.YYYY or D.M.YY)
+        _dateRegex = new Regex(
+            @"\b\d{1,2}\.\d{1,2}\.\d{2,4}\b",
             RegexOptions.IgnoreCase | RegexOptions.Compiled,
             TimeSpan.FromSeconds(1));
 
@@ -205,6 +212,15 @@ public class VideoParser : IVideoParser
             }
         }
 
+        // 9. Date Detection
+        if (!videoInfo.IsShow)
+        {
+            if (_dateRegex.IsMatch(processedMediaTitle))
+            {
+                videoInfo.IsShow = true;
+            }
+        }
+
         // Final title cleanup (topic removal, general cleanup)
         // Try to remove common series names/prefixes that might still be in the title
         if (!string.IsNullOrWhiteSpace(topic))
@@ -220,8 +236,12 @@ public class VideoParser : IVideoParser
         // General cleanup for episode title
         // Remove "u.a. " prefix
         processedMediaTitle = Regex.Replace(processedMediaTitle, @"^u\.a\.\s*", string.Empty, RegexOptions.IgnoreCase).Trim();
-        // Remove date patterns like "· 13.06.13 |"
-        processedMediaTitle = Regex.Replace(processedMediaTitle, @"\s*[\·\|\-]\s*\d{2}\.\d{2}\.\d{2,4}\s*[\·\|\-]?\s*", " ", RegexOptions.IgnoreCase).Trim();
+        // Remove date patterns like "· 13.06.13 |" only if we have other numbering
+        if (videoInfo.HasSeasonEpisodeNumbering || videoInfo.HasAbsoluteNumbering)
+        {
+            processedMediaTitle = Regex.Replace(processedMediaTitle, @"\s*[\·\|\-]\s*\d{2}\.\d{2}\.\d{2,4}\s*[\·\|\-]?\s*", " ", RegexOptions.IgnoreCase).Trim();
+        }
+
         // Remove "Folge NNN: " prefix for normal numbering and similar prefixes
         processedMediaTitle = Regex.Replace(processedMediaTitle, @"^(?:Folge\s*\d+:\s*)", string.Empty, RegexOptions.IgnoreCase).Trim();
         // Less aggressive period/underscore replacement

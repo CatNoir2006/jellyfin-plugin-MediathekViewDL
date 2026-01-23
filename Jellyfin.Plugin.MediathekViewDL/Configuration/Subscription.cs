@@ -130,6 +130,16 @@ public class Subscription
     public int? MaxDurationMinutes { get; set; }
 
     /// <summary>
+    /// Gets or sets the minimum broadcast date for search results.
+    /// </summary>
+    public DateTimeOffset? MinBroadcastDate { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum broadcast date for search results.
+    /// </summary>
+    public DateTimeOffset? MaxBroadcastDate { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether to use streaming URL files (.strm) instead of downloading the actual video files.
     /// </summary>
     public bool UseStreamingUrlFiles { get; set; }
@@ -152,6 +162,18 @@ public class Subscription
     /// This can slow down the Scan. Especially if thers a lot of unavailable videos.
     /// </summary>
     public bool QualityCheckWithUrl { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to append the broadcast date to the title.
+    /// Useful for shows that don't have unique titles or season/episode numbers.
+    /// </summary>
+    public bool AppendDateToTitle { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to append the broadcast time to the title.
+    /// Useful for shows that air multiple times a day (e.g. news).
+    /// </summary>
+    public bool AppendTimeToTitle { get; set; }
 
     /// <summary>
     /// Gets or sets the UTC timestamp of the last successful download for this subscription.

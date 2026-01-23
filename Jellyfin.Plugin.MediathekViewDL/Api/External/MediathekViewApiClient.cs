@@ -57,17 +57,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         _jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, };
     }
 
-    /// <summary>
-    /// Searches for media on the MediathekViewWeb API.
-    /// </summary>
-    /// <param name="title">The title query.</param>
-    /// <param name="topic">The topic filter.</param>
-    /// <param name="channel">The channel filter.</param>
-    /// <param name="combinedSearch">The combined search query (Title, Topic).</param>
-    /// <param name="minDuration">Optional minimum duration in seconds.</param>
-    /// <param name="maxDuration">Optional maximum duration in seconds.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A collection of result items.</returns>
+    /// <inheritdoc/>
     /// <exception cref="MediathekException">Thrown when an error occurs while calling the API.</exception>
     public async Task<IReadOnlyCollection<ResultItemDto>> SearchAsync(
         string? title,
@@ -76,15 +66,52 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         string? combinedSearch,
         int? minDuration,
         int? maxDuration,
+        DateTimeOffset? minBroadcastDate,
+        DateTimeOffset? maxBroadcastDate,
         CancellationToken cancellationToken)
     {
-        var apiQuery = new ApiQueryDto
-        {
-            Size = 50, // Get a decent number of results
-            MinDuration = minDuration,
-            MaxDuration = maxDuration,
-        };
+        var allResults = new List<ResultItemDto>();
+        const int pageSize = 50;
+        const int maxPages = 5;
+        var currentOffset = 0;
+        var page = 0;
 
+        while (allResults.Count < pageSize && page < maxPages)
+        {
+            var apiQuery = new ApiQueryDto
+            {
+                Size = pageSize,
+                Offset = currentOffset,
+                MinDuration = minDuration,
+                MaxDuration = maxDuration,
+                MinBroadcastDate = minBroadcastDate,
+                MaxBroadcastDate = maxBroadcastDate,
+            };
+
+            PopulateQueries(apiQuery, title, topic, channel, combinedSearch);
+
+            if (apiQuery.Queries.Count == 0)
+            {
+                return Array.Empty<ResultItemDto>();
+            }
+
+            var res = await SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
+            allResults.AddRange(res.Results);
+
+            if (currentOffset + pageSize >= res.QueryInfo.TotalResults)
+            {
+                break;
+            }
+
+            currentOffset += pageSize;
+            page++;
+        }
+
+        return allResults;
+    }
+
+    private void PopulateQueries(ApiQueryDto apiQuery, string? title, string? topic, string? channel, string? combinedSearch)
+    {
         var titles = SplitAndClean(title);
         foreach (var titleItem in titles)
         {
@@ -120,14 +147,6 @@ public class MediathekViewApiClient : IMediathekViewApiClient
                 apiQuery.Queries.Add(query);
             }
         }
-
-        if (apiQuery.Queries.Count == 0)
-        {
-            return new List<ResultItemDto>();
-        }
-
-        var res = await SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
-        return res.Results;
     }
 
     private static List<string> SplitAndClean(string? input)
@@ -177,9 +196,9 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             }
 
             _logger.LogInformation("API search returned {Count} results", apiResult.Result.Results.Count);
-            ChannelUrlHttpsUpgrade(apiResult.Result);
 
-            var dto = apiResult.Result.ToDto();
+            var upgradeToHttps = !(_configurationProvider.ConfigurationOrNull?.AllowHttp ?? false);
+            var dto = apiResult.Result.ToDto(apiQueryDto, upgradeToHttps);
 
             if (_configurationProvider.ConfigurationOrNull?.FetchStreamSizes == true)
             {
@@ -269,32 +288,5 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             _logger.LogError(ex, "An unexpected error occurred while calling the MediathekViewWeb API");
             throw new MediathekApiException("An unexpected error occurred while calling the MediathekViewWeb API", ex);
         }
-    }
-
-    private void ChannelUrlHttpsUpgrade(ResultChannels? channels)
-    {
-        if (channels?.Results == null || channels.Results.Count == 0 || _configurationProvider.ConfigurationOrNull?.AllowHttp == true)
-        {
-            return;
-        }
-
-        foreach (var channel in channels.Results)
-        {
-            channel.UrlSubtitle = UrlHttpsUpgrade(channel.UrlSubtitle);
-            channel.UrlVideo = UrlHttpsUpgrade(channel.UrlVideo);
-            channel.UrlVideoHd = UrlHttpsUpgrade(channel.UrlVideoHd);
-            channel.UrlVideoLow = UrlHttpsUpgrade(channel.UrlVideoLow);
-        }
-    }
-
-    private string UrlHttpsUpgrade(string uri)
-    {
-        if (Uri.TryCreate(uri, UriKind.Absolute, out var uriRes) && uriRes.Scheme == Uri.UriSchemeHttp)
-        {
-            var builder = new UriBuilder(uriRes) { Scheme = Uri.UriSchemeHttps };
-            return builder.ToString();
-        }
-
-        return uri;
     }
 }

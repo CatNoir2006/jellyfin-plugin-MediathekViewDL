@@ -154,6 +154,8 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="combinedSearch">The combined search query (Title, Topic).</param>
     /// <param name="minDuration">Optional minimum duration in seconds.</param>
     /// <param name="maxDuration">Optional maximum duration in seconds.</param>
+    /// <param name="minBroadcastDate">The minimum Date of the Item.</param>
+    /// <param name="maxBroadcastDate">The max Age of the Item. (e.g. In Future).</param>
     /// <returns>A list of search results.</returns>
     [HttpGet("Search")]
     public async Task<ActionResult<IEnumerable<ResultItemDto>>> Search(
@@ -162,7 +164,9 @@ public class MediathekViewDlApiService : ControllerBase
         [FromQuery] string? channel,
         [FromQuery] string? combinedSearch,
         [FromQuery] int? minDuration,
-        [FromQuery] int? maxDuration)
+        [FromQuery] int? maxDuration,
+        [FromQuery] DateTimeOffset? minBroadcastDate,
+        [FromQuery] DateTimeOffset? maxBroadcastDate)
     {
         if (string.IsNullOrWhiteSpace(title) &&
             string.IsNullOrWhiteSpace(topic) &&
@@ -174,7 +178,7 @@ public class MediathekViewDlApiService : ControllerBase
 
         try
         {
-            var results = await _apiClient.SearchAsync(title, topic, channel, combinedSearch, minDuration, maxDuration, CancellationToken.None).ConfigureAwait(false);
+            var results = await _apiClient.SearchAsync(title, topic, channel, combinedSearch, minDuration, maxDuration, minBroadcastDate, maxBroadcastDate, CancellationToken.None).ConfigureAwait(false);
             return Ok(results);
         }
         catch (MediathekConnectionException ex)
