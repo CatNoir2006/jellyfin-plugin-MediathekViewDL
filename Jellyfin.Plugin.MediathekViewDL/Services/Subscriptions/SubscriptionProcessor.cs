@@ -237,9 +237,10 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
 
             var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription, DownloadContext.Subscription);
+            string path = paths.MainFilePath;
             if (!paths.IsValid)
             {
-                continue;
+                path = "Warnung: Ungültiger Pfad";
             }
 
             var description = item.Description ?? string.Empty;
@@ -248,7 +249,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 description = string.Concat(description.AsSpan(0, 100), "...");
             }
 
-            yield return item with { Description = $"Pfad: {paths.MainFilePath} | {description}" };
+            yield return item with { Description = $"Pfad: {path} | {description}" };
         }
     }
 
