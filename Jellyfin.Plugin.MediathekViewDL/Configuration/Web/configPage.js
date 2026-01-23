@@ -187,7 +187,11 @@ class SearchController {
         if (minD) params.push('minDuration=' + (parseInt(minD) * 60));
         if (maxD) params.push('maxDuration=' + (parseInt(maxD) * 60));
         if (minDate) params.push('minBroadcastDate=' + encodeURIComponent(new Date(minDate).toISOString()));
-        if (maxDate) params.push('maxBroadcastDate=' + encodeURIComponent(new Date(maxDate).toISOString()));
+        if (maxDate) {
+            const d = new Date(maxDate);
+            d.setHours(23, 59, 59, 999);
+            params.push('maxBroadcastDate=' + encodeURIComponent(d.toISOString()));
+        }
 
         if (params.length > 0) {
             url += '?' + params.join('&');
@@ -771,7 +775,11 @@ class SubscriptionEditor {
             MinDurationMinutes: minDuration ? parseInt(minDuration, 10) : null,
             MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
             MinBroadcastDate: minBroadcastDate ? new Date(minBroadcastDate).toISOString() : null,
-            MaxBroadcastDate: maxBroadcastDate ? new Date(maxBroadcastDate).toISOString() : null,
+            MaxBroadcastDate: maxBroadcastDate ? (() => {
+                const d = new Date(maxBroadcastDate);
+                d.setHours(23, 59, 59, 999);
+                return d.toISOString();
+            })() : null,
             DownloadPath: path,
             EnforceSeriesParsing: enforce,
             CreateNfo: createNfo,
