@@ -70,15 +70,48 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         DateTimeOffset? maxBroadcastDate,
         CancellationToken cancellationToken)
     {
-        var apiQuery = new ApiQueryDto
-        {
-            Size = 50, // Get a decent number of results
-            MinDuration = minDuration,
-            MaxDuration = maxDuration,
-            MinBroadcastDate = minBroadcastDate,
-            MaxBroadcastDate = maxBroadcastDate,
-        };
+        var allResults = new List<ResultItemDto>();
+        const int pageSize = 50;
+        const int maxPages = 5;
+        var currentOffset = 0;
+        var page = 0;
 
+        while (allResults.Count < pageSize && page < maxPages)
+        {
+            var apiQuery = new ApiQueryDto
+            {
+                Size = pageSize,
+                Offset = currentOffset,
+                MinDuration = minDuration,
+                MaxDuration = maxDuration,
+                MinBroadcastDate = minBroadcastDate,
+                MaxBroadcastDate = maxBroadcastDate,
+            };
+
+            PopulateQueries(apiQuery, title, topic, channel, combinedSearch);
+
+            if (apiQuery.Queries.Count == 0)
+            {
+                return Array.Empty<ResultItemDto>();
+            }
+
+            var res = await SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
+            allResults.AddRange(res.Results);
+
+            if (currentOffset + pageSize >= res.QueryInfo.TotalResults)
+            {
+                break;
+            }
+
+            currentOffset += pageSize;
+            page++;
+        }
+
+        return allResults;
+    }
+
+    private void PopulateQueries(ApiQueryDto apiQuery, string? title, string? topic, string? channel, string? combinedSearch)
+    {
         var titles = SplitAndClean(title);
         foreach (var titleItem in titles)
         {
@@ -114,14 +147,6 @@ public class MediathekViewApiClient : IMediathekViewApiClient
                 apiQuery.Queries.Add(query);
             }
         }
-
-        if (apiQuery.Queries.Count == 0)
-        {
-            return new List<ResultItemDto>();
-        }
-
-        var res = await SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
-        return res.Results;
     }
 
     private static List<string> SplitAndClean(string? input)
