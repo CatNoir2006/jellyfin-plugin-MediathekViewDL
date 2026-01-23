@@ -164,6 +164,18 @@ public class Subscription
     public bool QualityCheckWithUrl { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to append the broadcast date to the title.
+    /// Useful for shows that don't have unique titles or season/episode numbers.
+    /// </summary>
+    public bool AppendDateToTitle { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to append the broadcast time to the title.
+    /// Useful for shows that air multiple times a day (e.g. news).
+    /// </summary>
+    public bool AppendTimeToTitle { get; set; }
+
+    /// <summary>
     /// Gets or sets the UTC timestamp of the last successful download for this subscription.
     /// This is purely for debugging and informational purposes.
     /// </summary>

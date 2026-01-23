@@ -107,9 +107,10 @@ public static class DtoConverter
 
         if (!string.IsNullOrEmpty(resultItem.UrlVideoLow))
         {
+            var videoUrl = resultItem.UrlVideoLow;
             videoUrls.Add(new VideoUrlDto
             {
-                Url = resultItem.UrlVideoLow,
+                Url = upgradeToHttps ? UrlHttpsUpgrade(videoUrl) : videoUrl,
                 Quality = 1, // Low
                 Size = null, // Individual size unknown
                 Language = null
@@ -118,9 +119,10 @@ public static class DtoConverter
 
         if (!string.IsNullOrEmpty(resultItem.UrlVideo))
         {
+            var videoUrl = resultItem.UrlVideo;
             videoUrls.Add(new VideoUrlDto
             {
-                Url = resultItem.UrlVideo,
+                Url = upgradeToHttps ? UrlHttpsUpgrade(videoUrl) : videoUrl,
                 Quality = 2, // Standard
                 Size = null, // Assume main size applies here roughly, or unknown
                 Language = null
@@ -129,9 +131,10 @@ public static class DtoConverter
 
         if (!string.IsNullOrEmpty(resultItem.UrlVideoHd))
         {
+            var videoUrl = resultItem.UrlVideoHd;
             videoUrls.Add(new VideoUrlDto
             {
-                Url = resultItem.UrlVideoHd,
+                Url = upgradeToHttps ? UrlHttpsUpgrade(videoUrl) : videoUrl,
                 Quality = 3, // HD
                 Size = null,
                 Language = null

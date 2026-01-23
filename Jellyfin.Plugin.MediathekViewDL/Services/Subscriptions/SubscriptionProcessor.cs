@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -98,6 +99,37 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
             SetOvLanguageIfSet(subscription, tempVideoInfo);
+
+            if (tempVideoInfo != null && (subscription.AppendDateToTitle || subscription.AppendTimeToTitle))
+            {
+                var suffixParts = new List<string>();
+
+                if (subscription.AppendDateToTitle)
+                {
+                    var dateStr = item.Timestamp.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                    if (!tempVideoInfo.Title.Contains(dateStr, StringComparison.OrdinalIgnoreCase))
+                    {
+                        suffixParts.Add(dateStr);
+                    }
+                }
+
+                if (subscription.AppendTimeToTitle)
+                {
+                    // using HH-mm because : is invalid in filenames
+                    var timeStr = item.Timestamp.ToString("HH-mm", CultureInfo.InvariantCulture);
+                    if (!tempVideoInfo.Title.Contains(timeStr, StringComparison.OrdinalIgnoreCase))
+                    {
+                        suffixParts.Add(timeStr);
+                    }
+                }
+
+                if (suffixParts.Count > 0)
+                {
+                    tempVideoInfo.Title = $"{tempVideoInfo.Title} - {string.Join(" ", suffixParts)}";
+                }
+
+                tempVideoInfo.IsShow = true;
+            }
 
             if (!await MatchesSubCriteriaAsync(tempVideoInfo, subscription, item, localEpisodeCache).ConfigureAwait(false))
             {
@@ -230,6 +262,37 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
 
             SetOvLanguageIfSet(subscription, tempVideoInfo);
+
+            if (tempVideoInfo != null && (subscription.AppendDateToTitle || subscription.AppendTimeToTitle))
+            {
+                var suffixParts = new List<string>();
+
+                if (subscription.AppendDateToTitle)
+                {
+                    var dateStr = item.Timestamp.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                    if (!tempVideoInfo.Title.Contains(dateStr, StringComparison.OrdinalIgnoreCase))
+                    {
+                        suffixParts.Add(dateStr);
+                    }
+                }
+
+                if (subscription.AppendTimeToTitle)
+                {
+                    // using HH-mm because : is invalid in filenames
+                    var timeStr = item.Timestamp.ToString("HH-mm", CultureInfo.InvariantCulture);
+                    if (!tempVideoInfo.Title.Contains(timeStr, StringComparison.OrdinalIgnoreCase))
+                    {
+                        suffixParts.Add(timeStr);
+                    }
+                }
+
+                if (suffixParts.Count > 0)
+                {
+                    tempVideoInfo.Title = $"{tempVideoInfo.Title} - {string.Join(" ", suffixParts)}";
+                }
+
+                tempVideoInfo.IsShow = true;
+            }
 
             if (!await MatchesSubCriteriaAsync(tempVideoInfo, subscription, item, null).ConfigureAwait(false))
             {

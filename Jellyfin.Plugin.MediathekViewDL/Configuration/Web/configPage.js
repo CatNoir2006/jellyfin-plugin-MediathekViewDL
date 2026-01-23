@@ -550,6 +550,12 @@ class DependencyManager {
                 dependentId: 'subQualityCheckWithUrlContainer',
                 showWhen: true,
                 disableWhenHidden: true
+            },
+            {
+                controllerId: 'subAppendDateToTitle',
+                dependentId: 'subAppendTimeToTitleContainer',
+                showWhen: true,
+                disableWhenHidden: true
             }
         ];
     }
@@ -665,6 +671,8 @@ class SubscriptionEditor {
             document.getElementById('subCreateNfo').checked = false;
             document.getElementById('subAllowAudioDesc').checked = false;
             document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = false;
+            document.getElementById('subAppendDateToTitle').checked = false;
+            document.getElementById('subAppendTimeToTitle').checked = false;
             document.getElementById('subAllowSignLanguage').checked = false;
             document.getElementById('subTreatNonEpisodesAsExtras').checked = false;
             document.getElementById('subSaveTrailers').checked = true;
@@ -699,6 +707,8 @@ class SubscriptionEditor {
         document.getElementById('subCreateNfo').checked = sub.CreateNfo !== undefined ? sub.CreateNfo : false;
         document.getElementById('subAllowAudioDesc').checked = sub.AllowAudioDescription;
         document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = sub.AllowAbsoluteEpisodeNumbering;
+        document.getElementById('subAppendDateToTitle').checked = sub.AppendDateToTitle !== undefined ? sub.AppendDateToTitle : false;
+        document.getElementById('subAppendTimeToTitle').checked = sub.AppendTimeToTitle !== undefined ? sub.AppendTimeToTitle : false;
         document.getElementById('subAllowSignLanguage').checked = sub.AllowSignLanguage;
         document.getElementById('subEnhancedDuplicateDetection').checked = sub.EnhancedDuplicateDetection;
         document.getElementById('subAutoUpgradeToHigherQuality').checked = sub.AutoUpgradeToHigherQuality !== undefined ? sub.AutoUpgradeToHigherQuality : false;
@@ -742,6 +752,8 @@ class SubscriptionEditor {
         const createNfo = document.getElementById('subCreateNfo').checked;
         const allowAudio = document.getElementById('subAllowAudioDesc').checked;
         const allowAbsolute = document.getElementById('subAllowAbsoluteEpisodeNumbering').checked;
+        const appendDateToTitle = document.getElementById('subAppendDateToTitle').checked;
+        const appendTimeToTitle = document.getElementById('subAppendTimeToTitle').checked;
         const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
         const enhancedDuplicateDetection = document.getElementById('subEnhancedDuplicateDetection').checked;
         const autoUpgradeToHigherQuality = document.getElementById('subAutoUpgradeToHigherQuality').checked;
@@ -785,6 +797,8 @@ class SubscriptionEditor {
             CreateNfo: createNfo,
             AllowAudioDescription: allowAudio,
             AllowAbsoluteEpisodeNumbering: allowAbsolute,
+            AppendDateToTitle: appendDateToTitle,
+            AppendTimeToTitle: appendTimeToTitle,
             AllowSignLanguage: allowSignLanguage,
             EnhancedDuplicateDetection: enhancedDuplicateDetection,
             AutoUpgradeToHigherQuality: autoUpgradeToHigherQuality,
