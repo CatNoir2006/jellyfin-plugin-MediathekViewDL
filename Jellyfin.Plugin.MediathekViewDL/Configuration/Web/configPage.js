@@ -470,6 +470,30 @@ class DownloadsController {
     }
 
     /**
+     * Toggles the expanded state of a history group.
+     * @param {string} groupKey 
+     * @param {boolean} expand 
+     * @param {HTMLElement} groupItem 
+     */
+    toggleGroupState(groupKey, expand, groupItem) {
+        const details = groupItem.querySelector('.mvpl-history-details');
+        const expandBtn = groupItem.querySelector('.mvpl-btn-expand');
+        const collapseBtn = groupItem.querySelector('.mvpl-btn-collapse');
+
+        if (expand) {
+            details.classList.remove('mvpl-hidden');
+            if (expandBtn) expandBtn.style.display = 'none';
+            if (collapseBtn) collapseBtn.style.display = 'inline-flex';
+            this.expandedGroups.add(groupKey);
+        } else {
+            details.classList.add('mvpl-hidden');
+            if (expandBtn) expandBtn.style.display = 'inline-flex';
+            if (collapseBtn) collapseBtn.style.display = 'none';
+            this.expandedGroups.delete(groupKey);
+        }
+    }
+
+    /**
      * Generates a unique key for a group to track its state.
      * @param {Object} group 
      * @returns {string}
@@ -550,55 +574,47 @@ class DownloadsController {
 
         const displayTitle = group.displayName || "Unbekannter Titel";
         
-        const groupItem = document.createElement('div');
-        groupItem.className = 'listItem listItem-border';
+        const actions = document.createElement('div');
+        actions.className = 'listItemButtons flex-gap-10';
+        
+        const expandBtn = this.dom.createIconButton('expand_more', 'Dateien anzeigen', () => {
+            this.toggleGroupState(groupKey, true, groupItem);
+        });
+        expandBtn.classList.add('mvpl-btn-expand');
+        expandBtn.style.display = isExpanded ? 'none' : 'inline-flex';
+
+        const collapseBtn = this.dom.createIconButton('expand_less', 'Dateien ausblenden', () => {
+            this.toggleGroupState(groupKey, false, groupItem);
+        });
+        collapseBtn.classList.add('mvpl-btn-collapse');
+        collapseBtn.style.display = isExpanded ? 'inline-flex' : 'none';
+
+        actions.appendChild(expandBtn);
+        actions.appendChild(collapseBtn);
+
+        const body1 = document.createElement('div');
+        body1.className = 'listItemBodyText secondary';
+        body1.textContent = 'Datum: ' + timestamp + (group.entries.length > 1 ? ' (' + group.entries.length + ' Dateien)' : '');
+
+        const groupItem = this.config.createListItem(displayTitle + downloadTrigger, body1, "", actions);
+        
+        // Match standard list item appearance while supporting collapsible details
         groupItem.style.flexDirection = 'column';
         groupItem.style.alignItems = 'stretch';
-        groupItem.style.padding = '0';
+        groupItem.style.padding = '0'; // We'll move padding to the header
 
-        const mainRow = document.createElement('div');
-        mainRow.style.display = 'flex';
-        mainRow.style.width = '100%';
-        mainRow.style.alignItems = 'center';
-        mainRow.style.padding = '10px 15px';
-
-        const body = document.createElement('div');
-        body.className = 'listItemBody two-line';
-        body.style.flexGrow = '1';
-
-        const titleEl = document.createElement('h3');
-        titleEl.className = 'listItemBodyText';
-        titleEl.textContent = displayTitle + downloadTrigger;
-
-        const text1El = document.createElement('div');
-        text1El.className = 'listItemBodyText secondary';
-        text1El.textContent = 'Datum: ' + timestamp + (group.entries.length > 1 ? ' (' + group.entries.length + ' Dateien)' : '');
-
-        body.appendChild(titleEl);
-        body.appendChild(text1El);
-        mainRow.appendChild(body);
-
-        const actions = document.createElement('div');
-        actions.className = 'flex-gap-10';
+        // Wrap existing children into a row to maintain row layout for the header
+        const headerRow = document.createElement('div');
+        headerRow.style.display = 'flex';
+        headerRow.style.flexDirection = 'row';
+        headerRow.style.alignItems = 'center';
+        headerRow.style.width = '100%';
+        headerRow.style.padding = '10px 15px'; // Standard Jellyfin listItem padding
         
-        const toggleBtn = this.dom.createIconButton(isExpanded ? 'expand_less' : 'expand_more', 'Dateien anzeigen', (e) => {
-            const details = groupItem.querySelector('.mvpl-history-details');
-            const icon = e.currentTarget.querySelector('.material-icons');
-            
-            if (details.classList.contains('mvpl-hidden')) {
-                details.classList.remove('mvpl-hidden');
-                icon.textContent = 'expand_less';
-                this.expandedGroups.add(groupKey);
-            } else {
-                details.classList.add('mvpl-hidden');
-                icon.textContent = 'expand_more';
-                this.expandedGroups.delete(groupKey);
-            }
-        });
-        actions.appendChild(toggleBtn);
-        mainRow.appendChild(actions);
-
-        groupItem.appendChild(mainRow);
+        while (groupItem.firstChild) {
+            headerRow.appendChild(groupItem.firstChild);
+        }
+        groupItem.appendChild(headerRow);
 
         // Details section for files
         const detailsDiv = document.createElement('div');
