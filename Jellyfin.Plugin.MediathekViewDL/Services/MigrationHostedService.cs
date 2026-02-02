@@ -53,20 +53,18 @@ public class MigrationHostedService : IHostedService
         // Migrate old path settings to new Paths property if it's empty
         if (config.Paths.IsEmpty())
         {
-#pragma warning disable CS0618 // Type or member is obsolete
             var pathsOld = new ConfigurationPaths()
             {
-                TempDownloadPath = config.TempDownloadPath,
-                DefaultDownloadPath = config.DefaultDownloadPath,
-                DefaultManualMoviePath = config.DefaultManualMoviePath,
-                DefaultManualShowPath = config.DefaultManualShowPath,
-                DefaultSubscriptionMoviePath = config.DefaultSubscriptionMoviePath,
-                DefaultSubscriptionShowPath = config.DefaultSubscriptionShowPath,
-                UseTopicForMoviePath = config.UseTopicForMoviePath,
+                TempDownloadPath = config.DeprecatedTempDownloadPath,
+                DefaultDownloadPath = config.DeprecatedDefaultDownloadPath,
+                DefaultManualMoviePath = config.DeprecatedDefaultManualMoviePath,
+                DefaultManualShowPath = config.DeprecatedDefaultManualShowPath,
+                DefaultSubscriptionMoviePath = config.DeprecatedDefaultSubscriptionMoviePath,
+                DefaultSubscriptionShowPath = config.DeprecatedDefaultSubscriptionShowPath,
+                UseTopicForMoviePath = config.DeprecatedUseTopicForMoviePath,
             };
             config.Paths = pathsOld;
             _configProvider.Save();
-#pragma warning restore CS0618 // Type or member is obsolete
         }
     }
 

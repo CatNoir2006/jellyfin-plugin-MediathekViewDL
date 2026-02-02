@@ -26,61 +26,66 @@ public class PluginConfiguration : BasePluginConfiguration
     #pragma warning restore SA1124
     /// <summary>
     /// Gets or sets the default path where completed downloads are stored.
-    /// Can be overridden by a subscription.
+    /// DO NOT USE. Use Paths.DefaultDownloadPath instead.
     /// </summary>
-    [Obsolete("Use Paths.DefaultDownloadPath instead.")]
+    [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("DefaultDownloadPath")]
-    public string DefaultDownloadPath { get; set; } = string.Empty;
+    public string DeprecatedDefaultDownloadPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the default path for show downloads in subscriptions.
+    /// DO NOT USE. Use Paths.DefaultSubscriptionShowPath instead.
     /// </summary>
-    [Obsolete("Use Paths.DefaultSubscriptionShowPath instead.")]
+    [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("DefaultSubscriptionShowPath")]
-    public string DefaultSubscriptionShowPath { get; set; } = string.Empty;
+    public string DeprecatedDefaultSubscriptionShowPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the default path for movie downloads in subscriptions.
+    /// DO NOT USE. Use Paths.DefaultSubscriptionMoviePath instead.
     /// </summary>
-    [Obsolete("Use Paths.DefaultSubscriptionMoviePath instead.")]
+    [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("DefaultSubscriptionMoviePath")]
-    public string DefaultSubscriptionMoviePath { get; set; } = string.Empty;
+    public string DeprecatedDefaultSubscriptionMoviePath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the default path for manual show downloads.
+    /// DO NOT USE. Use Paths.DefaultManualShowPath instead.
     /// </summary>
-    [Obsolete("Use Paths.DefaultManualShowPath instead.")]
+    [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("DefaultManualShowPath")]
-    public string DefaultManualShowPath { get; set; } = string.Empty;
+    public string DeprecatedDefaultManualShowPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the default path for manual movie downloads.
+    /// DO NOT USE. Use Paths.DefaultManualMoviePath instead.
     /// </summary>
-    [Obsolete("Use Paths.DefaultManualMoviePath instead.")]
+    [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("DefaultManualMoviePath")]
-    public string DefaultManualMoviePath { get; set; } = string.Empty;
+    public string DeprecatedDefaultManualMoviePath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the temporary path where files are stored during download.
-    /// If empty, the destination path is used directly.
+    /// DO NOT USE. Use Paths.TempDownloadPath instead.
     /// </summary>
-    [Obsolete("Use Paths.TempDownloadPath instead.")]
+    [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("TempDownloadPath")]
-    public string TempDownloadPath { get; set; } = string.Empty;
+    public string DeprecatedTempDownloadPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets a value indicating whether Paths for movies should contain the 'Topic' of the Movie.
+    /// DO NOT USE. Use Paths.UseTopicForMoviePath instead.
     /// </summary>
-    [Obsolete("Use Paths.UseTopicForMoviePath instead.")]
+    [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("UseTopicForMoviePath")]
-    public bool UseTopicForMoviePath { get; set; }
+    public bool DeprecatedUseTopicForMoviePath { get; set; }
     #endregion
 
     /// <summary>
