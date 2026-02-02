@@ -490,18 +490,22 @@ class DownloadsController {
             const entrySubId = entry.SubscriptionId || '00000000-0000-0000-0000-000000000000';
             const entryItemId = entry.ItemId || '';
             const entryTitle = entry.Title || '';
+            const entryFileName = entry.DownloadPath.split(/[\\\/]/).pop() || '';
+            const entryDisplayName = !StringHelper.isNullOrWhitespace(entryTitle) ? entryTitle : entryFileName;
 
-            // Match logic: Same SubId AND (Same ItemId OR Same Title)
+            // Match logic: Same SubId AND (Same ItemId OR Same Title OR same DisplayName)
             let group = groups.find(g => {
                 if (g.subscriptionId !== entrySubId) return false;
                 if (entryItemId && g.itemId && entryItemId === g.itemId) return true;
-                return entryTitle && g.title && entryTitle === g.title;
+                if (entryTitle && g.title && entryTitle === g.title) return true;
+                return entryDisplayName && g.displayName && entryDisplayName === g.displayName;
             });
             
             if (!group) {
                 group = {
                     subscriptionId: entrySubId,
                     title: entryTitle,
+                    displayName: entryDisplayName,
                     itemId: entryItemId,
                     latestTimestamp: entry.Timestamp,
                     entries: []
@@ -511,9 +515,9 @@ class DownloadsController {
             
             group.entries.push(entry);
             
-            // Preference for title: use shortest title available
-            if (entryTitle && (!group.title || entryTitle.length < group.title.length)) {
-                group.title = entryTitle;
+            // Preference for display name: use shortest one available (as requested)
+            if (entryDisplayName && (!group.displayName || entryDisplayName.length < group.displayName.length)) {
+                group.displayName = entryDisplayName;
             }
 
             if (new Date(entry.Timestamp) > new Date(group.latestTimestamp)) {
@@ -544,7 +548,7 @@ class DownloadsController {
             }
         }
 
-        const displayTitle = StringHelper.isNullOrWhitespace(group.title) ? (group.itemId || "Unbekannter Titel") : group.title;
+        const displayTitle = group.displayName || "Unbekannter Titel";
         
         const groupItem = document.createElement('div');
         groupItem.className = 'listItem listItem-border';
