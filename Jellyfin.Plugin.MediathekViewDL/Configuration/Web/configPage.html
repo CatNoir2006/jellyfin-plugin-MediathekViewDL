@@ -982,6 +982,32 @@
             margin-left: 10px;
             margin-bottom: 20px;
         }
+        .mvpl-history-details {
+            transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.2s ease-in-out;
+            max-height: 2000px;
+            opacity: 1;
+            overflow: hidden;
+        }
+
+        .mvpl-history-details.mvpl-hidden {
+            max-height: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+
+        .mvpl-history-entry {
+            margin-bottom: 8px;
+            border-left: 2px solid #444;
+            padding-left: 10px;
+        }
+
+        .mvpl-history-entry-path {
+            font-size: 0.9em;
+            opacity: 0.7;
+            word-break: break-all;
+        }
     </style>
 </div>
 </body>

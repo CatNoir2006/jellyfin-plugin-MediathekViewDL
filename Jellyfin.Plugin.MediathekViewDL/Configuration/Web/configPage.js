@@ -331,6 +331,7 @@ class DownloadsController {
         this.dom = config.dom;
         this.pollTimeout = null;
         this.isPolling = false;
+        this.expandedGroups = new Set();
         this.statusMapping = {
             'Queued': {text: 'Warteschlange'}, // Queued
             'Downloading': {text: 'Herunterladen...'}, // Downloading
@@ -462,25 +463,167 @@ class DownloadsController {
             return;
         }
 
-        history.forEach((entry) => {
-            const timestamp = new Date(entry.Timestamp).toLocaleString();
-            const body1 = 'Pfad: ' + entry.DownloadPath;
+        const groups = this.groupHistoryEntries(history);
+        groups.forEach((group) => {
+            container.appendChild(this.renderHistoryGroup(group));
+        });
+    }
 
-            let downloadTrigger = ' (Manuell)';
-            if (!StringHelper.isNullOrWhitespace(entry.SubscriptionId)) {
-                const sub = this.config.currentConfig?.Subscriptions?.find(s => s.Id === entry.SubscriptionId);
-                if (sub) {
-                    downloadTrigger = ' (Abo: ' + sub.Name + ')';
-                } else {
-                    downloadTrigger = ' (Abo)';
-                }
+    /**
+     * Generates a unique key for a group to track its state.
+     * @param {Object} group 
+     * @returns {string}
+     */
+    getGroupKey(group) {
+        return (group.subscriptionId || 'manual') + '_' + (group.itemId || group.title);
+    }
+
+    /**
+     * Groups history entries by SubscriptionId and (ItemId or Title).
+     * @param {Array} history - The history entries.
+     * @returns {Array} The grouped entries.
+     */
+    groupHistoryEntries(history) {
+        const groups = [];
+
+        history.forEach((entry) => {
+            const entrySubId = entry.SubscriptionId || '00000000-0000-0000-0000-000000000000';
+            const entryItemId = entry.ItemId || '';
+            const entryTitle = entry.Title || '';
+
+            // Match logic: Same SubId AND (Same ItemId OR Same Title)
+            let group = groups.find(g => {
+                if (g.subscriptionId !== entrySubId) return false;
+                if (entryItemId && g.itemId && entryItemId === g.itemId) return true;
+                return entryTitle && g.title && entryTitle === g.title;
+            });
+            
+            if (!group) {
+                group = {
+                    subscriptionId: entrySubId,
+                    title: entryTitle,
+                    itemId: entryItemId,
+                    latestTimestamp: entry.Timestamp,
+                    entries: []
+                };
+                groups.push(group);
+            }
+            
+            group.entries.push(entry);
+            
+            // Preference for title: use shortest title available
+            if (entryTitle && (!group.title || entryTitle.length < group.title.length)) {
+                group.title = entryTitle;
             }
 
-            const body2 = 'Datum: ' + timestamp + downloadTrigger;
-            const fileName = entry.DownloadPath.split(/[\\\/]/).pop();
-            const title = StringHelper.isNullOrWhitespace(entry.Title) ? fileName : entry.Title;
-            container.appendChild(this.config.createListItem(title, body1, body2, null));
+            if (new Date(entry.Timestamp) > new Date(group.latestTimestamp)) {
+                group.latestTimestamp = entry.Timestamp;
+            }
         });
+
+        return groups.sort((a, b) => new Date(b.latestTimestamp) - new Date(a.latestTimestamp));
+    }
+
+    /**
+     * Renders a single history group item.
+     * @param {Object} group - The grouped history data.
+     * @returns {HTMLElement} The group DOM element.
+     */
+    renderHistoryGroup(group) {
+        const groupKey = this.getGroupKey(group);
+        const isExpanded = this.expandedGroups.has(groupKey);
+        const timestamp = new Date(group.latestTimestamp).toLocaleString();
+        
+        let downloadTrigger = ' (Manuell)';
+        if (group.subscriptionId && group.subscriptionId !== '00000000-0000-0000-0000-000000000000') {
+            const sub = this.config.currentConfig?.Subscriptions?.find(s => s.Id === group.subscriptionId);
+            if (sub) {
+                downloadTrigger = ' (Abo: ' + sub.Name + ')';
+            } else {
+                downloadTrigger = ' (Abo)';
+            }
+        }
+
+        const displayTitle = StringHelper.isNullOrWhitespace(group.title) ? (group.itemId || "Unbekannter Titel") : group.title;
+        
+        const groupItem = document.createElement('div');
+        groupItem.className = 'listItem listItem-border';
+        groupItem.style.flexDirection = 'column';
+        groupItem.style.alignItems = 'stretch';
+        groupItem.style.padding = '0';
+
+        const mainRow = document.createElement('div');
+        mainRow.style.display = 'flex';
+        mainRow.style.width = '100%';
+        mainRow.style.alignItems = 'center';
+        mainRow.style.padding = '10px 15px';
+
+        const body = document.createElement('div');
+        body.className = 'listItemBody two-line';
+        body.style.flexGrow = '1';
+
+        const titleEl = document.createElement('h3');
+        titleEl.className = 'listItemBodyText';
+        titleEl.textContent = displayTitle + downloadTrigger;
+
+        const text1El = document.createElement('div');
+        text1El.className = 'listItemBodyText secondary';
+        text1El.textContent = 'Datum: ' + timestamp + (group.entries.length > 1 ? ' (' + group.entries.length + ' Dateien)' : '');
+
+        body.appendChild(titleEl);
+        body.appendChild(text1El);
+        mainRow.appendChild(body);
+
+        const actions = document.createElement('div');
+        actions.className = 'flex-gap-10';
+        
+        const toggleBtn = this.dom.createIconButton(isExpanded ? 'expand_less' : 'expand_more', 'Dateien anzeigen', (e) => {
+            const details = groupItem.querySelector('.mvpl-history-details');
+            const icon = e.currentTarget.querySelector('.material-icons');
+            
+            if (details.classList.contains('mvpl-hidden')) {
+                details.classList.remove('mvpl-hidden');
+                icon.textContent = 'expand_less';
+                this.expandedGroups.add(groupKey);
+            } else {
+                details.classList.add('mvpl-hidden');
+                icon.textContent = 'expand_more';
+                this.expandedGroups.delete(groupKey);
+            }
+        });
+        actions.appendChild(toggleBtn);
+        mainRow.appendChild(actions);
+
+        groupItem.appendChild(mainRow);
+
+        // Details section for files
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'mvpl-history-details' + (isExpanded ? '' : ' mvpl-hidden');
+        detailsDiv.style.paddingLeft = '30px';
+        detailsDiv.style.paddingRight = '15px';
+        detailsDiv.style.paddingBottom = isExpanded ? '15px' : '0';
+        detailsDiv.style.fontSize = '0.85em';
+
+        group.entries.forEach(entry => {
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'mvpl-history-entry';
+            
+            let fileTypeInfo = "";
+            const ext = entry.DownloadPath.split('.').pop().toLowerCase();
+            if (ext === 'vtt' || ext === 'ttml') fileTypeInfo = "[Untertitel] ";
+            else if (ext === 'nfo') fileTypeInfo = "[Metadaten] ";
+            else if (ext === 'strm') fileTypeInfo = "[Stream] ";
+            
+            const langInfo = !StringHelper.isNullOrWhitespace(entry.Language) ? (" (" + entry.Language + ")") : "";
+            const fileNameOnly = entry.DownloadPath.split(/[\\\/]/).pop();
+
+            entryDiv.innerHTML = '<span class="secondary" style="font-weight:bold;">' + fileTypeInfo + fileNameOnly + langInfo + '</span><br/>' +
+                                 '<span class="secondary mvpl-history-entry-path">' + entry.DownloadPath + '</span>';
+            detailsDiv.appendChild(entryDiv);
+        });
+
+        groupItem.appendChild(detailsDiv);
+        return groupItem;
     }
 
     cancelDownload(id) {
