@@ -48,6 +48,10 @@
     <None Remove="Configuration\Web\configPage.css" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Configuration\Groups\" />
+  </ItemGroup>
+
   <!-- Fix for BadImageFormatException: Remove native runtimes that Jellyfin mistakenly tries to load as managed assemblies -->
   <Target Name="CleanRuntimes" AfterTargets="Build;Publish">
     <RemoveDir Directories="$(TargetDir)runtimes" />

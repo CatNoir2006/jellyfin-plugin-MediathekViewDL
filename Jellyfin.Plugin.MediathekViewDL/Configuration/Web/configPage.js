@@ -1,4 +1,136 @@
 /**
+ * Helper Class that contains various utility methods.
+ */
+class Helper {
+    static config() {window.MediathekViewDL.config;}
+
+    /**
+     * Shows a confirmation popup.
+     * @param message The message to display
+     * @param title The title of the popup
+     * @param resultCallback The callback to receive the result (true/false)
+     */
+    static confirmationPopup(message, title, resultCallback) {
+        // noinspection JSUnresolvedReference
+        if (typeof Dashboard !== 'undefined' && typeof Dashboard.confirm === 'function') {
+            // noinspection JSUnresolvedReference,JSCheckFunctionSignatures
+            Dashboard.confirm(message, title, resultCallback);
+        } else {
+            const result = confirm(title + "\n\n" + message);
+            resultCallback(result);
+        }
+    }
+
+    /**
+     * Shows a toast/alert message.
+     * @param message The message to display
+     */
+    static showToast(message) {
+        // noinspection JSUnresolvedReference
+        if (typeof Dashboard !== 'undefined' && typeof Dashboard.alert === 'function') {
+            // noinspection JSUnresolvedReference
+            Dashboard.alert(message);
+        } else {
+            alert(message);
+        }
+    }
+
+    /**
+     * Opens a folder selection dialog and sets the selected path to the input element.
+     * @param inputId The ID of the input element to set the path
+     * @param headerText The Title of the dialog
+     */
+    static openFolderDialog(inputId, headerText) {
+        try {
+            // noinspection JSUnresolvedReference
+            if (typeof Dashboard !== 'undefined' && Dashboard.DirectoryBrowser) {
+                // noinspection JSUnresolvedReference
+                const picker = new Dashboard.DirectoryBrowser();
+                picker.show({
+                    header: headerText,
+                    includeDirectories: true,
+                    includeFiles: false,
+                    callback: (path) => {
+                        if (path) {
+                            document.getElementById(inputId).value = path;
+                        }
+                        picker.close();
+                    }
+                });
+            } else {
+                let currentValue = document.getElementById(inputId).value;
+                let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
+                if (newPath !== null && newPath.trim() !== '') {
+                    document.getElementById(inputId).value = newPath.trim();
+                }
+            }
+        } catch (e) {
+            console.error('Error opening folder dialog:', e);
+            let currentValue = document.getElementById(inputId).value;
+            let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
+            if (newPath !== null && newPath.trim() !== '') {
+                document.getElementById(inputId).value = newPath.trim();
+            }
+        }
+    }
+
+    /**
+     * Generates a UUID (version 4).
+     * @returns {string}
+     */
+    static genUUID() {
+        try {
+            return crypto.randomUUID();
+        } catch (e) {
+            console.error('Error generating UUID using crypto.randomUUID():', e);
+        }
+        console.warn('Falling back to manual UUID generation.');
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            let r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    /**
+     * Opens a DuckDuckGo search in a new tab.
+     * @param search The search query
+     * @param siteFilter Filter to a specific site (optional)
+     * @param openPage Open the search results page (true) or just the query (false)
+     */
+    static openDuckDuckGoSearch(search = '', siteFilter = '', openPage = false) {
+        let queryString = (search).trim();
+        if (siteFilter) {
+            queryString += ' site:' + siteFilter;
+        }
+        const query = encodeURIComponent(queryString);
+        const searchUrl = 'https://duckduckgo.com/?q=' + (openPage ? '\\' : '');
+        window.open(searchUrl + query, '_blank');
+    }
+
+    /**
+     * Extracts the file name from a given path.
+     * @param path The full file path
+     * @returns {string} The file name or empty string if none
+     */
+    static getFileNameFromPath(path) {
+        if (!path) return '';
+        const parts = path.split(/[\\\/]/);
+        return parts[parts.length - 1];
+    }
+
+    /**
+     * Extracts the file extension from a given path.
+     * @param path The full file path
+     * @returns {string} The file extension in lowercase, or empty string if none
+     */
+    static getFileExtensionFromPath(path) {
+        if (!path) return '';
+        const parts = path.split('.');
+        return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
+    }
+}
+
+/**
  * Helper class for DOM manipulation to reduce verbosity.
  */
 class DomHelper {
@@ -171,7 +303,7 @@ class SearchController {
         const maxDate = document.getElementById('dateMaxBroadcast').value;
 
         if (!title && !topic && !channel && !combinedSearch) {
-            this.config.showToast("Bitte Suchbegriff eingeben");
+            Helper.showToast("Bitte Suchbegriff eingeben");
             return;
         }
         // noinspection JSUnresolvedReference
@@ -206,7 +338,7 @@ class SearchController {
         }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            this.config.showToast("Fehler bei der Suche: " + err);
+            Helper.showToast("Fehler bei der Suche: " + err);
         });
     }
 
@@ -245,12 +377,12 @@ class SearchController {
             if (videoUrl) {
                 window.open(videoUrl, '_blank');
             } else {
-                this.config.showToast("Keine Video-URL verfügbar.");
+                Helper.showToast("Keine Video-URL verfügbar.");
             }
         }))
         actions.appendChild(this.dom.createIconButton('search', 'Video über DuckDuckGo suchen', () => {
             const queryString = item.Topic + ' ' + item.Title;
-            window.MediathekViewDL.config.openDuckDuckGoSearch(queryString);
+            Helper.openDuckDuckGoSearch(queryString);
         }));
         actions.appendChild(this.dom.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
         actions.appendChild(this.dom.createIconButton('settings', 'Erweiterter Download', () => this.config.openAdvancedDownloadDialog(this.currentSearchResults[index])));
@@ -297,11 +429,11 @@ class SearchController {
         }).then((result) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            this.config.showToast("Download für '" + item.Title + "' in Warteschlange.");
+            Helper.showToast("Download für '" + item.Title + "' in Warteschlange.");
         }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            this.config.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+            Helper.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
         });
     }
 
@@ -343,6 +475,7 @@ class DownloadsController {
     }
 
     init() {
+        this.config.debugLog("Initialisiere DownloadsController");
         // Initial load handled by switchTab
     }
 
@@ -471,9 +604,9 @@ class DownloadsController {
 
     /**
      * Toggles the expanded state of a history group.
-     * @param {string} groupKey 
-     * @param {boolean} expand 
-     * @param {HTMLElement} groupItem 
+     * @param {string} groupKey
+     * @param {boolean} expand
+     * @param {HTMLElement} groupItem
      */
     toggleGroupState(groupKey, expand, groupItem) {
         const details = groupItem.querySelector('.mvpl-history-details');
@@ -495,7 +628,7 @@ class DownloadsController {
 
     /**
      * Generates a unique key for a group to track its state.
-     * @param {Object} group 
+     * @param {Object} group
      * @returns {string}
      */
     getGroupKey(group) {
@@ -514,7 +647,7 @@ class DownloadsController {
             const entrySubId = entry.SubscriptionId || '00000000-0000-0000-0000-000000000000';
             const entryItemId = entry.ItemId || '';
             const entryTitle = entry.Title || '';
-            const entryFileName = entry.DownloadPath.split(/[\\\/]/).pop() || '';
+            const entryFileName = Helper.getFileNameFromPath(entry.DownloadPath);
             const entryDisplayName = !StringHelper.isNullOrWhitespace(entryTitle) ? entryTitle : entryFileName;
 
             // Match logic: Same SubId AND (Same ItemId OR Same Title OR same DisplayName)
@@ -524,7 +657,7 @@ class DownloadsController {
                 if (entryTitle && g.title && entryTitle === g.title) return true;
                 return entryDisplayName && g.displayName && entryDisplayName === g.displayName;
             });
-            
+
             if (!group) {
                 group = {
                     subscriptionId: entrySubId,
@@ -536,10 +669,10 @@ class DownloadsController {
                 };
                 groups.push(group);
             }
-            
+
             group.entries.push(entry);
-            
-            // Preference for display name: use shortest one available (as requested)
+
+            // Preference for display name: use shortest one available
             if (entryDisplayName && (!group.displayName || entryDisplayName.length < group.displayName.length)) {
                 group.displayName = entryDisplayName;
             }
@@ -561,7 +694,7 @@ class DownloadsController {
         const groupKey = this.getGroupKey(group);
         const isExpanded = this.expandedGroups.has(groupKey);
         const timestamp = new Date(group.latestTimestamp).toLocaleString();
-        
+
         let downloadTrigger = ' (Manuell)';
         if (group.subscriptionId && group.subscriptionId !== '00000000-0000-0000-0000-000000000000') {
             const sub = this.config.currentConfig?.Subscriptions?.find(s => s.Id === group.subscriptionId);
@@ -573,10 +706,10 @@ class DownloadsController {
         }
 
         const displayTitle = group.displayName || "Unbekannter Titel";
-        
+
         const actions = document.createElement('div');
         actions.className = 'listItemButtons flex-gap-10';
-        
+
         const expandBtn = this.dom.createIconButton('expand_more', 'Dateien anzeigen', () => {
             this.toggleGroupState(groupKey, true, groupItem);
         });
@@ -597,7 +730,7 @@ class DownloadsController {
         body1.textContent = 'Datum: ' + timestamp + (group.entries.length > 1 ? ' (' + group.entries.length + ' Dateien)' : '');
 
         const groupItem = this.config.createListItem(displayTitle + downloadTrigger, body1, "", actions);
-        
+
         // Match standard list item appearance while supporting collapsible details
         groupItem.style.flexDirection = 'column';
         groupItem.style.alignItems = 'stretch';
@@ -609,8 +742,8 @@ class DownloadsController {
         headerRow.style.flexDirection = 'row';
         headerRow.style.alignItems = 'center';
         headerRow.style.width = '100%';
-        headerRow.style.padding = '10px 15px'; // Standard Jellyfin listItem padding
-        
+        headerRow.style.padding = '10px 15px';
+
         while (groupItem.firstChild) {
             headerRow.appendChild(groupItem.firstChild);
         }
@@ -627,15 +760,15 @@ class DownloadsController {
         group.entries.forEach(entry => {
             const entryDiv = document.createElement('div');
             entryDiv.className = 'mvpl-history-entry';
-            
+
             let fileTypeInfo = "";
-            const ext = entry.DownloadPath.split('.').pop().toLowerCase();
+            const ext = Helper.getFileExtensionFromPath(entry.DownloadPath);
             if (ext === 'vtt' || ext === 'ttml') fileTypeInfo = "[Untertitel] ";
             else if (ext === 'nfo') fileTypeInfo = "[Metadaten] ";
             else if (ext === 'strm') fileTypeInfo = "[Stream] ";
-            
+
             const langInfo = !StringHelper.isNullOrWhitespace(entry.Language) ? (" (" + entry.Language + ")") : "";
-            const fileNameOnly = entry.DownloadPath.split(/[\\\/]/).pop();
+            const fileNameOnly = Helper.getFileNameFromPath(entry.DownloadPath);
 
             entryDiv.innerHTML = '<span class="secondary" style="font-weight:bold;">' + fileTypeInfo + fileNameOnly + langInfo + '</span><br/>' +
                                  '<span class="secondary mvpl-history-entry-path">' + entry.DownloadPath + '</span>';
@@ -652,10 +785,10 @@ class DownloadsController {
             type: "DELETE",
             url: url
         }).then(() => {
-            this.config.showToast("Abbruch angefordert.");
+            Helper.showToast("Abbruch angefordert.");
             this.refreshData();
         }).catch((err) => {
-            this.config.showToast("Fehler beim Abbrechen: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+            Helper.showToast("Fehler beim Abbrechen: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
         });
     }
 }
@@ -1031,74 +1164,6 @@ class MediathekPluginConfig {
         }
     }
 
-    confirmationPopup(message, title, resultCallback) {
-        // noinspection JSUnresolvedReference
-        if (typeof Dashboard !== 'undefined' && typeof Dashboard.confirm === 'function') {
-            // noinspection JSUnresolvedReference,JSCheckFunctionSignatures
-            Dashboard.confirm(message, title, resultCallback);
-        } else {
-            const result = confirm(title + "\n\n" + message);
-            resultCallback(result);
-        }
-    }
-
-    showToast(message) {
-        // noinspection JSUnresolvedReference
-        if (typeof Dashboard !== 'undefined' && typeof Dashboard.alert === 'function') {
-            // noinspection JSUnresolvedReference
-            Dashboard.alert(message);
-        } else {
-            alert(message);
-        }
-    }
-
-    openFolderDialog(inputId, headerText) {
-        try {
-            // noinspection JSUnresolvedReference
-            if (typeof Dashboard !== 'undefined' && Dashboard.DirectoryBrowser) {
-                // noinspection JSUnresolvedReference
-                const picker = new Dashboard.DirectoryBrowser();
-                picker.show({
-                    header: headerText,
-                    includeDirectories: true,
-                    includeFiles: false,
-                    callback: (path) => {
-                        if (path) {
-                            document.getElementById(inputId).value = path;
-                        }
-                        picker.close();
-                    }
-                });
-            } else {
-                let currentValue = document.getElementById(inputId).value;
-                let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
-                if (newPath !== null && newPath.trim() !== '') {
-                    document.getElementById(inputId).value = newPath.trim();
-                }
-            }
-        } catch (e) {
-            console.error('Error opening folder dialog:', e);
-            let currentValue = document.getElementById(inputId).value;
-            let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
-            if (newPath !== null && newPath.trim() !== '') {
-                document.getElementById(inputId).value = newPath.trim();
-            }
-        }
-    }
-
-    genUUID() {
-        try {
-            return crypto.randomUUID();
-        } catch (e) {
-            console.error('Error generating UUID using crypto.randomUUID():', e);
-        }
-        console.warn('Falling back to manual UUID generation.');
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            let r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    }
-
     setupAutoGrowInputs() {
         const inputs = [
             'txtSearchCombined',
@@ -1156,16 +1221,6 @@ class MediathekPluginConfig {
         setTimeout(updateWidth, 0);
     }
 
-    openDuckDuckGoSearch(search = '', siteFilter = '', openPage = false) {
-        let queryString = (search).trim();
-        if (siteFilter) {
-            queryString += ' site:' + siteFilter;
-        }
-        const query = encodeURIComponent(queryString);
-        const searchUrl = 'https://duckduckgo.com/?q=' + (openPage ? '\\' : '');
-        window.open(searchUrl + query, '_blank');
-    }
-
     // --- Core Logic ---
 
     /**
@@ -1214,7 +1269,7 @@ class MediathekPluginConfig {
         ApiClient.updatePluginConfiguration(this.pluginId, this.currentConfig).then((result) => {
             // noinspection JSUnresolvedReference
             Dashboard.processPluginConfigurationUpdateResult(result);
-            this.showToast("Einstellungen gespeichert.");
+            Helper.showToast("Einstellungen gespeichert.");
             this.loadConfig();
         });
     }
@@ -1356,7 +1411,7 @@ class MediathekPluginConfig {
     }
 
     resetProcessedItems(id) {
-        this.confirmationPopup("Dies wird die Liste der bereits verarbeiteten Items für dieses Abonnement zurücksetzen. Es kann dazu führen, dass bereits heruntergeladene Inhalte erneut heruntergeladen werden, wenn sie noch in den Suchergebnissen der MediathekView API erscheinen. Fortfahren?", "Verarbeitete Items zurücksetzen", (confirmed) => {
+        Helper.confirmationPopup("Dies wird die Liste der bereits verarbeiteten Items für dieses Abonnement zurücksetzen. Es kann dazu führen, dass bereits heruntergeladene Inhalte erneut heruntergeladen werden, wenn sie noch in den Suchergebnissen der MediathekView API erscheinen. Fortfahren?", "Verarbeitete Items zurücksetzen", (confirmed) => {
             if (confirmed) {
                 // noinspection JSUnresolvedReference
                 Dashboard.showLoadingMsg();
@@ -1367,12 +1422,12 @@ class MediathekPluginConfig {
                 }).then((result) => {
                     // noinspection JSUnresolvedReference
                     Dashboard.hideLoadingMsg();
-                    this.showToast("Verarbeitete Items für Abonnement zurückgesetzt.");
+                    Helper.showToast("Verarbeitete Items für Abonnement zurückgesetzt.");
                     this.loadConfig(); // Refresh the configuration to update the UI
                 }).catch((err) => {
                     // noinspection JSUnresolvedReference
                     Dashboard.hideLoadingMsg();
-                    this.showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                    Helper.showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
                 });
             }
         });
@@ -1437,7 +1492,7 @@ class MediathekPluginConfig {
         const subData = this.subscriptionEditor.getEditorValues();
 
         if (subData.Criteria.length === 0) {
-            this.showToast("Bitte mindestens eine Suchanfrage definieren.");
+            Helper.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
 
@@ -1460,7 +1515,7 @@ class MediathekPluginConfig {
                 this.currentConfig.Subscriptions[idx].IsEnabled = existingIsEnabled;
             }
         } else {
-            subData.Id = this.genUUID();
+            subData.Id = Helper.genUUID();
             subData.IsEnabled = true; // Default enabled for new subs
             this.currentConfig.Subscriptions.push(subData);
         }
@@ -1471,7 +1526,7 @@ class MediathekPluginConfig {
     }
 
     deleteSubscription(id) {
-        this.confirmationPopup("Soll dieses Abonnement wirklich gelöscht werden?", "Löschen bestätigen", (confirmed) => {
+        Helper.confirmationPopup("Soll dieses Abonnement wirklich gelöscht werden?", "Löschen bestätigen", (confirmed) => {
             if (confirmed) {
                 this.currentConfig.Subscriptions = this.currentConfig.Subscriptions.filter(function (s) {
                     return s.Id !== id;
@@ -1610,23 +1665,23 @@ class MediathekPluginConfig {
         }).then((result) => {
             Dashboard.hideLoadingMsg();
             this.closeAdvancedDownloadDialog();
-            this.showToast("Download für '" + this.currentItemForAdvancedDl.Title + "' gestartet.");
+            Helper.showToast("Download für '" + this.currentItemForAdvancedDl.Title + "' gestartet.");
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
-            this.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+            Helper.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
         });
     }
 
     testSubscription() {
         const subData = this.subscriptionEditor.getEditorValues();
         if (subData.Criteria.length === 0) {
-            this.showToast("Bitte mindestens eine Suchanfrage definieren.");
+            Helper.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
 
         // If ID is empty (new subscription), generate a temporary one for the backend to accept the object
         if (!subData.Id) {
-            subData.Id = this.genUUID();
+            subData.Id = Helper.genUUID();
         }
 
         const url = ApiClient.getUrl('/' + this.pluginName + '/TestSubscription');
@@ -1652,7 +1707,7 @@ class MediathekPluginConfig {
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
             console.error("Test subscription error:", err);
-            this.showToast("Fehler beim Testen des Abos: " + (err.responseJSON ? err.responseJSON.detail : (err.message || "Unbekannter Fehler")));
+            Helper.showToast("Fehler beim Testen des Abos: " + (err.responseJSON ? err.responseJSON.detail : (err.message || "Unbekannter Fehler")));
         });
     }
 
@@ -1739,22 +1794,22 @@ class MediathekPluginConfig {
 
         // Path selector in main config
         document.getElementById('btnSelectPath').addEventListener('click', () => {
-            this.openFolderDialog('txtDefaultDownloadPath', 'Globalen Standard Download Pfad wählen');
+            Helper.openFolderDialog('txtDefaultDownloadPath', 'Globalen Standard Download Pfad wählen');
         });
         document.getElementById('btnSelectSubscriptionShowPath').addEventListener('click', () => {
-            this.openFolderDialog('txtDefaultSubscriptionShowPath', 'Standard Serien Pfad (Abo) wählen');
+            Helper.openFolderDialog('txtDefaultSubscriptionShowPath', 'Standard Serien Pfad (Abo) wählen');
         });
         document.getElementById('btnSelectSubscriptionMoviePath').addEventListener('click', () => {
-            this.openFolderDialog('txtDefaultSubscriptionMoviePath', 'Standard Film Pfad (Abo) wählen');
+            Helper.openFolderDialog('txtDefaultSubscriptionMoviePath', 'Standard Film Pfad (Abo) wählen');
         });
         document.getElementById('btnSelectManualShowPath').addEventListener('click', () => {
-            this.openFolderDialog('txtDefaultManualShowPath', 'Standard Serien Pfad (Manuell) wählen');
+            Helper.openFolderDialog('txtDefaultManualShowPath', 'Standard Serien Pfad (Manuell) wählen');
         });
         document.getElementById('btnSelectManualMoviePath').addEventListener('click', () => {
-            this.openFolderDialog('txtDefaultManualMoviePath', 'Standard Film Pfad (Manuell) wählen');
+            Helper.openFolderDialog('txtDefaultManualMoviePath', 'Standard Film Pfad (Manuell) wählen');
         });
         document.getElementById('btnSelectTempPath').addEventListener('click', () => {
-            this.openFolderDialog('txtTempDownloadPath', 'Temporären Download Pfad wählen');
+            Helper.openFolderDialog('txtTempDownloadPath', 'Temporären Download Pfad wählen');
         });
 
         document.getElementById('chkMoviePathWithTopic').addEventListener('change', (e) => {
@@ -1764,7 +1819,7 @@ class MediathekPluginConfig {
 
         // Path selectors in subscription editor
         document.getElementById('btnSelectSubPath').addEventListener('click', () => {
-            this.openFolderDialog('subPath', 'Abo Pfad wählen');
+            Helper.openFolderDialog('subPath', 'Abo Pfad wählen');
             this.subscriptionEditor.updateSubPathHoverText();
         });
         document.getElementById('subPath').addEventListener('input', () => {
@@ -1775,7 +1830,7 @@ class MediathekPluginConfig {
         });
         // Path selector in advanced download dialog
         document.getElementById('btnSelectAdvPath').addEventListener('click', () => {
-            this.openFolderDialog('advDlPath', 'Download Pfad wählen');
+            Helper.openFolderDialog('advDlPath', 'Download Pfad wählen');
         });
 
         // Subscription Management
@@ -1823,12 +1878,12 @@ class MediathekPluginConfig {
 
         document.getElementById('mvpl-btn-duckduckgo-tmdb').addEventListener('click', () => {
             const query = this.currentItemForAdvancedDl.Topic + ' ' + this.currentItemForAdvancedDl.Title;
-            this.openDuckDuckGoSearch(query, 'themoviedb.org', true);
+            Helper.openDuckDuckGoSearch(query, 'themoviedb.org', true);
         });
 
         document.getElementById('mvpl-btn-duckduckgo').addEventListener('click', () => {
             const query = this.currentItemForAdvancedDl.Topic + ' ' + this.currentItemForAdvancedDl.Title;
-            this.openDuckDuckGoSearch(query, 'themoviedb.org');
+            Helper.openDuckDuckGoSearch(query, 'themoviedb.org');
         });
     }
 

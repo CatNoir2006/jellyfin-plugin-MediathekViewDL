@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using MediaBrowser.Model.Plugins;
 
@@ -37,6 +38,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("DefaultDownloadPath")]
+    [JsonIgnore]
     public string DeprecatedDefaultDownloadPath { get; set; } = string.Empty;
 
     /// <summary>
@@ -46,6 +48,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("DefaultSubscriptionShowPath")]
+    [JsonIgnore]
     public string DeprecatedDefaultSubscriptionShowPath { get; set; } = string.Empty;
 
     /// <summary>
@@ -55,6 +58,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("DefaultSubscriptionMoviePath")]
+    [JsonIgnore]
     public string DeprecatedDefaultSubscriptionMoviePath { get; set; } = string.Empty;
 
     /// <summary>
@@ -64,6 +68,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("DefaultManualShowPath")]
+    [JsonIgnore]
     public string DeprecatedDefaultManualShowPath { get; set; } = string.Empty;
 
     /// <summary>
@@ -73,6 +78,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("DefaultManualMoviePath")]
+    [JsonIgnore]
     public string DeprecatedDefaultManualMoviePath { get; set; } = string.Empty;
 
     /// <summary>
@@ -82,6 +88,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("TempDownloadPath")]
+    [JsonIgnore]
     public string DeprecatedTempDownloadPath { get; set; } = string.Empty;
 
     /// <summary>
@@ -91,6 +98,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("UseTopicForMoviePath")]
+    [JsonIgnore]
     public bool DeprecatedUseTopicForMoviePath { get; set; }
 
     /// <summary>
@@ -100,6 +108,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("DownloadSubtitles")]
+    [JsonIgnore]
     public bool DeprecatedDownloadSubtitles { get; set; } = true;
 
     /// <summary>
@@ -109,6 +118,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("EnableDirectAudioExtraction")]
+    [JsonIgnore]
     public bool DeprecatedEnableDirectAudioExtraction { get; set; } = true;
 
     /// <summary>
@@ -118,6 +128,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("MinFreeDiskSpaceBytes")]
+    [JsonIgnore]
     public long DeprecatedMinFreeDiskSpaceBytes { get; set; } = (long)(1.5 * 1024 * 1024 * 1024);
 
     /// <summary>
@@ -127,6 +138,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("AllowDownloadOnUnknownDiskSpace")]
+    [JsonIgnore]
     public bool DeprecatedAllowDownloadOnUnknownDiskSpace { get; set; }
 
     /// <summary>
@@ -136,6 +148,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("MaxBandwidthMBits")]
+    [JsonIgnore]
     public int DeprecatedMaxBandwidthMBits { get; set; }
 
     /// <summary>
@@ -145,6 +158,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("AllowUnknownDomains")]
+    [JsonIgnore]
     public bool DeprecatedAllowUnknownDomains { get; set; }
 
     /// <summary>
@@ -154,6 +168,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("AllowHttp")]
+    [JsonIgnore]
     public bool DeprecatedAllowHttp { get; set; }
 
     /// <summary>
@@ -163,6 +178,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("ScanLibraryAfterDownload")]
+    [JsonIgnore]
     public bool DeprecatedScanLibraryAfterDownload { get; set; } = true;
 
     /// <summary>
@@ -172,6 +188,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("EnableStrmCleanup")]
+    [JsonIgnore]
     public bool DeprecatedEnableStrmCleanup { get; set; }
 
     /// <summary>
@@ -181,6 +198,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("FetchStreamSizes")]
+    [JsonIgnore]
     public bool DeprecatedFetchStreamSizes { get; set; }
 
     /// <summary>
@@ -190,6 +208,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("SearchInFutureBroadcasts")]
+    [JsonIgnore]
     public bool DeprecatedSearchInFutureBroadcasts { get; set; } = true;
     #endregion
 
@@ -239,7 +258,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// This covers the known CDNs used by ARD and ZDF.
     /// The list does only contain top-level domains subdomains may be added at some point.
     /// </summary>
-    public HashSet<string> AllowedDomains => new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    public HashSet<string> AllowedDomains => new(StringComparer.OrdinalIgnoreCase)
     {
         "akamaihd.net",
         "akamaized.net",
