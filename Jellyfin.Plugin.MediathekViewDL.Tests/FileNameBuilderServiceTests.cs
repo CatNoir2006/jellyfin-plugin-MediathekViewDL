@@ -64,7 +64,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public void GenerateDownloadPaths_ShouldReturnValidPaths_ForSimpleVideo()
         {
             // Arrange
-            var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
+            var config = new PluginConfiguration();
+            config.Paths.DefaultDownloadPath = "/tmp/downloads";
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
             var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
@@ -90,11 +91,10 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public void GenerateDownloadPaths_ShouldIncludeTopicFolder_ForMovie_WhenEnabled()
         {
             // Arrange
-            var config = new PluginConfiguration 
-            { 
-                DefaultDownloadPath = "/tmp/downloads",
-                UseTopicForMoviePath = true
-            };
+            var config = new PluginConfiguration();
+            config.Paths.DefaultDownloadPath = "/tmp/downloads";
+            config.Paths.UseTopicForMoviePath = true;
+
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
             var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
@@ -118,7 +118,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public void GenerateDownloadPaths_ShouldHandleSeasonEpisodeNumbering()
         {
             // Arrange
-            var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
+            var config = new PluginConfiguration();
+            config.Paths.DefaultDownloadPath = "/tmp/downloads";
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
             var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
@@ -149,7 +150,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public void GenerateDownloadPaths_ShouldUseSubscriptionPath_IfSet()
         {
             // Arrange
-            var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
+            var config = new PluginConfiguration();
+            config.Paths.DefaultDownloadPath = "/tmp/downloads";
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
             var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
@@ -171,7 +173,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public void GenerateDownloadPaths_ShouldHandleTrailers_WhenTreatNonEpisodesAsExtrasEnabled()
         {
             // Arrange
-            var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
+            var config = new PluginConfiguration();
+            config.Paths.DefaultDownloadPath = "/tmp/downloads";
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
             var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
@@ -193,7 +196,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public void GenerateDownloadPaths_ShouldAppendLanguage_WhenNotGerman()
         {
             // Arrange
-            var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
+            var config = new PluginConfiguration();
+            config.Paths.DefaultDownloadPath = "/tmp/downloads";
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
             var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
@@ -219,7 +223,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public void GenerateDownloadPaths_ShouldReturnMkv_WhenNotGerman_AndDownloadFullVideoEnabled()
         {
             // Arrange
-            var config = new PluginConfiguration { DefaultDownloadPath = "/tmp/downloads" };
+            var config = new PluginConfiguration();
+            config.Paths.DefaultDownloadPath = "/tmp/downloads";
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
             var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
@@ -245,14 +250,13 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public void GenerateDownloadPaths_ShouldUseSpecificDefaultPaths_WhenConfigured()
         {
             // Arrange
-            var config = new PluginConfiguration
-            {
-                DefaultDownloadPath = "/tmp/downloads",
-                DefaultSubscriptionShowPath = "/tmp/shows",
-                DefaultSubscriptionMoviePath = "/tmp/movies",
-                DefaultManualShowPath = "/manual/shows",
-                DefaultManualMoviePath = "/manual/movies"
-            };
+            var config = new PluginConfiguration();
+            config.Paths.DefaultDownloadPath = "/tmp/downloads";
+            config.Paths.DefaultSubscriptionShowPath = "/tmp/shows";
+            config.Paths.DefaultSubscriptionMoviePath = "/tmp/movies";
+            config.Paths.DefaultManualShowPath = "/manual/shows";
+            config.Paths.DefaultManualMoviePath = "/manual/movies";
+
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
             var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
@@ -281,7 +285,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var allowedDir = Path.Combine(tempBase, "Allowed");
             Directory.CreateDirectory(allowedDir);
 
-            var config = new PluginConfiguration { DefaultDownloadPath = allowedDir };
+            var config = new PluginConfiguration();
+            config.Paths.DefaultDownloadPath = allowedDir;
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
             var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 
@@ -300,7 +305,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             Directory.CreateDirectory(allowedDir);
             Directory.CreateDirectory(unsafeDir);
 
-            var config = new PluginConfiguration { DefaultDownloadPath = allowedDir };
+            var config = new PluginConfiguration();
+            config.Paths.DefaultDownloadPath = allowedDir;
             _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
             var service = new FileNameBuilderService(_loggerMock.Object, _configProviderMock.Object, _libraryManagerMock.Object);
 

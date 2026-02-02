@@ -36,6 +36,7 @@ public class MigrationHostedService : IHostedService
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
+        MigrateConfiguration();
         MigrateSubscriptions();
     }
 
@@ -43,6 +44,30 @@ public class MigrationHostedService : IHostedService
     public Task StopAsync(CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
+    }
+
+    private void MigrateConfiguration()
+    {
+        var config = _configProvider.Configuration;
+
+        // Migrate old path settings to new Paths property if it's empty
+        if (config.Paths.IsEmpty())
+        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            var pathsOld = new ConfigurationPaths()
+            {
+                TempDownloadPath = config.TempDownloadPath,
+                DefaultDownloadPath = config.DefaultDownloadPath,
+                DefaultManualMoviePath = config.DefaultManualMoviePath,
+                DefaultManualShowPath = config.DefaultManualShowPath,
+                DefaultSubscriptionMoviePath = config.DefaultSubscriptionMoviePath,
+                DefaultSubscriptionShowPath = config.DefaultSubscriptionShowPath,
+                UseTopicForMoviePath = config.UseTopicForMoviePath,
+            };
+            config.Paths = pathsOld;
+            _configProvider.Save();
+#pragma warning restore CS0618 // Type or member is obsolete
+        }
     }
 
     private void MigrateSubscriptions()

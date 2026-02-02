@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Xml.Serialization;
 using MediaBrowser.Model.Plugins;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Configuration;
@@ -22,38 +24,65 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Gets or sets the default path where completed downloads are stored.
     /// Can be overridden by a subscription.
     /// </summary>
+    [Obsolete("Use Paths.DefaultDownloadPath instead.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("DefaultDownloadPath")]
     public string DefaultDownloadPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the default path for show downloads in subscriptions.
     /// </summary>
+    [Obsolete("Use Paths.DefaultSubscriptionShowPath instead.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("DefaultSubscriptionShowPath")]
     public string DefaultSubscriptionShowPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the default path for movie downloads in subscriptions.
     /// </summary>
+    [Obsolete("Use Paths.DefaultSubscriptionMoviePath instead.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("DefaultSubscriptionMoviePath")]
     public string DefaultSubscriptionMoviePath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the default path for manual show downloads.
     /// </summary>
+    [Obsolete("Use Paths.DefaultManualShowPath instead.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("DefaultManualShowPath")]
     public string DefaultManualShowPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the default path for manual movie downloads.
     /// </summary>
+    [Obsolete("Use Paths.DefaultManualMoviePath instead.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("DefaultManualMoviePath")]
     public string DefaultManualMoviePath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the temporary path where files are stored during download.
     /// If empty, the destination path is used directly.
     /// </summary>
+    [Obsolete("Use Paths.TempDownloadPath instead.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("TempDownloadPath")]
     public string TempDownloadPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets a value indicating whether Paths for movies should contain the 'Topic' of the Movie.
     /// </summary>
+    [Obsolete("Use Paths.UseTopicForMoviePath instead.")]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("UseTopicForMoviePath")]
     public bool UseTopicForMoviePath { get; set; }
+
+    /// <summary>
+    /// Gets or sets the configuration paths.
+    /// Contains the paths for the different download types.
+    /// </summary>
+    public ConfigurationPaths Paths { get; set; } = new();
 
     /// <summary>
     /// Gets or sets a value indicating whether subtitles should be downloaded if available.

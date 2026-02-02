@@ -617,9 +617,9 @@ class SubscriptionEditor {
         if (!el) return;
 
         if (StringHelper.isNullOrWhitespace(el.value)) {
-            const defaultMoviePath = window.MediathekViewDL.config.currentConfig.DefaultSubscriptionMoviePath || 'Nicht konfiguriert';
-            const defaultShowPath = window.MediathekViewDL.config.currentConfig.DefaultSubscriptionShowPath || 'Nicht konfiguriert';
-            const useTopicForMoviePath = window.MediathekViewDL.config.currentConfig.UseTopicForMoviePath;
+            const defaultMoviePath = window.MediathekViewDL.config.currentConfig.Paths.DefaultSubscriptionMoviePath || 'Nicht konfiguriert';
+            const defaultShowPath = window.MediathekViewDL.config.currentConfig.Paths.DefaultSubscriptionShowPath || 'Nicht konfiguriert';
+            const useTopicForMoviePath = window.MediathekViewDL.config.currentConfig.Paths.UseTopicForMoviePath;
             const subName = document.getElementById('subName').value || '[AboName]';
 
             const joinPath = (path, part) => {
@@ -1015,12 +1015,12 @@ class MediathekPluginConfig {
         ApiClient.getPluginConfiguration(this.pluginId).then((config) => {
             this.currentConfig = config;
 
-            document.querySelector('#txtDefaultDownloadPath').value = config.DefaultDownloadPath || "";
-            document.querySelector('#txtDefaultSubscriptionShowPath').value = config.DefaultSubscriptionShowPath || "";
-            document.querySelector('#txtDefaultSubscriptionMoviePath').value = config.DefaultSubscriptionMoviePath || "";
-            document.querySelector('#txtDefaultManualShowPath').value = config.DefaultManualShowPath || "";
-            document.querySelector('#txtDefaultManualMoviePath').value = config.DefaultManualMoviePath || "";
-            document.querySelector('#txtTempDownloadPath').value = config.TempDownloadPath || "";
+            document.querySelector('#txtDefaultDownloadPath').value = config.Paths.DefaultDownloadPath || "";
+            document.querySelector('#txtDefaultSubscriptionShowPath').value = config.Paths.DefaultSubscriptionShowPath || "";
+            document.querySelector('#txtDefaultSubscriptionMoviePath').value = config.Paths.DefaultSubscriptionMoviePath || "";
+            document.querySelector('#txtDefaultManualShowPath').value = config.Paths.DefaultManualShowPath || "";
+            document.querySelector('#txtDefaultManualMoviePath').value = config.Paths.DefaultManualMoviePath || "";
+            document.querySelector('#txtTempDownloadPath').value = config.Paths.TempDownloadPath || "";
             document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
             document.querySelector('#chkAllowUnknownDomains').checked = config.AllowUnknownDomains;
             document.querySelector('#chkAllowHttp').checked = config.AllowHttp;
@@ -1032,7 +1032,7 @@ class MediathekPluginConfig {
             document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
             document.querySelector('#txtMaxBandwidthMBits').value = config.MaxBandwidthMBits || 0;
             document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
-            document.querySelector('#chkMoviePathWithTopic').checked = config.UseTopicForMoviePath;
+            document.querySelector('#chkMoviePathWithTopic').checked = config.Paths.UseTopicForMoviePath;
 
             this.renderSubscriptionsList();
             // noinspection JSUnresolvedReference
@@ -1544,12 +1544,12 @@ class MediathekPluginConfig {
         // Main Config Form
         document.getElementById('MediathekGeneralConfigForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            this.currentConfig.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
-            this.currentConfig.DefaultSubscriptionShowPath = document.querySelector('#txtDefaultSubscriptionShowPath').value;
-            this.currentConfig.DefaultSubscriptionMoviePath = document.querySelector('#txtDefaultSubscriptionMoviePath').value;
-            this.currentConfig.DefaultManualShowPath = document.querySelector('#txtDefaultManualShowPath').value;
-            this.currentConfig.DefaultManualMoviePath = document.querySelector('#txtDefaultManualMoviePath').value;
-            this.currentConfig.TempDownloadPath = document.querySelector('#txtTempDownloadPath').value;
+            this.currentConfig.Paths.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
+            this.currentConfig.Paths.DefaultSubscriptionShowPath = document.querySelector('#txtDefaultSubscriptionShowPath').value;
+            this.currentConfig.Paths.DefaultSubscriptionMoviePath = document.querySelector('#txtDefaultSubscriptionMoviePath').value;
+            this.currentConfig.Paths.DefaultManualShowPath = document.querySelector('#txtDefaultManualShowPath').value;
+            this.currentConfig.Paths.DefaultManualMoviePath = document.querySelector('#txtDefaultManualMoviePath').value;
+            this.currentConfig.Paths.TempDownloadPath = document.querySelector('#txtTempDownloadPath').value;
             this.currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
             this.currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
             this.currentConfig.AllowHttp = document.querySelector('#chkAllowHttp').checked;
@@ -1560,7 +1560,7 @@ class MediathekPluginConfig {
             this.currentConfig.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
             const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
             this.currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
-            this.currentConfig.UseTopicForMoviePath = document.querySelector('#chkMoviePathWithTopic').checked;
+            this.currentConfig.Paths.UseTopicForMoviePath = document.querySelector('#chkMoviePathWithTopic').checked;
 
             const maxBandwidth = parseInt(document.querySelector('#txtMaxBandwidthMBits').value, 10);
             this.currentConfig.MaxBandwidthMBits = isNaN(maxBandwidth) ? 0 : maxBandwidth;
@@ -1591,7 +1591,7 @@ class MediathekPluginConfig {
         });
 
         document.getElementById('chkMoviePathWithTopic').addEventListener('change', (e) => {
-            this.currentConfig.UseTopicForMoviePath = e.target.checked;
+            this.currentConfig.Paths.UseTopicForMoviePath = e.target.checked;
             this.subscriptionEditor.updateSubPathHoverText();
         });
 

@@ -71,15 +71,15 @@ public class TempFileCleanup : IScheduledTask
         if (config != null)
         {
             // 2. Configured Plugin Temp Directory
-            if (!string.IsNullOrWhiteSpace(config.TempDownloadPath))
+            if (!string.IsNullOrWhiteSpace(config.Paths.TempDownloadPath))
             {
-                directoriesToScan.Add(config.TempDownloadPath);
+                directoriesToScan.Add(config.Paths.TempDownloadPath);
             }
 
             // 3. Default Download Directory (if no temp dir configured, temp files might be here)
-            if (!string.IsNullOrWhiteSpace(config.DefaultDownloadPath))
+            if (!string.IsNullOrWhiteSpace(config.Paths.DefaultDownloadPath))
             {
-                directoriesToScan.Add(config.DefaultDownloadPath);
+                directoriesToScan.Add(config.Paths.DefaultDownloadPath);
             }
 
             // 4. Subscription Download Directories
