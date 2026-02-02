@@ -309,7 +309,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 path = "Warnung: Ungültiger Pfad";
             }
 
-            var description = item.Description;
+            var description = item.Description ?? string.Empty;
             if (description.Length > 100)
             {
                 description = string.Concat(description.AsSpan(0, 100), "...");
