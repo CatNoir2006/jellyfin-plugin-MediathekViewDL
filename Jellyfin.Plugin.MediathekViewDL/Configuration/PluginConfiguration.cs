@@ -20,6 +20,10 @@ public class PluginConfiguration : BasePluginConfiguration
         Subscriptions = new Collection<Subscription>();
     }
 
+    #pragma warning disable SA1124
+    // ToDo: Remove obsolete properties on 1.0.0.0 release
+    #region Obsolete Path Properties
+    #pragma warning restore SA1124
     /// <summary>
     /// Gets or sets the default path where completed downloads are stored.
     /// Can be overridden by a subscription.
@@ -77,6 +81,7 @@ public class PluginConfiguration : BasePluginConfiguration
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("UseTopicForMoviePath")]
     public bool UseTopicForMoviePath { get; set; }
+    #endregion
 
     /// <summary>
     /// Gets or sets the configuration paths.
@@ -140,6 +145,11 @@ public class PluginConfiguration : BasePluginConfiguration
     /// This requires an additional HTTP request per result and may slow down the search.
     /// </summary>
     public bool FetchStreamSizes { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to search in future broadcasts when performing searches.
+    /// </summary>
+    public bool SearchInFutureBroadcasts { get; set; } = true;
 
     /// <summary>
     /// Gets the list of download subscriptions.

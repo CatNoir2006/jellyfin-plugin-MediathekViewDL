@@ -1028,6 +1028,7 @@ class MediathekPluginConfig {
             document.querySelector('#chkEnableDirectAudioExtraction').checked = config.EnableDirectAudioExtraction;
             document.querySelector('#chkEnableStrmCleanup').checked = config.EnableStrmCleanup;
             document.querySelector('#chkFetchStreamSizes').checked = config.FetchStreamSizes;
+            document.querySelector('#chkSearchInFutureBroadcasts').checked = config.SearchInFutureBroadcasts;
             document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked = config.AllowDownloadOnUnknownDiskSpace;
             document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
             document.querySelector('#txtMaxBandwidthMBits').value = config.MaxBandwidthMBits || 0;
@@ -1557,6 +1558,7 @@ class MediathekPluginConfig {
             this.currentConfig.EnableDirectAudioExtraction = document.querySelector('#chkEnableDirectAudioExtraction').checked;
             this.currentConfig.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
             this.currentConfig.FetchStreamSizes = document.querySelector('#chkFetchStreamSizes').checked;
+            this.currentConfig.SearchInFutureBroadcasts = document.querySelector('#chkSearchInFutureBroadcasts').checked;
             this.currentConfig.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
             const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
             this.currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);

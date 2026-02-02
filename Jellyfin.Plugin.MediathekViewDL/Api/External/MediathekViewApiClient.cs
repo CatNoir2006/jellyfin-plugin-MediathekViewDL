@@ -86,6 +86,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
                 MaxDuration = maxDuration,
                 MinBroadcastDate = minBroadcastDate,
                 MaxBroadcastDate = maxBroadcastDate,
+                Future = _configurationProvider.Configuration.SearchInFutureBroadcasts
             };
 
             PopulateQueries(apiQuery, title, topic, channel, combinedSearch);
