@@ -56,13 +56,13 @@ public class StrmValidationService : IStrmValidationService
         }
 
         // Security check: Only allow HTTPS
-        if (uri.Scheme != Uri.UriSchemeHttps && !(config.AllowHttp && uri.Scheme == Uri.UriSchemeHttp))
+        if (uri.Scheme != Uri.UriSchemeHttps && !(config.Network.AllowHttp && uri.Scheme == Uri.UriSchemeHttp))
         {
             throw new ArgumentException($"Insecure URL scheme (not HTTPS): {url}", nameof(url));
         }
 
         // Domain check (reuse logic/list from configuration)
-        if (!config.AllowUnknownDomains)
+        if (!config.Network.AllowUnknownDomains)
         {
             var host = uri.Host;
             var hostParts = host.Split('.');

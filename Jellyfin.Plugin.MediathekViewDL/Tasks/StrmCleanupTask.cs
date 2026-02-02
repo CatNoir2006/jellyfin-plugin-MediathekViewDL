@@ -57,7 +57,7 @@ public class StrmCleanupTask : IScheduledTask
     public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
     {
         var config = _configurationProvider.ConfigurationOrNull;
-        if (config == null || !config.EnableStrmCleanup)
+        if (config == null || !config.Maintenance.EnableStrmCleanup)
         {
             _logger.LogInformation("Strm cleanup task is disabled in configuration or config is missing. Skipping.");
             return;

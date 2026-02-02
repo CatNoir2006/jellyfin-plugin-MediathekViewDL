@@ -214,7 +214,7 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
                         download.Job.ItemInfo.Language).ConfigureAwait(false);
                 }
 
-                if (_configurationProvider.ConfigurationOrNull?.ScanLibraryAfterDownload == true && _activeDownloads.Values.All(d => d.Status != DownloadStatus.Queued))
+                if (_configurationProvider.ConfigurationOrNull?.Download.ScanLibraryAfterDownload == true && _activeDownloads.Values.All(d => d.Status != DownloadStatus.Queued))
                 {
                     _logger.LogInformation("Triggering library scan (all downloads finished).");
                     libraryManager.QueueLibraryScan();

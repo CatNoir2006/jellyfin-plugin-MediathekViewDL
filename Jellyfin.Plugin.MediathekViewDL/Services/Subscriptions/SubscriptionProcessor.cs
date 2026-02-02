@@ -636,7 +636,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 MaxDuration = subscription.MaxDurationMinutes * 60,
                 MinBroadcastDate = subscription.MinBroadcastDate,
                 MaxBroadcastDate = subscription.MaxBroadcastDate,
-                Future = _configurationProvider.Configuration.SearchInFutureBroadcasts,
+                Future = _configurationProvider.Configuration.Search.SearchInFutureBroadcasts,
             };
 
             QueryResultDto result;

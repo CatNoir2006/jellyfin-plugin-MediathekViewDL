@@ -1021,17 +1021,17 @@ class MediathekPluginConfig {
             document.querySelector('#txtDefaultManualShowPath').value = config.Paths.DefaultManualShowPath || "";
             document.querySelector('#txtDefaultManualMoviePath').value = config.Paths.DefaultManualMoviePath || "";
             document.querySelector('#txtTempDownloadPath').value = config.Paths.TempDownloadPath || "";
-            document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
-            document.querySelector('#chkAllowUnknownDomains').checked = config.AllowUnknownDomains;
-            document.querySelector('#chkAllowHttp').checked = config.AllowHttp;
-            document.querySelector('#chkScanLibraryAfterDownload').checked = config.ScanLibraryAfterDownload;
-            document.querySelector('#chkEnableDirectAudioExtraction').checked = config.EnableDirectAudioExtraction;
-            document.querySelector('#chkEnableStrmCleanup').checked = config.EnableStrmCleanup;
-            document.querySelector('#chkFetchStreamSizes').checked = config.FetchStreamSizes;
-            document.querySelector('#chkSearchInFutureBroadcasts').checked = config.SearchInFutureBroadcasts;
-            document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked = config.AllowDownloadOnUnknownDiskSpace;
-            document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
-            document.querySelector('#txtMaxBandwidthMBits').value = config.MaxBandwidthMBits || 0;
+            document.querySelector('#chkDownloadSubtitles').checked = config.Download.DownloadSubtitles;
+            document.querySelector('#chkAllowUnknownDomains').checked = config.Network.AllowUnknownDomains;
+            document.querySelector('#chkAllowHttp').checked = config.Network.AllowHttp;
+            document.querySelector('#chkScanLibraryAfterDownload').checked = config.Download.ScanLibraryAfterDownload;
+            document.querySelector('#chkEnableDirectAudioExtraction').checked = config.Download.EnableDirectAudioExtraction;
+            document.querySelector('#chkEnableStrmCleanup').checked = config.Maintenance.EnableStrmCleanup;
+            document.querySelector('#chkFetchStreamSizes').checked = config.Search.FetchStreamSizes;
+            document.querySelector('#chkSearchInFutureBroadcasts').checked = config.Search.SearchInFutureBroadcasts;
+            document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked = config.Maintenance.AllowDownloadOnUnknownDiskSpace;
+            document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.Download.MinFreeDiskSpaceBytes ? (config.Download.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
+            document.querySelector('#txtMaxBandwidthMBits').value = config.Download.MaxBandwidthMBits || 0;
             document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
             document.querySelector('#chkMoviePathWithTopic').checked = config.Paths.UseTopicForMoviePath;
 
@@ -1551,21 +1551,23 @@ class MediathekPluginConfig {
             this.currentConfig.Paths.DefaultManualShowPath = document.querySelector('#txtDefaultManualShowPath').value;
             this.currentConfig.Paths.DefaultManualMoviePath = document.querySelector('#txtDefaultManualMoviePath').value;
             this.currentConfig.Paths.TempDownloadPath = document.querySelector('#txtTempDownloadPath').value;
-            this.currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
-            this.currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
-            this.currentConfig.AllowHttp = document.querySelector('#chkAllowHttp').checked;
-            this.currentConfig.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
-            this.currentConfig.EnableDirectAudioExtraction = document.querySelector('#chkEnableDirectAudioExtraction').checked;
-            this.currentConfig.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
-            this.currentConfig.FetchStreamSizes = document.querySelector('#chkFetchStreamSizes').checked;
-            this.currentConfig.SearchInFutureBroadcasts = document.querySelector('#chkSearchInFutureBroadcasts').checked;
-            this.currentConfig.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
+
+            this.currentConfig.Download.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
+            this.currentConfig.Network.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
+            this.currentConfig.Network.AllowHttp = document.querySelector('#chkAllowHttp').checked;
+            this.currentConfig.Download.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
+            this.currentConfig.Download.EnableDirectAudioExtraction = document.querySelector('#chkEnableDirectAudioExtraction').checked;
+            this.currentConfig.Maintenance.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
+            this.currentConfig.Search.FetchStreamSizes = document.querySelector('#chkFetchStreamSizes').checked;
+            this.currentConfig.Search.SearchInFutureBroadcasts = document.querySelector('#chkSearchInFutureBroadcasts').checked;
+            this.currentConfig.Maintenance.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
+
             const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
-            this.currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
+            this.currentConfig.Download.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
             this.currentConfig.Paths.UseTopicForMoviePath = document.querySelector('#chkMoviePathWithTopic').checked;
 
             const maxBandwidth = parseInt(document.querySelector('#txtMaxBandwidthMBits').value, 10);
-            this.currentConfig.MaxBandwidthMBits = isNaN(maxBandwidth) ? 0 : maxBandwidth;
+            this.currentConfig.Download.MaxBandwidthMBits = isNaN(maxBandwidth) ? 0 : maxBandwidth;
 
             this.subscriptionEditor.updateSubPathHoverText();
             this.saveGlobalConfig();

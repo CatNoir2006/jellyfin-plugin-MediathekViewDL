@@ -20,9 +20,15 @@ public class PluginConfiguration : BasePluginConfiguration
         Subscriptions = new Collection<Subscription>();
     }
 
+    /// <summary>
+    /// Gets or sets the version of the configuration.
+    /// Used for migrations.
+    /// </summary>
+    public int ConfigVersion { get; set; }
+
     #pragma warning disable SA1124
     // ToDo: Remove obsolete properties on 1.0.0.0 release
-    #region Obsolete Path Properties
+    #region Obsolete Properties
     #pragma warning restore SA1124
     /// <summary>
     /// Gets or sets the default path where completed downloads are stored.
@@ -86,6 +92,105 @@ public class PluginConfiguration : BasePluginConfiguration
     [EditorBrowsable(EditorBrowsableState.Never)]
     [XmlElement("UseTopicForMoviePath")]
     public bool DeprecatedUseTopicForMoviePath { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether subtitles should be downloaded if available.
+    /// DO NOT USE. Use Download.DownloadSubtitles instead.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("DownloadSubtitles")]
+    public bool DeprecatedDownloadSubtitles { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether direct audio extraction from URL is enabled.
+    /// DO NOT USE. Use Download.EnableDirectAudioExtraction instead.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("EnableDirectAudioExtraction")]
+    public bool DeprecatedEnableDirectAudioExtraction { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the minimum free disk space in bytes required to start a new download.
+    /// DO NOT USE. Use Download.MinFreeDiskSpaceBytes instead.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("MinFreeDiskSpaceBytes")]
+    public long DeprecatedMinFreeDiskSpaceBytes { get; set; } = (long)(1.5 * 1024 * 1024 * 1024);
+
+    /// <summary>
+    /// Gets or sets a value indicating whether downloads should be allowed if the available disk space cannot be determined.
+    /// DO NOT USE. Use Maintenance.AllowDownloadOnUnknownDiskSpace instead.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("AllowDownloadOnUnknownDiskSpace")]
+    public bool DeprecatedAllowDownloadOnUnknownDiskSpace { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum download bandwidth in MBit/s.
+    /// DO NOT USE. Use Download.MaxBandwidthMBits instead.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("MaxBandwidthMBits")]
+    public int DeprecatedMaxBandwidthMBits { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether downloads from unknown domains are allowed.
+    /// DO NOT USE. Use Network.AllowUnknownDomains instead.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("AllowUnknownDomains")]
+    public bool DeprecatedAllowUnknownDomains { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether http is allowed for download URLs.
+    /// DO NOT USE. Use Network.AllowHttp instead.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("AllowHttp")]
+    public bool DeprecatedAllowHttp { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether a library scan should be triggered after a download finishes.
+    /// DO NOT USE. Use Download.ScanLibraryAfterDownload instead.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("ScanLibraryAfterDownload")]
+    public bool DeprecatedScanLibraryAfterDownload { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to enable the automated cleanup of invalid .strm files.
+    /// DO NOT USE. Use Maintenance.EnableStrmCleanup instead.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("EnableStrmCleanup")]
+    public bool DeprecatedEnableStrmCleanup { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to fetch the stream size for search results.
+    /// DO NOT USE. Use Search.FetchStreamSizes instead.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("FetchStreamSizes")]
+    public bool DeprecatedFetchStreamSizes { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to search in future broadcasts when performing searches.
+    /// DO NOT USE. Use Search.SearchInFutureBroadcasts instead.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("SearchInFutureBroadcasts")]
+    public bool DeprecatedSearchInFutureBroadcasts { get; set; } = true;
     #endregion
 
     /// <summary>
@@ -95,66 +200,29 @@ public class PluginConfiguration : BasePluginConfiguration
     public ConfigurationPaths Paths { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets a value indicating whether subtitles should be downloaded if available.
+    /// Gets or sets the download options.
     /// </summary>
-    public bool DownloadSubtitles { get; set; } = true;
+    public DownloadOptions Download { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets a value indicating whether direct audio extraction from URL is enabled.
+    /// Gets or sets the search options.
     /// </summary>
-    public bool EnableDirectAudioExtraction { get; set; } = true;
+    public SearchOptions Search { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets the minimum free disk space in bytes required to start a new download.
+    /// Gets or sets the network options.
     /// </summary>
-    public long MinFreeDiskSpaceBytes { get; set; } = (long)(1.5 * 1024 * 1024 * 1024); // Default to 1.5 GiB
+    public NetworkOptions Network { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets a value indicating whether downloads should be allowed if the available disk space cannot be determined.
-    /// This can happen with network shares or non-standard file systems.
+    /// Gets or sets the maintenance options.
     /// </summary>
-    public bool AllowDownloadOnUnknownDiskSpace { get; set; }
+    public MaintenanceOptions Maintenance { get; set; } = new();
 
     /// <summary>
-    /// Gets or sets the maximum download bandwidth in MBit/s.
-    /// 0 means unlimited.
+    /// Gets or sets the subscription default values.
     /// </summary>
-    public int MaxBandwidthMBits { get; set; } = 0;
-
-    /// <summary>
-    /// Gets or sets a value indicating whether downloads from unknown domains are allowed.
-    /// This may be usefull if ARD or ZDF adds new CDNs that are not yet whitelisted.
-    /// This may pose a security risk, so use with caution.
-    /// </summary>
-    public bool AllowUnknownDomains { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether http is allowed for download URLs.
-    /// This may be necessary as some URLs do not support https for some reason.
-    /// I recommend keeping this off and only turning it on if you encounter problems.
-    /// </summary>
-    public bool AllowHttp { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether a library scan should be triggered after a download finishes.
-    /// </summary>
-    public bool ScanLibraryAfterDownload { get; set; } = true;
-
-    /// <summary>
-    /// Gets or sets a value indicating whether to enable the automated cleanup of invalid .strm files.
-    /// </summary>
-    public bool EnableStrmCleanup { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether to fetch the stream size for search results.
-    /// This requires an additional HTTP request per result and may slow down the search.
-    /// </summary>
-    public bool FetchStreamSizes { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether to search in future broadcasts when performing searches.
-    /// </summary>
-    public bool SearchInFutureBroadcasts { get; set; } = true;
+    public SubscriptionDefaults SubscriptionDefaults { get; set; } = new();
 
     /// <summary>
     /// Gets the list of download subscriptions.

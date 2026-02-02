@@ -49,11 +49,20 @@ public class MigrationHostedService : IHostedService
     private void MigrateConfiguration()
     {
         var config = _configProvider.Configuration;
+        const int CurrentConfigVersion = 1;
 
-        // Migrate old path settings to new Paths property if it's empty
-        if (config.Paths.IsEmpty())
+        if (config.ConfigVersion >= CurrentConfigVersion)
         {
-            var pathsOld = new ConfigurationPaths()
+            return;
+        }
+
+        _logger.LogInformation("Migrating configuration from version {OldVersion} to {NewVersion}", config.ConfigVersion, CurrentConfigVersion);
+
+        // Version 0 -> 1: Migrate Top-Level Settings to grouped settings
+        if (config.ConfigVersion < 1)
+        {
+            // Migrate old path settings to new Paths property if it's empty
+            config.Paths = new ConfigurationPaths()
             {
                 TempDownloadPath = config.DeprecatedTempDownloadPath,
                 DefaultDownloadPath = config.DeprecatedDefaultDownloadPath,
@@ -63,9 +72,39 @@ public class MigrationHostedService : IHostedService
                 DefaultSubscriptionShowPath = config.DeprecatedDefaultSubscriptionShowPath,
                 UseTopicForMoviePath = config.DeprecatedUseTopicForMoviePath,
             };
-            config.Paths = pathsOld;
+
+            // Migrate Download Options
+            config.Download = new DownloadOptions
+            {
+                DownloadSubtitles = config.DeprecatedDownloadSubtitles,
+                EnableDirectAudioExtraction = config.DeprecatedEnableDirectAudioExtraction,
+                MaxBandwidthMBits = config.DeprecatedMaxBandwidthMBits,
+                MinFreeDiskSpaceBytes = config.DeprecatedMinFreeDiskSpaceBytes,
+                ScanLibraryAfterDownload = config.DeprecatedScanLibraryAfterDownload
+            };
+
+            // Migrate Search Options
+            config.Search = new SearchOptions { FetchStreamSizes = config.DeprecatedFetchStreamSizes, SearchInFutureBroadcasts = config.DeprecatedSearchInFutureBroadcasts };
+
+            // Migrate Network Options
+            config.Network = new NetworkOptions { AllowUnknownDomains = config.DeprecatedAllowUnknownDomains, AllowHttp = config.DeprecatedAllowHttp };
+
+            // Migrate Maintenance Options
+            config.Maintenance = new MaintenanceOptions { EnableStrmCleanup = config.DeprecatedEnableStrmCleanup, AllowDownloadOnUnknownDiskSpace = config.DeprecatedAllowDownloadOnUnknownDiskSpace };
+
+            // Update config version
+            config.ConfigVersion = 1;
             _configProvider.Save();
         }
+
+        // The migration is complete, update the config version if the Migration Versions is still outdated
+        if (config.ConfigVersion < CurrentConfigVersion)
+        {
+            config.ConfigVersion = CurrentConfigVersion;
+            _configProvider.Save();
+        }
+
+        _logger.LogInformation("Configuration migration completed successfully.");
     }
 
     private void MigrateSubscriptions()

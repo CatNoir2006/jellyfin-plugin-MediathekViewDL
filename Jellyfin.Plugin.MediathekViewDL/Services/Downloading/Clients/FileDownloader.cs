@@ -71,8 +71,8 @@ public class FileDownloader : IFileDownloader
         }
 
         // Check if the domain is allowed
-        var domainAllowed = CheckDomainAllowed(fileUrl, pluginConfig, pluginConfig.AllowUnknownDomains);
-        if (!pluginConfig.AllowUnknownDomains && !domainAllowed)
+        var domainAllowed = CheckDomainAllowed(fileUrl, pluginConfig, pluginConfig.Network.AllowUnknownDomains);
+        if (!pluginConfig.Network.AllowUnknownDomains && !domainAllowed)
         {
             _logger.LogError("Download from unknown domain is not allowed: {FileUrl}", fileUrl);
             return false;
@@ -92,7 +92,7 @@ public class FileDownloader : IFileDownloader
 
             if (diskSpace == null)
             {
-                if (pluginConfig.AllowDownloadOnUnknownDiskSpace)
+                if (pluginConfig.Maintenance.AllowDownloadOnUnknownDiskSpace)
                 {
                     _logger.LogWarning("Could not determine available disk space for '{DestinationPath}'. Proceeding with download as configured.", destinationPath);
                 }
@@ -105,13 +105,13 @@ public class FileDownloader : IFileDownloader
             else
             {
                 // Check if there is enough disk space before starting the download
-                if (diskSpace < pluginConfig.MinFreeDiskSpaceBytes)
+                if (diskSpace < pluginConfig.Download.MinFreeDiskSpaceBytes)
                 {
                     _logger.LogError(
                         "Insufficient disk space to download '{FileUrl}' to '{DestinationPath}'. Required: {RequiredBytes} bytes, Available: {AvailableBytes} bytes.",
                         fileUrl,
                         destinationPath,
-                        pluginConfig.MinFreeDiskSpaceBytes,
+                        pluginConfig.Download.MinFreeDiskSpaceBytes,
                         diskSpace);
                     return false;
                 }
@@ -126,7 +126,7 @@ public class FileDownloader : IFileDownloader
             // Check disk space again considering the file size
             if (totalBytes != -1 && diskSpace != null)
             {
-                var requiredSpace = totalBytes + pluginConfig.MinFreeDiskSpaceBytes;
+                var requiredSpace = totalBytes + pluginConfig.Download.MinFreeDiskSpaceBytes;
 
                 if (diskSpace < requiredSpace)
                 {
@@ -138,7 +138,7 @@ public class FileDownloader : IFileDownloader
                         destinationPath,
                         requiredSpace,
                         totalBytes,
-                        pluginConfig.MinFreeDiskSpaceBytes,
+                        pluginConfig.Download.MinFreeDiskSpaceBytes,
                         diskSpace);
 
                     return false;
@@ -153,9 +153,9 @@ public class FileDownloader : IFileDownloader
             {
 #pragma warning disable CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
                 var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                if (pluginConfig.MaxBandwidthMBits > 0)
+                if (pluginConfig.Download.MaxBandwidthMBits > 0)
                 {
-                    var bytesPerSecond = (long)pluginConfig.MaxBandwidthMBits * 1_000_000 / 8;
+                    var bytesPerSecond = (long)pluginConfig.Download.MaxBandwidthMBits * 1_000_000 / 8;
                     stream = new ThrottledStream(stream, bytesPerSecond);
                 }
 

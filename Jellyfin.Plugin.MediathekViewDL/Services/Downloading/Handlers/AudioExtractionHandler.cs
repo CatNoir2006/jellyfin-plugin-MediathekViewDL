@@ -57,7 +57,7 @@ public class AudioExtractionHandler : IDownloadHandler
         _logger.LogInformation("Downloading '{Title}' to '{Path}'.", job.Title, item.DestinationPath);
         var config = _configProvider.Configuration;
 
-        if (config.EnableDirectAudioExtraction)
+        if (config.Download.EnableDirectAudioExtraction)
         {
             return await DoAudioExtractNew(item, job.ItemInfo, progress, cancellationToken).ConfigureAwait(false);
         }
