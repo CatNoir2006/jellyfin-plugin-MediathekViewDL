@@ -296,7 +296,7 @@ public class MediathekViewDlApiService : ControllerBase
             return BadRequest("Could not generate download paths.");
         }
 
-        if (FileDownloader.GetDiskSpace(paths.DirectoryPath) < config.MinFreeDiskSpaceBytes)
+        if (FileDownloader.GetDiskSpace(paths.DirectoryPath) < config.Download.MinFreeDiskSpaceBytes)
         {
             _logger.LogError("Not enough free disk space to start download for item: {Title} at {Path}", item.Title, paths.DirectoryPath);
             return BadRequest("Not enough free disk space to start download.");
@@ -309,7 +309,7 @@ public class MediathekViewDlApiService : ControllerBase
         job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase) ? DownloadType.M3U8Download : DownloadType.DirectDownload });
 
         var subtitle = item.GetSubtitle();
-        if (config.DownloadSubtitles && !string.IsNullOrWhiteSpace(subtitle?.Url))
+        if (config.Download.DownloadSubtitles && !string.IsNullOrWhiteSpace(subtitle?.Url))
         {
             job.DownloadItems.Add(new DownloadItem { SourceUrl = subtitle.Url, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
         }
@@ -367,7 +367,7 @@ public class MediathekViewDlApiService : ControllerBase
         }
 
 #pragma warning disable CA3003 // Path is validated via manual check and directory creation rules
-        if (FileDownloader.GetDiskSpace(options.DownloadPath) < config.MinFreeDiskSpaceBytes)
+        if (FileDownloader.GetDiskSpace(options.DownloadPath) < config.Download.MinFreeDiskSpaceBytes)
 #pragma warning restore CA3003
         {
             _logger.LogError("Not enough free disk space to start advanced download for item: {Title} at {Path}", item.Title, options.DownloadPath);

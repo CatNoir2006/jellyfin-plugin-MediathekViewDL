@@ -197,91 +197,115 @@
                             </div>
                         </details>
 
-                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
-                            <label class="emby-checkbox-label">
-                                <input id="chkDownloadSubtitles" type="checkbox" is="emby-checkbox"/>
-                                <span>Untertitel herunterladen (wenn verfügbar)</span>
-                            </label>
-                            <div class="fieldDescription">Lädt eine separate VTT- oder TTML-Datei für Untertitel
-                                herunter, falls vom Sender bereitgestellt.
+                        <details>
+                            <summary class="inputLabel mvpl-collapsible-summary">Download-Einstellungen</summary>
+                            <div class="mvpl-details-content">
+                                <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                                    <label class="emby-checkbox-label">
+                                        <input id="chkDownloadSubtitles" type="checkbox" is="emby-checkbox"/>
+                                        <span>Untertitel herunterladen (wenn verfügbar)</span>
+                                    </label>
+                                    <div class="fieldDescription">Lädt eine separate VTT- oder TTML-Datei für Untertitel
+                                        herunter, falls vom Sender bereitgestellt.
+                                    </div>
+                                </div>
+
+                                <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                                    <label class="emby-checkbox-label">
+                                        <input id="chkEnableDirectAudioExtraction" type="checkbox" is="emby-checkbox"/>
+                                        <span>Direkte Audio-Extraktion aktivieren</span>
+                                    </label>
+                                    <div class="fieldDescription">Wenn aktiviert, wird versucht, Audio direkt aus der URL zu extrahieren. Hinweis: Die Bandbreitenbegrenzung funktioniert hierbei nicht, aber es müssen generell weniger Daten heruntergeladen werden und der Vorgang sollte schneller sein. (Standard: An)</div>
+                                </div>
+
+                                <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                                    <label class="emby-checkbox-label">
+                                        <input id="chkScanLibraryAfterDownload" type="checkbox" is="emby-checkbox"/>
+                                        <span>Bibliotheks-Scan nach Download</span>
+                                    </label>
+                                    <div class="fieldDescription">Startet automatisch einen Scan der Medienbibliothek, nachdem neue Inhalte heruntergeladen wurden. Wenn deaktiviert, erscheinen neue Inhalte erst nach dem nächsten regulären Scan.</div>
+                                </div>
+
+                                <div class="inputContainer">
+                                    <label class="inputLabel" for="txtMinFreeDiskSpaceMiB">Mindestfreier Speicherplatz (MiB)</label>
+                                    <input is="emby-input" type="number" id="txtMinFreeDiskSpaceMiB"/>
+                                    <div class="fieldDescription">Legt den minimalen freien Speicherplatz fest, der erforderlich ist, um einen neuen Download zu starten.</div>
+                                </div>
+
+                                <div class="inputContainer">
+                                    <label class="inputLabel" for="txtMaxBandwidthMBits">Maximale Download-Bandbreite (MBit/s)</label>
+                                    <input is="emby-input" type="number" id="txtMaxBandwidthMBits"/>
+                                    <div class="fieldDescription">Begrenzt die Download-Geschwindigkeit. 0 bedeutet unbegrenzt.</div>
+                                </div>
                             </div>
-                        </div>
+                        </details>
 
-                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
-                            <label class="emby-checkbox-label">
-                                <input id="chkAllowUnknownDomains" type="checkbox" is="emby-checkbox"/>
-                                <span>Downloads von unbekannten Domains erlauben</span>
-                            </label>
-                            <div class="fieldDescription">Ermöglicht das Herunterladen von Inhalten von Domains,
-                                die
-                                nicht auf der Whitelist stehen. Dies kann nützlich sein, wenn ARD oder ZDF neue CDNs
-                                hinzufügen, die noch nicht berücksichtigt werden. Dies kann jedoch ein
-                                Sicherheitsrisiko darstellen, daher mit Vorsicht verwenden. Falls dadurch manche
-                                Inhalte nicht gefunden werden wäre es schön, wenn auf GitHub ein Issue erstellt wird,
-                                das ich die Whitelist ggf. erweitern kann.
+                        <details>
+                            <summary class="inputLabel mvpl-collapsible-summary">Suche-Einstellungen</summary>
+                            <div class="mvpl-details-content">
+                                <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                                    <label class="emby-checkbox-label">
+                                        <input id="chkFetchStreamSizes" type="checkbox" is="emby-checkbox"/>
+                                        <span>Größe des Streams abrufen</span>
+                                    </label>
+                                    <div class="fieldDescription">Wenn aktiviert, wird die Größe der Video-Dateien bei der Suche abgerufen. Dies verlangsamt die Suche erheblich, da für jedes Ergebnis eine zusätzliche Anfrage gesendet werden muss.</div>
+                                </div>
+
+                                <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                                    <label class="emby-checkbox-label">
+                                        <input id="chkSearchInFutureBroadcasts" type="checkbox" is="emby-checkbox"/>
+                                        <span>Suche in zukünftigen Ausstrahlungen</span>
+                                    </label>
+                                    <div class="fieldDescription">Manchmal sind Videos auch schon vor der eigentlichen TV-Ausstrahlung in der Mediathek verfügbar.</div>
+                                </div>
                             </div>
-                        </div>
+                        </details>
 
-                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
-                            <label class="emby-checkbox-label">
-                                <input id="chkAllowHttp" type="checkbox" is="emby-checkbox"/>
-                                <span>HTTP Downloads erlauben</span>
-                            </label>
-                            <div class="fieldDescription">Dies kann notwendig sein, da manche URLs aus irgendeinem Grund kein HTTPS unterstützen. Es wird empfohlen, dies deaktiviert zu lassen und nur zu aktivieren, wenn Probleme auftreten.</div>
-                        </div>
+                        <details>
+                            <summary class="inputLabel mvpl-collapsible-summary">Netzwerk & Sicherheit</summary>
+                            <div class="mvpl-details-content">
+                                <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                                    <label class="emby-checkbox-label">
+                                        <input id="chkAllowUnknownDomains" type="checkbox" is="emby-checkbox"/>
+                                        <span>Downloads von unbekannten Domains erlauben</span>
+                                    </label>
+                                    <div class="fieldDescription">Ermöglicht das Herunterladen von Inhalten von Domains,
+                                        die nicht auf der Whitelist stehen. Dies kann nützlich sein, wenn ARD oder ZDF neue CDNs
+                                        hinzufügen, die noch nicht berücksichtigt werden. Dies kann jedoch ein
+                                        Sicherheitsrisiko darstellen, daher mit Vorsicht verwenden.
+                                    </div>
+                                </div>
 
-                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
-                            <label class="emby-checkbox-label">
-                                <input id="chkScanLibraryAfterDownload" type="checkbox" is="emby-checkbox"/>
-                                <span>Bibliotheks-Scan nach Download</span>
-                            </label>
-                            <div class="fieldDescription">Startet automatisch einen Scan der Medienbibliothek, nachdem neue Inhalte heruntergeladen wurden. Wenn deaktiviert, erscheinen neue Inhalte erst nach dem nächsten regulären Scan.</div>
-                        </div>
+                                <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                                    <label class="emby-checkbox-label">
+                                        <input id="chkAllowHttp" type="checkbox" is="emby-checkbox"/>
+                                        <span>HTTP Downloads erlauben</span>
+                                    </label>
+                                    <div class="fieldDescription">Dies kann notwendig sein, da manche URLs aus irgendeinem Grund kein HTTPS unterstützen. Es wird empfohlen, dies deaktiviert zu lassen und nur zu aktivieren, wenn Probleme auftreten.</div>
+                                </div>
+                            </div>
+                        </details>
 
-                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
-                            <label class="emby-checkbox-label">
-                                <input id="chkEnableDirectAudioExtraction" type="checkbox" is="emby-checkbox"/>
-                                <span>Direkte Audio-Extraktion aktivieren</span>
-                            </label>
-                            <div class="fieldDescription">Wenn aktiviert, wird versucht, Audio direkt aus der URL zu extrahieren. Hinweis: Die Bandbreitenbegrenzung funktioniert hierbei nicht, aber es müssen generell weniger Daten heruntergeladen werden und der Vorgang sollte schneller sein. (Standard: An)</div>
-                        </div>
+                        <details>
+                            <summary class="inputLabel mvpl-collapsible-summary">Wartung</summary>
+                            <div class="mvpl-details-content">
+                                <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                                    <label class="emby-checkbox-label">
+                                        <input id="chkEnableStrmCleanup" type="checkbox" is="emby-checkbox"/>
+                                        <span>Bereinigung ungültiger Streaming-Dateien (.strm) aktivieren</span>
+                                    </label>
+                                    <div class="fieldDescription">Überprüft regelmäßig (via geplanten Task) alle erstellten .strm Dateien auf Gültigkeit der Links. Wenn ein Link nicht mehr erreichbar ist (z.B. 404), wird die Datei gelöscht, damit ggf. eine aktualisierte Version heruntergeladen werden kann. Beachtet die Einstellung "Downloads von unbekannten Domains erlauben".</div>
+                                </div>
 
-                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
-                            <label class="emby-checkbox-label">
-                                <input id="chkEnableStrmCleanup" type="checkbox" is="emby-checkbox"/>
-                                <span>Bereinigung ungültiger Streaming-Dateien (.strm) aktivieren</span>
-                            </label>
-                            <div class="fieldDescription">Überprüft regelmäßig (via geplanten Task) alle erstellten .strm Dateien auf Gültigkeit der Links. Wenn ein Link nicht mehr erreichbar ist (z.B. 404), wird die Datei gelöscht, damit ggf. eine aktualisierte Version heruntergeladen werden kann. Beachtet die Einstellung "Downloads von unbekannten Domains erlauben".</div>
-                        </div>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
-                            <label class="emby-checkbox-label">
-                                <input id="chkFetchStreamSizes" type="checkbox" is="emby-checkbox"/>
-                                <span>Größe des Streams abrufen</span>
-                            </label>
-                            <div class="fieldDescription">Wenn aktiviert, wird die Größe der Video-Dateien bei der Suche abgerufen. Dies verlangsamt die Suche erheblich, da für jedes Ergebnis eine zusätzliche Anfrage gesendet werden muss.</div>
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel" for="txtMinFreeDiskSpaceMiB">Mindestfreier Speicherplatz
-                                (MiB)</label>
-                            <input is="emby-input" type="number" id="txtMinFreeDiskSpaceMiB"/>
-                            <div class="fieldDescription">Legt den minimalen freien Speicherplatz fest, der erforderlich ist, um einen neuen Download zu starten.</div>
-                        </div>
-
-                        <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
-                            <label class="emby-checkbox-label">
-                                <input id="chkAllowDownloadOnUnknownDiskSpace" type="checkbox" is="emby-checkbox"/>
-                                <span>Download bei unbekanntem Speicherplatz erlauben</span>
-                            </label>
-                            <div class="fieldDescription">Ermöglicht den Download auch dann, wenn der verfügbare Speicherplatz nicht ermittelt werden kann (z.B. bei manchen Netzwerkfreigaben). Wenn deaktiviert, wird der Download in diesem Fall blockiert.</div>
-                        </div>
-
-                        <div class="inputContainer">
-                            <label class="inputLabel" for="txtMaxBandwidthMBits">Maximale Download-Bandbreite (MBit/s)</label>
-                            <input is="emby-input" type="number" id="txtMaxBandwidthMBits"/>
-                            <div class="fieldDescription">Begrenzt die Download-Geschwindigkeit. 0 bedeutet unbegrenzt.</div>
-                        </div>
+                                <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
+                                    <label class="emby-checkbox-label">
+                                        <input id="chkAllowDownloadOnUnknownDiskSpace" type="checkbox" is="emby-checkbox"/>
+                                        <span>Download bei unbekanntem Speicherplatz erlauben</span>
+                                    </label>
+                                    <div class="fieldDescription">Ermöglicht den Download auch dann, wenn der verfügbare Speicherplatz nicht ermittelt werden kann (z.B. bei manchen Netzwerkfreigaben). Wenn deaktiviert, wird der Download in diesem Fall blockiert.</div>
+                                </div>
+                            </div>
+                        </details>
 
                         <div class="inputContainer">
                             <label class="inputLabel">Letzter Lauf</label>
@@ -914,7 +938,6 @@
             border-radius: 5px;
             display: flex;
             align-items: center;
-            margin-bottom: 1em;
             margin-top: 1em;
             user-select: none;
             transition: background-color 0.2s;
@@ -958,6 +981,32 @@
             border-left: 1px solid #444;
             margin-left: 10px;
             margin-bottom: 20px;
+        }
+        .mvpl-history-details {
+            transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.2s ease-in-out;
+            max-height: 2000px;
+            opacity: 1;
+            overflow: hidden;
+        }
+
+        .mvpl-history-details.mvpl-hidden {
+            max-height: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+
+        .mvpl-history-entry {
+            margin-bottom: 8px;
+            border-left: 2px solid #444;
+            padding-left: 10px;
+        }
+
+        .mvpl-history-entry-path {
+            font-size: 0.9em;
+            opacity: 0.7;
+            word-break: break-all;
         }
     </style>
 </div>

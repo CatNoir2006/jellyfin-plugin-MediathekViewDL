@@ -42,7 +42,7 @@ public class StrmValidationServiceTests
     {
         // Arrange
         var url = "https://ard.de/video.mp4";
-        
+
         _httpMessageHandlerMock.Protected()
             .Setup<Task<HttpResponseMessage>>(
                 "SendAsync",
@@ -115,11 +115,11 @@ public class StrmValidationServiceTests
     {
         // Arrange
         var url = "https://malicious-site.com/video.mp4";
-        _testConfig.AllowUnknownDomains = false;
+        _testConfig.Network.AllowUnknownDomains = false;
 
         // Act & Assert
         await Assert.ThrowsAsync<InvalidOperationException>(() => _service.ValidateUrlAsync(url, CancellationToken.None));
-        
+
         // Ensure no HTTP call was made
         _httpMessageHandlerMock.Protected().Verify(
             "SendAsync",

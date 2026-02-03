@@ -1,4 +1,136 @@
 /**
+ * Helper Class that contains various utility methods.
+ */
+class Helper {
+    static config() {window.MediathekViewDL.config;}
+
+    /**
+     * Shows a confirmation popup.
+     * @param message The message to display
+     * @param title The title of the popup
+     * @param resultCallback The callback to receive the result (true/false)
+     */
+    static confirmationPopup(message, title, resultCallback) {
+        // noinspection JSUnresolvedReference
+        if (typeof Dashboard !== 'undefined' && typeof Dashboard.confirm === 'function') {
+            // noinspection JSUnresolvedReference,JSCheckFunctionSignatures
+            Dashboard.confirm(message, title, resultCallback);
+        } else {
+            const result = confirm(title + "\n\n" + message);
+            resultCallback(result);
+        }
+    }
+
+    /**
+     * Shows a toast/alert message.
+     * @param message The message to display
+     */
+    static showToast(message) {
+        // noinspection JSUnresolvedReference
+        if (typeof Dashboard !== 'undefined' && typeof Dashboard.alert === 'function') {
+            // noinspection JSUnresolvedReference
+            Dashboard.alert(message);
+        } else {
+            alert(message);
+        }
+    }
+
+    /**
+     * Opens a folder selection dialog and sets the selected path to the input element.
+     * @param inputId The ID of the input element to set the path
+     * @param headerText The Title of the dialog
+     */
+    static openFolderDialog(inputId, headerText) {
+        try {
+            // noinspection JSUnresolvedReference
+            if (typeof Dashboard !== 'undefined' && Dashboard.DirectoryBrowser) {
+                // noinspection JSUnresolvedReference
+                const picker = new Dashboard.DirectoryBrowser();
+                picker.show({
+                    header: headerText,
+                    includeDirectories: true,
+                    includeFiles: false,
+                    callback: (path) => {
+                        if (path) {
+                            document.getElementById(inputId).value = path;
+                        }
+                        picker.close();
+                    }
+                });
+            } else {
+                let currentValue = document.getElementById(inputId).value;
+                let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
+                if (newPath !== null && newPath.trim() !== '') {
+                    document.getElementById(inputId).value = newPath.trim();
+                }
+            }
+        } catch (e) {
+            console.error('Error opening folder dialog:', e);
+            let currentValue = document.getElementById(inputId).value;
+            let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
+            if (newPath !== null && newPath.trim() !== '') {
+                document.getElementById(inputId).value = newPath.trim();
+            }
+        }
+    }
+
+    /**
+     * Generates a UUID (version 4).
+     * @returns {string}
+     */
+    static genUUID() {
+        try {
+            return crypto.randomUUID();
+        } catch (e) {
+            console.error('Error generating UUID using crypto.randomUUID():', e);
+        }
+        console.warn('Falling back to manual UUID generation.');
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            let r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    /**
+     * Opens a DuckDuckGo search in a new tab.
+     * @param search The search query
+     * @param siteFilter Filter to a specific site (optional)
+     * @param openPage Open the search results page (true) or just the query (false)
+     */
+    static openDuckDuckGoSearch(search = '', siteFilter = '', openPage = false) {
+        let queryString = (search).trim();
+        if (siteFilter) {
+            queryString += ' site:' + siteFilter;
+        }
+        const query = encodeURIComponent(queryString);
+        const searchUrl = 'https://duckduckgo.com/?q=' + (openPage ? '\\' : '');
+        window.open(searchUrl + query, '_blank');
+    }
+
+    /**
+     * Extracts the file name from a given path.
+     * @param path The full file path
+     * @returns {string} The file name or empty string if none
+     */
+    static getFileNameFromPath(path) {
+        if (!path) return '';
+        const parts = path.split(/[\\\/]/);
+        return parts[parts.length - 1];
+    }
+
+    /**
+     * Extracts the file extension from a given path.
+     * @param path The full file path
+     * @returns {string} The file extension in lowercase, or empty string if none
+     */
+    static getFileExtensionFromPath(path) {
+        if (!path) return '';
+        const parts = path.split('.');
+        return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
+    }
+}
+
+/**
  * Helper class for DOM manipulation to reduce verbosity.
  */
 class DomHelper {
@@ -171,7 +303,7 @@ class SearchController {
         const maxDate = document.getElementById('dateMaxBroadcast').value;
 
         if (!title && !topic && !channel && !combinedSearch) {
-            this.config.showToast("Bitte Suchbegriff eingeben");
+            Helper.showToast("Bitte Suchbegriff eingeben");
             return;
         }
         // noinspection JSUnresolvedReference
@@ -206,7 +338,7 @@ class SearchController {
         }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            this.config.showToast("Fehler bei der Suche: " + err);
+            Helper.showToast("Fehler bei der Suche: " + err);
         });
     }
 
@@ -245,12 +377,12 @@ class SearchController {
             if (videoUrl) {
                 window.open(videoUrl, '_blank');
             } else {
-                this.config.showToast("Keine Video-URL verfügbar.");
+                Helper.showToast("Keine Video-URL verfügbar.");
             }
         }))
         actions.appendChild(this.dom.createIconButton('search', 'Video über DuckDuckGo suchen', () => {
             const queryString = item.Topic + ' ' + item.Title;
-            window.MediathekViewDL.config.openDuckDuckGoSearch(queryString);
+            Helper.openDuckDuckGoSearch(queryString);
         }));
         actions.appendChild(this.dom.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
         actions.appendChild(this.dom.createIconButton('settings', 'Erweiterter Download', () => this.config.openAdvancedDownloadDialog(this.currentSearchResults[index])));
@@ -297,11 +429,11 @@ class SearchController {
         }).then((result) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            this.config.showToast("Download für '" + item.Title + "' in Warteschlange.");
+            Helper.showToast("Download für '" + item.Title + "' in Warteschlange.");
         }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            this.config.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+            Helper.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
         });
     }
 
@@ -331,6 +463,7 @@ class DownloadsController {
         this.dom = config.dom;
         this.pollTimeout = null;
         this.isPolling = false;
+        this.expandedGroups = new Set();
         this.statusMapping = {
             'Queued': {text: 'Warteschlange'}, // Queued
             'Downloading': {text: 'Herunterladen...'}, // Downloading
@@ -342,6 +475,7 @@ class DownloadsController {
     }
 
     init() {
+        this.config.debugLog("Initialisiere DownloadsController");
         // Initial load handled by switchTab
     }
 
@@ -462,25 +596,187 @@ class DownloadsController {
             return;
         }
 
-        history.forEach((entry) => {
-            const timestamp = new Date(entry.Timestamp).toLocaleString();
-            const body1 = 'Pfad: ' + entry.DownloadPath;
+        const groups = this.groupHistoryEntries(history);
+        groups.forEach((group) => {
+            container.appendChild(this.renderHistoryGroup(group));
+        });
+    }
 
-            let downloadTrigger = ' (Manuell)';
-            if (!StringHelper.isNullOrWhitespace(entry.SubscriptionId)) {
-                const sub = this.config.currentConfig?.Subscriptions?.find(s => s.Id === entry.SubscriptionId);
-                if (sub) {
-                    downloadTrigger = ' (Abo: ' + sub.Name + ')';
-                } else {
-                    downloadTrigger = ' (Abo)';
-                }
+    /**
+     * Toggles the expanded state of a history group.
+     * @param {string} groupKey
+     * @param {boolean} expand
+     * @param {HTMLElement} groupItem
+     */
+    toggleGroupState(groupKey, expand, groupItem) {
+        const details = groupItem.querySelector('.mvpl-history-details');
+        const expandBtn = groupItem.querySelector('.mvpl-btn-expand');
+        const collapseBtn = groupItem.querySelector('.mvpl-btn-collapse');
+
+        if (expand) {
+            details.classList.remove('mvpl-hidden');
+            if (expandBtn) expandBtn.style.display = 'none';
+            if (collapseBtn) collapseBtn.style.display = 'inline-flex';
+            this.expandedGroups.add(groupKey);
+        } else {
+            details.classList.add('mvpl-hidden');
+            if (expandBtn) expandBtn.style.display = 'inline-flex';
+            if (collapseBtn) collapseBtn.style.display = 'none';
+            this.expandedGroups.delete(groupKey);
+        }
+    }
+
+    /**
+     * Generates a unique key for a group to track its state.
+     * @param {Object} group
+     * @returns {string}
+     */
+    getGroupKey(group) {
+        return (group.subscriptionId || 'manual') + '_' + (group.itemId || group.title);
+    }
+
+    /**
+     * Groups history entries by SubscriptionId and (ItemId or Title).
+     * @param {Array} history - The history entries.
+     * @returns {Array} The grouped entries.
+     */
+    groupHistoryEntries(history) {
+        const groups = [];
+
+        history.forEach((entry) => {
+            const entrySubId = entry.SubscriptionId || '00000000-0000-0000-0000-000000000000';
+            const entryItemId = entry.ItemId || '';
+            const entryTitle = entry.Title || '';
+            const entryFileName = Helper.getFileNameFromPath(entry.DownloadPath);
+            const entryDisplayName = !StringHelper.isNullOrWhitespace(entryTitle) ? entryTitle : entryFileName;
+
+            // Match logic: Same SubId AND (Same ItemId OR Same Title OR same DisplayName)
+            let group = groups.find(g => {
+                if (g.subscriptionId !== entrySubId) return false;
+                if (entryItemId && g.itemId && entryItemId === g.itemId) return true;
+                if (entryTitle && g.title && entryTitle === g.title) return true;
+                return entryDisplayName && g.displayName && entryDisplayName === g.displayName;
+            });
+
+            if (!group) {
+                group = {
+                    subscriptionId: entrySubId,
+                    title: entryTitle,
+                    displayName: entryDisplayName,
+                    itemId: entryItemId,
+                    latestTimestamp: entry.Timestamp,
+                    entries: []
+                };
+                groups.push(group);
             }
 
-            const body2 = 'Datum: ' + timestamp + downloadTrigger;
-            const fileName = entry.DownloadPath.split(/[\\\/]/).pop();
-            const title = StringHelper.isNullOrWhitespace(entry.Title) ? fileName : entry.Title;
-            container.appendChild(this.config.createListItem(title, body1, body2, null));
+            group.entries.push(entry);
+
+            // Preference for display name: use shortest one available
+            if (entryDisplayName && (!group.displayName || entryDisplayName.length < group.displayName.length)) {
+                group.displayName = entryDisplayName;
+            }
+
+            if (new Date(entry.Timestamp) > new Date(group.latestTimestamp)) {
+                group.latestTimestamp = entry.Timestamp;
+            }
         });
+
+        return groups.sort((a, b) => new Date(b.latestTimestamp) - new Date(a.latestTimestamp));
+    }
+
+    /**
+     * Renders a single history group item.
+     * @param {Object} group - The grouped history data.
+     * @returns {HTMLElement} The group DOM element.
+     */
+    renderHistoryGroup(group) {
+        const groupKey = this.getGroupKey(group);
+        const isExpanded = this.expandedGroups.has(groupKey);
+        const timestamp = new Date(group.latestTimestamp).toLocaleString();
+
+        let downloadTrigger = ' (Manuell)';
+        if (group.subscriptionId && group.subscriptionId !== '00000000-0000-0000-0000-000000000000') {
+            const sub = this.config.currentConfig?.Subscriptions?.find(s => s.Id === group.subscriptionId);
+            if (sub) {
+                downloadTrigger = ' (Abo: ' + sub.Name + ')';
+            } else {
+                downloadTrigger = ' (Abo)';
+            }
+        }
+
+        const displayTitle = group.displayName || "Unbekannter Titel";
+
+        const actions = document.createElement('div');
+        actions.className = 'listItemButtons flex-gap-10';
+
+        const expandBtn = this.dom.createIconButton('expand_more', 'Dateien anzeigen', () => {
+            this.toggleGroupState(groupKey, true, groupItem);
+        });
+        expandBtn.classList.add('mvpl-btn-expand');
+        expandBtn.style.display = isExpanded ? 'none' : 'inline-flex';
+
+        const collapseBtn = this.dom.createIconButton('expand_less', 'Dateien ausblenden', () => {
+            this.toggleGroupState(groupKey, false, groupItem);
+        });
+        collapseBtn.classList.add('mvpl-btn-collapse');
+        collapseBtn.style.display = isExpanded ? 'inline-flex' : 'none';
+
+        actions.appendChild(expandBtn);
+        actions.appendChild(collapseBtn);
+
+        const body1 = document.createElement('div');
+        body1.className = 'listItemBodyText secondary';
+        body1.textContent = 'Datum: ' + timestamp + (group.entries.length > 1 ? ' (' + group.entries.length + ' Dateien)' : '');
+
+        const groupItem = this.config.createListItem(displayTitle + downloadTrigger, body1, "", actions);
+
+        // Match standard list item appearance while supporting collapsible details
+        groupItem.style.flexDirection = 'column';
+        groupItem.style.alignItems = 'stretch';
+        groupItem.style.padding = '0'; // We'll move padding to the header
+
+        // Wrap existing children into a row to maintain row layout for the header
+        const headerRow = document.createElement('div');
+        headerRow.style.display = 'flex';
+        headerRow.style.flexDirection = 'row';
+        headerRow.style.alignItems = 'center';
+        headerRow.style.width = '100%';
+        headerRow.style.padding = '10px 15px';
+
+        while (groupItem.firstChild) {
+            headerRow.appendChild(groupItem.firstChild);
+        }
+        groupItem.appendChild(headerRow);
+
+        // Details section for files
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'mvpl-history-details' + (isExpanded ? '' : ' mvpl-hidden');
+        detailsDiv.style.paddingLeft = '30px';
+        detailsDiv.style.paddingRight = '15px';
+        detailsDiv.style.paddingBottom = isExpanded ? '15px' : '0';
+        detailsDiv.style.fontSize = '0.85em';
+
+        group.entries.forEach(entry => {
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'mvpl-history-entry';
+
+            let fileTypeInfo = "";
+            const ext = Helper.getFileExtensionFromPath(entry.DownloadPath);
+            if (ext === 'vtt' || ext === 'ttml') fileTypeInfo = "[Untertitel] ";
+            else if (ext === 'nfo') fileTypeInfo = "[Metadaten] ";
+            else if (ext === 'strm') fileTypeInfo = "[Stream] ";
+
+            const langInfo = !StringHelper.isNullOrWhitespace(entry.Language) ? (" (" + entry.Language + ")") : "";
+            const fileNameOnly = Helper.getFileNameFromPath(entry.DownloadPath);
+
+            entryDiv.innerHTML = '<span class="secondary" style="font-weight:bold;">' + fileTypeInfo + fileNameOnly + langInfo + '</span><br/>' +
+                                 '<span class="secondary mvpl-history-entry-path">' + entry.DownloadPath + '</span>';
+            detailsDiv.appendChild(entryDiv);
+        });
+
+        groupItem.appendChild(detailsDiv);
+        return groupItem;
     }
 
     cancelDownload(id) {
@@ -489,10 +785,10 @@ class DownloadsController {
             type: "DELETE",
             url: url
         }).then(() => {
-            this.config.showToast("Abbruch angefordert.");
+            Helper.showToast("Abbruch angefordert.");
             this.refreshData();
         }).catch((err) => {
-            this.config.showToast("Fehler beim Abbrechen: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+            Helper.showToast("Fehler beim Abbrechen: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
         });
     }
 }
@@ -617,9 +913,9 @@ class SubscriptionEditor {
         if (!el) return;
 
         if (StringHelper.isNullOrWhitespace(el.value)) {
-            const defaultMoviePath = window.MediathekViewDL.config.currentConfig.DefaultSubscriptionMoviePath || 'Nicht konfiguriert';
-            const defaultShowPath = window.MediathekViewDL.config.currentConfig.DefaultSubscriptionShowPath || 'Nicht konfiguriert';
-            const useTopicForMoviePath = window.MediathekViewDL.config.currentConfig.UseTopicForMoviePath;
+            const defaultMoviePath = window.MediathekViewDL.config.currentConfig.Paths.DefaultSubscriptionMoviePath || 'Nicht konfiguriert';
+            const defaultShowPath = window.MediathekViewDL.config.currentConfig.Paths.DefaultSubscriptionShowPath || 'Nicht konfiguriert';
+            const useTopicForMoviePath = window.MediathekViewDL.config.currentConfig.Paths.UseTopicForMoviePath;
             const subName = document.getElementById('subName').value || '[AboName]';
 
             const joinPath = (path, part) => {
@@ -868,74 +1164,6 @@ class MediathekPluginConfig {
         }
     }
 
-    confirmationPopup(message, title, resultCallback) {
-        // noinspection JSUnresolvedReference
-        if (typeof Dashboard !== 'undefined' && typeof Dashboard.confirm === 'function') {
-            // noinspection JSUnresolvedReference,JSCheckFunctionSignatures
-            Dashboard.confirm(message, title, resultCallback);
-        } else {
-            const result = confirm(title + "\n\n" + message);
-            resultCallback(result);
-        }
-    }
-
-    showToast(message) {
-        // noinspection JSUnresolvedReference
-        if (typeof Dashboard !== 'undefined' && typeof Dashboard.alert === 'function') {
-            // noinspection JSUnresolvedReference
-            Dashboard.alert(message);
-        } else {
-            alert(message);
-        }
-    }
-
-    openFolderDialog(inputId, headerText) {
-        try {
-            // noinspection JSUnresolvedReference
-            if (typeof Dashboard !== 'undefined' && Dashboard.DirectoryBrowser) {
-                // noinspection JSUnresolvedReference
-                const picker = new Dashboard.DirectoryBrowser();
-                picker.show({
-                    header: headerText,
-                    includeDirectories: true,
-                    includeFiles: false,
-                    callback: (path) => {
-                        if (path) {
-                            document.getElementById(inputId).value = path;
-                        }
-                        picker.close();
-                    }
-                });
-            } else {
-                let currentValue = document.getElementById(inputId).value;
-                let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
-                if (newPath !== null && newPath.trim() !== '') {
-                    document.getElementById(inputId).value = newPath.trim();
-                }
-            }
-        } catch (e) {
-            console.error('Error opening folder dialog:', e);
-            let currentValue = document.getElementById(inputId).value;
-            let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
-            if (newPath !== null && newPath.trim() !== '') {
-                document.getElementById(inputId).value = newPath.trim();
-            }
-        }
-    }
-
-    genUUID() {
-        try {
-            return crypto.randomUUID();
-        } catch (e) {
-            console.error('Error generating UUID using crypto.randomUUID():', e);
-        }
-        console.warn('Falling back to manual UUID generation.');
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            let r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    }
-
     setupAutoGrowInputs() {
         const inputs = [
             'txtSearchCombined',
@@ -993,16 +1221,6 @@ class MediathekPluginConfig {
         setTimeout(updateWidth, 0);
     }
 
-    openDuckDuckGoSearch(search = '', siteFilter = '', openPage = false) {
-        let queryString = (search).trim();
-        if (siteFilter) {
-            queryString += ' site:' + siteFilter;
-        }
-        const query = encodeURIComponent(queryString);
-        const searchUrl = 'https://duckduckgo.com/?q=' + (openPage ? '\\' : '');
-        window.open(searchUrl + query, '_blank');
-    }
-
     // --- Core Logic ---
 
     /**
@@ -1015,24 +1233,25 @@ class MediathekPluginConfig {
         ApiClient.getPluginConfiguration(this.pluginId).then((config) => {
             this.currentConfig = config;
 
-            document.querySelector('#txtDefaultDownloadPath').value = config.DefaultDownloadPath || "";
-            document.querySelector('#txtDefaultSubscriptionShowPath').value = config.DefaultSubscriptionShowPath || "";
-            document.querySelector('#txtDefaultSubscriptionMoviePath').value = config.DefaultSubscriptionMoviePath || "";
-            document.querySelector('#txtDefaultManualShowPath').value = config.DefaultManualShowPath || "";
-            document.querySelector('#txtDefaultManualMoviePath').value = config.DefaultManualMoviePath || "";
-            document.querySelector('#txtTempDownloadPath').value = config.TempDownloadPath || "";
-            document.querySelector('#chkDownloadSubtitles').checked = config.DownloadSubtitles;
-            document.querySelector('#chkAllowUnknownDomains').checked = config.AllowUnknownDomains;
-            document.querySelector('#chkAllowHttp').checked = config.AllowHttp;
-            document.querySelector('#chkScanLibraryAfterDownload').checked = config.ScanLibraryAfterDownload;
-            document.querySelector('#chkEnableDirectAudioExtraction').checked = config.EnableDirectAudioExtraction;
-            document.querySelector('#chkEnableStrmCleanup').checked = config.EnableStrmCleanup;
-            document.querySelector('#chkFetchStreamSizes').checked = config.FetchStreamSizes;
-            document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked = config.AllowDownloadOnUnknownDiskSpace;
-            document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.MinFreeDiskSpaceBytes ? (config.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
-            document.querySelector('#txtMaxBandwidthMBits').value = config.MaxBandwidthMBits || 0;
+            document.querySelector('#txtDefaultDownloadPath').value = config.Paths.DefaultDownloadPath || "";
+            document.querySelector('#txtDefaultSubscriptionShowPath').value = config.Paths.DefaultSubscriptionShowPath || "";
+            document.querySelector('#txtDefaultSubscriptionMoviePath').value = config.Paths.DefaultSubscriptionMoviePath || "";
+            document.querySelector('#txtDefaultManualShowPath').value = config.Paths.DefaultManualShowPath || "";
+            document.querySelector('#txtDefaultManualMoviePath').value = config.Paths.DefaultManualMoviePath || "";
+            document.querySelector('#txtTempDownloadPath').value = config.Paths.TempDownloadPath || "";
+            document.querySelector('#chkDownloadSubtitles').checked = config.Download.DownloadSubtitles;
+            document.querySelector('#chkAllowUnknownDomains').checked = config.Network.AllowUnknownDomains;
+            document.querySelector('#chkAllowHttp').checked = config.Network.AllowHttp;
+            document.querySelector('#chkScanLibraryAfterDownload').checked = config.Download.ScanLibraryAfterDownload;
+            document.querySelector('#chkEnableDirectAudioExtraction').checked = config.Download.EnableDirectAudioExtraction;
+            document.querySelector('#chkEnableStrmCleanup').checked = config.Maintenance.EnableStrmCleanup;
+            document.querySelector('#chkFetchStreamSizes').checked = config.Search.FetchStreamSizes;
+            document.querySelector('#chkSearchInFutureBroadcasts').checked = config.Search.SearchInFutureBroadcasts;
+            document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked = config.Maintenance.AllowDownloadOnUnknownDiskSpace;
+            document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.Download.MinFreeDiskSpaceBytes ? (config.Download.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
+            document.querySelector('#txtMaxBandwidthMBits').value = config.Download.MaxBandwidthMBits || 0;
             document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
-            document.querySelector('#chkMoviePathWithTopic').checked = config.UseTopicForMoviePath;
+            document.querySelector('#chkMoviePathWithTopic').checked = config.Paths.UseTopicForMoviePath;
 
             this.renderSubscriptionsList();
             // noinspection JSUnresolvedReference
@@ -1050,7 +1269,7 @@ class MediathekPluginConfig {
         ApiClient.updatePluginConfiguration(this.pluginId, this.currentConfig).then((result) => {
             // noinspection JSUnresolvedReference
             Dashboard.processPluginConfigurationUpdateResult(result);
-            this.showToast("Einstellungen gespeichert.");
+            Helper.showToast("Einstellungen gespeichert.");
             this.loadConfig();
         });
     }
@@ -1192,7 +1411,7 @@ class MediathekPluginConfig {
     }
 
     resetProcessedItems(id) {
-        this.confirmationPopup("Dies wird die Liste der bereits verarbeiteten Items für dieses Abonnement zurücksetzen. Es kann dazu führen, dass bereits heruntergeladene Inhalte erneut heruntergeladen werden, wenn sie noch in den Suchergebnissen der MediathekView API erscheinen. Fortfahren?", "Verarbeitete Items zurücksetzen", (confirmed) => {
+        Helper.confirmationPopup("Dies wird die Liste der bereits verarbeiteten Items für dieses Abonnement zurücksetzen. Es kann dazu führen, dass bereits heruntergeladene Inhalte erneut heruntergeladen werden, wenn sie noch in den Suchergebnissen der MediathekView API erscheinen. Fortfahren?", "Verarbeitete Items zurücksetzen", (confirmed) => {
             if (confirmed) {
                 // noinspection JSUnresolvedReference
                 Dashboard.showLoadingMsg();
@@ -1203,12 +1422,12 @@ class MediathekPluginConfig {
                 }).then((result) => {
                     // noinspection JSUnresolvedReference
                     Dashboard.hideLoadingMsg();
-                    this.showToast("Verarbeitete Items für Abonnement zurückgesetzt.");
+                    Helper.showToast("Verarbeitete Items für Abonnement zurückgesetzt.");
                     this.loadConfig(); // Refresh the configuration to update the UI
                 }).catch((err) => {
                     // noinspection JSUnresolvedReference
                     Dashboard.hideLoadingMsg();
-                    this.showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                    Helper.showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
                 });
             }
         });
@@ -1273,7 +1492,7 @@ class MediathekPluginConfig {
         const subData = this.subscriptionEditor.getEditorValues();
 
         if (subData.Criteria.length === 0) {
-            this.showToast("Bitte mindestens eine Suchanfrage definieren.");
+            Helper.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
 
@@ -1296,7 +1515,7 @@ class MediathekPluginConfig {
                 this.currentConfig.Subscriptions[idx].IsEnabled = existingIsEnabled;
             }
         } else {
-            subData.Id = this.genUUID();
+            subData.Id = Helper.genUUID();
             subData.IsEnabled = true; // Default enabled for new subs
             this.currentConfig.Subscriptions.push(subData);
         }
@@ -1307,7 +1526,7 @@ class MediathekPluginConfig {
     }
 
     deleteSubscription(id) {
-        this.confirmationPopup("Soll dieses Abonnement wirklich gelöscht werden?", "Löschen bestätigen", (confirmed) => {
+        Helper.confirmationPopup("Soll dieses Abonnement wirklich gelöscht werden?", "Löschen bestätigen", (confirmed) => {
             if (confirmed) {
                 this.currentConfig.Subscriptions = this.currentConfig.Subscriptions.filter(function (s) {
                     return s.Id !== id;
@@ -1446,23 +1665,23 @@ class MediathekPluginConfig {
         }).then((result) => {
             Dashboard.hideLoadingMsg();
             this.closeAdvancedDownloadDialog();
-            this.showToast("Download für '" + this.currentItemForAdvancedDl.Title + "' gestartet.");
+            Helper.showToast("Download für '" + this.currentItemForAdvancedDl.Title + "' gestartet.");
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
-            this.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+            Helper.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
         });
     }
 
     testSubscription() {
         const subData = this.subscriptionEditor.getEditorValues();
         if (subData.Criteria.length === 0) {
-            this.showToast("Bitte mindestens eine Suchanfrage definieren.");
+            Helper.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
 
         // If ID is empty (new subscription), generate a temporary one for the backend to accept the object
         if (!subData.Id) {
-            subData.Id = this.genUUID();
+            subData.Id = Helper.genUUID();
         }
 
         const url = ApiClient.getUrl('/' + this.pluginName + '/TestSubscription');
@@ -1488,7 +1707,7 @@ class MediathekPluginConfig {
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
             console.error("Test subscription error:", err);
-            this.showToast("Fehler beim Testen des Abos: " + (err.responseJSON ? err.responseJSON.detail : (err.message || "Unbekannter Fehler")));
+            Helper.showToast("Fehler beim Testen des Abos: " + (err.responseJSON ? err.responseJSON.detail : (err.message || "Unbekannter Fehler")));
         });
     }
 
@@ -1544,26 +1763,29 @@ class MediathekPluginConfig {
         // Main Config Form
         document.getElementById('MediathekGeneralConfigForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            this.currentConfig.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
-            this.currentConfig.DefaultSubscriptionShowPath = document.querySelector('#txtDefaultSubscriptionShowPath').value;
-            this.currentConfig.DefaultSubscriptionMoviePath = document.querySelector('#txtDefaultSubscriptionMoviePath').value;
-            this.currentConfig.DefaultManualShowPath = document.querySelector('#txtDefaultManualShowPath').value;
-            this.currentConfig.DefaultManualMoviePath = document.querySelector('#txtDefaultManualMoviePath').value;
-            this.currentConfig.TempDownloadPath = document.querySelector('#txtTempDownloadPath').value;
-            this.currentConfig.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
-            this.currentConfig.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
-            this.currentConfig.AllowHttp = document.querySelector('#chkAllowHttp').checked;
-            this.currentConfig.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
-            this.currentConfig.EnableDirectAudioExtraction = document.querySelector('#chkEnableDirectAudioExtraction').checked;
-            this.currentConfig.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
-            this.currentConfig.FetchStreamSizes = document.querySelector('#chkFetchStreamSizes').checked;
-            this.currentConfig.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
+            this.currentConfig.Paths.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
+            this.currentConfig.Paths.DefaultSubscriptionShowPath = document.querySelector('#txtDefaultSubscriptionShowPath').value;
+            this.currentConfig.Paths.DefaultSubscriptionMoviePath = document.querySelector('#txtDefaultSubscriptionMoviePath').value;
+            this.currentConfig.Paths.DefaultManualShowPath = document.querySelector('#txtDefaultManualShowPath').value;
+            this.currentConfig.Paths.DefaultManualMoviePath = document.querySelector('#txtDefaultManualMoviePath').value;
+            this.currentConfig.Paths.TempDownloadPath = document.querySelector('#txtTempDownloadPath').value;
+
+            this.currentConfig.Download.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
+            this.currentConfig.Network.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
+            this.currentConfig.Network.AllowHttp = document.querySelector('#chkAllowHttp').checked;
+            this.currentConfig.Download.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
+            this.currentConfig.Download.EnableDirectAudioExtraction = document.querySelector('#chkEnableDirectAudioExtraction').checked;
+            this.currentConfig.Maintenance.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
+            this.currentConfig.Search.FetchStreamSizes = document.querySelector('#chkFetchStreamSizes').checked;
+            this.currentConfig.Search.SearchInFutureBroadcasts = document.querySelector('#chkSearchInFutureBroadcasts').checked;
+            this.currentConfig.Maintenance.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
+
             const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
-            this.currentConfig.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
-            this.currentConfig.UseTopicForMoviePath = document.querySelector('#chkMoviePathWithTopic').checked;
+            this.currentConfig.Download.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
+            this.currentConfig.Paths.UseTopicForMoviePath = document.querySelector('#chkMoviePathWithTopic').checked;
 
             const maxBandwidth = parseInt(document.querySelector('#txtMaxBandwidthMBits').value, 10);
-            this.currentConfig.MaxBandwidthMBits = isNaN(maxBandwidth) ? 0 : maxBandwidth;
+            this.currentConfig.Download.MaxBandwidthMBits = isNaN(maxBandwidth) ? 0 : maxBandwidth;
 
             this.subscriptionEditor.updateSubPathHoverText();
             this.saveGlobalConfig();
@@ -1572,32 +1794,32 @@ class MediathekPluginConfig {
 
         // Path selector in main config
         document.getElementById('btnSelectPath').addEventListener('click', () => {
-            this.openFolderDialog('txtDefaultDownloadPath', 'Globalen Standard Download Pfad wählen');
+            Helper.openFolderDialog('txtDefaultDownloadPath', 'Globalen Standard Download Pfad wählen');
         });
         document.getElementById('btnSelectSubscriptionShowPath').addEventListener('click', () => {
-            this.openFolderDialog('txtDefaultSubscriptionShowPath', 'Standard Serien Pfad (Abo) wählen');
+            Helper.openFolderDialog('txtDefaultSubscriptionShowPath', 'Standard Serien Pfad (Abo) wählen');
         });
         document.getElementById('btnSelectSubscriptionMoviePath').addEventListener('click', () => {
-            this.openFolderDialog('txtDefaultSubscriptionMoviePath', 'Standard Film Pfad (Abo) wählen');
+            Helper.openFolderDialog('txtDefaultSubscriptionMoviePath', 'Standard Film Pfad (Abo) wählen');
         });
         document.getElementById('btnSelectManualShowPath').addEventListener('click', () => {
-            this.openFolderDialog('txtDefaultManualShowPath', 'Standard Serien Pfad (Manuell) wählen');
+            Helper.openFolderDialog('txtDefaultManualShowPath', 'Standard Serien Pfad (Manuell) wählen');
         });
         document.getElementById('btnSelectManualMoviePath').addEventListener('click', () => {
-            this.openFolderDialog('txtDefaultManualMoviePath', 'Standard Film Pfad (Manuell) wählen');
+            Helper.openFolderDialog('txtDefaultManualMoviePath', 'Standard Film Pfad (Manuell) wählen');
         });
         document.getElementById('btnSelectTempPath').addEventListener('click', () => {
-            this.openFolderDialog('txtTempDownloadPath', 'Temporären Download Pfad wählen');
+            Helper.openFolderDialog('txtTempDownloadPath', 'Temporären Download Pfad wählen');
         });
 
         document.getElementById('chkMoviePathWithTopic').addEventListener('change', (e) => {
-            this.currentConfig.UseTopicForMoviePath = e.target.checked;
+            this.currentConfig.Paths.UseTopicForMoviePath = e.target.checked;
             this.subscriptionEditor.updateSubPathHoverText();
         });
 
         // Path selectors in subscription editor
         document.getElementById('btnSelectSubPath').addEventListener('click', () => {
-            this.openFolderDialog('subPath', 'Abo Pfad wählen');
+            Helper.openFolderDialog('subPath', 'Abo Pfad wählen');
             this.subscriptionEditor.updateSubPathHoverText();
         });
         document.getElementById('subPath').addEventListener('input', () => {
@@ -1608,7 +1830,7 @@ class MediathekPluginConfig {
         });
         // Path selector in advanced download dialog
         document.getElementById('btnSelectAdvPath').addEventListener('click', () => {
-            this.openFolderDialog('advDlPath', 'Download Pfad wählen');
+            Helper.openFolderDialog('advDlPath', 'Download Pfad wählen');
         });
 
         // Subscription Management
@@ -1656,12 +1878,12 @@ class MediathekPluginConfig {
 
         document.getElementById('mvpl-btn-duckduckgo-tmdb').addEventListener('click', () => {
             const query = this.currentItemForAdvancedDl.Topic + ' ' + this.currentItemForAdvancedDl.Title;
-            this.openDuckDuckGoSearch(query, 'themoviedb.org', true);
+            Helper.openDuckDuckGoSearch(query, 'themoviedb.org', true);
         });
 
         document.getElementById('mvpl-btn-duckduckgo').addEventListener('click', () => {
             const query = this.currentItemForAdvancedDl.Topic + ' ' + this.currentItemForAdvancedDl.Title;
-            this.openDuckDuckGoSearch(query, 'themoviedb.org');
+            Helper.openDuckDuckGoSearch(query, 'themoviedb.org');
         });
     }
 

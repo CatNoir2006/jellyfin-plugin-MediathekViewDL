@@ -16,7 +16,7 @@ internal static class TempFileHelper
         ILogger logger)
     {
         var config = configProvider.ConfigurationOrNull;
-        var tempDir = config?.TempDownloadPath;
+        var tempDir = config?.Paths.TempDownloadPath;
 
         // 1. If TempDownloadPath is configured, use it.
         if (!string.IsNullOrWhiteSpace(tempDir))

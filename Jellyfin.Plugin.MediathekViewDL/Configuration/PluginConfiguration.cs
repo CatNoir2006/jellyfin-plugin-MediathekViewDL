@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Text.Json.Serialization;
+using System.Xml.Serialization;
 using MediaBrowser.Model.Plugins;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Configuration;
@@ -19,98 +22,226 @@ public class PluginConfiguration : BasePluginConfiguration
     }
 
     /// <summary>
-    /// Gets or sets the default path where completed downloads are stored.
-    /// Can be overridden by a subscription.
+    /// Gets or sets the version of the configuration.
+    /// Used for migrations.
     /// </summary>
-    public string DefaultDownloadPath { get; set; } = string.Empty;
+    public int ConfigVersion { get; set; }
+
+    #pragma warning disable SA1124
+    // ToDo: Remove obsolete properties on 1.0.0.0 release
+    #region Obsolete Properties
+    #pragma warning restore SA1124
+    /// <summary>
+    /// Gets or sets the default path where completed downloads are stored.
+    /// DO NOT USE. Use Paths.DefaultDownloadPath instead.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("DefaultDownloadPath")]
+    [JsonIgnore]
+    public string DeprecatedDefaultDownloadPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the default path for show downloads in subscriptions.
+    /// DO NOT USE. Use Paths.DefaultSubscriptionShowPath instead.
     /// </summary>
-    public string DefaultSubscriptionShowPath { get; set; } = string.Empty;
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("DefaultSubscriptionShowPath")]
+    [JsonIgnore]
+    public string DeprecatedDefaultSubscriptionShowPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the default path for movie downloads in subscriptions.
+    /// DO NOT USE. Use Paths.DefaultSubscriptionMoviePath instead.
     /// </summary>
-    public string DefaultSubscriptionMoviePath { get; set; } = string.Empty;
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("DefaultSubscriptionMoviePath")]
+    [JsonIgnore]
+    public string DeprecatedDefaultSubscriptionMoviePath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the default path for manual show downloads.
+    /// DO NOT USE. Use Paths.DefaultManualShowPath instead.
     /// </summary>
-    public string DefaultManualShowPath { get; set; } = string.Empty;
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("DefaultManualShowPath")]
+    [JsonIgnore]
+    public string DeprecatedDefaultManualShowPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the default path for manual movie downloads.
+    /// DO NOT USE. Use Paths.DefaultManualMoviePath instead.
     /// </summary>
-    public string DefaultManualMoviePath { get; set; } = string.Empty;
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("DefaultManualMoviePath")]
+    [JsonIgnore]
+    public string DeprecatedDefaultManualMoviePath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets the temporary path where files are stored during download.
-    /// If empty, the destination path is used directly.
+    /// DO NOT USE. Use Paths.TempDownloadPath instead.
     /// </summary>
-    public string TempDownloadPath { get; set; } = string.Empty;
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("TempDownloadPath")]
+    [JsonIgnore]
+    public string DeprecatedTempDownloadPath { get; set; } = string.Empty;
 
     /// <summary>
     /// Gets or sets a value indicating whether Paths for movies should contain the 'Topic' of the Movie.
+    /// DO NOT USE. Use Paths.UseTopicForMoviePath instead.
     /// </summary>
-    public bool UseTopicForMoviePath { get; set; }
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("UseTopicForMoviePath")]
+    [JsonIgnore]
+    public bool DeprecatedUseTopicForMoviePath { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether subtitles should be downloaded if available.
+    /// DO NOT USE. Use Download.DownloadSubtitles instead.
     /// </summary>
-    public bool DownloadSubtitles { get; set; } = true;
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("DownloadSubtitles")]
+    [JsonIgnore]
+    public bool DeprecatedDownloadSubtitles { get; set; } = true;
 
     /// <summary>
     /// Gets or sets a value indicating whether direct audio extraction from URL is enabled.
+    /// DO NOT USE. Use Download.EnableDirectAudioExtraction instead.
     /// </summary>
-    public bool EnableDirectAudioExtraction { get; set; } = true;
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("EnableDirectAudioExtraction")]
+    [JsonIgnore]
+    public bool DeprecatedEnableDirectAudioExtraction { get; set; } = true;
 
     /// <summary>
     /// Gets or sets the minimum free disk space in bytes required to start a new download.
+    /// DO NOT USE. Use Download.MinFreeDiskSpaceBytes instead.
     /// </summary>
-    public long MinFreeDiskSpaceBytes { get; set; } = (long)(1.5 * 1024 * 1024 * 1024); // Default to 1.5 GiB
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("MinFreeDiskSpaceBytes")]
+    [JsonIgnore]
+    public long DeprecatedMinFreeDiskSpaceBytes { get; set; } = (long)(1.5 * 1024 * 1024 * 1024);
 
     /// <summary>
     /// Gets or sets a value indicating whether downloads should be allowed if the available disk space cannot be determined.
-    /// This can happen with network shares or non-standard file systems.
+    /// DO NOT USE. Use Maintenance.AllowDownloadOnUnknownDiskSpace instead.
     /// </summary>
-    public bool AllowDownloadOnUnknownDiskSpace { get; set; }
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("AllowDownloadOnUnknownDiskSpace")]
+    [JsonIgnore]
+    public bool DeprecatedAllowDownloadOnUnknownDiskSpace { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum download bandwidth in MBit/s.
-    /// 0 means unlimited.
+    /// DO NOT USE. Use Download.MaxBandwidthMBits instead.
     /// </summary>
-    public int MaxBandwidthMBits { get; set; } = 0;
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("MaxBandwidthMBits")]
+    [JsonIgnore]
+    public int DeprecatedMaxBandwidthMBits { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether downloads from unknown domains are allowed.
-    /// This may be usefull if ARD or ZDF adds new CDNs that are not yet whitelisted.
-    /// This may pose a security risk, so use with caution.
+    /// DO NOT USE. Use Network.AllowUnknownDomains instead.
     /// </summary>
-    public bool AllowUnknownDomains { get; set; }
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("AllowUnknownDomains")]
+    [JsonIgnore]
+    public bool DeprecatedAllowUnknownDomains { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether http is allowed for download URLs.
-    /// This may be necessary as some URLs do not support https for some reason.
-    /// I recommend keeping this off and only turning it on if you encounter problems.
+    /// DO NOT USE. Use Network.AllowHttp instead.
     /// </summary>
-    public bool AllowHttp { get; set; }
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("AllowHttp")]
+    [JsonIgnore]
+    public bool DeprecatedAllowHttp { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether a library scan should be triggered after a download finishes.
+    /// DO NOT USE. Use Download.ScanLibraryAfterDownload instead.
     /// </summary>
-    public bool ScanLibraryAfterDownload { get; set; } = true;
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("ScanLibraryAfterDownload")]
+    [JsonIgnore]
+    public bool DeprecatedScanLibraryAfterDownload { get; set; } = true;
 
     /// <summary>
     /// Gets or sets a value indicating whether to enable the automated cleanup of invalid .strm files.
+    /// DO NOT USE. Use Maintenance.EnableStrmCleanup instead.
     /// </summary>
-    public bool EnableStrmCleanup { get; set; }
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("EnableStrmCleanup")]
+    [JsonIgnore]
+    public bool DeprecatedEnableStrmCleanup { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether to fetch the stream size for search results.
-    /// This requires an additional HTTP request per result and may slow down the search.
+    /// DO NOT USE. Use Search.FetchStreamSizes instead.
     /// </summary>
-    public bool FetchStreamSizes { get; set; }
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("FetchStreamSizes")]
+    [JsonIgnore]
+    public bool DeprecatedFetchStreamSizes { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to search in future broadcasts when performing searches.
+    /// DO NOT USE. Use Search.SearchInFutureBroadcasts instead.
+    /// </summary>
+    [Browsable(false)]
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    [XmlElement("SearchInFutureBroadcasts")]
+    [JsonIgnore]
+    public bool DeprecatedSearchInFutureBroadcasts { get; set; } = true;
+    #endregion
+
+    /// <summary>
+    /// Gets or sets the configuration paths.
+    /// Contains the paths for the different download types.
+    /// </summary>
+    public ConfigurationPaths Paths { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the download options.
+    /// </summary>
+    public DownloadOptions Download { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the search options.
+    /// </summary>
+    public SearchOptions Search { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the network options.
+    /// </summary>
+    public NetworkOptions Network { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the maintenance options.
+    /// </summary>
+    public MaintenanceOptions Maintenance { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the subscription default values.
+    /// </summary>
+    public SubscriptionDefaults SubscriptionDefaults { get; set; } = new();
 
     /// <summary>
     /// Gets the list of download subscriptions.
@@ -127,7 +258,7 @@ public class PluginConfiguration : BasePluginConfiguration
     /// This covers the known CDNs used by ARD and ZDF.
     /// The list does only contain top-level domains subdomains may be added at some point.
     /// </summary>
-    public HashSet<string> AllowedDomains => new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+    public HashSet<string> AllowedDomains => new(StringComparer.OrdinalIgnoreCase)
     {
         "akamaihd.net",
         "akamaized.net",

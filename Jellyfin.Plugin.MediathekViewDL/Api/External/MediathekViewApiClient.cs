@@ -86,6 +86,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
                 MaxDuration = maxDuration,
                 MinBroadcastDate = minBroadcastDate,
                 MaxBroadcastDate = maxBroadcastDate,
+                Future = _configurationProvider.Configuration.Search.SearchInFutureBroadcasts
             };
 
             PopulateQueries(apiQuery, title, topic, channel, combinedSearch);
@@ -197,10 +198,10 @@ public class MediathekViewApiClient : IMediathekViewApiClient
 
             _logger.LogInformation("API search returned {Count} results", apiResult.Result.Results.Count);
 
-            var upgradeToHttps = !(_configurationProvider.ConfigurationOrNull?.AllowHttp ?? false);
+            var upgradeToHttps = !(_configurationProvider.ConfigurationOrNull?.Network.AllowHttp ?? false);
             var dto = apiResult.Result.ToDto(apiQueryDto, upgradeToHttps);
 
-            if (_configurationProvider.ConfigurationOrNull?.FetchStreamSizes == true)
+            if (_configurationProvider.ConfigurationOrNull?.Search.FetchStreamSizes == true)
             {
                 var newResults = new List<ResultItemDto>();
                 foreach (var item in dto.Results)

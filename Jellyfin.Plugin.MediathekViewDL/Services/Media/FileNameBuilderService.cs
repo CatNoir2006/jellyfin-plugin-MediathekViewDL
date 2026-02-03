@@ -188,7 +188,7 @@ public class FileNameBuilderService : IFileNameBuilderService
                 return string.Empty;
             }
 
-            if (useShowDir || config.UseTopicForMoviePath)
+            if (useShowDir || config.Paths.UseTopicForMoviePath)
             {
                 targetPath = Path.Combine(defaultPath, subscriptionPath);
             }
@@ -247,14 +247,14 @@ public class FileNameBuilderService : IFileNameBuilderService
 
         string path = context switch
         {
-            DownloadContext.Manual => isShow ? config.DefaultManualShowPath : config.DefaultManualMoviePath,
-            DownloadContext.Subscription => isShow ? config.DefaultSubscriptionShowPath : config.DefaultSubscriptionMoviePath,
+            DownloadContext.Manual => isShow ? config.Paths.DefaultManualShowPath : config.Paths.DefaultManualMoviePath,
+            DownloadContext.Subscription => isShow ? config.Paths.DefaultSubscriptionShowPath : config.Paths.DefaultSubscriptionMoviePath,
             _ => string.Empty
         };
 
         if (string.IsNullOrWhiteSpace(path))
         {
-            path = config.DefaultDownloadPath;
+            path = config.Paths.DefaultDownloadPath;
         }
 
         return path;
@@ -322,12 +322,12 @@ public class FileNameBuilderService : IFileNameBuilderService
                 }
             }
 
-            AddIfNotNull(config.DefaultDownloadPath);
-            AddIfNotNull(config.DefaultSubscriptionShowPath);
-            AddIfNotNull(config.DefaultSubscriptionMoviePath);
-            AddIfNotNull(config.DefaultManualShowPath);
-            AddIfNotNull(config.DefaultManualMoviePath);
-            AddIfNotNull(config.TempDownloadPath);
+            AddIfNotNull(config.Paths.DefaultDownloadPath);
+            AddIfNotNull(config.Paths.DefaultSubscriptionShowPath);
+            AddIfNotNull(config.Paths.DefaultSubscriptionMoviePath);
+            AddIfNotNull(config.Paths.DefaultManualShowPath);
+            AddIfNotNull(config.Paths.DefaultManualMoviePath);
+            AddIfNotNull(config.Paths.TempDownloadPath);
 
             foreach (var sub in config.Subscriptions)
             {

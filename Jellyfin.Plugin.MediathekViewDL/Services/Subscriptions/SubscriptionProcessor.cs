@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api.External;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
-using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
@@ -36,6 +35,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private readonly IFFmpegService _ffmpegService;
     private readonly IQualityCacheRepository _qualityCacheRepository;
     private readonly IDownloadHistoryRepository _downloadHistoryRepository;
+    private readonly IConfigurationProvider _configurationProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscriptionProcessor"/> class.
@@ -49,6 +49,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="ffmpegService">The ffmpeg Service.</param>
     /// <param name="qualityCacheRepository">The QualityCacheRepository.</param>
     /// <param name="downloadHistoryRepository">The Download History Repo.</param>
+    /// <param name="configurationProvider">The Configuration Provider.</param>
     public SubscriptionProcessor(
         ILogger<SubscriptionProcessor> logger,
         IMediathekViewApiClient apiClient,
@@ -58,7 +59,8 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         IStrmValidationService strmValidationService,
         IFFmpegService ffmpegService,
         IQualityCacheRepository qualityCacheRepository,
-        IDownloadHistoryRepository downloadHistoryRepository)
+        IDownloadHistoryRepository downloadHistoryRepository,
+        IConfigurationProvider configurationProvider)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -69,6 +71,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         _ffmpegService = ffmpegService;
         _qualityCacheRepository = qualityCacheRepository;
         _downloadHistoryRepository = downloadHistoryRepository;
+        _configurationProvider = configurationProvider;
     }
 
     /// <inheritdoc/>
@@ -583,7 +586,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             cancellationToken.ThrowIfCancellationRequested();
             try
             {
-                if (await _strmValidationService.ValidateUrlAsync(url!, cancellationToken).ConfigureAwait(false))
+                if (await _strmValidationService.ValidateUrlAsync(url, cancellationToken).ConfigureAwait(false))
                 {
                     candidateUrl = url;
                     if (url != validCandidates.First())
@@ -633,6 +636,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 MaxDuration = subscription.MaxDurationMinutes * 60,
                 MinBroadcastDate = subscription.MinBroadcastDate,
                 MaxBroadcastDate = subscription.MaxBroadcastDate,
+                Future = _configurationProvider.Configuration.Search.SearchInFutureBroadcasts,
             };
 
             QueryResultDto result;
@@ -646,7 +650,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 yield break;
             }
 
-            if (result.QueryInfo?.TotalResults > (currentPage + 1) * pageSize)
+            if (result.QueryInfo.TotalResults > (currentPage + 1) * pageSize)
             {
                 hasMoreResults = true;
                 currentPage++;

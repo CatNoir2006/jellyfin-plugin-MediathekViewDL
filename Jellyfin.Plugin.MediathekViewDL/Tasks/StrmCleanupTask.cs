@@ -57,7 +57,7 @@ public class StrmCleanupTask : IScheduledTask
     public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
     {
         var config = _configurationProvider.ConfigurationOrNull;
-        if (config == null || !config.EnableStrmCleanup)
+        if (config == null || !config.Maintenance.EnableStrmCleanup)
         {
             _logger.LogInformation("Strm cleanup task is disabled in configuration or config is missing. Skipping.");
             return;
@@ -77,9 +77,9 @@ public class StrmCleanupTask : IScheduledTask
         var paths = new HashSet<string>();
 
         // Add default download path
-        if (!string.IsNullOrWhiteSpace(config.DefaultDownloadPath))
+        if (!string.IsNullOrWhiteSpace(config.Paths.DefaultDownloadPath))
         {
-            paths.Add(config.DefaultDownloadPath);
+            paths.Add(config.Paths.DefaultDownloadPath);
         }
 
         // Add subscription specific paths

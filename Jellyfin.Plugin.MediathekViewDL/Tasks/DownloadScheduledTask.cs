@@ -98,7 +98,7 @@ public class DownloadScheduledTask : IScheduledTask
             // Step 1: Find jobs
             var jobs = await _subscriptionProcessor.GetJobsForSubscriptionAsync(
                 subscription,
-                config.DownloadSubtitles,
+                config.Download.DownloadSubtitles,
                 cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("Found {Count} new items for '{SubscriptionName}'.", jobs.Count, subscription.Name);
