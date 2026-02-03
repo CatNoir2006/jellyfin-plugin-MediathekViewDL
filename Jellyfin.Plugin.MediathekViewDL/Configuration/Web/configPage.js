@@ -442,16 +442,24 @@ class SearchController {
         const newSub = {
             Id: null,
             Name: topic,
-            Criteria: [
-                {Fields: ["Title"], Query: title},
-                {Fields: ["Channel"], Query: channel},
-                {Fields: ["Topic"], Query: topic}
-            ],
-            MinDurationMinutes: null,
-            MaxDurationMinutes: null,
-            DownloadPath: "",
-            EnforceSeriesParsing: false,
-            AllowAudioDescription: false
+            Search: {
+                Criteria: [
+                    {Fields: ["Title"], Query: title},
+                    {Fields: ["Channel"], Query: channel},
+                    {Fields: ["Topic"], Query: topic}
+                ],
+                MinDurationMinutes: null,
+                MaxDurationMinutes: null,
+            },
+            Download: {
+                DownloadPath: "",
+            },
+            Series: {
+                EnforceSeriesParsing: false,
+            },
+            Accessibility: {
+                AllowAudioDescription: false
+            }
         };
         this.config.subscriptionEditor.show(newSub);
     }
@@ -992,36 +1000,45 @@ class SubscriptionEditor {
 
         document.getElementById('subId').value = sub.Id || "";
         document.getElementById('subName').value = sub.Name;
-        document.getElementById('subOriginalLanguage').value = sub.OriginalLanguage || "";
-        document.getElementById('subMinDuration').value = sub.MinDurationMinutes || "";
-        document.getElementById('subMaxDuration').value = sub.MaxDurationMinutes || "";
-        document.getElementById('subMinBroadcastDate').value = sub.MinBroadcastDate ? sub.MinBroadcastDate.split('T')[0] : "";
-        document.getElementById('subMaxBroadcastDate').value = sub.MaxBroadcastDate ? sub.MaxBroadcastDate.split('T')[0] : "";
-        document.getElementById('subPath').value = sub.DownloadPath || "";
+
+        // Ensure nested objects exist to avoid errors
+        const search = sub.Search || {};
+        const download = sub.Download || {};
+        const series = sub.Series || {};
+        const metadata = sub.Metadata || {};
+        const accessibility = sub.Accessibility || {};
+
+        document.getElementById('subOriginalLanguage').value = metadata.OriginalLanguage || "";
+        document.getElementById('subMinDuration').value = search.MinDurationMinutes || "";
+        document.getElementById('subMaxDuration').value = search.MaxDurationMinutes || "";
+        document.getElementById('subMinBroadcastDate').value = search.MinBroadcastDate ? search.MinBroadcastDate.split('T')[0] : "";
+        document.getElementById('subMaxBroadcastDate').value = search.MaxBroadcastDate ? search.MaxBroadcastDate.split('T')[0] : "";
+        document.getElementById('subPath').value = download.DownloadPath || "";
         this.updateSubPathHoverText();
-        document.getElementById('subEnforceSeries').checked = sub.EnforceSeriesParsing;
-        document.getElementById('subCreateNfo').checked = sub.CreateNfo !== undefined ? sub.CreateNfo : false;
-        document.getElementById('subAllowAudioDesc').checked = sub.AllowAudioDescription;
-        document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = sub.AllowAbsoluteEpisodeNumbering;
-        document.getElementById('subAppendDateToTitle').checked = sub.AppendDateToTitle !== undefined ? sub.AppendDateToTitle : false;
-        document.getElementById('subAppendTimeToTitle').checked = sub.AppendTimeToTitle !== undefined ? sub.AppendTimeToTitle : false;
-        document.getElementById('subAllowSignLanguage').checked = sub.AllowSignLanguage;
-        document.getElementById('subEnhancedDuplicateDetection').checked = sub.EnhancedDuplicateDetection;
-        document.getElementById('subAutoUpgradeToHigherQuality').checked = sub.AutoUpgradeToHigherQuality !== undefined ? sub.AutoUpgradeToHigherQuality : false;
-        document.getElementById('subTreatNonEpisodesAsExtras').checked = sub.TreatNonEpisodesAsExtras;
-        document.getElementById('subSaveTrailers').checked = sub.SaveTrailers;
-        document.getElementById('subSaveInterviews').checked = sub.SaveInterviews;
-        document.getElementById('subSaveGenericExtras').checked = sub.SaveGenericExtras;
-        document.getElementById('subSaveExtrasAsStrm').checked = sub.SaveExtrasAsStrm;
-        document.getElementById('subUseStreamingUrlFiles').checked = sub.UseStreamingUrlFiles;
-        document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = sub.DownloadFullVideoForSecondaryAudio;
-        document.getElementById('subAllowFallbackToLowerQuality').checked = sub.AllowFallbackToLowerQuality !== undefined ? sub.AllowFallbackToLowerQuality : true;
-        document.getElementById('subQualityCheckWithUrl').checked = sub.QualityCheckWithUrl !== undefined ? sub.QualityCheckWithUrl : false;
+
+        document.getElementById('subEnforceSeries').checked = series.EnforceSeriesParsing;
+        document.getElementById('subCreateNfo').checked = metadata.CreateNfo !== undefined ? metadata.CreateNfo : false;
+        document.getElementById('subAllowAudioDesc').checked = accessibility.AllowAudioDescription;
+        document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = series.AllowAbsoluteEpisodeNumbering;
+        document.getElementById('subAppendDateToTitle').checked = metadata.AppendDateToTitle !== undefined ? metadata.AppendDateToTitle : false;
+        document.getElementById('subAppendTimeToTitle').checked = metadata.AppendTimeToTitle !== undefined ? metadata.AppendTimeToTitle : false;
+        document.getElementById('subAllowSignLanguage').checked = accessibility.AllowSignLanguage;
+        document.getElementById('subEnhancedDuplicateDetection').checked = download.EnhancedDuplicateDetection;
+        document.getElementById('subAutoUpgradeToHigherQuality').checked = download.AutoUpgradeToHigherQuality !== undefined ? download.AutoUpgradeToHigherQuality : false;
+        document.getElementById('subTreatNonEpisodesAsExtras').checked = series.TreatNonEpisodesAsExtras;
+        document.getElementById('subSaveTrailers').checked = series.SaveTrailers !== undefined ? series.SaveTrailers : true;
+        document.getElementById('subSaveInterviews').checked = series.SaveInterviews !== undefined ? series.SaveInterviews : true;
+        document.getElementById('subSaveGenericExtras').checked = series.SaveGenericExtras !== undefined ? series.SaveGenericExtras : true;
+        document.getElementById('subSaveExtrasAsStrm').checked = series.SaveExtrasAsStrm;
+        document.getElementById('subUseStreamingUrlFiles').checked = download.UseStreamingUrlFiles;
+        document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = download.DownloadFullVideoForSecondaryAudio;
+        document.getElementById('subAllowFallbackToLowerQuality').checked = download.AllowFallbackToLowerQuality !== undefined ? download.AllowFallbackToLowerQuality : true;
+        document.getElementById('subQualityCheckWithUrl').checked = download.QualityCheckWithUrl !== undefined ? download.QualityCheckWithUrl : false;
 
 
         const queriesContainer = document.getElementById('queriesContainer');
         queriesContainer.textContent = '';
-        const criteria = sub.Criteria || [];
+        const criteria = search.Criteria || [];
         if (criteria.length > 0) {
             criteria.forEach((c) => {
                 this.config.addQueryRow(c);
@@ -1078,35 +1095,45 @@ class SubscriptionEditor {
         return {
             Id: id,
             Name: name,
-            OriginalLanguage: originalLanguage,
-            Criteria: criteria,
-            MinDurationMinutes: minDuration ? parseInt(minDuration, 10) : null,
-            MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
-            MinBroadcastDate: minBroadcastDate ? new Date(minBroadcastDate).toISOString() : null,
-            MaxBroadcastDate: maxBroadcastDate ? (() => {
-                const d = new Date(maxBroadcastDate);
-                d.setHours(23, 59, 59, 999);
-                return d.toISOString();
-            })() : null,
-            DownloadPath: path,
-            EnforceSeriesParsing: enforce,
-            CreateNfo: createNfo,
-            AllowAudioDescription: allowAudio,
-            AllowAbsoluteEpisodeNumbering: allowAbsolute,
-            AppendDateToTitle: appendDateToTitle,
-            AppendTimeToTitle: appendTimeToTitle,
-            AllowSignLanguage: allowSignLanguage,
-            EnhancedDuplicateDetection: enhancedDuplicateDetection,
-            AutoUpgradeToHigherQuality: autoUpgradeToHigherQuality,
-            TreatNonEpisodesAsExtras: treatNonEpisodesAsExtras,
-            SaveTrailers: saveTrailers,
-            SaveInterviews: saveInterviews,
-            SaveGenericExtras: saveGenericExtras,
-            SaveExtrasAsStrm: saveExtrasAsStrm,
-            UseStreamingUrlFiles: useStreamingUrlFiles,
-            DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio,
-            AllowFallbackToLowerQuality: allowFallbackToLowerQuality,
-            QualityCheckWithUrl: qualityCheckWithUrl,
+            Search: {
+                Criteria: criteria,
+                MinDurationMinutes: minDuration ? parseInt(minDuration, 10) : null,
+                MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
+                MinBroadcastDate: minBroadcastDate ? new Date(minBroadcastDate).toISOString() : null,
+                MaxBroadcastDate: maxBroadcastDate ? (() => {
+                    const d = new Date(maxBroadcastDate);
+                    d.setHours(23, 59, 59, 999);
+                    return d.toISOString();
+                })() : null,
+            },
+            Download: {
+                DownloadPath: path,
+                UseStreamingUrlFiles: useStreamingUrlFiles,
+                DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio,
+                AllowFallbackToLowerQuality: allowFallbackToLowerQuality,
+                QualityCheckWithUrl: qualityCheckWithUrl,
+                AutoUpgradeToHigherQuality: autoUpgradeToHigherQuality,
+                EnhancedDuplicateDetection: enhancedDuplicateDetection,
+            },
+            Series: {
+                EnforceSeriesParsing: enforce,
+                AllowAbsoluteEpisodeNumbering: allowAbsolute,
+                TreatNonEpisodesAsExtras: treatNonEpisodesAsExtras,
+                SaveTrailers: saveTrailers,
+                SaveInterviews: saveInterviews,
+                SaveGenericExtras: saveGenericExtras,
+                SaveExtrasAsStrm: saveExtrasAsStrm,
+            },
+            Metadata: {
+                CreateNfo: createNfo,
+                OriginalLanguage: originalLanguage,
+                AppendDateToTitle: appendDateToTitle,
+                AppendTimeToTitle: appendTimeToTitle,
+            },
+            Accessibility: {
+                AllowAudioDescription: allowAudio,
+                AllowSignLanguage: allowSignLanguage,
+            }
         };
     }
 
@@ -1360,7 +1387,8 @@ class MediathekPluginConfig {
             // Handle IsEnabled default true if undefined
             if (sub.IsEnabled === undefined) sub.IsEnabled = true;
 
-            const queriesSummary = (sub.Criteria || []).map(function (q) {
+            const search = sub.Search || {};
+            const queriesSummary = (search.Criteria || []).map(function (q) {
                 return q.Query;
             }).join(', ');
             const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
@@ -1491,7 +1519,7 @@ class MediathekPluginConfig {
     saveSubscription() {
         const subData = this.subscriptionEditor.getEditorValues();
 
-        if (subData.Criteria.length === 0) {
+        if (!subData.Search || !subData.Search.Criteria || subData.Search.Criteria.length === 0) {
             Helper.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
@@ -1674,7 +1702,7 @@ class MediathekPluginConfig {
 
     testSubscription() {
         const subData = this.subscriptionEditor.getEditorValues();
-        if (subData.Criteria.length === 0) {
+        if (!subData.Search || !subData.Search.Criteria || subData.Search.Criteria.length === 0) {
             Helper.showToast("Bitte mindestens eine Suchanfrage definieren.");
             return;
         }
