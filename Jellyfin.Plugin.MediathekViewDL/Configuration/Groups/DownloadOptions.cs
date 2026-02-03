@@ -1,4 +1,4 @@
-namespace Jellyfin.Plugin.MediathekViewDL.Configuration;
+namespace Jellyfin.Plugin.MediathekViewDL.Configuration.Groups;
 
 /// <summary>
 /// Options for the download process.

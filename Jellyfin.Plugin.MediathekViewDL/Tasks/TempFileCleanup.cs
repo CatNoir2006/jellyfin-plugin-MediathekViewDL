@@ -85,9 +85,9 @@ public class TempFileCleanup : IScheduledTask
             // 4. Subscription Download Directories
             foreach (var subscription in config.Subscriptions)
             {
-                if (!string.IsNullOrWhiteSpace(subscription.DownloadPath))
+                if (!string.IsNullOrWhiteSpace(subscription.Download.DownloadPath))
                 {
-                    directoriesToScan.Add(subscription.DownloadPath);
+                    directoriesToScan.Add(subscription.Download.DownloadPath);
                 }
             }
         }

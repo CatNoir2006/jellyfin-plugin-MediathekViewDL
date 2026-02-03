@@ -9,6 +9,7 @@ using Jellyfin.Plugin.MediathekViewDL.Api.External;
 using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Configuration.SubscriptionSettings;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
@@ -118,7 +119,11 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetJobsForSubscriptionAsync_ShouldSkip_IfFoundLocally_AndEnhancedDetectionEnabled()
         {
             // Arrange
-            var subscription = new Subscription { Name = "TestSub", EnhancedDuplicateDetection = true };
+            var subscription = new Subscription 
+            { 
+                Name = "TestSub",
+                Download = new DownloadSettings { EnhancedDuplicateDetection = true }
+            };
             var item = new ResultItem { Id = "456", Title = "ExistingTitle" };
 
             var resultChannels = new ResultChannels
@@ -158,7 +163,11 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetJobsForSubscriptionAsync_ShouldSkip_AudioDescription_IfDisabled()
         {
             // Arrange
-            var subscription = new Subscription { Name = "TestSub", AllowAudioDescription = false };
+            var subscription = new Subscription 
+            { 
+                Name = "TestSub",
+                Accessibility = new AccessibilitySettings { AllowAudioDescription = false }
+            };
             var item = new ResultItem { Id = "123", Title = "AD Content" };
 
             var resultChannels = new ResultChannels
@@ -222,7 +231,11 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetJobsForSubscriptionAsync_ShouldFallback_ToNextQuality_WhenPrimaryFails()
         {
             // Arrange
-            var subscription = new Subscription { Name = "TestSub", QualityCheckWithUrl = true };
+            var subscription = new Subscription 
+            { 
+                Name = "TestSub",
+                Download = new DownloadSettings { QualityCheckWithUrl = true }
+            };
             var item = new ResultItem
             {
                 Id = "123",
@@ -273,7 +286,11 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetJobsForSubscriptionAsync_ShouldSkip_WhenAllQualitiesFail()
         {
             // Arrange
-            var subscription = new Subscription { Name = "TestSub", QualityCheckWithUrl = true };
+            var subscription = new Subscription 
+            { 
+                Name = "TestSub",
+                Download = new DownloadSettings { QualityCheckWithUrl = true }
+            };
             var item = new ResultItem
             {
                 Id = "123",

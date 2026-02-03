@@ -80,9 +80,9 @@ public class FileNameBuilderService : IFileNameBuilderService
         var config = _configurationProvider.ConfigurationOrNull;
         string targetPath;
 
-        if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
+        if (string.IsNullOrWhiteSpace(subscription.Download.DownloadPath))
         {
-            string defaultPath = GetDefaultPathForContext(config, context, subscription.EnforceSeriesParsing || subscription.AllowAbsoluteEpisodeNumbering);
+            string defaultPath = GetDefaultPathForContext(config, context, subscription.Series.EnforceSeriesParsing || subscription.Series.AllowAbsoluteEpisodeNumbering);
             string subscriptionPath = SanitizeDirectoryName(subscription.Name);
             if (string.IsNullOrWhiteSpace(defaultPath))
             {
@@ -94,7 +94,7 @@ public class FileNameBuilderService : IFileNameBuilderService
         }
         else
         {
-            targetPath = subscription.DownloadPath;
+            targetPath = subscription.Download.DownloadPath;
         }
 
         return targetPath;
@@ -177,9 +177,9 @@ public class FileNameBuilderService : IFileNameBuilderService
         }
 
         string targetPath;
-        if (string.IsNullOrWhiteSpace(subscription.DownloadPath))
+        if (string.IsNullOrWhiteSpace(subscription.Download.DownloadPath))
         {
-            bool useShowDir = videoInfo.IsShow || subscription.TreatNonEpisodesAsExtras;
+            bool useShowDir = videoInfo.IsShow || subscription.Series.TreatNonEpisodesAsExtras;
             string defaultPath = GetDefaultPathForContext(config, context, useShowDir);
             string subscriptionPath = SanitizeDirectoryName(subscription.Name);
             if (string.IsNullOrWhiteSpace(defaultPath))
@@ -199,7 +199,7 @@ public class FileNameBuilderService : IFileNameBuilderService
         }
         else
         {
-            targetPath = subscription.DownloadPath;
+            targetPath = subscription.Download.DownloadPath;
         }
 
         if (string.IsNullOrWhiteSpace(targetPath))
@@ -208,12 +208,12 @@ public class FileNameBuilderService : IFileNameBuilderService
             return string.Empty;
         }
 
-        if ((videoInfo.IsShow && videoInfo.HasSeasonEpisodeNumbering) || (subscription.TreatNonEpisodesAsExtras && videoInfo.SeasonNumber.HasValue))
+        if ((videoInfo.IsShow && videoInfo.HasSeasonEpisodeNumbering) || (subscription.Series.TreatNonEpisodesAsExtras && videoInfo.SeasonNumber.HasValue))
         {
             targetPath = Path.Combine(targetPath, $"Staffel {videoInfo.SeasonNumber!.Value}");
         }
 
-        if (subscription.TreatNonEpisodesAsExtras && !videoInfo.IsShow)
+        if (subscription.Series.TreatNonEpisodesAsExtras && !videoInfo.IsShow)
         {
             if (videoInfo.IsTrailer)
             {
@@ -229,7 +229,7 @@ public class FileNameBuilderService : IFileNameBuilderService
             }
         }
 
-        if (!subscription.TreatNonEpisodesAsExtras && !videoInfo.IsShow)
+        if (!subscription.Series.TreatNonEpisodesAsExtras && !videoInfo.IsShow)
         {
             var sanitizedTitle = SanitizeDirectoryName(videoInfo.Title);
             targetPath = Path.Combine(targetPath, sanitizedTitle);
@@ -262,14 +262,14 @@ public class FileNameBuilderService : IFileNameBuilderService
 
     private FileType GetTargetMainType(VideoInfo videoInfo, Subscription subscription)
     {
-        bool useStrm = subscription.UseStreamingUrlFiles || (subscription is { SaveExtrasAsStrm: true, TreatNonEpisodesAsExtras: true } && !videoInfo.IsShow);
+        bool useStrm = subscription.Download.UseStreamingUrlFiles || (subscription.Series.SaveExtrasAsStrm && subscription.Series.TreatNonEpisodesAsExtras && !videoInfo.IsShow);
         if (useStrm)
         {
             return FileType.Strm;
         }
 
         // Audiodesc. should alwas be Audioonly, SignLang must be Video because else its nonsense
-        if ((videoInfo is { Language: "deu", HasAudiodescription: false } or { HasSignLanguage: true }) || subscription.DownloadFullVideoForSecondaryAudio)
+        if ((videoInfo is { Language: "deu", HasAudiodescription: false } or { HasSignLanguage: true }) || subscription.Download.DownloadFullVideoForSecondaryAudio)
         {
             return FileType.Video;
         }
@@ -331,7 +331,7 @@ public class FileNameBuilderService : IFileNameBuilderService
 
             foreach (var sub in config.Subscriptions)
             {
-                AddIfNotNull(sub.DownloadPath);
+                AddIfNotNull(sub.Download.DownloadPath);
             }
 
             // Add paths from Jellyfin libraries

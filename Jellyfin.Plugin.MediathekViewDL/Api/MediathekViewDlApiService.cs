@@ -5,12 +5,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api.External;
-using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
-using Jellyfin.Plugin.MediathekViewDL.Services;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Queue;
@@ -134,7 +132,7 @@ public class MediathekViewDlApiService : ControllerBase
             return BadRequest("Subscription configuration is required.");
         }
 
-        _logger.LogInformation("Testing subscription '{Name}' with {QueryCount} queries.", subscription.Name, subscription.Criteria.Count);
+        _logger.LogInformation("Testing subscription '{Name}' with {QueryCount} queries.", subscription.Name, subscription.Search.Criteria.Count);
 
         var results = new List<ResultItemDto>();
         await foreach (var item in _subscriptionProcessor.TestSubscriptionAsync(subscription, CancellationToken.None).ConfigureAwait(false))
@@ -264,7 +262,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="item">The item to download.</param>
     /// <returns>An OK result.</returns>
     [HttpPost("Download")]
-    public IActionResult Download([FromBody] ResultItemDto item)
+    public IActionResult Download([FromBody] ResultItemDto? item)
     {
         var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
@@ -273,7 +271,7 @@ public class MediathekViewDlApiService : ControllerBase
             return StatusCode(500, "Plugin configuration is not available.");
         }
 
-        var videoUrl = item.GetVideoByQuality()?.Url;
+        var videoUrl = item?.GetVideoByQuality()?.Url;
 
         if (item == null || string.IsNullOrWhiteSpace(videoUrl))
         {
@@ -324,7 +322,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="options">The advanced download options.</param>
     /// <returns>An OK result.</returns>
     [HttpPost("AdvancedDownload")]
-    public IActionResult AdvancedDownload([FromBody] AdvancedDownloadOptions options)
+    public IActionResult AdvancedDownload([FromBody] AdvancedDownloadOptions? options)
     {
         var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
@@ -333,10 +331,15 @@ public class MediathekViewDlApiService : ControllerBase
             return StatusCode(500, "Plugin configuration is not available.");
         }
 
+        if (options == null)
+        {
+            return BadRequest("Advanced download options are required.");
+        }
+
         var item = options.Item;
         var videoUrl = item.GetVideoByQuality()?.Url;
 
-        if (item == null || string.IsNullOrWhiteSpace(videoUrl))
+        if (string.IsNullOrWhiteSpace(videoUrl))
         {
             return BadRequest("Invalid item provided for download (no video URL).");
         }

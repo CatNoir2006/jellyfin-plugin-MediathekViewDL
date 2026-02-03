@@ -85,9 +85,9 @@ public class StrmCleanupTask : IScheduledTask
         // Add subscription specific paths
         foreach (var sub in subscriptions)
         {
-            if (!string.IsNullOrWhiteSpace(sub.DownloadPath))
+            if (!string.IsNullOrWhiteSpace(sub.Download.DownloadPath))
             {
-                paths.Add(sub.DownloadPath);
+                paths.Add(sub.Download.DownloadPath);
             }
         }
 

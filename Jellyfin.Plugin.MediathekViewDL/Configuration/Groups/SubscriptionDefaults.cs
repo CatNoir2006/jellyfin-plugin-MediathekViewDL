@@ -1,4 +1,4 @@
-namespace Jellyfin.Plugin.MediathekViewDL.Configuration;
+namespace Jellyfin.Plugin.MediathekViewDL.Configuration.Groups;
 
 /// <summary>
 /// Default values for new subscriptions.

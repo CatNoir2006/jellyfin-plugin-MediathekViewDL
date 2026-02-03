@@ -1,4 +1,4 @@
-namespace Jellyfin.Plugin.MediathekViewDL.Configuration;
+namespace Jellyfin.Plugin.MediathekViewDL.Configuration.Groups;
 
 /// <summary>
 /// The configuration paths for the main plugin configuration.
