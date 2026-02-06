@@ -151,9 +151,10 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 continue;
             }
 
-            // Video/Main Job
+            // Download Task
             var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo!.Title, ItemInfo = tempVideoInfo };
 
+            // Video/Main Item
             switch (paths.MainType)
             {
                 case FileType.Strm:
@@ -212,19 +213,24 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                     break;
             }
 
-            jobs.Add(downloadJob);
-
-            // Subtitle Job
-            var subtitleUrl = item.SubtitleUrls.OrderByDescending(x => x.Type).FirstOrDefault();
-            if (downloadSubtitles && !string.IsNullOrWhiteSpace(subtitleUrl?.Url))
+            // Subtitle Item
+            if (downloadSubtitles)
             {
-                // Some subtitles are WEBVTT, change extension accordingly
-                if (subtitleUrl.Type == SubtitleType.WEBVTT)
+                foreach (var sub in item.SubtitleUrls)
                 {
-                    paths.SubtitleFilePath = Path.ChangeExtension(paths.SubtitleFilePath, ".vtt");
-                }
+                    if (sub.Type == SubtitleType.Unknown)
+                    {
+                        continue;
+                    }
 
-                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = subtitleUrl.Url, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
+                    string subPath = paths.SubtitleFilePath;
+                    if (sub.Type == SubtitleType.WEBVTT)
+                    {
+                        subPath = Path.ChangeExtension(subPath, ".vtt");
+                    }
+
+                    downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = sub.Url, DestinationPath = subPath, JobType = DownloadType.DirectDownload });
+                }
             }
 
             if (subscription.Metadata.CreateNfo)
@@ -246,6 +252,8 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                     Set = string.Empty
                 };
             }
+
+            jobs.Add(downloadJob);
         }
 
         return jobs;

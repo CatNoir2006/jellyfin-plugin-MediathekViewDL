@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
@@ -141,14 +142,7 @@ public static class DtoConverter
             });
         }
 
-        var subtitleUrls = new List<SubtitleUrlDto>();
-        if (!string.IsNullOrEmpty(resultItem.UrlSubtitle))
-        {
-            subtitleUrls.Add(new SubtitleUrlDto
-            {
-                Url = resultItem.UrlSubtitle, Type = DetermineSubtitleType(resultItem.UrlSubtitle), Language = null // Unknown language
-            });
-        }
+        var subtitleUrls = ExtractSubtitleUrls(resultItem.UrlSubtitle);
 
         return new ResultItemDto
         {
@@ -241,5 +235,93 @@ public static class DtoConverter
         }
 
         return uri;
+    }
+
+    /// <summary>
+    /// Extracts additional Subtitle Types from the Main Subtitle Url.
+    /// </summary>
+    /// <param name="subtitle">The SubtitleURL.</param>
+    /// <returns>A list of subtitle URls.</returns>
+    private static List<SubtitleUrlDto> ExtractSubtitleUrls(string subtitle)
+    {
+        var subtitleUrls = new List<SubtitleUrlDto>();
+
+        void AddSub(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                return;
+            }
+
+            if (subtitleUrls.Any(s => s.Url == url))
+            {
+                return;
+            }
+
+            subtitleUrls.Add(new SubtitleUrlDto
+            {
+                Url = url, Type = DetermineSubtitleType(url), Language = null // Unknown language
+            });
+        }
+
+        void ExtractArdUrls()
+        {
+            const string Pattern = @"https:\/\/api\.ardmediathek\.de\/player-service\/subtitle\/(?:ebutt|webvtt)\/urn:ard:subtitle:([a-f0-9]+)(?:\.vtt)?";
+            var match = Regex.Match(subtitle, Pattern, RegexOptions.IgnoreCase);
+            if (!match.Success)
+            {
+                return;
+            }
+
+            var subtitleId = match.Groups[1].Value;
+            AddSub($"https://api.ardmediathek.de/player-service/subtitle/ebutt/urn:ard:subtitle:{subtitleId}");
+            AddSub($"https://api.ardmediathek.de/player-service/subtitle/webvtt/urn:ard:subtitle:{subtitleId}.vtt");
+        }
+
+        void ExtractZdfUrls()
+        {
+            if (string.IsNullOrEmpty(subtitle) || !subtitle.Contains("zdf.de", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            int lastSlashIndex = subtitle.LastIndexOf('/');
+            int lastDotIndex = subtitle.LastIndexOf('.');
+
+            if (lastDotIndex <= lastSlashIndex)
+            {
+                return;
+            }
+
+            string baseUrl = subtitle.Substring(0, lastDotIndex);
+            AddSub(baseUrl + ".xml");
+            AddSub(baseUrl + ".vtt");
+        }
+
+        void ExtractKikaUrls()
+        {
+            if (string.IsNullOrEmpty(subtitle) || !subtitle.Contains("kika.de", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            int lastSlashIndex = subtitle.LastIndexOf('/');
+
+            if (lastSlashIndex <= 8) // "https://".Length
+            {
+                return;
+            }
+
+            string baseUrl = subtitle.Substring(0, lastSlashIndex);
+            AddSub(baseUrl + "/subtitle");
+            AddSub(baseUrl + "/webvtt");
+        }
+
+        AddSub(subtitle);
+        ExtractArdUrls();
+        ExtractZdfUrls();
+        ExtractKikaUrls();
+
+        return subtitleUrls;
     }
 }
