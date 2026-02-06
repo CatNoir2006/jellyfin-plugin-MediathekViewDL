@@ -271,6 +271,7 @@ public class PluginConfiguration : BasePluginConfiguration
         "daserste.de",
         "orf.at",
         "srf.ch",
-        "zdf.de"
+        "zdf.de",
+        "kika.de",
     };
 }
