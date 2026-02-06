@@ -56,6 +56,12 @@ public class TempFileCleanup : IScheduledTask
     /// <inheritdoc />
     public Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            _logger.LogError("Temporary file cleanup aborted because the plugin failed to initialize: {ErrorMessage}", Plugin.Instance.InitializationException.Message);
+            return Task.CompletedTask;
+        }
+
         _logger.LogInformation("Starting temporary file cleanup.");
         progress.Report(0);
 

@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
@@ -7,6 +8,7 @@ using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Configuration.Groups;
 using Jellyfin.Plugin.MediathekViewDL.Configuration.SubscriptionSettings;
 using Jellyfin.Plugin.MediathekViewDL.Data;
+using Jellyfin.Plugin.MediathekViewDL.Exceptions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -37,8 +39,19 @@ public class MigrationHostedService : IHostedService
     /// <inheritdoc />
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
-        MigrateConfiguration();
+        try
+        {
+            await _migrator.EnsureMigratedAsync().ConfigureAwait(false);
+            MigrateConfiguration();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, "Failed to initialize MediathekViewDL plugin. The plugin will be disabled to prevent server instability.");
+            if (Plugin.Instance is not null)
+            {
+                Plugin.Instance.InitializationException = ex;
+            }
+        }
     }
 
     /// <inheritdoc />
@@ -50,14 +63,40 @@ public class MigrationHostedService : IHostedService
     private void MigrateConfiguration()
     {
         var config = _configProvider.Configuration;
-        const int CurrentConfigVersion = 2;
+        const int TargetVersion = 2;
+        const int MinimumSupportetUpgradeVersion = 0;
 
-        if (config.ConfigVersion >= CurrentConfigVersion)
+        // Skip migration if Downgrading and log an error. Downgrading is not supported to prevent data loss and inconsistencies. The plugin should be updated to the latest version to ensure compatibility with the existing configuration.
+        if (config.ConfigVersion > TargetVersion)
+        {
+            _logger.LogError("Configuration version {ConfigVersion} is newer than the current supported version {CurrentConfigVersion}. No migration will be performed. Please update the plugin to the latest version. Downgrading is not Supportet.", config.ConfigVersion, TargetVersion);
+            throw new UnsupportedConfigurationVersionException(config.ConfigVersion, MinimumSupportetUpgradeVersion, TargetVersion);
+        }
+
+        // Skip migration if the configuration version is up to date
+        if (config.ConfigVersion == TargetVersion)
         {
             return;
         }
 
-        _logger.LogInformation("Migrating configuration from version {OldVersion} to {NewVersion}", config.ConfigVersion, CurrentConfigVersion);
+        // Fresh installation detection: If version is 0 and its never been run.
+        // We set it to TargetVersion immediately to avoid the "Unsupported Version" error.
+        if (config.ConfigVersion == 0 && config.LastRun == default)
+        {
+            _logger.LogInformation("Fresh installation detected. Setting configuration version to {TargetVersion}.", TargetVersion);
+            config.ConfigVersion = TargetVersion;
+            _configProvider.Save();
+            return;
+        }
+
+        if (config.ConfigVersion < MinimumSupportetUpgradeVersion)
+        {
+            _logger.LogError("Configuration version {ConfigVersion} is too old to be migrated to the current supported version {CurrentConfigVersion}. Please install a older Version of the plugin that supports this configuration version and update the configuration step by step until it can be migrated to the latest version.", config.ConfigVersion, TargetVersion);
+            UnsupportedVersionUpgradeInfo(config.ConfigVersion, TargetVersion);
+            throw new UnsupportedConfigurationVersionException(config.ConfigVersion, MinimumSupportetUpgradeVersion, TargetVersion);
+        }
+
+        _logger.LogInformation("Migrating configuration from version {OldVersion} to {NewVersion}", config.ConfigVersion, TargetVersion);
 
         // Version 0 -> 1: Migrate Configuration Top-Level Settings to grouped settings
         // This Migration is planed to be supported until Version 1.0.0.0
@@ -198,17 +237,23 @@ public class MigrationHostedService : IHostedService
             }
 
             // Update config version
-            config.ConfigVersion = 1;
+            config.ConfigVersion = 2;
             _configProvider.Save();
         }
 
         // The migration is complete, update the config version if the Migration Versions is still outdated
-        if (config.ConfigVersion < CurrentConfigVersion)
+        if (config.ConfigVersion < TargetVersion)
         {
-            config.ConfigVersion = CurrentConfigVersion;
+            config.ConfigVersion = TargetVersion;
             _configProvider.Save();
         }
 
         _logger.LogInformation("Configuration migration completed successfully.");
+    }
+
+    private void UnsupportedVersionUpgradeInfo(int? currentVersion, int targetVersion)
+    {
+        // This is not used at the moment, as the migrations support all Version at the moment.
+        // In future versions this could be just to provide more detailed Information about the Upgrade path.
     }
 }

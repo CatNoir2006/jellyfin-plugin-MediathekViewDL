@@ -65,6 +65,12 @@ public class DownloadScheduledTask : IScheduledTask
     /// <inheritdoc />
     public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            _logger.LogError("Mediathek subscription download task aborted because the plugin failed to initialize: {ErrorMessage}", Plugin.Instance.InitializationException.Message);
+            return;
+        }
+
         _logger.LogInformation("Starting Mediathek subscription download task.");
         progress.Report(0);
 

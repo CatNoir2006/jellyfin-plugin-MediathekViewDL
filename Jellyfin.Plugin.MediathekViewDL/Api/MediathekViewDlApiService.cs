@@ -74,12 +74,38 @@ public class MediathekViewDlApiService : ControllerBase
     }
 
     /// <summary>
+    /// Gets the initialization error, if any.
+    /// </summary>
+    /// <returns>The error message or null.</returns>
+    [HttpGet("InitializationError")]
+    public ActionResult<string?> GetInitializationError()
+    {
+        if (Plugin.Instance?.InitializationException is null)
+        {
+            return Ok(null);
+        }
+
+        string msg = Plugin.Instance.InitializationException.Message;
+        if (string.IsNullOrWhiteSpace(msg))
+        {
+            msg = "Ein unbekannter Fehler ist aufgetreten.";
+        }
+
+        return Ok(msg);
+    }
+
+    /// <summary>
     /// Gets the currently active downloads.
     /// </summary>
     /// <returns>A list of active downloads.</returns>
     [HttpGet("Downloads/Active")]
     public ActionResult<IEnumerable<ActiveDownload>> GetActiveDownloads()
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         return Ok(_downloadQueueManager.GetActiveDownloads());
     }
 
@@ -91,6 +117,11 @@ public class MediathekViewDlApiService : ControllerBase
     [HttpGet("Downloads/History")]
     public async Task<ActionResult<IEnumerable<DownloadHistoryEntry>>> GetDownloadHistory([FromQuery] int limit = 50)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         var history = await _downloadHistoryRepository.GetRecentHistoryAsync(limit).ConfigureAwait(false);
         return Ok(history);
     }
@@ -127,6 +158,11 @@ public class MediathekViewDlApiService : ControllerBase
     [HttpPost("TestSubscription")]
     public async Task<ActionResult<List<ResultItemDto>>> TestSubscription([FromBody] Subscription? subscription)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         if (subscription == null)
         {
             return BadRequest("Subscription configuration is required.");
@@ -166,6 +202,11 @@ public class MediathekViewDlApiService : ControllerBase
         [FromQuery] DateTimeOffset? minBroadcastDate,
         [FromQuery] DateTimeOffset? maxBroadcastDate)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         if (string.IsNullOrWhiteSpace(title) &&
             string.IsNullOrWhiteSpace(topic) &&
             string.IsNullOrWhiteSpace(channel) &&
@@ -264,6 +305,11 @@ public class MediathekViewDlApiService : ControllerBase
     [HttpPost("Download")]
     public IActionResult Download([FromBody] ResultItemDto? item)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
         {
@@ -324,6 +370,11 @@ public class MediathekViewDlApiService : ControllerBase
     [HttpPost("AdvancedDownload")]
     public IActionResult AdvancedDownload([FromBody] AdvancedDownloadOptions? options)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
         {
@@ -415,6 +466,11 @@ public class MediathekViewDlApiService : ControllerBase
     [HttpPost("ResetProcessedItems")]
     public async Task<ActionResult> ResetProcessedItems([FromQuery] Guid subscriptionId)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
         {

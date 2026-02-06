@@ -13,6 +13,17 @@
     <div data-role="content">
         <div class="content-primary">
             <h1>MediathekViewDL</h1>
+
+            <div id="mvpl-critical-error-overlay" class="mvpl-error-overlay mvpl-hidden">
+                <div class="mvpl-error-overlay-content">
+                    <span class="material-icons error_outline" style="font-size: 48px; color: #f44336;"></span>
+                    <h2 style="margin-top: 10px;">Kritischer Initialisierungsfehler</h2>
+                    <p id="mvpl-critical-error-message" style="font-weight: bold; margin: 15px 0;"></p>
+                    <p>Das Plugin konnte nicht korrekt gestartet werden und wurde zum Schutz des Systems deaktiviert.</p>
+                    <p>Bitte prüfen Sie die Server-Logs für Details und starten Sie Jellyfin neu, sobald das Problem behoben wurde.</p>
+                </div>
+            </div>
+
             <!-- Tab Navigation -->
             <div class="mvpl-tabs-spacer" role="tablist">
                 <button type="button" class="paper-icon-button-light selected" id="mvpl-btn-tab-search" role="tab" aria-selected="true" aria-controls="tab-search">
@@ -1007,6 +1018,32 @@
             font-size: 0.9em;
             opacity: 0.7;
             word-break: break-all;
+        }
+
+        .mvpl-error-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+            border-radius: 5px;
+        }
+
+        .mvpl-error-overlay-content {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            background: #1a1a1a;
+            border: 2px solid #f44336;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(244, 67, 54, 0.4);
+            color: #eee;
         }
     </style>
 </div>

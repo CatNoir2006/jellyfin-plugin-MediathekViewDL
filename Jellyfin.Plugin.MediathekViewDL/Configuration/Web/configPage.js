@@ -1254,6 +1254,22 @@ class MediathekPluginConfig {
      * Loads the configuration from the server.
      */
     loadConfig() {
+        // Check for initialization errors first
+        const errorUrl = ApiClient.getUrl('/' + this.pluginName + '/InitializationError');
+        ApiClient.getJSON(errorUrl).then((errorMessage) => {
+            const overlay = document.getElementById('mvpl-critical-error-overlay');
+            const errorMsg = document.getElementById('mvpl-critical-error-message');
+            if (errorMessage) {
+                overlay.classList.remove('mvpl-hidden');
+                errorMsg.textContent = errorMessage;
+                // Also disable the main form to be safe
+                document.getElementById('MediathekGeneralConfigForm').style.pointerEvents = 'none';
+                document.getElementById('MediathekGeneralConfigForm').style.opacity = '0.5';
+            } else {
+                overlay.classList.add('mvpl-hidden');
+            }
+        }).catch(err => console.error("Error checking initialization status", err));
+
         // noinspection JSUnresolvedReference
         Dashboard.showLoadingMsg();
         // noinspection JSUnresolvedReference

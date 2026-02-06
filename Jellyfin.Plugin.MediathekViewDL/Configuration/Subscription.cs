@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
@@ -12,6 +13,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Configuration;
 /// <summary>
 /// Represents a single download subscription based on a search query.
 /// </summary>
+[DebuggerDisplay("Name={Name}, Enabled={IsEnabled}, Search={Search}")]
 public class Subscription
 {
     /// <summary>
@@ -91,7 +93,7 @@ public class Subscription
     /// </summary>
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
-    [XmlElement("Queries")]
+    [XmlArray("Queries")]
     [JsonIgnore]
     public Collection<QueryFields> DeprecatedQueries { get; init; } = new();
 
@@ -101,7 +103,7 @@ public class Subscription
     /// </summary>
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
-    [XmlElement("Criteria")]
+    [XmlArray("Criteria")]
     [JsonIgnore]
     public Collection<QueryFieldsDto> DeprecatedCriteria { get; init; } = new();
 
