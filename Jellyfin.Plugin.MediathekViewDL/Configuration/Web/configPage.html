@@ -298,6 +298,147 @@
                         </details>
 
                         <details>
+                            <summary class="inputLabel mvpl-collapsible-summary">Abo-Standardwerte</summary>
+                            <div class="mvpl-details-content">
+                                <p class="fieldDescription">Diese Werte werden als Standard für neue Abonnements verwendet.</p>
+                                
+                                <div class="sectionTitleLabel" style="font-size: 1.1em; margin-top: 15px;">Suche</div>
+                                <div class="mvpl-duration-inputs-row">
+                                    <div class="inputContainer flex-grow">
+                                        <label class="inputLabel" for="defSubMinDuration">Min. Dauer (Minuten)</label>
+                                        <input is="emby-input" type="number" id="defSubMinDuration"/>
+                                    </div>
+                                    <div class="inputContainer flex-grow">
+                                        <label class="inputLabel" for="defSubMaxDuration">Max. Dauer (Minuten)</label>
+                                        <input is="emby-input" type="number" id="defSubMaxDuration"/>
+                                    </div>
+                                </div>
+
+                                <div class="sectionTitleLabel" style="font-size: 1.1em; margin-top: 20px;">Download</div>
+                                <div id="defSubUseStreamingUrlFilesContainer" class="checkboxContainer checkboxContainer-withDescription">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubUseStreamingUrlFiles" type="checkbox" is="emby-checkbox"/>
+                                        <span>Streaming-URL-Dateien (.strm) verwenden</span>
+                                    </label>
+                                </div>
+                                <div id="defSubDownloadFullVideoForSecondaryAudioContainer" class="checkboxContainer checkboxContainer-withDescription">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubDownloadFullVideoForSecondaryAudio" type="checkbox" is="emby-checkbox"/>
+                                        <span>Vollständiges Video für sekundäre Audiosprachen</span>
+                                    </label>
+                                </div>
+                                <div class="checkboxContainer checkboxContainer-withDescription">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubEnhancedDuplicateDetection" type="checkbox" is="emby-checkbox"/>
+                                        <span>Erweiterte Duplikaterkennung</span>
+                                    </label>
+                                </div>
+                                <div class="checkboxContainer checkboxContainer-withDescription">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubAutoUpgradeToHigherQuality" type="checkbox" is="emby-checkbox"/>
+                                        <span>Automatisch auf höhere Qualität upgraden</span>
+                                    </label>
+                                </div>
+                                <div class="checkboxContainer checkboxContainer-withDescription">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubAllowFallbackToLowerQuality" type="checkbox" is="emby-checkbox"/>
+                                        <span>Fallback auf niedrigere Qualität erlauben</span>
+                                    </label>
+                                </div>
+                                <div id="defSubQualityCheckWithUrlContainer" class="checkboxContainer checkboxContainer-withDescription mvpl-indented-block">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubQualityCheckWithUrl" type="checkbox" is="emby-checkbox"/>
+                                        <span>URL-Gültigkeit prüfen</span>
+                                    </label>
+                                </div>
+
+                                <div class="sectionTitleLabel" style="font-size: 1.1em; margin-top: 20px;">Serien</div>
+                                <div class="checkboxContainer checkboxContainer-withDescription">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubEnforceSeries" type="checkbox" is="emby-checkbox"/>
+                                        <span>Nur Serien herunterladen</span>
+                                    </label>
+                                </div>
+                                <div id="defSubAllowAbsoluteEpisodeNumberingContainer" class="checkboxContainer checkboxContainer-withDescription mvpl-indented-block">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubAllowAbsoluteEpisodeNumbering" type="checkbox" is="emby-checkbox"/>
+                                        <span>Absolute Episodennummerierung erlauben</span>
+                                    </label>
+                                </div>
+                                <div id="defSubTreatNonEpisodesAsExtrasContainer" class="checkboxContainer checkboxContainer-withDescription">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubTreatNonEpisodesAsExtras" type="checkbox" is="emby-checkbox"/>
+                                        <span>Nicht-Episoden als Extras behandeln</span>
+                                    </label>
+                                </div>
+                                <div class="mvpl-indented-block">
+                                    <div id="defSubSaveExtrasAsStrmContainer" class="checkboxContainer checkboxContainer-withDescription">
+                                        <label class="emby-checkbox-label">
+                                            <input id="defSubSaveExtrasAsStrm" type="checkbox" is="emby-checkbox"/>
+                                            <span>Extras als Stream (.strm) speichern</span>
+                                        </label>
+                                    </div>
+                                    <div id="defSubSaveTrailersContainer" class="checkboxContainer checkboxContainer-withDescription">
+                                        <label class="emby-checkbox-label">
+                                            <input id="defSubSaveTrailers" type="checkbox" is="emby-checkbox"/>
+                                            <span>Trailer speichern</span>
+                                        </label>
+                                    </div>
+                                    <div id="defSubSaveInterviewsContainer" class="checkboxContainer checkboxContainer-withDescription">
+                                        <label class="emby-checkbox-label">
+                                            <input id="defSubSaveInterviews" type="checkbox" is="emby-checkbox"/>
+                                            <span>Interviews speichern</span>
+                                        </label>
+                                    </div>
+                                    <div id="defSubSaveGenericExtrasContainer" class="checkboxContainer checkboxContainer-withDescription">
+                                        <label class="emby-checkbox-label">
+                                            <input id="defSubSaveGenericExtras" type="checkbox" is="emby-checkbox"/>
+                                            <span>Generische Extras speichern</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="sectionTitleLabel" style="font-size: 1.1em; margin-top: 20px;">Metadaten</div>
+                                <div class="inputContainer">
+                                    <label class="inputLabel" for="defSubOriginalLanguage">Originalsprache (ISO Code)</label>
+                                    <input is="emby-input" type="text" id="defSubOriginalLanguage"/>
+                                </div>
+                                <div class="checkboxContainer checkboxContainer-withDescription">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubCreateNfo" type="checkbox" is="emby-checkbox"/>
+                                        <span>NFO Dateien erstellen</span>
+                                    </label>
+                                </div>
+                                <div class="checkboxContainer checkboxContainer-withDescription">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubAppendDateToTitle" type="checkbox" is="emby-checkbox"/>
+                                        <span>Datum an Titel anhängen</span>
+                                    </label>
+                                </div>
+                                <div id="defSubAppendTimeToTitleContainer" class="checkboxContainer checkboxContainer-withDescription mvpl-indented-block">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubAppendTimeToTitle" type="checkbox" is="emby-checkbox"/>
+                                        <span>Uhrzeit an Titel anhängen</span>
+                                    </label>
+                                </div>
+
+                                <div class="sectionTitleLabel" style="font-size: 1.1em; margin-top: 20px;">Barrierefreiheit</div>
+                                <div class="checkboxContainer checkboxContainer-withDescription">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubAllowAudioDesc" type="checkbox" is="emby-checkbox"/>
+                                        <span>Audiodeskription erlauben</span>
+                                    </label>
+                                </div>
+                                <div class="checkboxContainer checkboxContainer-withDescription">
+                                    <label class="emby-checkbox-label">
+                                        <input id="defSubAllowSignLanguage" type="checkbox" is="emby-checkbox"/>
+                                        <span>Gebärdensprache erlauben</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </details>
+
+                        <details>
                             <summary class="inputLabel mvpl-collapsible-summary">Wartung</summary>
                             <div class="mvpl-details-content">
                                 <div class="checkboxContainer checkboxContainer-withDescription mvpl-margin-top-20">
