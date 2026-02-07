@@ -75,6 +75,9 @@ public class VideoParserTests
     [InlineData("Der Erlkönig (152)", null, 152, "Der Erlkönig")]
     [InlineData("Gnadenbrot (253)", null, 253, "Gnadenbrot")]
     [InlineData("34. Ungewohnte Zaubertricks (Hörfassung)", null, 34, "Ungewohnte Zaubertricks")]
+    [InlineData("52. Verhexter Zauber (2)", null, 52, "Verhexter Zauber (2)")]
+    [InlineData("51. Verhexter Zauber (1)", null, 51, "Verhexter Zauber (1)")]
+    [InlineData("12. Zwillingszauber (1)", null, 12, "Zwillingszauber (1)")]
     public void ParseVideoInfo_ShouldParseAbsoluteNumbering(string title, string? subscriptionName, int expectedAbsolute, string expectedEpisodeTitle)
     {
         // Act
