@@ -1,0 +1,10 @@
+FROM jellyfin/jellyfin:latest
+RUN apt-get update && apt-get install -y curl openssh-server unzip wget
+# Debugger einmalig vorinstallieren
+RUN mkdir -p /root/.RiderDebuggerTools && \
+    curl -L -o /tmp/rider-debug.zip "https://data.services.jetbrains.com/products/download?code=RRD&platform=linux64" && \
+    unzip -q /tmp/rider-debug.zip -d /root/.RiderDebuggerTools && \
+    rm /tmp/rider-debug.zip
+# SSH Konfiguration
+RUN mkdir -p /var/run/sshd && echo 'root:root' | chpasswd && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
