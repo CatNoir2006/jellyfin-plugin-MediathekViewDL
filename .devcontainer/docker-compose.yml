@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/dotnet:9.0-bookworm
+    volumes:
+      - ..:/workspaces/jellyfin-plugin-MediathekViewDL:cached
+    # Overrides default command so container doesn't exit.
+    command: sleep infinity
+    environment:
+      - EnableEfDesign=true
+
+  jellyfin:
+    image: jellyfin/jellyfin:latest
+    ports:
+      - "8096:8096"
+    volumes:
+      # Access to the Jellyfin config directory.
+      # You can change 'jellyfin-config' to a local path like './jellyfin/config:/config' if preferred.
+      #- jellyfin-config:/config
+      - ./devcontainer-config:/config
+      # Example: Mount local media for testing (read-only)
+      # - /path/to/your/media:/media:ro
+      # Mount the build output directly to the plugins directory.
+      # You need to run 'dotnet build' in the 'app' container first.
+      - ../Jellyfin.Plugin.MediathekViewDL/bin/Debug/net9.0:/plugins/MediathekViewDL
+
+volumes:
+  jellyfin-config:
