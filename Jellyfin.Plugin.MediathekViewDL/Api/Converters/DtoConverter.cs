@@ -204,6 +204,7 @@ public static class DtoConverter
         {
             return url.Contains("ebutt", StringComparison.OrdinalIgnoreCase) ||
                    url.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) ||
+                   url.EndsWith(".ttml", StringComparison.OrdinalIgnoreCase) ||
                    url.EndsWith("subtitle", StringComparison.OrdinalIgnoreCase);
         }
 
@@ -245,6 +246,11 @@ public static class DtoConverter
     private static List<SubtitleUrlDto> ExtractSubtitleUrls(string subtitle)
     {
         var subtitleUrls = new List<SubtitleUrlDto>();
+
+        if (string.IsNullOrWhiteSpace(subtitle))
+        {
+            return subtitleUrls;
+        }
 
         void AddSub(string url)
         {
