@@ -1,0 +1,27 @@
+# Set default behavior to automatically guess if a file is text or binary.
+# If text, it will be normalized to LF in the repository.
+* text=auto
+
+# Explicitly declare text files that should always use LF on checkout
+*.cs text eol=lf
+*.csproj text eol=lf
+*.sln text eol=lf
+*.html text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+.editorconfig text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Denote all files that are truly binary and should not be modified.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary

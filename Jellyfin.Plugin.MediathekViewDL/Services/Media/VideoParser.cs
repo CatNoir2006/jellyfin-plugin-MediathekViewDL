@@ -87,14 +87,14 @@ public class VideoParser : IVideoParser
         // Compile regex patterns for Absolute Numbering (Folge ZZZ, (ZZZ), ZZZ.)
         _absoluteNumberingPatterns = new List<Regex>
         {
+            // "123. " - Number at start
+            new Regex(@"^\s*(?<absolute>\d+)\.\s*", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
+
             // "Folge 123"
             new Regex(@"(?:Folge\s*(?<absolute>\d+)\b)", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
 
             // "(123)" - Number inside brackets
-            new Regex(@"(?<=\()\s*(?<absolute>\d+)\s*(?=\))", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
-
-            // "123. " - Number at start
-            new Regex(@"^\s*(?<absolute>\d+)\.\s*", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1))
+            new Regex(@"(?<=\()\s*(?<absolute>\d+)\s*(?=\))", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1))
         };
 
         // Compile regex patterns for Season Only Numbering
