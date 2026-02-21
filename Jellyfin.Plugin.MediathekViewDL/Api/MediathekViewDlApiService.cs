@@ -89,7 +89,7 @@ public class MediathekViewDlApiService : ControllerBase
         string msg = Plugin.Instance.InitializationException.Message;
         if (string.IsNullOrWhiteSpace(msg))
         {
-            msg = "Ein unbekannter Fehler ist aufgetreten.";
+            msg = "Ein unbekannter Fehler während der Initialisierung ist aufgetreten.";
         }
 
         return Ok(msg);
@@ -139,11 +139,11 @@ public class MediathekViewDlApiService : ControllerBase
         try
         {
             _downloadQueueManager.CancelJob(id);
-            return Ok($"Download '{id}' cancellation requested.");
+            return Ok($"Download '{id}' Abbruch angefordert.");
         }
         catch (KeyNotFoundException)
         {
-            return NotFound(new ApiErrorDto(ApiErrorId.NotFound, $"Download with ID '{id}' not found."));
+            return NotFound(new ApiErrorDto(ApiErrorId.NotFound, $"Download mit ID '{id}' wurde nicht gefunden."));
         }
         catch (InvalidOperationException ex)
         {
@@ -166,7 +166,7 @@ public class MediathekViewDlApiService : ControllerBase
 
         if (subscription == null)
         {
-            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidSubscription, "Subscription configuration is required."));
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidSubscription, "Abonnement-Konfiguration ist erforderlich."));
         }
 
         _logger.LogInformation("Testing subscription '{Name}' with {QueryCount} queries.", subscription.Name, subscription.Search.Criteria.Count);
@@ -213,7 +213,7 @@ public class MediathekViewDlApiService : ControllerBase
             string.IsNullOrWhiteSpace(channel) &&
             string.IsNullOrWhiteSpace(combinedSearch))
         {
-            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidSearch, "At least one search parameter (title, topic, channel, or combinedSearch) must be provided."));
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidSearch, "Mindestens ein Suchparameter (Titel, Thema, Sender oder kombinierte Suche) muss angegeben werden."));
         }
 
         try
@@ -224,23 +224,23 @@ public class MediathekViewDlApiService : ControllerBase
         catch (MediathekConnectionException ex)
         {
             _logger.LogError(ex, "Connection error while searching.");
-            return StatusCode(503, new ApiErrorDto(ApiErrorId.MediathekUnavailable, "The MediathekView API is currently unreachable. Please try again later."));
+            return StatusCode(503, new ApiErrorDto(ApiErrorId.MediathekUnavailable, "Die MediathekView API ist derzeit nicht erreichbar. Bitte versuchen Sie es später erneut."));
         }
         catch (MediathekParsingException ex)
         {
             _logger.LogError(ex, "Parsing error while searching.");
-            return StatusCode(502, new ApiErrorDto(ApiErrorId.MediathekInvalidResponse, "Received an invalid response from the MediathekView API."));
+            return StatusCode(502, new ApiErrorDto(ApiErrorId.MediathekInvalidResponse, "Ungültige Antwort von der MediathekView API erhalten."));
         }
         catch (MediathekApiException ex)
         {
             _logger.LogError(ex, "API error while searching. Status code: {StatusCode}", ex.StatusCode);
             var statusCode = (int)ex.StatusCode >= 500 ? 502 : 500;
-            return StatusCode(statusCode, new ApiErrorDto(ApiErrorId.MediathekApiError, $"The MediathekView API returned an error ({ex.StatusCode})."));
+            return StatusCode(statusCode, new ApiErrorDto(ApiErrorId.MediathekApiError, $"Die MediathekView API hat einen Fehler zurückgegeben ({ex.StatusCode})."));
         }
         catch (MediathekException ex)
         {
             _logger.LogError(ex, "An error occurred while searching.");
-            return StatusCode(500, new ApiErrorDto(ApiErrorId.MediathekError, "An unexpected error occurred while calling the MediathekView API."));
+            return StatusCode(500, new ApiErrorDto(ApiErrorId.MediathekError, "Ein unerwarteter Fehler ist beim Aufruf der MediathekView API aufgetreten."));
         }
     }
 
@@ -258,7 +258,7 @@ public class MediathekViewDlApiService : ControllerBase
             if (parsed == null)
             {
                 _logger.LogError("Could not parse the Item: {Item}", item);
-                return BadRequest(new ApiErrorDto(ApiErrorId.ParseError, "Could not parse the Item"));
+                return BadRequest(new ApiErrorDto(ApiErrorId.ParseError, "Das Element konnte nicht analysiert werden."));
             }
 
             return Ok(parsed);
@@ -266,7 +266,7 @@ public class MediathekViewDlApiService : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Could not parse the Item: {Item}", item);
-            return BadRequest(new ApiErrorDto(ApiErrorId.ParseError, "Could not parse the Item"));
+            return BadRequest(new ApiErrorDto(ApiErrorId.ParseError, "Das Element konnte nicht analysiert werden."));
         }
     }
 
@@ -294,7 +294,7 @@ public class MediathekViewDlApiService : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Could not create RecommendedPaths for: {VideoInfo}", videoInfo);
-            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidPath, "Could not create RecommendedPaths"));
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidPath, "Empfohlene Pfade konnten nicht erstellt werden."));
         }
     }
 
@@ -315,21 +315,21 @@ public class MediathekViewDlApiService : ControllerBase
         if (config == null)
         {
             _logger.LogError("Plugin configuration is not available. Cannot start manual download.");
-            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin configuration is not available."));
+            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin-Konfiguration ist nicht verfügbar."));
         }
 
         var videoUrl = item?.GetVideoByQuality()?.Url;
 
         if (item == null || string.IsNullOrWhiteSpace(videoUrl))
         {
-            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidItem, "Invalid item provided for download (no video URL)."));
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidItem, "Ungültiges Element für den Download bereitgestellt (keine Video-URL)."));
         }
 
         var videoInfo = _videoParser.ParseVideoInfo(item.Topic, item.Title);
         if (videoInfo == null)
         {
             _logger.LogError("Could not parse video info for item: {Title}", item.Title);
-            return BadRequest(new ApiErrorDto(ApiErrorId.ParseError, "Could not parse video info."));
+            return BadRequest(new ApiErrorDto(ApiErrorId.ParseError, "Video-Informationen konnten nicht analysiert werden."));
         }
 
         var defaultSub = new Subscription() { Name = item.Topic };
@@ -338,13 +338,13 @@ public class MediathekViewDlApiService : ControllerBase
         if (!paths.IsValid)
         {
             _logger.LogError("Could not generate download paths for item: {Title}", item.Title);
-            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidPath, "Could not generate download paths."));
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidPath, "Download-Pfade konnten nicht generiert werden."));
         }
 
         if (FileDownloader.GetDiskSpace(paths.DirectoryPath) < config.Download.MinFreeDiskSpaceBytes)
         {
             _logger.LogError("Not enough free disk space to start download for item: {Title} at {Path}", item.Title, paths.DirectoryPath);
-            return BadRequest(new ApiErrorDto(ApiErrorId.InsufficientDiskSpace, "Not enough free disk space to start download."));
+            return BadRequest(new ApiErrorDto(ApiErrorId.InsufficientDiskSpace, "Nicht genügend freier Speicherplatz, um den Download zu starten."));
         }
 
         _logger.LogInformation("Manual download requested for item: {Title}", item.Title);
@@ -360,7 +360,7 @@ public class MediathekViewDlApiService : ControllerBase
         }
 
         _downloadQueueManager.QueueJob(job);
-        return Ok($"Download for '{item.Title}' queued.");
+        return Ok($"Download für '{item.Title}' in Warteschlange.");
     }
 
     /// <summary>
@@ -380,12 +380,12 @@ public class MediathekViewDlApiService : ControllerBase
         if (config == null)
         {
             _logger.LogError("Plugin configuration is not available. Cannot start advanced download.");
-            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin configuration is not available."));
+            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin-Konfiguration ist nicht verfügbar."));
         }
 
         if (options == null)
         {
-            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidOptions, "Advanced download options are required."));
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidOptions, "Erweiterte Download-Optionen sind erforderlich."));
         }
 
         var item = options.Item;
@@ -393,32 +393,32 @@ public class MediathekViewDlApiService : ControllerBase
 
         if (string.IsNullOrWhiteSpace(videoUrl))
         {
-            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidItem, "Invalid item provided for download (no video URL)."));
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidItem, "Ungültiges Element für den Download bereitgestellt (keine Video-URL)."));
         }
 
         if (string.IsNullOrWhiteSpace(options.DownloadPath) || string.IsNullOrWhiteSpace(options.FileName))
         {
-            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidOptions, "DownloadPath and FileName are required for advanced download."));
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidOptions, "Download-Pfad und Dateiname sind für den erweiterten Download erforderlich."));
         }
 
         // Security check: Validate path traversal
         if (!_fileNameBuilder.IsPathSafe(options.DownloadPath))
         {
             _logger.LogWarning("Blocked advanced download request to unsafe path: {Path}", options.DownloadPath);
-            return BadRequest(new ApiErrorDto(ApiErrorId.UnsafePath, "The provided download path is not allowed. Please use a path within your library or configured download directories."));
+            return BadRequest(new ApiErrorDto(ApiErrorId.UnsafePath, "Der angegebene Download-Pfad ist nicht zulässig. Bitte verwenden Sie einen Pfad innerhalb Ihrer Bibliothek oder der konfigurierten Download-Verzeichnisse."));
         }
 
         // Validate using project-specific sanitization logic
         if (_fileNameBuilder.SanitizeFileName(options.FileName) != options.FileName)
         {
-            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidFilename, "FileName contains invalid characters."));
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidFilename, "Der Dateiname enthält ungültige Zeichen."));
         }
 
         var videoInfo = _videoParser.ParseVideoInfo(item.Topic, item.Title);
         if (videoInfo == null)
         {
             _logger.LogError("Could not parse video info for item: {Title}", item.Title);
-            return BadRequest(new ApiErrorDto(ApiErrorId.ParseError, "Could not parse video info."));
+            return BadRequest(new ApiErrorDto(ApiErrorId.ParseError, "Video-Informationen konnten nicht analysiert werden."));
         }
 
 #pragma warning disable CA3003 // Path is validated via manual check and directory creation rules
@@ -426,7 +426,7 @@ public class MediathekViewDlApiService : ControllerBase
 #pragma warning restore CA3003
         {
             _logger.LogError("Not enough free disk space to start advanced download for item: {Title} at {Path}", item.Title, options.DownloadPath);
-            return BadRequest(new ApiErrorDto(ApiErrorId.InsufficientDiskSpace, "Not enough free disk space to start download."));
+            return BadRequest(new ApiErrorDto(ApiErrorId.InsufficientDiskSpace, "Nicht genügend freier Speicherplatz, um den Download zu starten."));
         }
 
         _logger.LogInformation("Advanced download requested for item: {Title} to path: {Path} with filename: {FileName}", item.Title, options.DownloadPath, options.FileName);
@@ -476,14 +476,14 @@ public class MediathekViewDlApiService : ControllerBase
         if (config == null)
         {
             _logger.LogError("Plugin configuration is not available. Cannot reset processed items.");
-            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin configuration is not available."));
+            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin-Konfiguration ist nicht verfügbar."));
         }
 
         var subscription = config.Subscriptions.FirstOrDefault(s => s.Id == subscriptionId);
         if (subscription == null)
         {
             _logger.LogWarning("Subscription with ID '{SubscriptionId}' not found. Cannot reset processed items.", subscriptionId);
-            return NotFound(new ApiErrorDto(ApiErrorId.NotFound, $"Subscription with ID '{subscriptionId}' not found."));
+            return NotFound(new ApiErrorDto(ApiErrorId.NotFound, $"Abonnement mit der ID '{subscriptionId}' wurde nicht gefunden."));
         }
 
         await _downloadHistoryRepository.RemoveBySubscriptionIdAsync(subscriptionId).ConfigureAwait(false);
@@ -491,6 +491,6 @@ public class MediathekViewDlApiService : ControllerBase
         _configurationProvider.TryUpdate(config);
 
         _logger.LogInformation("Processed items list reset for subscription '{SubscriptionName}' (ID: {SubscriptionId}).", subscription.Name, subscriptionId);
-        return Ok($"Processed items list reset for subscription '{subscription.Name}'.");
+        return Ok($"Liste der verarbeiteten Elemente für Abonnement '{subscription.Name}' wurde zurückgesetzt.");
     }
 }
