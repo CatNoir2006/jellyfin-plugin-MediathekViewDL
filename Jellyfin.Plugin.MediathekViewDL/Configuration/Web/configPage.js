@@ -173,6 +173,18 @@ class Helper {
 
         return err.statusText || err.message || defaultMessage;
     }
+
+    /**
+     * Shows an error message extracted from an API error response in a toast/alert.
+     * @param err The error object from the API call
+     * @param msgPrefix Text to prefix the error message with (optional)
+     * @param defaultMessage A fallback message if no specific error is found
+     */
+    static showError(err, msgPrefix = '', defaultMessage = 'Unbekannter Fehler') {
+        this.getErrorMessage(err, defaultMessage).then(message => {
+            Helper.showToast(msgPrefix + message);
+        });
+    }
 }
 
 /**
@@ -380,10 +392,10 @@ class SearchController {
             this.renderSearchResults();
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-        }).catch(async (err) => {
+        }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Fehler bei der Suche: " + await Helper.getErrorMessage(err));
+            Helper.showError(err, "Fehler bei der Suche: ");
         });
     }
 
@@ -475,10 +487,10 @@ class SearchController {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
             Helper.showToast("Download für '" + item.Title + "' in Warteschlange.");
-        }).catch(async (err) => {
+        }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Fehler beim Starten des Downloads: " + await Helper.getErrorMessage(err));
+            Helper.showError(err, "Fehler beim Starten des Downloads: ");
         });
     }
 
@@ -866,8 +878,8 @@ class DownloadsController {
         }).then(() => {
             Helper.showToast("Abbruch angefordert.");
             this.refreshData();
-        }).catch(async (err) => {
-            Helper.showToast("Fehler beim Abbrechen: " + await Helper.getErrorMessage(err));
+        }).catch((err) => {
+            Helper.showError(err, "Fehler beim Abbrechen: ");
         });
     }
 }
@@ -1634,10 +1646,10 @@ class MediathekPluginConfig {
                     Dashboard.hideLoadingMsg();
                     Helper.showToast("Verarbeitete Items für Abonnement zurückgesetzt.");
                     this.loadConfig(); // Refresh the configuration to update the UI
-                }).catch(async (err) => {
+                }).catch((err) => {
                     // noinspection JSUnresolvedReference
                     Dashboard.hideLoadingMsg();
-                    Helper.showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + await Helper.getErrorMessage(err));
+                    Helper.showError(err, "Fehler beim Zurücksetzen der verarbeiteten Items: ");
                 });
             }
         });
@@ -1876,9 +1888,9 @@ class MediathekPluginConfig {
             Dashboard.hideLoadingMsg();
             this.closeAdvancedDownloadDialog();
             Helper.showToast("Download für '" + this.currentItemForAdvancedDl.Title + "' gestartet.");
-        }).catch(async (err) => {
+        }).catch((err) => {
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Fehler beim Starten des Downloads: " + await Helper.getErrorMessage(err));
+            Helper.showError(err, "Fehler beim Starten des Downloads: ");
         });
     }
 
@@ -1914,10 +1926,10 @@ class MediathekPluginConfig {
             }
             this.renderTestResults(results);
             document.getElementById('testSubscriptionModal').style.display = 'flex';
-        }).catch(async (err) => {
+        }).catch((err) => {
             Dashboard.hideLoadingMsg();
             console.error("Test subscription error:", err);
-            Helper.showToast("Fehler beim Testen des Abos: " + await Helper.getErrorMessage(err));
+            Helper.showError(err, "Fehler beim Testen des Abonnements: ");
         });
     }
 
