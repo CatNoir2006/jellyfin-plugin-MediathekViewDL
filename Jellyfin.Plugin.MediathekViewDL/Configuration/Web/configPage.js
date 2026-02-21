@@ -128,6 +128,32 @@ class Helper {
         const parts = path.split('.');
         return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
     }
+
+    /**
+     * Extracts a human-readable error message from an API error response.
+     * @param err The error object from the API call
+     * @param defaultMessage A fallback message if no specific error is found
+     * @returns {string} The extracted error message
+     */
+    static getErrorMessage(err, defaultMessage = 'Unbekannter Fehler') {
+        if (!err) return defaultMessage;
+
+        // Try to get message from JSON response (our new ApiErrorDto or standard ProblemDetails)
+        if (err.responseJSON) {
+            if (err.responseJSON.Detail) return err.responseJSON.Detail;
+            if (err.responseJSON.detail) return err.responseJSON.detail;
+            if (err.responseJSON.Message) return err.responseJSON.Message;
+            if (err.responseJSON.message) return err.responseJSON.message;
+        }
+
+        // Fallback to responseText if it's not HTML
+        if (err.responseText && !err.responseText.trim().startsWith('<!DOCTYPE')) {
+            return err.responseText;
+        }
+
+        // Fallback to status text or generic error message
+        return err.statusText || err.message || defaultMessage;
+    }
 }
 
 /**
@@ -338,7 +364,7 @@ class SearchController {
         }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Fehler bei der Suche: " + err);
+            Helper.showToast("Fehler bei der Suche: " + Helper.getErrorMessage(err));
         });
     }
 
@@ -433,7 +459,7 @@ class SearchController {
         }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+            Helper.showToast("Fehler beim Starten des Downloads: " + Helper.getErrorMessage(err));
         });
     }
 
@@ -822,7 +848,7 @@ class DownloadsController {
             Helper.showToast("Abbruch angefordert.");
             this.refreshData();
         }).catch((err) => {
-            Helper.showToast("Fehler beim Abbrechen: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+            Helper.showToast("Fehler beim Abbrechen: " + Helper.getErrorMessage(err));
         });
     }
 }
@@ -1592,7 +1618,7 @@ class MediathekPluginConfig {
                 }).catch((err) => {
                     // noinspection JSUnresolvedReference
                     Dashboard.hideLoadingMsg();
-                    Helper.showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                    Helper.showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + Helper.getErrorMessage(err));
                 });
             }
         });
@@ -1833,7 +1859,7 @@ class MediathekPluginConfig {
             Helper.showToast("Download für '" + this.currentItemForAdvancedDl.Title + "' gestartet.");
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+            Helper.showToast("Fehler beim Starten des Downloads: " + Helper.getErrorMessage(err));
         });
     }
 
@@ -1872,7 +1898,7 @@ class MediathekPluginConfig {
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
             console.error("Test subscription error:", err);
-            Helper.showToast("Fehler beim Testen des Abos: " + (err.responseJSON ? err.responseJSON.detail : (err.message || "Unbekannter Fehler")));
+            Helper.showToast("Fehler beim Testen des Abos: " + Helper.getErrorMessage(err));
         });
     }
 
