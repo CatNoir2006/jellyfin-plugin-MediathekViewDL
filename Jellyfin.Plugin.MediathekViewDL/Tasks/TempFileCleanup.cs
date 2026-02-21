@@ -56,6 +56,12 @@ public class TempFileCleanup : IScheduledTask
     /// <inheritdoc />
     public Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            _logger.LogError("Temporary file cleanup aborted because the plugin failed to initialize: {ErrorMessage}", Plugin.Instance.InitializationException.Message);
+            return Task.CompletedTask;
+        }
+
         _logger.LogInformation("Starting temporary file cleanup.");
         progress.Report(0);
 
@@ -85,9 +91,9 @@ public class TempFileCleanup : IScheduledTask
             // 4. Subscription Download Directories
             foreach (var subscription in config.Subscriptions)
             {
-                if (!string.IsNullOrWhiteSpace(subscription.DownloadPath))
+                if (!string.IsNullOrWhiteSpace(subscription.Download.DownloadPath))
                 {
-                    directoriesToScan.Add(subscription.DownloadPath);
+                    directoriesToScan.Add(subscription.Download.DownloadPath);
                 }
             }
         }

@@ -56,6 +56,12 @@ public class StrmCleanupTask : IScheduledTask
     /// <inheritdoc />
     public async Task ExecuteAsync(IProgress<double> progress, CancellationToken cancellationToken)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            _logger.LogError(".strm cleanup task aborted because the plugin failed to initialize: {ErrorMessage}", Plugin.Instance.InitializationException.Message);
+            return;
+        }
+
         var config = _configurationProvider.ConfigurationOrNull;
         if (config == null || !config.Maintenance.EnableStrmCleanup)
         {
@@ -85,9 +91,9 @@ public class StrmCleanupTask : IScheduledTask
         // Add subscription specific paths
         foreach (var sub in subscriptions)
         {
-            if (!string.IsNullOrWhiteSpace(sub.DownloadPath))
+            if (!string.IsNullOrWhiteSpace(sub.Download.DownloadPath))
             {
-                paths.Add(sub.DownloadPath);
+                paths.Add(sub.Download.DownloadPath);
             }
         }
 

@@ -48,6 +48,9 @@ Die einfachste Methode. Updates erfolgen automatisch über Jellyfin.
 4.  Installieren Sie das Plugin nun über den **Katalog** und starten Sie Jellyfin neu.
 
 ### 🛠️ Manuell (Für Entwickler)
+<details>
+<summary><strong>🔽 Details</strong></summary>
+<br>
 
 1.  **Repository klonen:**
     ```bash
@@ -62,6 +65,7 @@ Die einfachste Methode. Updates erfolgen automatisch über Jellyfin.
     *   Erstellen Sie einen Ordner `MediathekViewDL` im `plugins`-Ordner Ihrer Jellyfin-Installation.
     *   Kopieren Sie **alle Dateien** aus `bin/Debug/net9.0` (oder `Release`) in diesen Ordner.
 4.  **Neustart:** Starten Sie den Jellyfin-Server neu.
+</details>
 
 ---
 
@@ -88,13 +92,20 @@ Hier können Sie gezielt nach Sendungen suchen, Downloads sofort starten oder Su
 ### 🛠 Allgemeine Einstellungen
 (Tab: *Einstellungen*)
 
-Hier konfigurieren Sie das globale Verhalten des Plugins.
+Hier konfigurieren Sie das globale Verhalten des Plugins. Die Einstellungen sind in logische Gruppen (Pfade, Download, Suche, Netzwerk, Abo-Standardwerte, Wartung) unterteilt.
+<details>
+<summary><strong>🔽 Allgemeine Einstellungen (Bild)</strong></summary>
+<br>
 
 <img src="Images/Einstellungen.png" width="800" alt="Einstellungen">
+</details>
 
-*   **Standard-Download-Pfad:** Wohin sollen Dateien standardmäßig gespeichert werden?
+*   **Pfade-Einstellungen:** Definieren Sie getrennte Standardpfade für Serien und Filme (Abonnements vs. Manuell).
+*   **Temporärer Download-Pfad:** Ein optionaler Ordner zum Zwischenspeichern von Downloads (schont SSDs).
+*   **Abo-Standardwerte:** Legen Sie fest, mit welchen Einstellungen neue Abonnements initial erstellt werden.
+*   **Wartung:** Aktiviert die automatische Bereinigung ungültiger `.strm`-Dateien (Link-Check).
 *   **Untertitel herunterladen:** Aktiviert den automatischen Untertitel-Download.
-*   **Minimaler freier Speicherplatz:** Stoppt Downloads, wenn z.B. weniger als 1.5 GB frei sind.
+*   **Minimaler freier Speicherplatz:** Stoppt Downloads bei wenig Speicherplatz (konfigurierbar).
 *   **Maximale Bandbreite:** Begrenzung in MBit/s (0 = unbegrenzt).
 *   **Bibliotheks-Scan:** Aktualisiert die Jellyfin-Bibliothek automatisch nach fertigen Downloads.
 
@@ -120,9 +131,11 @@ Das Herzstück des Plugins. Hier definieren Sie, was regelmäßig gesucht wird.
 | **Suchanfragen** | Eine oder mehrere Suchkriterien (Titel, Thema, Sender), die kombiniert werden. |
 | **Download-Pfad** | Überschreibt den globalen Standard-Download-Pfad nur für dieses Abo. |
 | **Min. / Max. Dauer** | Filtert Ergebnisse anhand der Dauer (in Minuten). |
+| **Min. / Max. Datum** | Filtert Ergebnisse anhand des Sendedatums. |
 | **Nur Serien herunterladen** | Lädt nur Inhalte, bei denen Staffel und Episode (SxxExx) erkannt wurden (`EnforceSeriesParsing`). |
 | **Absolute Nummerierung erlauben** | Erlaubt Episoden wie "Episode 5" statt "S01E05". (Nur aktiv wenn "Nur Serien" aktiv). |
 | **Metadaten (.nfo) erstellen** | Generiert NFO-Dateien mit Beschreibungen und Tags für Jellyfin/Kodi. |
+| **Originalsprache (ISO)** | Setzt einen ISO-Sprachcode (z.B. 'eng'), wenn der Inhalt als Originalversion erkannt wird. |
 | **Streaming (.strm) verwenden** | Speichert keine Videodatei, sondern nur eine Textdatei, die auf den Online-Stream verweist. |
 | **Vollständiges Video für sek. Audio** | Lädt das komplette Video, auch wenn es eine andere Sprache als Deutsch hat (sonst nur Audio-Extrakt). (Nicht bei .strm). |
 | **Nicht-Episoden als Extras** | Behandelt Videos ohne Episodennummer als Bonusmaterial. |
@@ -136,6 +149,8 @@ Das Herzstück des Plugins. Hier definieren Sie, was regelmäßig gesucht wird.
 | **Auto-Upgrade Qualität** | Ersetzt existierende Dateien, wenn eine bessere Auflösung verfügbar wird. |
 | **Fallback auf niedrigere Qualität** | Erlaubt den Download schlechterer Qualität, wenn HD nicht verfügbar ist. |
 | **URL-Check vor Download** | Prüft vorab, ob der Videolink erreichbar ist (vermeidet defekte Downloads, kostet Zeit). (Nur bei Fallback aktiv). |
+| **Datum/Uhrzeit im Titel** | Hängt das Datum oder die Uhrzeit an den Titel an (ideal für News/Daily). |
+| **Abo prüfen (Dry Run)** | Testet die Sucheinstellungen, ohne Dateien herunterzuladen. |
 
 </details>
 
@@ -164,3 +179,8 @@ Das Plugin arbeitet im Hintergrund mit einem **Scheduled Task** (Geplante Aufgab
 
 *   **Danke:** Ein großer Dank geht an das Team von [MediathekViewWeb.de](https://mediathekviewweb.de/) für die Bereitstellung der API, ohne die dieses Plugin nicht möglich wäre.
 *   **Disclaimer:** Dieses Plugin dient der Automatisierung des Zugriffs auf öffentlich verfügbare Inhalte. Bitte beachten Sie die Nutzungsbedingungen der jeweiligen Sender und Mediatheken. Die Nutzung erfolgt auf eigene Gefahr.
+
+---
+## Letze Anpassung der Readme
+* Plugin: v0.7.2.0
+* Commit: c190e6b

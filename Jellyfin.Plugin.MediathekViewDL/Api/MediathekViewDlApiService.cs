@@ -5,12 +5,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api.External;
-using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
-using Jellyfin.Plugin.MediathekViewDL.Services;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Queue;
@@ -76,12 +74,38 @@ public class MediathekViewDlApiService : ControllerBase
     }
 
     /// <summary>
+    /// Gets the initialization error, if any.
+    /// </summary>
+    /// <returns>The error message or null.</returns>
+    [HttpGet("InitializationError")]
+    public ActionResult<string?> GetInitializationError()
+    {
+        if (Plugin.Instance?.InitializationException is null)
+        {
+            return Ok(null);
+        }
+
+        string msg = Plugin.Instance.InitializationException.Message;
+        if (string.IsNullOrWhiteSpace(msg))
+        {
+            msg = "Ein unbekannter Fehler ist aufgetreten.";
+        }
+
+        return Ok(msg);
+    }
+
+    /// <summary>
     /// Gets the currently active downloads.
     /// </summary>
     /// <returns>A list of active downloads.</returns>
     [HttpGet("Downloads/Active")]
     public ActionResult<IEnumerable<ActiveDownload>> GetActiveDownloads()
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         return Ok(_downloadQueueManager.GetActiveDownloads());
     }
 
@@ -93,6 +117,11 @@ public class MediathekViewDlApiService : ControllerBase
     [HttpGet("Downloads/History")]
     public async Task<ActionResult<IEnumerable<DownloadHistoryEntry>>> GetDownloadHistory([FromQuery] int limit = 50)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         var history = await _downloadHistoryRepository.GetRecentHistoryAsync(limit).ConfigureAwait(false);
         return Ok(history);
     }
@@ -129,12 +158,17 @@ public class MediathekViewDlApiService : ControllerBase
     [HttpPost("TestSubscription")]
     public async Task<ActionResult<List<ResultItemDto>>> TestSubscription([FromBody] Subscription? subscription)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         if (subscription == null)
         {
             return BadRequest("Subscription configuration is required.");
         }
 
-        _logger.LogInformation("Testing subscription '{Name}' with {QueryCount} queries.", subscription.Name, subscription.Criteria.Count);
+        _logger.LogInformation("Testing subscription '{Name}' with {QueryCount} queries.", subscription.Name, subscription.Search.Criteria.Count);
 
         var results = new List<ResultItemDto>();
         await foreach (var item in _subscriptionProcessor.TestSubscriptionAsync(subscription, CancellationToken.None).ConfigureAwait(false))
@@ -168,6 +202,11 @@ public class MediathekViewDlApiService : ControllerBase
         [FromQuery] DateTimeOffset? minBroadcastDate,
         [FromQuery] DateTimeOffset? maxBroadcastDate)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         if (string.IsNullOrWhiteSpace(title) &&
             string.IsNullOrWhiteSpace(topic) &&
             string.IsNullOrWhiteSpace(channel) &&
@@ -264,8 +303,13 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="item">The item to download.</param>
     /// <returns>An OK result.</returns>
     [HttpPost("Download")]
-    public IActionResult Download([FromBody] ResultItemDto item)
+    public IActionResult Download([FromBody] ResultItemDto? item)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
         {
@@ -273,7 +317,7 @@ public class MediathekViewDlApiService : ControllerBase
             return StatusCode(500, "Plugin configuration is not available.");
         }
 
-        var videoUrl = item.GetVideoByQuality()?.Url;
+        var videoUrl = item?.GetVideoByQuality()?.Url;
 
         if (item == null || string.IsNullOrWhiteSpace(videoUrl))
         {
@@ -324,8 +368,13 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="options">The advanced download options.</param>
     /// <returns>An OK result.</returns>
     [HttpPost("AdvancedDownload")]
-    public IActionResult AdvancedDownload([FromBody] AdvancedDownloadOptions options)
+    public IActionResult AdvancedDownload([FromBody] AdvancedDownloadOptions? options)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
         {
@@ -333,10 +382,15 @@ public class MediathekViewDlApiService : ControllerBase
             return StatusCode(500, "Plugin configuration is not available.");
         }
 
+        if (options == null)
+        {
+            return BadRequest("Advanced download options are required.");
+        }
+
         var item = options.Item;
         var videoUrl = item.GetVideoByQuality()?.Url;
 
-        if (item == null || string.IsNullOrWhiteSpace(videoUrl))
+        if (string.IsNullOrWhiteSpace(videoUrl))
         {
             return BadRequest("Invalid item provided for download (no video URL).");
         }
@@ -412,6 +466,11 @@ public class MediathekViewDlApiService : ControllerBase
     [HttpPost("ResetProcessedItems")]
     public async Task<ActionResult> ResetProcessedItems([FromQuery] Guid subscriptionId)
     {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, Plugin.Instance.InitializationException.Message);
+        }
+
         var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
         {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Configuration.SubscriptionSettings;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using MediaBrowser.Controller.Library;
@@ -159,7 +160,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var subscription = new Subscription 
             { 
                 Name = "TestSub", 
-                DownloadPath = "/custom/path/MyShow" 
+                Download = new DownloadSettings { DownloadPath = "/custom/path/MyShow" }
             };
 
             // Act
@@ -182,7 +183,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var subscription = new Subscription 
             { 
                 Name = "TestSub", 
-                TreatNonEpisodesAsExtras = true 
+                Series = new SeriesSettings { TreatNonEpisodesAsExtras = true }
             };
 
             // Act
@@ -236,7 +237,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var subscription = new Subscription 
             { 
                 Name = "TestSub",
-                DownloadFullVideoForSecondaryAudio = true
+                Download = new DownloadSettings { DownloadFullVideoForSecondaryAudio = true }
             };
 
             // Act

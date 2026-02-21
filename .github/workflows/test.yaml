@@ -1,5 +1,8 @@
 name: '🧪 Test Plugin'
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:

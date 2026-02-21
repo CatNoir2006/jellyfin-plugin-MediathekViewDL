@@ -83,7 +83,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         var jobs = new List<DownloadJob>();
 
         LocalEpisodeCache? localEpisodeCache = null;
-        if (subscription.EnhancedDuplicateDetection)
+        if (subscription.Download.EnhancedDuplicateDetection)
         {
             var subscriptionBaseDir = _fileNameBuilderService.GetSubscriptionBaseDirectory(subscription, DownloadContext.Subscription);
             if (!string.IsNullOrWhiteSpace(subscriptionBaseDir))
@@ -94,7 +94,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
         await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            if (await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false) && !subscription.AutoUpgradeToHigherQuality)
+            if (await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false) && !subscription.Download.AutoUpgradeToHigherQuality)
             {
                 _logger.LogDebug("Skipping item '{Title}' (ID: {Id}) as it was already processed for subscription '{SubscriptionName}'.", item.Title, item.Id, subscription.Name);
                 continue;
@@ -103,11 +103,11 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
             SetOvLanguageIfSet(subscription, tempVideoInfo);
 
-            if (tempVideoInfo != null && (subscription.AppendDateToTitle || subscription.AppendTimeToTitle))
+            if (tempVideoInfo != null && (subscription.Metadata.AppendDateToTitle || subscription.Metadata.AppendTimeToTitle))
             {
                 var suffixParts = new List<string>();
 
-                if (subscription.AppendDateToTitle)
+                if (subscription.Metadata.AppendDateToTitle)
                 {
                     var dateStr = item.Timestamp.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                     if (!tempVideoInfo.Title.Contains(dateStr, StringComparison.OrdinalIgnoreCase))
@@ -116,7 +116,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                     }
                 }
 
-                if (subscription.AppendTimeToTitle)
+                if (subscription.Metadata.AppendTimeToTitle)
                 {
                     // using HH-mm because : is invalid in filenames
                     var timeStr = item.Timestamp.ToString("HH-mm", CultureInfo.InvariantCulture);
@@ -151,9 +151,10 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 continue;
             }
 
-            // Video/Main Job
+            // Download Task
             var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo!.Title, ItemInfo = tempVideoInfo };
 
+            // Video/Main Item
             switch (paths.MainType)
             {
                 case FileType.Strm:
@@ -212,22 +213,27 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                     break;
             }
 
-            jobs.Add(downloadJob);
-
-            // Subtitle Job
-            var subtitleUrl = item.SubtitleUrls.OrderByDescending(x => x.Type).FirstOrDefault();
-            if (downloadSubtitles && !string.IsNullOrWhiteSpace(subtitleUrl?.Url))
+            // Subtitle Item
+            if (downloadSubtitles)
             {
-                // Some subtitles are WEBVTT, change extension accordingly
-                if (subtitleUrl.Type == SubtitleType.WEBVTT)
+                foreach (var sub in item.SubtitleUrls)
                 {
-                    paths.SubtitleFilePath = Path.ChangeExtension(paths.SubtitleFilePath, ".vtt");
-                }
+                    if (sub.Type == SubtitleType.Unknown)
+                    {
+                        continue;
+                    }
 
-                downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = subtitleUrl.Url, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.DirectDownload });
+                    string subPath = paths.SubtitleFilePath;
+                    if (sub.Type == SubtitleType.WEBVTT)
+                    {
+                        subPath = Path.ChangeExtension(subPath, ".vtt");
+                    }
+
+                    downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = sub.Url, DestinationPath = subPath, JobType = DownloadType.DirectDownload });
+                }
             }
 
-            if (subscription.CreateNfo)
+            if (subscription.Metadata.CreateNfo)
             {
                 var topic = string.IsNullOrWhiteSpace(subscription.Name) ? item.Topic : subscription.Name;
 
@@ -246,6 +252,8 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                     Set = string.Empty
                 };
             }
+
+            jobs.Add(downloadJob);
         }
 
         return jobs;
@@ -266,11 +274,11 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
             SetOvLanguageIfSet(subscription, tempVideoInfo);
 
-            if (tempVideoInfo != null && (subscription.AppendDateToTitle || subscription.AppendTimeToTitle))
+            if (tempVideoInfo != null && (subscription.Metadata.AppendDateToTitle || subscription.Metadata.AppendTimeToTitle))
             {
                 var suffixParts = new List<string>();
 
-                if (subscription.AppendDateToTitle)
+                if (subscription.Metadata.AppendDateToTitle)
                 {
                     var dateStr = item.Timestamp.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
                     if (!tempVideoInfo.Title.Contains(dateStr, StringComparison.OrdinalIgnoreCase))
@@ -279,7 +287,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                     }
                 }
 
-                if (subscription.AppendTimeToTitle)
+                if (subscription.Metadata.AppendTimeToTitle)
                 {
                     // using HH-mm because : is invalid in filenames
                     var timeStr = item.Timestamp.ToString("HH-mm", CultureInfo.InvariantCulture);
@@ -331,7 +339,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             return false;
         }
 
-        if (localEpisodeCache != null && localEpisodeCache.Contains(tempVideoInfo) && !subscription.AutoUpgradeToHigherQuality)
+        if (localEpisodeCache != null && localEpisodeCache.Contains(tempVideoInfo) && !subscription.Download.AutoUpgradeToHigherQuality)
         {
             _logger.LogInformation(
                 "Skipping item '{Title}' (S{Season}E{Episode} / Abs: {Abs}) as it was found locally via enhanced duplicate detection.",
@@ -345,45 +353,45 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             return false;
         }
 
-        if (!subscription.AllowAudioDescription && tempVideoInfo.HasAudiodescription)
+        if (!subscription.Accessibility.AllowAudioDescription && tempVideoInfo.HasAudiodescription)
         {
             _logger.LogDebug("Skipping item '{Title}' due to Audiodescription and subscription preference.", item.Title);
             return false;
         }
 
-        if (!subscription.AllowSignLanguage && tempVideoInfo.HasSignLanguage)
+        if (!subscription.Accessibility.AllowSignLanguage && tempVideoInfo.HasSignLanguage)
         {
             _logger.LogDebug("Skipping item '{Title}' due to Sign Language and subscription preference.", item.Title);
             return false;
         }
 
-        if (subscription.EnforceSeriesParsing && !tempVideoInfo.IsShow && !subscription.TreatNonEpisodesAsExtras)
+        if (subscription.Series.EnforceSeriesParsing && !tempVideoInfo.IsShow && !subscription.Series.TreatNonEpisodesAsExtras)
         {
             _logger.LogDebug("Skipping item '{Title}' due to EnforceSeriesParsing and parsing result.", item.Title);
             return false;
         }
 
-        if ((subscription is { EnforceSeriesParsing: true, AllowAbsoluteEpisodeNumbering: false } && tempVideoInfo is { HasSeasonEpisodeNumbering: false }) && (!subscription.TreatNonEpisodesAsExtras && !tempVideoInfo.IsShow))
+        if ((subscription.Series.EnforceSeriesParsing && !subscription.Series.AllowAbsoluteEpisodeNumbering && !tempVideoInfo.HasSeasonEpisodeNumbering) && (!subscription.Series.TreatNonEpisodesAsExtras && !tempVideoInfo.IsShow))
         {
             _logger.LogDebug("Skipping item '{Title}' due to absolute episode numbering and subscription preference.", item.Title);
             return false;
         }
 
-        if (subscription.TreatNonEpisodesAsExtras)
+        if (subscription.Series.TreatNonEpisodesAsExtras)
         {
-            if (tempVideoInfo.IsTrailer && !subscription.SaveTrailers)
+            if (tempVideoInfo.IsTrailer && !subscription.Series.SaveTrailers)
             {
                 _logger.LogDebug("Skipping item '{Title}' because it is a trailer and SaveTrailers is disabled.", item.Title);
                 return false;
             }
 
-            if (tempVideoInfo.IsInterview && !subscription.SaveInterviews)
+            if (tempVideoInfo.IsInterview && !subscription.Series.SaveInterviews)
             {
                 _logger.LogDebug("Skipping item '{Title}' because it is an interview and SaveInterviews is disabled.", item.Title);
                 return false;
             }
 
-            if (tempVideoInfo is { IsTrailer: false, IsInterview: false, IsShow: false } && !subscription.SaveGenericExtras)
+            if (tempVideoInfo is { IsTrailer: false, IsInterview: false, IsShow: false } && !subscription.Series.SaveGenericExtras)
             {
                 _logger.LogDebug("Skipping item '{Title}' because it is a generic extra and SaveGenericExtras is disabled.", item.Title);
                 return false;
@@ -409,7 +417,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         string targetPath,
         CancellationToken cancellationToken)
     {
-        if (!subscription.AutoUpgradeToHigherQuality)
+        if (!subscription.Download.AutoUpgradeToHigherQuality)
         {
             return null;
         }
@@ -491,9 +499,9 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
     private void SetOvLanguageIfSet(Subscription subscription, VideoInfo? videoInfo)
     {
-        if (videoInfo is { Language: "und" } && !string.IsNullOrWhiteSpace(subscription.OriginalLanguage))
+        if (videoInfo is { Language: "und" } && !string.IsNullOrWhiteSpace(subscription.Metadata.OriginalLanguage))
         {
-            videoInfo.Language = subscription.OriginalLanguage;
+            videoInfo.Language = subscription.Metadata.OriginalLanguage;
         }
     }
 
@@ -564,7 +572,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         var hdUrl = item.VideoUrls.FirstOrDefault(v => v.Quality == 3)?.Url;
 
         // If no fallback is allowed, return HD URL if available
-        if (!subscription.AllowFallbackToLowerQuality)
+        if (!subscription.Download.AllowFallbackToLowerQuality)
         {
             return hdUrl;
         }
@@ -572,7 +580,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         List<string> candidateUrls = item.VideoUrls.OrderByDescending(s => s.Quality).Select(s => s.Url).ToList();
 
         // If no url availability check is required, return the first URL
-        if (!subscription.QualityCheckWithUrl)
+        if (!subscription.Download.QualityCheckWithUrl)
         {
             return candidateUrls.Count > 0 ? candidateUrls[0] : null;
         }
@@ -629,13 +637,13 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         {
             var apiQuery = new ApiQueryDto
             {
-                Queries = subscription.Criteria,
+                Queries = subscription.Search.Criteria,
                 Size = pageSize,
                 Offset = currentPage * pageSize,
-                MinDuration = subscription.MinDurationMinutes * 60,
-                MaxDuration = subscription.MaxDurationMinutes * 60,
-                MinBroadcastDate = subscription.MinBroadcastDate,
-                MaxBroadcastDate = subscription.MaxBroadcastDate,
+                MinDuration = subscription.Search.MinDurationMinutes * 60,
+                MaxDuration = subscription.Search.MaxDurationMinutes * 60,
+                MinBroadcastDate = subscription.Search.MinBroadcastDate,
+                MaxBroadcastDate = subscription.Search.MaxBroadcastDate,
                 Future = _configurationProvider.Configuration.Search.SearchInFutureBroadcasts,
             };
 

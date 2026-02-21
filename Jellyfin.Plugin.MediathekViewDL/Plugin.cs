@@ -42,6 +42,11 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// </summary>
     public static Plugin? Instance { get; private set; }
 
+    /// <summary>
+    /// Gets the exception that occurred during plugin initialization, if any.
+    /// </summary>
+    public Exception? InitializationException { get; internal set; }
+
     /// <inheritdoc />
     public IEnumerable<PluginPageInfo> GetPages()
     {

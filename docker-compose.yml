@@ -1,0 +1,23 @@
+services:
+  jellyfin:
+    build:
+      context: .
+      dockerfile: Dockerfile.debug
+    container_name: jellyfin_debug
+    ports:
+      - "8096:8096"
+      - "54691:22"
+    volumes:
+      # Jellyfin Konfiguration
+      - ./jellyfin-config:/config
+
+      # DEIN DEBUG-BUILD: Mountet die gebauten DLLs direkt in Jellyfin
+      - ./Jellyfin.Plugin.MediathekViewDL/bin/Debug/net9.0:/config/plugins/MediathekViewDL
+
+      # SMB-Share via Link außerhalb des Projektverzeichnisses
+      - ../media:/media/Provider:ro
+
+    environment:
+      - DOTNET_DEBUGGER_CHROME=1
+      - COMPlus_EnableDiagnostics=1
+      - ASPNETCORE_ENVIRONMENT=Development

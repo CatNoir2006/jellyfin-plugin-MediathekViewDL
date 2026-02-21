@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
+using Jellyfin.Plugin.MediathekViewDL.Configuration.Groups;
 using MediaBrowser.Model.Plugins;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Configuration;
@@ -270,6 +271,7 @@ public class PluginConfiguration : BasePluginConfiguration
         "daserste.de",
         "orf.at",
         "srf.ch",
-        "zdf.de"
+        "zdf.de",
+        "kika.de",
     };
 }
