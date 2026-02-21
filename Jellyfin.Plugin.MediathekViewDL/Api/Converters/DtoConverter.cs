@@ -291,6 +291,11 @@ public static class DtoConverter
                 return;
             }
 
+            if (!Uri.TryCreate(subtitle, UriKind.Absolute, out var uri))
+            {
+                return;
+            }
+
             int lastSlashIndex = subtitle.LastIndexOf('/');
             int lastDotIndex = subtitle.LastIndexOf('.');
 
@@ -311,13 +316,18 @@ public static class DtoConverter
                 return;
             }
 
-            int lastSlashIndex = subtitle.LastIndexOf('/');
-
-            if (lastSlashIndex <= 8) // "https://".Length
+            if (!Uri.TryCreate(subtitle, UriKind.Absolute, out var uri))
             {
                 return;
             }
 
+            // Ensure there's a path component beyond the root slash
+            if (uri.Segments.Length <= 1)
+            {
+                return;
+            }
+
+            int lastSlashIndex = subtitle.LastIndexOf('/');
             string baseUrl = subtitle.Substring(0, lastSlashIndex);
             AddSub(baseUrl + "/subtitle");
             AddSub(baseUrl + "/webvtt");
