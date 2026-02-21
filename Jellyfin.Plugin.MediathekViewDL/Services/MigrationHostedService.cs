@@ -190,10 +190,6 @@ public class MigrationHostedService : IHostedService
                         subscription.DeprecatedCriteria.Add(newCriteria);
                     }
                 }
-
-                // Update config version
-                config.ConfigVersion = 2;
-                _configProvider.Save();
             }
 
             MigrateSubscriptionLegacy();
