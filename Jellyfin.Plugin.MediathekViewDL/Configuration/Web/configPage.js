@@ -2,7 +2,7 @@
  * Helper Class that contains various utility methods.
  */
 class Helper {
-    static config() {window.MediathekViewDL.config;}
+    static config() {return window.MediathekViewDL.config;}
 
     /**
      * Shows a confirmation popup.
@@ -127,6 +127,63 @@ class Helper {
         if (!path) return '';
         const parts = path.split('.');
         return parts.length > 1 ? parts[parts.length - 1].toLowerCase() : '';
+    }
+
+    /**
+     * Extracts a human-readable error message from an API error response.
+     * Supports both legacy XHR objects and modern Fetch Response objects.
+     * @param err The error object from the API call
+     * @param defaultMessage A fallback message if no specific error is found
+     * @returns {Promise<string>} The extracted error message
+     */
+    static async getErrorMessage(err, defaultMessage = 'Unbekannter Fehler') {
+        if (!err) return defaultMessage;
+
+        // Support for Fetch Response objects (asynchronous)
+        if (err instanceof Response) {
+            try {
+                const contentType = err.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    const json = await err.json();
+                    return json.Detail || json.detail || json.Message || json.message || err.statusText || defaultMessage;
+                } else {
+                    const text = await err.text();
+                    if (text && !text.trim().startsWith('<!DOCTYPE')) {
+                        return text;
+                    }
+                }
+            } catch (e) {
+                console.error("Error parsing fetch response", e);
+            }
+            return err.statusText || defaultMessage;
+        }
+
+        // Legacy support for XHR/jQuery-like objects (synchronous)
+        if (err.responseJSON) {
+            const r = err.responseJSON;
+            if (r.Detail) return r.Detail;
+            if (r.detail) return r.detail;
+            if (r.Message) return r.Message;
+            if (r.message) return r.message;
+        }
+
+        if (err.responseText && !err.responseText.trim().startsWith('<!DOCTYPE')) {
+            return err.responseText;
+        }
+
+        return err.statusText || err.message || defaultMessage;
+    }
+
+    /**
+     * Shows an error message extracted from an API error response in a toast/alert.
+     * @param err The error object from the API call
+     * @param msgPrefix Text to prefix the error message with (optional)
+     * @param defaultMessage A fallback message if no specific error is found
+     */
+    static showError(err, msgPrefix = '', defaultMessage = 'Unbekannter Fehler') {
+        this.getErrorMessage(err, defaultMessage).then(message => {
+            Helper.showToast(msgPrefix + message);
+        });
     }
 }
 
@@ -338,7 +395,7 @@ class SearchController {
         }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Fehler bei der Suche: " + err);
+            Helper.showError(err, "Fehler bei der Suche: ");
         });
     }
 
@@ -433,7 +490,7 @@ class SearchController {
         }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+            Helper.showError(err, "Fehler beim Starten des Downloads: ");
         });
     }
 
@@ -822,7 +879,7 @@ class DownloadsController {
             Helper.showToast("Abbruch angefordert.");
             this.refreshData();
         }).catch((err) => {
-            Helper.showToast("Fehler beim Abbrechen: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+            Helper.showError(err, "Fehler beim Abbrechen: ");
         });
     }
 }
@@ -1592,7 +1649,7 @@ class MediathekPluginConfig {
                 }).catch((err) => {
                     // noinspection JSUnresolvedReference
                     Dashboard.hideLoadingMsg();
-                    Helper.showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+                    Helper.showError(err, "Fehler beim Zurücksetzen der verarbeiteten Items: ");
                 });
             }
         });
@@ -1833,7 +1890,7 @@ class MediathekPluginConfig {
             Helper.showToast("Download für '" + this.currentItemForAdvancedDl.Title + "' gestartet.");
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Fehler beim Starten des Downloads: " + (err.responseJSON ? err.responseJSON.detail : "Unbekannter Fehler"));
+            Helper.showError(err, "Fehler beim Starten des Downloads: ");
         });
     }
 
@@ -1872,7 +1929,7 @@ class MediathekPluginConfig {
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
             console.error("Test subscription error:", err);
-            Helper.showToast("Fehler beim Testen des Abos: " + (err.responseJSON ? err.responseJSON.detail : (err.message || "Unbekannter Fehler")));
+            Helper.showError(err, "Fehler beim Testen des Abonnements: ");
         });
     }
 
