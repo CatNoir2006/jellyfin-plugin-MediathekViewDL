@@ -2,7 +2,7 @@
  * Helper Class that contains various utility methods.
  */
 class Helper {
-    static config() {window.MediathekViewDL.config;}
+    static config() {return window.MediathekViewDL.config;}
 
     /**
      * Shows a confirmation popup.
@@ -131,27 +131,46 @@ class Helper {
 
     /**
      * Extracts a human-readable error message from an API error response.
+     * Supports both legacy XHR objects and modern Fetch Response objects.
      * @param err The error object from the API call
      * @param defaultMessage A fallback message if no specific error is found
-     * @returns {string} The extracted error message
+     * @returns {Promise<string>} The extracted error message
      */
-    static getErrorMessage(err, defaultMessage = 'Unbekannter Fehler') {
+    static async getErrorMessage(err, defaultMessage = 'Unbekannter Fehler') {
         if (!err) return defaultMessage;
 
-        // Try to get message from JSON response (our new ApiErrorDto or standard ProblemDetails)
-        if (err.responseJSON) {
-            if (err.responseJSON.Detail) return err.responseJSON.Detail;
-            if (err.responseJSON.detail) return err.responseJSON.detail;
-            if (err.responseJSON.Message) return err.responseJSON.Message;
-            if (err.responseJSON.message) return err.responseJSON.message;
+        // Support for Fetch Response objects (asynchronous)
+        if (err instanceof Response) {
+            try {
+                const contentType = err.headers.get("content-type");
+                if (contentType && contentType.includes("application/json")) {
+                    const json = await err.json();
+                    return json.Detail || json.detail || json.Message || json.message || err.statusText || defaultMessage;
+                } else {
+                    const text = await err.text();
+                    if (text && !text.trim().startsWith('<!DOCTYPE')) {
+                        return text;
+                    }
+                }
+            } catch (e) {
+                console.error("Error parsing fetch response", e);
+            }
+            return err.statusText || defaultMessage;
         }
 
-        // Fallback to responseText if it's not HTML
+        // Legacy support for XHR/jQuery-like objects (synchronous)
+        if (err.responseJSON) {
+            const r = err.responseJSON;
+            if (r.Detail) return r.Detail;
+            if (r.detail) return r.detail;
+            if (r.Message) return r.Message;
+            if (r.message) return r.message;
+        }
+
         if (err.responseText && !err.responseText.trim().startsWith('<!DOCTYPE')) {
             return err.responseText;
         }
 
-        // Fallback to status text or generic error message
         return err.statusText || err.message || defaultMessage;
     }
 }
@@ -361,10 +380,10 @@ class SearchController {
             this.renderSearchResults();
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-        }).catch((err) => {
+        }).catch(async (err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Fehler bei der Suche: " + Helper.getErrorMessage(err));
+            Helper.showToast("Fehler bei der Suche: " + await Helper.getErrorMessage(err));
         });
     }
 
@@ -456,10 +475,10 @@ class SearchController {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
             Helper.showToast("Download für '" + item.Title + "' in Warteschlange.");
-        }).catch((err) => {
+        }).catch(async (err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Fehler beim Starten des Downloads: " + Helper.getErrorMessage(err));
+            Helper.showToast("Fehler beim Starten des Downloads: " + await Helper.getErrorMessage(err));
         });
     }
 
@@ -847,8 +866,8 @@ class DownloadsController {
         }).then(() => {
             Helper.showToast("Abbruch angefordert.");
             this.refreshData();
-        }).catch((err) => {
-            Helper.showToast("Fehler beim Abbrechen: " + Helper.getErrorMessage(err));
+        }).catch(async (err) => {
+            Helper.showToast("Fehler beim Abbrechen: " + await Helper.getErrorMessage(err));
         });
     }
 }
@@ -1615,10 +1634,10 @@ class MediathekPluginConfig {
                     Dashboard.hideLoadingMsg();
                     Helper.showToast("Verarbeitete Items für Abonnement zurückgesetzt.");
                     this.loadConfig(); // Refresh the configuration to update the UI
-                }).catch((err) => {
+                }).catch(async (err) => {
                     // noinspection JSUnresolvedReference
                     Dashboard.hideLoadingMsg();
-                    Helper.showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + Helper.getErrorMessage(err));
+                    Helper.showToast("Fehler beim Zurücksetzen der verarbeiteten Items: " + await Helper.getErrorMessage(err));
                 });
             }
         });
@@ -1857,9 +1876,9 @@ class MediathekPluginConfig {
             Dashboard.hideLoadingMsg();
             this.closeAdvancedDownloadDialog();
             Helper.showToast("Download für '" + this.currentItemForAdvancedDl.Title + "' gestartet.");
-        }).catch((err) => {
+        }).catch(async (err) => {
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Fehler beim Starten des Downloads: " + Helper.getErrorMessage(err));
+            Helper.showToast("Fehler beim Starten des Downloads: " + await Helper.getErrorMessage(err));
         });
     }
 
@@ -1895,10 +1914,10 @@ class MediathekPluginConfig {
             }
             this.renderTestResults(results);
             document.getElementById('testSubscriptionModal').style.display = 'flex';
-        }).catch((err) => {
+        }).catch(async (err) => {
             Dashboard.hideLoadingMsg();
             console.error("Test subscription error:", err);
-            Helper.showToast("Fehler beim Testen des Abos: " + Helper.getErrorMessage(err));
+            Helper.showToast("Fehler beim Testen des Abos: " + await Helper.getErrorMessage(err));
         });
     }
 
