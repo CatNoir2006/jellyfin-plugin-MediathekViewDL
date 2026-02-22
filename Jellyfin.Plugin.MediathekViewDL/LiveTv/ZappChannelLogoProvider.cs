@@ -44,10 +44,9 @@ public static class ZappChannelLogoProvider
     };
 
     /// <summary>
-    /// For now we disable images as the are not correctly displayed in Jellyfin
+    /// For now we disable images as the are not correctly displayed in Jellyfin.
     /// </summary>
     private static bool enableImages = false;
-
 
     /// <summary>
     /// Gets the logo URL for a channel.

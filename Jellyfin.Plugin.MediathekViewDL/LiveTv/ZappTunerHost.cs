@@ -132,20 +132,7 @@ public class ZappTunerHost : ITunerHost, IConfigurableTunerHost
         {
             Path = path,
             Protocol = protocol,
-            MediaStreams = new MediaStream[]
-            {
-                new MediaStream
-                {
-                    Type = MediaStreamType.Video,
-                    Index = -1,
-                    IsInterlaced = false
-                },
-                new MediaStream
-                {
-                    Type = MediaStreamType.Audio,
-                    Index = -1
-                }
-            },
+            MediaStreams = Array.Empty<MediaStream>(),
             RequiresOpening = true,
             RequiresClosing = true,
             Id = channel.Path.GetMD5().ToString("N", CultureInfo.InvariantCulture),
@@ -153,7 +140,9 @@ public class ZappTunerHost : ITunerHost, IConfigurableTunerHost
             IsRemote = isRemote,
             SupportsDirectPlay = true,
             SupportsDirectStream = true,
-            RequiredHttpHeaders = httpHeaders
+            SupportsProbing = true,
+            AnalyzeDurationMs = 3000,
+            RequiredHttpHeaders = httpHeaders,
         };
 
         mediaSource.InferTotalBitrate();
