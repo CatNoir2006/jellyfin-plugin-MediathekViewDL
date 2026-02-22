@@ -188,7 +188,7 @@ public class FileNameBuilderService : IFileNameBuilderService
                 return string.Empty;
             }
 
-            if (useShowDir || config.Paths.UseTopicForMoviePath)
+            if (useShowDir || config.Paths.UseTopicForMoviePath || subscription.Download.AlwaysCreateSubfolder)
             {
                 targetPath = Path.Combine(defaultPath, subscriptionPath);
             }

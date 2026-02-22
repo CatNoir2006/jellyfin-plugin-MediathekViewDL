@@ -329,6 +329,12 @@
                                 </div>
                                 <div class="checkboxContainer checkboxContainer-withDescription">
                                     <label class="emby-checkbox-label">
+                                        <input id="defSubAlwaysCreateSubfolder" type="checkbox" is="emby-checkbox"/>
+                                        <span>Unterordner für Abo erstellen</span>
+                                    </label>
+                                </div>
+                                <div class="checkboxContainer checkboxContainer-withDescription">
+                                    <label class="emby-checkbox-label">
                                         <input id="defSubEnhancedDuplicateDetection" type="checkbox" is="emby-checkbox"/>
                                         <span>Erweiterte Duplikaterkennung</span>
                                     </label>
@@ -584,6 +590,14 @@
                                 </div>
 
                                 <!-- Enhanced Duplicate Detection Checkbox -->
+                                <div class="checkboxContainer checkboxContainer-withDescription">
+                                    <label class="emby-checkbox-label">
+                                        <input id="subAlwaysCreateSubfolder" type="checkbox" is="emby-checkbox"/>
+                                        <span>Unterordner für dieses Abo erstellen</span>
+                                    </label>
+                                    <div class="fieldDescription">Erstellt immer einen Unterordner mit dem Namen des Abonnements, auch wenn es sich um Filme handelt und die globale Einstellung "Beim Film Downloads Ordner für das Thema erstellen" deaktiviert ist.</div>
+                                </div>
+
                                 <div class="checkboxContainer checkboxContainer-withDescription">
                                     <label class="emby-checkbox-label">
                                         <input id="subEnhancedDuplicateDetection" type="checkbox" is="emby-checkbox"/>

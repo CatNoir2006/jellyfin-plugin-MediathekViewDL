@@ -519,6 +519,7 @@ class SearchController {
                 DownloadPath: "",
                 UseStreamingUrlFiles: defDl.UseStreamingUrlFiles || false,
                 DownloadFullVideoForSecondaryAudio: defDl.DownloadFullVideoForSecondaryAudio || false,
+                AlwaysCreateSubfolder: defDl.AlwaysCreateSubfolder || false,
                 EnhancedDuplicateDetection: defDl.EnhancedDuplicateDetection || false,
                 AutoUpgradeToHigherQuality: defDl.AutoUpgradeToHigherQuality || false,
                 AllowFallbackToLowerQuality: defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true,
@@ -1062,6 +1063,7 @@ class SubscriptionEditor {
             const defaultMoviePath = window.MediathekViewDL.config.currentConfig.Paths.DefaultSubscriptionMoviePath || 'Nicht konfiguriert';
             const defaultShowPath = window.MediathekViewDL.config.currentConfig.Paths.DefaultSubscriptionShowPath || 'Nicht konfiguriert';
             const useTopicForMoviePath = window.MediathekViewDL.config.currentConfig.Paths.UseTopicForMoviePath;
+            const alwaysCreateSubfolder = document.getElementById('subAlwaysCreateSubfolder').checked;
             const subName = document.getElementById('subName').value || '[AboName]';
 
             const joinPath = (path, part) => {
@@ -1073,7 +1075,7 @@ class SubscriptionEditor {
                 return path + separator + part;
             };
 
-            const resolvedMoviePath = useTopicForMoviePath ? joinPath(defaultMoviePath, subName) : defaultMoviePath;
+            const resolvedMoviePath = (useTopicForMoviePath || alwaysCreateSubfolder) ? joinPath(defaultMoviePath, subName) : defaultMoviePath;
             const resolvedShowPath = joinPath(defaultShowPath, subName);
             this.updatePathPlaceholderText(resolvedMoviePath, resolvedShowPath);
             el.title = "Verwendete Pfade:\nFilme: " + resolvedMoviePath + "\nSerien: " + resolvedShowPath;
@@ -1130,6 +1132,7 @@ class SubscriptionEditor {
             document.getElementById('subSaveExtrasAsStrm').checked = defSeries.SaveExtrasAsStrm || false;
             document.getElementById('subUseStreamingUrlFiles').checked = defDl.UseStreamingUrlFiles || false;
             document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = defDl.DownloadFullVideoForSecondaryAudio || false;
+            document.getElementById('subAlwaysCreateSubfolder').checked = defDl.AlwaysCreateSubfolder || false;
             document.getElementById('subEnhancedDuplicateDetection').checked = defDl.EnhancedDuplicateDetection || false;
             document.getElementById('subAutoUpgradeToHigherQuality').checked = defDl.AutoUpgradeToHigherQuality || false;
             document.getElementById('subAllowFallbackToLowerQuality').checked = defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true;
@@ -1168,6 +1171,7 @@ class SubscriptionEditor {
         document.getElementById('subAppendDateToTitle').checked = metadata.AppendDateToTitle !== undefined ? metadata.AppendDateToTitle : false;
         document.getElementById('subAppendTimeToTitle').checked = metadata.AppendTimeToTitle !== undefined ? metadata.AppendTimeToTitle : false;
         document.getElementById('subAllowSignLanguage').checked = accessibility.AllowSignLanguage;
+        document.getElementById('subAlwaysCreateSubfolder').checked = download.AlwaysCreateSubfolder || false;
         document.getElementById('subEnhancedDuplicateDetection').checked = download.EnhancedDuplicateDetection;
         document.getElementById('subAutoUpgradeToHigherQuality').checked = download.AutoUpgradeToHigherQuality !== undefined ? download.AutoUpgradeToHigherQuality : false;
         document.getElementById('subTreatNonEpisodesAsExtras').checked = series.TreatNonEpisodesAsExtras;
@@ -1213,6 +1217,7 @@ class SubscriptionEditor {
         const appendDateToTitle = document.getElementById('subAppendDateToTitle').checked;
         const appendTimeToTitle = document.getElementById('subAppendTimeToTitle').checked;
         const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
+        const alwaysCreateSubfolder = document.getElementById('subAlwaysCreateSubfolder').checked;
         const enhancedDuplicateDetection = document.getElementById('subEnhancedDuplicateDetection').checked;
         const autoUpgradeToHigherQuality = document.getElementById('subAutoUpgradeToHigherQuality').checked;
         const treatNonEpisodesAsExtras = document.getElementById('subTreatNonEpisodesAsExtras').checked;
@@ -1255,6 +1260,7 @@ class SubscriptionEditor {
                 DownloadPath: path,
                 UseStreamingUrlFiles: useStreamingUrlFiles,
                 DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio,
+                AlwaysCreateSubfolder: alwaysCreateSubfolder,
                 AllowFallbackToLowerQuality: allowFallbackToLowerQuality,
                 QualityCheckWithUrl: qualityCheckWithUrl,
                 AutoUpgradeToHigherQuality: autoUpgradeToHigherQuality,
@@ -1453,6 +1459,7 @@ class MediathekPluginConfig {
             document.querySelector('#defSubMaxDuration').value = defSearch.MaxDurationMinutes || "";
             document.querySelector('#defSubUseStreamingUrlFiles').checked = defDl.UseStreamingUrlFiles || false;
             document.querySelector('#defSubDownloadFullVideoForSecondaryAudio').checked = defDl.DownloadFullVideoForSecondaryAudio || false;
+            document.querySelector('#defSubAlwaysCreateSubfolder').checked = defDl.AlwaysCreateSubfolder || false;
             document.querySelector('#defSubEnhancedDuplicateDetection').checked = defDl.EnhancedDuplicateDetection || false;
             document.querySelector('#defSubAutoUpgradeToHigherQuality').checked = defDl.AutoUpgradeToHigherQuality || false;
             document.querySelector('#defSubAllowFallbackToLowerQuality').checked = defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true;
@@ -2014,6 +2021,7 @@ class MediathekPluginConfig {
                 DownloadSettings: {
                     UseStreamingUrlFiles: document.querySelector('#defSubUseStreamingUrlFiles').checked,
                     DownloadFullVideoForSecondaryAudio: document.querySelector('#defSubDownloadFullVideoForSecondaryAudio').checked,
+                    AlwaysCreateSubfolder: document.querySelector('#defSubAlwaysCreateSubfolder').checked,
                     EnhancedDuplicateDetection: document.querySelector('#defSubEnhancedDuplicateDetection').checked,
                     AutoUpgradeToHigherQuality: document.querySelector('#defSubAutoUpgradeToHigherQuality').checked,
                     AllowFallbackToLowerQuality: document.querySelector('#defSubAllowFallbackToLowerQuality').checked,
@@ -2083,6 +2091,9 @@ class MediathekPluginConfig {
             this.subscriptionEditor.updateSubPathHoverText();
         });
         document.getElementById('subName').addEventListener('input', () => {
+            this.subscriptionEditor.updateSubPathHoverText();
+        });
+        document.getElementById('subAlwaysCreateSubfolder').addEventListener('change', () => {
             this.subscriptionEditor.updateSubPathHoverText();
         });
         // Path selector in advanced download dialog
