@@ -77,7 +77,8 @@ public class ZappListingsProvider : IListingsProvider
             Id = c.Id,
             Path = c.StreamUrl,
             ChannelType = ChannelType.TV,
-            TunerHostId = "zapp"
+            TunerHostId = "zapp",
+            ImageUrl = ZappChannelLogoProvider.GetLogoUrl(c.Id)
         }).ToList();
     }
 }

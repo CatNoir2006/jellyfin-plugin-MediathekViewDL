@@ -925,7 +925,7 @@ class SetupLiveTvController {
         const guideInfo = {
             Type: 'zapp',
             Id: 'zapp_guide',
-            Name: 'Zapp (MediathekView)'
+            Name: 'Zapp (MediathekView)',
         };
 
         Dashboard.showLoadingMsg();

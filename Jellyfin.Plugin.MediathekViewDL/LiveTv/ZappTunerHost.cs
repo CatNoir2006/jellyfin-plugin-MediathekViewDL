@@ -71,6 +71,7 @@ public class ZappTunerHost : ITunerHost, IConfigurableTunerHost
             Path = c.StreamUrl,
             TunerHostId = "zapp",
             ChannelType = ChannelType.TV,
+            ImageUrl = ZappChannelLogoProvider.GetLogoUrl(c.Id)
         }).ToList();
     }
 
