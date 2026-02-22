@@ -35,6 +35,12 @@ public record BaseDownloadSettings
     public bool AutoUpgradeToHigherQuality { get; init; }
 
     /// <summary>
+    /// Gets a value indicating whether to always create a subfolder for the subscription (using the subscription name),
+    /// even if the content is a movie and the global setting 'UseTopicForMoviePath' is disabled.
+    /// </summary>
+    public bool AlwaysCreateSubfolder { get; init; }
+
+    /// <summary>
     /// Gets a value indicating whether to enable enhanced duplicate detection.
     /// If enabled, the target directory is scanned for existing files matching the season/episode pattern.
     /// </summary>
