@@ -1,4 +1,4 @@
-# MediathekViewWeb API Dokumentation (Intern)
+# MediathekViewWeb API Dokumentation
 
 Dieses Dokument fasst die Struktur und Verwendung des MediathekViewWeb API-Endpunkts zusammen.
 
@@ -91,3 +91,64 @@ Die Antwort ist ein JSON-Objekt, das die Suchergebnisse enthält.
   - `id` (String): Eine eindeutige ID für diesen Eintrag. Perfekt zum Verfolgen bereits heruntergeladener Dateien.
 - `queryInfo`: Enthält Metadaten über die Suche (z.B. Gesamtzahl der Treffer).
 - `err`: Ist `null`, wenn kein Fehler aufgetreten ist.
+
+---
+
+# Zapp API Dokumentation
+
+Die Zapp API bietet Zugriff auf Live-TV-Streams und Informationen zum aktuellen Programm.
+
+## Basis-URL
+`https://api.zapp.mediathekview.de/v1/`
+
+## Endpunkte
+
+### 1. Senderliste und Streams
+
+- **URL:** `channelInfoList`
+- **Methode:** `GET`
+
+Gibt eine Liste aller verfügbaren Sender mit ihren Stream-URLs (HLS) zurück.
+
+**Response Body:**
+```json
+{
+  "das_erste": {
+    "streamUrl": "https://daserste-live.ard-mcdn.de/daserste/live/hls/de/master.m3u8",
+    "name": "Das Erste"
+  },
+  "zdf": {
+    "streamUrl": "https://zdf-hls-15.akamaized.net/hls/live/2016498/de/high/master.m3u8",
+    "name": "ZDF"
+  }
+}
+```
+
+### 2. Aktuelle Sendungsinformationen
+
+- **URL:** `shows/:channelId`
+- **Methode:** `GET`
+
+Gibt Informationen zur aktuell laufenden Sendung eines Senders zurück.
+
+- `channelId`: Die ID des Senders aus der `channelInfoList` (z.B. `das_erste`, `zdf`).
+
+**Response Body:**
+```json
+{
+  "shows": [
+    {
+      "title": "Sendungstitel",
+      "subtitle": "Untertitel",
+      "description": "Beschreibung der Sendung...",
+      "startTime": "2024-03-20T20:00:00.000+01:00",
+      "endTime": "2024-03-20T20:15:00.000+01:00"
+    }
+  ]
+}
+```
+
+
+---
+
+# Zappel API Dokumentation

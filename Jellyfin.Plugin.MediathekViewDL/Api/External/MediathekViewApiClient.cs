@@ -29,6 +29,11 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     private const string BaseApiUrl = "https://mediathekviewweb.de/api";
     private const string SearchEndpoint = BaseApiUrl + "/query";
     private const string StreamSizeEndpoint = BaseApiUrl + "/content-length?url=";
+
+    private const string ZappBaseApiUrl = "https://api.zapp.mediathekview.de/v1";
+    private const string ZappChannelsEndpoint = ZappBaseApiUrl + "/channelInfoList";
+    private const string ZappShowsEndpoint = ZappBaseApiUrl + "/shows/";
+
     private readonly HttpClient _httpClient;
     private readonly ILogger<MediathekViewApiClient> _logger;
     private readonly IConfigurationProvider _configurationProvider;
@@ -289,5 +294,96 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             _logger.LogError(ex, "An unexpected error occurred while calling the MediathekViewWeb API");
             throw new MediathekApiException("An unexpected error occurred while calling the MediathekViewWeb API", ex);
         }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<ZappChannelDto>> GetZappChannelsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogDebug("Retrieving Zapp channels from: {Url}", ZappChannelsEndpoint);
+
+            var response = await _resiliencePolicy.ExecuteAsync(
+                async ct => await _httpClient.GetAsync(ZappChannelsEndpoint, ct).ConfigureAwait(false),
+                cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Zapp API request failed with status code {StatusCode}", response.StatusCode);
+                throw new MediathekApiException($"Zapp API request failed with status code {response.StatusCode}", response.StatusCode);
+            }
+
+            var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            var channels = await JsonSerializer.DeserializeAsync<Dictionary<string, ZappChannelInfo>>(responseStream, _jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
+
+            if (channels == null)
+            {
+                return Array.Empty<ZappChannelDto>();
+            }
+
+            return channels.Select(kvp => new ZappChannelDto
+            {
+                Id = kvp.Key,
+                Name = kvp.Value.Name ?? kvp.Key,
+                StreamUrl = kvp.Value.StreamUrl ?? string.Empty
+            }).ToList();
+        }
+        catch (Exception ex) when (ex is not MediathekException)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while calling the Zapp API for channels");
+            throw new MediathekApiException("An unexpected error occurred while calling the Zapp API for channels", ex);
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<ZappShowDto>> GetCurrentZappShowAsync(string channelId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var url = ZappShowsEndpoint + channelId;
+            _logger.LogDebug("Retrieving current Zapp show for channel {ChannelId} from: {Url}", channelId, url);
+
+            var response = await _resiliencePolicy.ExecuteAsync(
+                async ct => await _httpClient.GetAsync(url, ct).ConfigureAwait(false),
+                cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Zapp API request failed with status code {StatusCode}", response.StatusCode);
+                throw new MediathekApiException($"Zapp API request failed with status code {response.StatusCode}", response.StatusCode);
+            }
+
+            var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            var showResponse = await JsonSerializer.DeserializeAsync<ZappShowResponse>(responseStream, _jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
+
+            if (showResponse?.Shows == null || showResponse.Shows.Count == 0)
+            {
+                return [];
+            }
+
+            return showResponse.Shows.Select(s => new ZappShowDto
+            {
+                Title = s.Title ?? "Unknown",
+                Subtitle = s.Subtitle,
+                Description = s.Description,
+                StartTime = TryParseDateTimeOffset(s.StartTime),
+                EndTime = TryParseDateTimeOffset(s.EndTime)
+            }).ToList();
+        }
+        catch (Exception ex) when (ex is not MediathekException)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while calling the Zapp API for show info");
+            throw new MediathekApiException("An unexpected error occurred while calling the Zapp API for show info", ex);
+        }
+    }
+
+    private static DateTimeOffset? TryParseDateTimeOffset(string? input)
+    {
+        if (DateTimeOffset.TryParse(input, out var result))
+        {
+            return result;
+        }
+
+        return null;
     }
 }

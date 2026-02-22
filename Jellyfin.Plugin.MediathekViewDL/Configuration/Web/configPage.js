@@ -886,6 +886,65 @@ class DownloadsController {
 }
 
 /**
+ * Handles Live TV setup operations.
+ */
+class SetupLiveTvController {
+    constructor(config) {
+        this.config = config;
+    }
+
+    init() {
+        document.getElementById('mvpl-btn-setup-tuner').addEventListener('click', () => this.setupTuner());
+        document.getElementById('mvpl-btn-setup-guide').addEventListener('click', () => this.setupGuide());
+    }
+
+    setupTuner() {
+        const tunerInfo = {
+            Type: 'zapp',
+            Url: 'zapp',
+            FriendlyName: 'Zapp (MediathekView)',
+            TunerCount: 0
+        };
+
+        Dashboard.showLoadingMsg();
+        ApiClient.ajax({
+            type: 'POST',
+            url: ApiClient.getUrl('LiveTv/TunerHosts'),
+            data: JSON.stringify(tunerInfo),
+            contentType: 'application/json'
+        }).then(() => {
+            Dashboard.hideLoadingMsg();
+            Helper.showToast("Zapp Tuner erfolgreich hinzugefügt.");
+        }).catch((err) => {
+            Dashboard.hideLoadingMsg();
+            Helper.showError(err, "Fehler beim Hinzufügen des Tuners: ");
+        });
+    }
+
+    setupGuide() {
+        const guideInfo = {
+            Type: 'zapp',
+            Id: 'zapp_guide',
+            Name: 'Zapp (MediathekView)',
+        };
+
+        Dashboard.showLoadingMsg();
+        ApiClient.ajax({
+            type: 'POST',
+            url: ApiClient.getUrl('LiveTv/ListingProviders'),
+            data: JSON.stringify(guideInfo),
+            contentType: 'application/json'
+        }).then(() => {
+            Dashboard.hideLoadingMsg();
+            Helper.showToast("Zapp Guide Provider erfolgreich hinzugefügt.");
+        }).catch((err) => {
+            Dashboard.hideLoadingMsg();
+            Helper.showError(err, "Fehler beim Hinzufügen des Guide Providers: ");
+        });
+    }
+}
+
+/**
  * Manages UI dependencies (showing/hiding fields based on others).
  */
 class DependencyManager {
@@ -1329,6 +1388,7 @@ class MediathekPluginConfig {
         this.dom = new DomHelper();
         this.searchController = new SearchController(this);
         this.downloadsController = new DownloadsController(this);
+        this.liveTvController = new SetupLiveTvController(this);
         this.dependencyManager = new DependencyManager();
         this.currentConfig = null;
         this.currentItemForAdvancedDl = null;
@@ -2158,6 +2218,7 @@ class MediathekPluginConfig {
     init() {
         this.bindEvents();
         this.searchController.init();
+        this.liveTvController.init();
         this.dependencyManager.init();
         this.setupAutoGrowInputs();
     }

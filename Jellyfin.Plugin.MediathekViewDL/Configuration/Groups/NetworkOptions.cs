@@ -18,4 +18,9 @@ public record NetworkOptions
     /// I recommend keeping this off and only turning it on if you encounter problems.
     /// </summary>
     public bool AllowHttp { get; set; }
+
+    /// <summary>
+    /// Gets or sets the User-Agent header to use for download requests.
+    /// </summary>
+    public string UserAgent { get; set; } = "MediatekViewDL/1";
 }

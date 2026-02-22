@@ -52,4 +52,19 @@ public interface IMediathekViewApiClient
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The fileSize of the MediaItem in Bytes.</returns>
     Task<long> GetStreamSizeAsync(string streamUrl, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Gets the list of available channels from the Zapp API.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A collection of Zapp channels.</returns>
+    Task<IReadOnlyCollection<ZappChannelDto>> GetZappChannelsAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Gets the current show for a specific channel from the Zapp API.
+    /// </summary>
+    /// <param name="channelId">The channel ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The current show, or null if not found.</returns>
+    Task<IReadOnlyCollection<ZappShowDto>> GetCurrentZappShowAsync(string channelId, CancellationToken cancellationToken);
 }
