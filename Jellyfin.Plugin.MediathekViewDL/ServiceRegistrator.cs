@@ -15,6 +15,7 @@ using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 using MediaBrowser.Controller;
+using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,6 +64,10 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddTransient<IFFmpegService, FFmpegService>();
             serviceCollection.AddTransient<IFileDownloader, FileDownloader>();
             serviceCollection.AddTransient<ISubscriptionProcessor, SubscriptionProcessor>();
+
+            // Live TV
+            serviceCollection.AddSingleton<ITunerHost, LiveTv.ZappTunerHost>();
+            serviceCollection.AddSingleton<IListingsProvider, LiveTv.ZappListingsProvider>();
 
             // Register Download Handlers
             serviceCollection.AddTransient<IDownloadHandler, DirectDownloadHandler>();

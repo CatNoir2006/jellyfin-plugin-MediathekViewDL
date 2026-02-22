@@ -336,7 +336,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     }
 
     /// <inheritdoc />
-    public async Task<ZappShowDto?> GetCurrentZappShowAsync(string channelId, CancellationToken cancellationToken)
+    public async Task<IReadOnlyCollection<ZappShowDto>> GetCurrentZappShowAsync(string channelId, CancellationToken cancellationToken)
     {
         try
         {
@@ -358,19 +358,17 @@ public class MediathekViewApiClient : IMediathekViewApiClient
 
             if (showResponse?.Shows == null || showResponse.Shows.Count == 0)
             {
-                return null;
+                return [];
             }
 
-            var show = showResponse.Shows[0];
-
-            return new ZappShowDto
+            return showResponse.Shows.Select(s => new ZappShowDto
             {
-                Title = show.Title ?? "Unknown",
-                Subtitle = show.Subtitle,
-                Description = show.Description,
-                StartTime = TryParseDateTimeOffset(show.StartTime),
-                EndTime = TryParseDateTimeOffset(show.EndTime)
-            };
+                Title = s.Title ?? "Unknown",
+                Subtitle = s.Subtitle,
+                Description = s.Description,
+                StartTime = TryParseDateTimeOffset(s.StartTime),
+                EndTime = TryParseDateTimeOffset(s.EndTime)
+            }).ToList();
         }
         catch (Exception ex) when (ex is not MediathekException)
         {

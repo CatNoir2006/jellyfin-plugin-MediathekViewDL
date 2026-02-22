@@ -66,5 +66,5 @@ public interface IMediathekViewApiClient
     /// <param name="channelId">The channel ID.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The current show, or null if not found.</returns>
-    Task<ZappShowDto?> GetCurrentZappShowAsync(string channelId, CancellationToken cancellationToken);
+    Task<IReadOnlyCollection<ZappShowDto>> GetCurrentZappShowAsync(string channelId, CancellationToken cancellationToken);
 }

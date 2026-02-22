@@ -465,6 +465,24 @@
                             </div>
                         </details>
 
+                        <details>
+                            <summary class="inputLabel mvpl-collapsible-summary">Live TV Integration</summary>
+                            <div class="mvpl-details-content">
+                                <p class="fieldDescription">Hier können Sie die Live TV Integration einrichten. Da Jellyfin Plugins nicht automatisch als Guide-Provider anzeigt, können Sie diese hier manuell hinzufügen.</p>
+                                <div class="button-row">
+                                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-setup-tuner">
+                                        <span>Zapp Tuner hinzufügen</span>
+                                    </button>
+                                    <button is="emby-button" type="button" class="raised" id="mvpl-btn-setup-guide">
+                                        <span>Zapp Guide Provider hinzufügen</span>
+                                    </button>
+                                </div>
+                                <div class="fieldDescription mvpl-margin-top-10">
+                                    <b>Hinweis:</b> Nach dem Hinzufügen müssen Sie möglicherweise die Seite neu laden oder den Guide-Refresh Task in Jellyfin starten, damit die Daten angezeigt werden.
+                                </div>
+                            </div>
+                        </details>
+
                         <div class="inputContainer">
                             <label class="inputLabel">Letzter Lauf</label>
                             <div id="lblLastRun" class="mvpl-last-run-label">Noch nie</div>
