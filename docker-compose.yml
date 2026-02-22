@@ -15,7 +15,7 @@ services:
       - ./Jellyfin.Plugin.MediathekViewDL/bin/Debug/net9.0:/config/plugins/MediathekViewDL
 
       # SMB-Share via Link außerhalb des Projektverzeichnisses
-      - ../media:/media/Provider:ro
+      #- ../media:/media/Provider:ro
 
     environment:
       - DOTNET_DEBUGGER_CHROME=1
