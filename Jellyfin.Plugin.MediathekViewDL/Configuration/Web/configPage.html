@@ -42,6 +42,10 @@
                     <span class="material-icons file_download" aria-hidden="true"></span>
                     <span>Downloads</span>
                 </button>
+                <button type="button" class="paper-icon-button-light" id="mvpl-btn-tab-adoption" role="tab" aria-selected="false" aria-controls="tab-adoption">
+                    <span class="material-icons folder_shared" aria-hidden="true"></span>
+                    <span>Lokale Dateien Adoptieren</span>
+                </button>
             </div>
 
             <!-- TAB 1: Search -->
@@ -825,6 +829,38 @@
                 </div>
             </div>
 
+            <!-- TAB 5: Adoption -->
+            <div id="tab-adoption" class="mvpl-tab-content" role="tabpanel" aria-labelledby="mvpl-btn-tab-adoption" style="display:none;">
+                <div class="verticalSection">
+                    <div class="sectionTitleLabel">Lokale Dateien Adoptieren</div>
+                    <p class="sectionDescription">Wähle ein Abo aus, um lokale Dateien mit den Ergebnissen der MediathekView API abzugleichen und zu "adoptieren".</p>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel" for="selectAdoptionAbo">Abonnement auswählen</label>
+                        <select is="emby-select" id="selectAdoptionAbo">
+                            <option value="">Bitte wählen...</option>
+                        </select>
+                    </div>
+
+                    <div id="adoptionTableContainer" style="display: none;">
+                        <div class="mvpl-adoption-grid">
+                            <div class="mvpl-adoption-column">
+                                <div class="sectionTitleLabel">Lokale Dateien</div>
+                                <div id="localFilesTable" class="paperList">
+                                    <!-- Lokale Dateien werden hier gerendert -->
+                                </div>
+                            </div>
+                            <div class="mvpl-adoption-column">
+                                <div class="sectionTitleLabel">API Ergebnisse</div>
+                                <div id="apiResultsTable" class="paperList">
+                                    <!-- API Ergebnisse werden hier gerendert -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -1009,6 +1045,17 @@
 
         .mvpl-last-run-label {
             padding: 10px 0;
+        }
+
+        .mvpl-adoption-grid {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .mvpl-adoption-column {
+            flex: 1;
+            min-width: 0;
         }
 
         .mvpl-subscription-editor {

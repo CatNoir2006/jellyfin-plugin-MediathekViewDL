@@ -2,7 +2,9 @@
  * Helper Class that contains various utility methods.
  */
 class Helper {
-    static config() {return window.MediathekViewDL.config;}
+    static config() {
+        return window.MediathekViewDL.config;
+    }
 
     /**
      * Shows a confirmation popup.
@@ -331,6 +333,104 @@ class StringHelper {
     }
 }
 
+const Language = {
+    General: {
+        Cancel: "Abbrechen",
+        Ok: "OK",
+        Save: "Speichern",
+        EmptyId: '00000000-0000-0000-0000-000000000000'
+    },
+    Search: {
+        SearchTearm: "Bitte Suchbegriff eingeben",
+        NoResults: "Keine Ergebnisse gefunden.",
+        Results: "Suchergebnisse: ",
+        Play: "Video abspielen",
+        SearchDuckDuckGo: "Video über DuckDuckGo suchen",
+        Download: "Video herunterladen",
+        AdvancedDownload: "Erweiterter Download",
+        Abo: "Abo erstellen",
+        SubAvailable: "Untertitel verfügbar",
+        VideoMissing: "Keine Video-URL verfügbar.",
+        Error: "Fehler bei der Suche: ",
+        ErrorDownloadStart: "Fehler beim Starten des Downloads: ",
+        InQueue: (title) => 'Download für ' + title + ' in Warteschlange.'
+    },
+    Download: {
+        Queued: "Warteschlange",
+        Downloading: "Herunterladen...",
+        Processing: "Verarbeiten...",
+        Finished: "Fertig",
+        Failed: "Fehler",
+        Cancelled: "Abgebrochen",
+        Unknown: "Unbekannt",
+        Progress: (progress) => 'Fortschritt: ' + progress,
+        NoAktivDownloads: "Keine aktiven Downloads.",
+        NoHistory: "Kein Verlauf verfügbar.",
+        TriggerManual: " (Manuell)",
+        TriggerAbo: (subName) => subName ? " (Abo: " + subName + ")" : " (Abo)",
+        Added: "Hinzugefügt: ",
+        UnknownTitle: "Unbekannter Titel",
+        ShowFiles: "Dateien anzeigen",
+        HideFiles: "Dateien ausblenden",
+        Subtitle: "[Untertitel]",
+        Metadata: "[Metadaten]",
+        Stream: "[Streaming-URL]",
+        CancelRequested: "Abbruch angefordert",
+        CancelFailed: "Fehler beim Abbrechen",
+        ErrorAktivDownloads: "Fehler beim Abrufen aktiver Downloads: ",
+        ErrorDownloadHistory: "Fehler beim Abrufen des Downloadverlaufs: ",
+    },
+    Adoption: {
+        NoData: "Noch keine Daten ..."
+    }
+
+}
+
+const DomIds = {
+    Tabs: {
+        Subscription: "subscription"
+    },
+    Abo: {},
+    Download: {
+        AktivList: "activeDownloadsList",
+        HistoryList: "downloadHistoryList"
+    },
+    Search: {
+        Form: "mvpl-form-search",
+        Title: "txtSearchQuery",
+        Topic: "txtSearchTopic",
+        Channel: "txtSearchChannel",
+        Combined: "txtSearchCombined",
+        MinDuration: "numMinDuration",
+        MaxDuration: "numMaxDuration",
+        MinBroadcastDate: "dateMinBroadcast",
+        MaxBroadcastDate: "dateMaxBroadcast",
+        Results: "searchResults"
+    },
+    LiveTv:{
+        Tuner: "mvpl-btn-setup-tuner",
+        Guide: "mvpl-btn-setup-guide"
+    },
+    Adoption: {
+        AboSelector: "selectAdoptionAbo",
+        TableContainer: "adoptionTableContainer",
+        LocalTable: "localFilesTable",
+        ExternalTable: "apiResultsTable",
+    }
+}
+
+const Icons = {
+    Search: 'search',
+    Download: 'file_download',
+    Play: 'play_arrow',
+    Settings: 'settings',
+    Add: "add",
+    Subtitle: "closed_caption",
+    Cancel: "cancel",
+    Expand: "expand_more",
+    Collapse: "expand_less"
+}
+
 /**
  * Handles search operations.
  */
@@ -342,7 +442,7 @@ class SearchController {
     }
 
     init() {
-        document.getElementById('mvpl-form-search').addEventListener('submit', (e) => {
+        document.getElementById(DomIds.Search.Form).addEventListener('submit', (e) => {
             e.preventDefault();
             this.performSearch();
             return false;
@@ -350,17 +450,17 @@ class SearchController {
     }
 
     performSearch() {
-        const title = document.getElementById('txtSearchQuery').value;
-        const topic = document.getElementById('txtSearchTopic').value;
-        const channel = document.getElementById('txtSearchChannel').value;
-        const combinedSearch = document.getElementById('txtSearchCombined').value;
-        const minD = document.getElementById('numMinDuration').value;
-        const maxD = document.getElementById('numMaxDuration').value;
-        const minDate = document.getElementById('dateMinBroadcast').value;
-        const maxDate = document.getElementById('dateMaxBroadcast').value;
+        const title = document.getElementById(DomIds.Search.Title).value;
+        const topic = document.getElementById(DomIds.Search.Topic).value;
+        const channel = document.getElementById(DomIds.Search.Channel).value;
+        const combinedSearch = document.getElementById(DomIds.Search.Combined).value;
+        const minD = document.getElementById(DomIds.Search.MinDuration).value;
+        const maxD = document.getElementById(DomIds.Search.MaxDuration).value;
+        const minDate = document.getElementById(DomIds.Search.MinBroadcastDate).value;
+        const maxDate = document.getElementById(DomIds.Search.MaxBroadcastDate).value;
 
         if (!title && !topic && !channel && !combinedSearch) {
-            Helper.showToast("Bitte Suchbegriff eingeben");
+            Helper.showToast(Language.Search.SearchTearm);
             return;
         }
         // noinspection JSUnresolvedReference
@@ -395,17 +495,17 @@ class SearchController {
         }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            Helper.showError(err, "Fehler bei der Suche: ");
+            Helper.showError(err, Language.Search.Error);
         });
     }
 
     renderSearchResults() {
-        const container = document.getElementById('searchResults');
+        const container = document.getElementById(DomIds.Search.Results);
         container.textContent = "";
 
         if (!this.currentSearchResults || this.currentSearchResults.length === 0) {
             const noRes = document.createElement('p');
-            noRes.textContent = "Keine Ergebnisse gefunden.";
+            noRes.textContent = Language.Search.NoResults;
             container.appendChild(noRes);
             return;
         }
@@ -413,7 +513,7 @@ class SearchController {
         const paperList = document.createElement('div');
         paperList.classList.add('paperList');
 
-        this.config.debugLog("Suchergebnisse: ", this.currentSearchResults);
+        this.config.debugLog(Language.Search.Results, this.currentSearchResults);
         this.currentSearchResults.forEach((item, index) => {
             paperList.appendChild(this.createSearchResultItem(item, index));
         });
@@ -426,7 +526,7 @@ class SearchController {
         const actions = document.createElement('div');
         actions.classList.add('flex-gap-10');
 
-        actions.appendChild(this.dom.createIconButton('play_arrow', 'Video abspielen.', () => {
+        actions.appendChild(this.dom.createIconButton(Icons.Play, Language.Search.Play, () => {
             const videoUrls = item.VideoUrls;
             // Sort by quality descending and get the first one
             const bestVideo = [...videoUrls].sort((a, b) => (b.Quality || 0) - (a.Quality || 0))[0];
@@ -434,16 +534,16 @@ class SearchController {
             if (videoUrl) {
                 window.open(videoUrl, '_blank');
             } else {
-                Helper.showToast("Keine Video-URL verfügbar.");
+                Helper.showToast(Language.Search.VideoMissing);
             }
         }))
-        actions.appendChild(this.dom.createIconButton('search', 'Video über DuckDuckGo suchen', () => {
+        actions.appendChild(this.dom.createIconButton(Icons.Search, Language.Search.SearchDuckDuckGo, () => {
             const queryString = item.Topic + ' ' + item.Title;
             Helper.openDuckDuckGoSearch(queryString);
         }));
-        actions.appendChild(this.dom.createIconButton('file_download', 'Herunterladen', () => this.downloadItem(index)));
-        actions.appendChild(this.dom.createIconButton('settings', 'Erweiterter Download', () => this.config.openAdvancedDownloadDialog(this.currentSearchResults[index])));
-        actions.appendChild(this.dom.createIconButton('add', 'Abo erstellen', () => this.createSubFromSearch(null, item.Title, item.Channel, item.Topic)));
+        actions.appendChild(this.dom.createIconButton(Icons.Download, Language.Search.Download, () => this.downloadItem(index)));
+        actions.appendChild(this.dom.createIconButton(Icons.Settings, Language.Search.AdvancedDownload, () => this.config.openAdvancedDownloadDialog(this.currentSearchResults[index])));
+        actions.appendChild(this.dom.createIconButton(Icons.Add, Language.Search.Abo, () => this.createSubFromSearch(null, item.Title, item.Channel, item.Topic)));
 
 
         // Build BodyText1
@@ -460,8 +560,8 @@ class SearchController {
             sep.textContent = ' | ';
             body1.appendChild(sep);
             const icon = document.createElement('span');
-            icon.classList.add('material-icons', 'closed_caption');
-            icon.title = 'Untertitel verfügbar';
+            icon.classList.add('material-icons', Icons.Subtitle);
+            icon.title = Language.Search.SubAvailable;
             body1.appendChild(icon);
         }
 
@@ -486,16 +586,16 @@ class SearchController {
         }).then((result) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Download für '" + item.Title + "' in Warteschlange.");
+            Helper.showToast(Language.Search.InQueue(item.Title));
         }).catch((err) => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
-            Helper.showError(err, "Fehler beim Starten des Downloads: ");
+            Helper.showError(err, Language.Search.ErrorDownloadStart);
         });
     }
 
     createSubFromSearch(btn, title, channel, topic) {
-        this.config.switchTab('subscriptions');
+        this.config.switchTab(DomIds.Tabs.Subscription);
         const def = this.config.currentConfig.SubscriptionDefaults || {};
         const defDl = def.DownloadSettings || {};
         const defSearch = def.SearchSettings || {};
@@ -557,12 +657,12 @@ class DownloadsController {
         this.isPolling = false;
         this.expandedGroups = new Set();
         this.statusMapping = {
-            'Queued': {text: 'Warteschlange'}, // Queued
-            'Downloading': {text: 'Herunterladen...'}, // Downloading
-            'Processing': {text: 'Verarbeiten...'}, // Processing
-            'Finished': {text: 'Fertig'}, // Finished
-            'Failed': {text: 'Fehler'}, // Failed
-            'Cancelled': {text: 'Abgebrochen'} // Cancelled
+            'Queued': {text: Language.Download.Queued}, // Queued
+            'Downloading': {text: Language.Download.Downloading}, // Downloading
+            'Processing': {text: Language.Download.Processing}, // Processing
+            'Finished': {text: Language.Download.Finished}, // Finished
+            'Failed': {text: Language.Download.Failed}, // Failed
+            'Cancelled': {text: Language.Download.Cancelled} // Cancelled
         };
     }
 
@@ -603,7 +703,7 @@ class DownloadsController {
         return ApiClient.getJSON(url).then((downloads) => {
             this.renderActive(downloads);
         }).catch((err) => {
-            console.error("Error fetching active downloads", err);
+            console.error(Language.Download.ErrorAktivDownloads, err);
         });
     }
 
@@ -612,23 +712,23 @@ class DownloadsController {
         return ApiClient.getJSON(url).then((history) => {
             this.renderHistory(history);
         }).catch((err) => {
-            console.error("Error fetching download history", err);
+            console.error(Language.Download.ErrorDownloadHistory, err);
         });
     }
 
     renderActive(downloads) {
-        const container = document.getElementById('activeDownloadsList');
+        const container = document.getElementById(DomIds.Download.AktivList);
         container.textContent = "";
 
         if (!downloads || downloads.length === 0) {
             const noRes = document.createElement('p');
-            noRes.textContent = "Keine aktiven Downloads.";
+            noRes.textContent = Language.Download.NoAktivDownloads;
             container.appendChild(noRes);
             return;
         }
 
         downloads.forEach((dl) => {
-            const statusInfo = this.statusMapping[dl.Status] || {text: 'Unbekannt'};
+            const statusInfo = this.statusMapping[dl.Status] || {text: Language.Download.Unknown};
             const progress = dl.Status === 'Downloading' ? Math.round(dl.Progress || 0) + '%' : '-';
 
             const actions = document.createElement('div');
@@ -636,7 +736,7 @@ class DownloadsController {
 
             // Show cancel button only if not finished/failed/cancelled
             if (['Queued', 'Downloading', 'Processing'].includes(dl.Status)) {
-                actions.appendChild(this.dom.createIconButton('cancel', 'Abbrechen', () => this.cancelDownload(dl.Id)));
+                actions.appendChild(this.dom.createIconButton(Icons.Cancel, Language.General.Cancel, () => this.cancelDownload(dl.Id)));
             }
 
             const statusBadge = document.createElement('span');
@@ -647,7 +747,7 @@ class DownloadsController {
 
             const body1 = document.createElement('div');
             body1.classList.add('flex-align-center');
-            body1.appendChild(document.createTextNode('Fortschritt: ' + progress));
+            body1.appendChild(document.createTextNode(Language.Download.Progress(progress)));
             body1.appendChild(statusBadge);
 
             if (dl.ErrorMessage) {
@@ -661,29 +761,25 @@ class DownloadsController {
 
             const createdAt = new Date(dl.CreatedAt).toLocaleString();
 
-            let downloadTrigger = ' (Manuell)';
+            let downloadTrigger = Language.Download.TriggerManual;
             if (!StringHelper.isNullOrWhitespace(dl.SubscriptionId)) {
                 const sub = this.config.currentConfig?.Subscriptions?.find(s => s.Id === dl.SubscriptionId);
-                if (sub) {
-                    downloadTrigger = ' (Abo: ' + sub.Name + ')'
-                } else {
-                    downloadTrigger = ' (Abo)';
-                }
+                downloadTrigger = Language.Download.TriggerAbo(sub.Name);
             }
 
-            const body2 = 'Hinzugefügt: ' + createdAt + downloadTrigger;
+            const body2 = Language.Download.Added + createdAt + downloadTrigger;
 
             container.appendChild(this.config.createListItem(dl.Job.Title, body1, body2, actions));
         });
     }
 
     renderHistory(history) {
-        const container = document.getElementById('downloadHistoryList');
+        const container = document.getElementById(DomIds.Download.HistoryList);
         container.textContent = "";
 
         if (!history || history.length === 0) {
             const noRes = document.createElement('p');
-            noRes.textContent = "Kein Verlauf verfügbar.";
+            noRes.textContent = Language.Download.NoHistory;
             container.appendChild(noRes);
             return;
         }
@@ -736,7 +832,7 @@ class DownloadsController {
         const groups = [];
 
         history.forEach((entry) => {
-            const entrySubId = entry.SubscriptionId || '00000000-0000-0000-0000-000000000000';
+            const entrySubId = entry.SubscriptionId || Language.General.EmptyId;
             const entryItemId = entry.ItemId || '';
             const entryTitle = entry.Title || '';
             const entryFileName = Helper.getFileNameFromPath(entry.DownloadPath);
@@ -787,28 +883,24 @@ class DownloadsController {
         const isExpanded = this.expandedGroups.has(groupKey);
         const timestamp = new Date(group.latestTimestamp).toLocaleString();
 
-        let downloadTrigger = ' (Manuell)';
-        if (group.subscriptionId && group.subscriptionId !== '00000000-0000-0000-0000-000000000000') {
+        let downloadTrigger = Language.Download.TriggerManual;
+        if (group.subscriptionId && group.subscriptionId !== Language.General.EmptyId) {
             const sub = this.config.currentConfig?.Subscriptions?.find(s => s.Id === group.subscriptionId);
-            if (sub) {
-                downloadTrigger = ' (Abo: ' + sub.Name + ')';
-            } else {
-                downloadTrigger = ' (Abo)';
-            }
+            downloadTrigger = Language.Download.TriggerAbo(sub.Name);
         }
 
-        const displayTitle = group.displayName || "Unbekannter Titel";
+        const displayTitle = group.displayName || Language.Download.UnknownTitle;
 
         const actions = document.createElement('div');
         actions.className = 'listItemButtons flex-gap-10';
 
-        const expandBtn = this.dom.createIconButton('expand_more', 'Dateien anzeigen', () => {
+        const expandBtn = this.dom.createIconButton(Icons.Expand, Language.Download.ShowFiles, () => {
             this.toggleGroupState(groupKey, true, groupItem);
         });
         expandBtn.classList.add('mvpl-btn-expand');
         expandBtn.style.display = isExpanded ? 'none' : 'inline-flex';
 
-        const collapseBtn = this.dom.createIconButton('expand_less', 'Dateien ausblenden', () => {
+        const collapseBtn = this.dom.createIconButton(Icons.Collapse, Language.Download.HideFiles, () => {
             this.toggleGroupState(groupKey, false, groupItem);
         });
         collapseBtn.classList.add('mvpl-btn-collapse');
@@ -855,15 +947,15 @@ class DownloadsController {
 
             let fileTypeInfo = "";
             const ext = Helper.getFileExtensionFromPath(entry.DownloadPath);
-            if (ext === 'vtt' || ext === 'ttml') fileTypeInfo = "[Untertitel] ";
-            else if (ext === 'nfo') fileTypeInfo = "[Metadaten] ";
-            else if (ext === 'strm') fileTypeInfo = "[Stream] ";
+            if (ext === 'vtt' || ext === 'ttml') fileTypeInfo = Language.Download.Subtitle;
+            else if (ext === 'nfo') fileTypeInfo = Language.Download.Metadata;
+            else if (ext === 'strm') fileTypeInfo = Language.Download.Stream;
 
             const langInfo = !StringHelper.isNullOrWhitespace(entry.Language) ? (" (" + entry.Language + ")") : "";
             const fileNameOnly = Helper.getFileNameFromPath(entry.DownloadPath);
 
             entryDiv.innerHTML = '<span class="secondary" style="font-weight:bold;">' + fileTypeInfo + fileNameOnly + langInfo + '</span><br/>' +
-                                 '<span class="secondary mvpl-history-entry-path">' + entry.DownloadPath + '</span>';
+                '<span class="secondary mvpl-history-entry-path">' + entry.DownloadPath + '</span>';
             detailsDiv.appendChild(entryDiv);
         });
 
@@ -877,11 +969,60 @@ class DownloadsController {
             type: "DELETE",
             url: url
         }).then(() => {
-            Helper.showToast("Abbruch angefordert.");
+            Helper.showToast(Language.Download.CancelRequested);
             this.refreshData();
         }).catch((err) => {
-            Helper.showError(err, "Fehler beim Abbrechen: ");
+            Helper.showError(err, Language.Download.CancelFailed);
         });
+    }
+}
+
+/**
+ * Handles adoption operations.
+ */
+class AdoptionController {
+    constructor(config) {
+        this.config = config;
+        this.dom = config.dom;
+    }
+
+    init() {
+        document.getElementById(DomIds.Adoption.AboSelector).addEventListener('change', (e) => {
+            this.onAboSelected(e.target.value);
+        });
+    }
+
+    onAboSelected(aboId) {
+        const container = document.getElementById(DomIds.Adoption.TableContainer);
+        if (aboId) {
+            container.style.display = 'block';
+            this.refreshData(aboId);
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    refreshData(aboId) {
+        // Vorerst noch keine Daten anzeigen
+        document.getElementById(DomIds.Adoption.LocalTable).textContent = Language.Adoption.NoData;
+        document.getElementById(DomIds.Adoption.ExternalTable).textContent = Language.Adoption.NoData;
+    }
+
+    populateAbos(subscriptions) {
+        const select = document.getElementById(DomIds.Adoption.AboSelector);
+        // Clear existing options except the first one
+        while (select.options.length > 1) {
+            select.remove(1);
+        }
+
+        if (subscriptions) {
+            subscriptions.forEach(sub => {
+                const opt = document.createElement('option');
+                opt.value = sub.Id;
+                opt.text = sub.Name;
+                select.add(opt);
+            });
+        }
     }
 }
 
@@ -894,8 +1035,8 @@ class SetupLiveTvController {
     }
 
     init() {
-        document.getElementById('mvpl-btn-setup-tuner').addEventListener('click', () => this.setupTuner());
-        document.getElementById('mvpl-btn-setup-guide').addEventListener('click', () => this.setupGuide());
+        document.getElementById(DomIds.LiveTv.Tuner).addEventListener('click', () => this.setupTuner());
+        document.getElementById(DomIds.LiveTv.Guide).addEventListener('click', () => this.setupGuide());
     }
 
     setupTuner() {
@@ -1389,6 +1530,7 @@ class MediathekPluginConfig {
         this.searchController = new SearchController(this);
         this.downloadsController = new DownloadsController(this);
         this.liveTvController = new SetupLiveTvController(this);
+        this.adoptionController = new AdoptionController(this);
         this.dependencyManager = new DependencyManager();
         this.currentConfig = null;
         this.currentItemForAdvancedDl = null;
@@ -1542,6 +1684,7 @@ class MediathekPluginConfig {
             document.querySelector('#defSubAllowSignLanguage').checked = defAccess.AllowSignLanguage || false;
 
             this.renderSubscriptionsList();
+            this.adoptionController.populateAbos(config.Subscriptions);
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
         });
@@ -1681,6 +1824,8 @@ class MediathekPluginConfig {
 
             list.appendChild(listItem);
         });
+
+        this.adoptionController.populateAbos(this.currentConfig.Subscriptions);
     }
 
     toggleSubscription(id) {
@@ -2048,6 +2193,7 @@ class MediathekPluginConfig {
         document.getElementById('mvpl-btn-tab-settings').addEventListener('click', () => this.switchTab('settings'));
         document.getElementById('mvpl-btn-tab-subscriptions').addEventListener('click', () => this.switchTab('subscriptions'));
         document.getElementById('mvpl-btn-tab-downloads').addEventListener('click', () => this.switchTab('downloads'));
+        document.getElementById('mvpl-btn-tab-adoption').addEventListener('click', () => this.switchTab('adoption'));
 
         // Main Config Form
         document.getElementById('MediathekGeneralConfigForm').addEventListener('submit', (e) => {
@@ -2219,6 +2365,7 @@ class MediathekPluginConfig {
         this.bindEvents();
         this.searchController.init();
         this.liveTvController.init();
+        this.adoptionController.init();
         this.dependencyManager.init();
         this.setupAutoGrowInputs();
     }
