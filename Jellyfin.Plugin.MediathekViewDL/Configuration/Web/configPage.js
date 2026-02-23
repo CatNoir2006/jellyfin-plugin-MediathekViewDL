@@ -1866,25 +1866,25 @@ class MediathekPluginConfig {
         ApiClient.getPluginConfiguration(this.pluginId).then((config) => {
             this.currentConfig = config;
 
-            document.querySelector('#' + DomIds.Settings.Paths.DefaultDownload).value = config.Paths.DefaultDownloadPath || "";
-            document.querySelector('#' + DomIds.Settings.Paths.SubscriptionShow).value = config.Paths.DefaultSubscriptionShowPath || "";
-            document.querySelector('#' + DomIds.Settings.Paths.SubscriptionMovie).value = config.Paths.DefaultSubscriptionMoviePath || "";
-            document.querySelector('#' + DomIds.Settings.Paths.ManualShow).value = config.Paths.DefaultManualShowPath || "";
-            document.querySelector('#' + DomIds.Settings.Paths.ManualMovie).value = config.Paths.DefaultManualMoviePath || "";
-            document.querySelector('#' + DomIds.Settings.Paths.TempDownload).value = config.Paths.TempDownloadPath || "";
-            document.querySelector('#' + DomIds.Settings.Download.Subtitles).checked = config.Download.DownloadSubtitles;
-            document.querySelector('#' + DomIds.Settings.Network.AllowUnknownDomains).checked = config.Network.AllowUnknownDomains;
-            document.querySelector('#' + DomIds.Settings.Network.AllowHttp).checked = config.Network.AllowHttp;
-            document.querySelector('#' + DomIds.Settings.Download.ScanLibrary).checked = config.Download.ScanLibraryAfterDownload;
-            document.querySelector('#' + DomIds.Settings.Download.DirectAudioExtraction).checked = config.Download.EnableDirectAudioExtraction;
-            document.querySelector('#' + DomIds.Settings.Maintenance.StrmCleanup).checked = config.Maintenance.EnableStrmCleanup;
-            document.querySelector('#' + DomIds.Settings.Search.FetchStreamSizes).checked = config.Search.FetchStreamSizes;
-            document.querySelector('#' + DomIds.Settings.Search.SearchFutureBroadcasts).checked = config.Search.SearchInFutureBroadcasts;
-            document.querySelector('#' + DomIds.Settings.Maintenance.AllowDownloadUnknownDiskSpace).checked = config.Maintenance.AllowDownloadOnUnknownDiskSpace;
-            document.querySelector('#' + DomIds.Settings.Download.MinFreeDiskSpace).value = config.Download.MinFreeDiskSpaceBytes ? (config.Download.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
-            document.querySelector('#' + DomIds.Settings.Download.MaxBandwidth).value = config.Download.MaxBandwidthMBits || 0;
-            document.querySelector('#' + DomIds.Settings.LastRun).innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : Language.Subscription.Never;
-            document.querySelector('#' + DomIds.Settings.Paths.UseTopicForMoviePath).checked = config.Paths.UseTopicForMoviePath;
+            document.getElementById(DomIds.Settings.Paths.DefaultDownload).value = config.Paths.DefaultDownloadPath || "";
+            document.getElementById(DomIds.Settings.Paths.SubscriptionShow).value = config.Paths.DefaultSubscriptionShowPath || "";
+            document.getElementById(DomIds.Settings.Paths.SubscriptionMovie).value = config.Paths.DefaultSubscriptionMoviePath || "";
+            document.getElementById(DomIds.Settings.Paths.ManualShow).value = config.Paths.DefaultManualShowPath || "";
+            document.getElementById(DomIds.Settings.Paths.ManualMovie).value = config.Paths.DefaultManualMoviePath || "";
+            document.getElementById(DomIds.Settings.Paths.TempDownload).value = config.Paths.TempDownloadPath || "";
+            document.getElementById(DomIds.Settings.Download.Subtitles).checked = config.Download.DownloadSubtitles;
+            document.getElementById(DomIds.Settings.Network.AllowUnknownDomains).checked = config.Network.AllowUnknownDomains;
+            document.getElementById(DomIds.Settings.Network.AllowHttp).checked = config.Network.AllowHttp;
+            document.getElementById(DomIds.Settings.Download.ScanLibrary).checked = config.Download.ScanLibraryAfterDownload;
+            document.getElementById(DomIds.Settings.Download.DirectAudioExtraction).checked = config.Download.EnableDirectAudioExtraction;
+            document.getElementById(DomIds.Settings.Maintenance.StrmCleanup).checked = config.Maintenance.EnableStrmCleanup;
+            document.getElementById(DomIds.Settings.Search.FetchStreamSizes).checked = config.Search.FetchStreamSizes;
+            document.getElementById(DomIds.Settings.Search.SearchFutureBroadcasts).checked = config.Search.SearchInFutureBroadcasts;
+            document.getElementById(DomIds.Settings.Maintenance.AllowDownloadUnknownDiskSpace).checked = config.Maintenance.AllowDownloadOnUnknownDiskSpace;
+            document.getElementById(DomIds.Settings.Download.MinFreeDiskSpace).value = config.Download.MinFreeDiskSpaceBytes ? (config.Download.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
+            document.getElementById(DomIds.Settings.Download.MaxBandwidth).value = config.Download.MaxBandwidthMBits || 0;
+            document.getElementById(DomIds.Settings.LastRun).innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : Language.Subscription.Never;
+            document.getElementById(DomIds.Settings.Paths.UseTopicForMoviePath).checked = config.Paths.UseTopicForMoviePath;
 
             // Load Subscription Defaults
             const def = config.SubscriptionDefaults || {};
@@ -1894,31 +1894,31 @@ class MediathekPluginConfig {
             const defMeta = def.MetadataSettings || {};
             const defAccess = def.AccessibilitySettings || {};
 
-            document.querySelector('#' + DomIds.Settings.Defaults.MinDuration).value = defSearch.MinDurationMinutes || "";
-            document.querySelector('#' + DomIds.Settings.Defaults.MaxDuration).value = defSearch.MaxDurationMinutes || "";
-            document.querySelector('#' + DomIds.Settings.Defaults.UseStreamingUrlFiles).checked = defDl.UseStreamingUrlFiles || false;
-            document.querySelector('#' + DomIds.Settings.Defaults.DownloadFullVideoSecondaryAudio).checked = defDl.DownloadFullVideoForSecondaryAudio || false;
-            document.querySelector('#' + DomIds.Settings.Defaults.AlwaysCreateSubfolder).checked = defDl.AlwaysCreateSubfolder || false;
-            document.querySelector('#' + DomIds.Settings.Defaults.EnhancedDuplicateDetection).checked = defDl.EnhancedDuplicateDetection || false;
-            document.querySelector('#' + DomIds.Settings.Defaults.AutoUpgradeHigherQuality).checked = defDl.AutoUpgradeToHigherQuality || false;
-            document.querySelector('#' + DomIds.Settings.Defaults.AllowFallbackLowerQuality).checked = defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true;
-            document.querySelector('#' + DomIds.Settings.Defaults.QualityCheckWithUrl).checked = defDl.QualityCheckWithUrl || false;
+            document.getElementById(DomIds.Settings.Defaults.MinDuration).value = defSearch.MinDurationMinutes || "";
+            document.getElementById(DomIds.Settings.Defaults.MaxDuration).value = defSearch.MaxDurationMinutes || "";
+            document.getElementById(DomIds.Settings.Defaults.UseStreamingUrlFiles).checked = defDl.UseStreamingUrlFiles || false;
+            document.getElementById(DomIds.Settings.Defaults.DownloadFullVideoSecondaryAudio).checked = defDl.DownloadFullVideoForSecondaryAudio || false;
+            document.getElementById(DomIds.Settings.Defaults.AlwaysCreateSubfolder).checked = defDl.AlwaysCreateSubfolder || false;
+            document.getElementById(DomIds.Settings.Defaults.EnhancedDuplicateDetection).checked = defDl.EnhancedDuplicateDetection || false;
+            document.getElementById(DomIds.Settings.Defaults.AutoUpgradeHigherQuality).checked = defDl.AutoUpgradeToHigherQuality || false;
+            document.getElementById(DomIds.Settings.Defaults.AllowFallbackLowerQuality).checked = defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true;
+            document.getElementById(DomIds.Settings.Defaults.QualityCheckWithUrl).checked = defDl.QualityCheckWithUrl || false;
 
-            document.querySelector('#' + DomIds.Settings.Defaults.EnforceSeries).checked = defSeries.EnforceSeriesParsing || false;
-            document.querySelector('#' + DomIds.Settings.Defaults.AbsoluteEpisodeNumbering).checked = defSeries.AllowAbsoluteEpisodeNumbering || false;
-            document.querySelector('#' + DomIds.Settings.Defaults.TreatNonEpisodesAsExtras).checked = defSeries.TreatNonEpisodesAsExtras || false;
-            document.querySelector('#' + DomIds.Settings.Defaults.SaveExtrasAsStrm).checked = defSeries.SaveExtrasAsStrm || false;
-            document.querySelector('#' + DomIds.Settings.Defaults.SaveTrailers).checked = defSeries.SaveTrailers !== undefined ? defSeries.SaveTrailers : true;
-            document.querySelector('#' + DomIds.Settings.Defaults.SaveInterviews).checked = defSeries.SaveInterviews !== undefined ? defSeries.SaveInterviews : true;
-            document.querySelector('#' + DomIds.Settings.Defaults.SaveGenericExtras).checked = defSeries.SaveGenericExtras !== undefined ? defSeries.SaveGenericExtras : true;
+            document.getElementById(DomIds.Settings.Defaults.EnforceSeries).checked = defSeries.EnforceSeriesParsing || false;
+            document.getElementById(DomIds.Settings.Defaults.AbsoluteEpisodeNumbering).checked = defSeries.AllowAbsoluteEpisodeNumbering || false;
+            document.getElementById(DomIds.Settings.Defaults.TreatNonEpisodesAsExtras).checked = defSeries.TreatNonEpisodesAsExtras || false;
+            document.getElementById(DomIds.Settings.Defaults.SaveExtrasAsStrm).checked = defSeries.SaveExtrasAsStrm || false;
+            document.getElementById(DomIds.Settings.Defaults.SaveTrailers).checked = defSeries.SaveTrailers !== undefined ? defSeries.SaveTrailers : true;
+            document.getElementById(DomIds.Settings.Defaults.SaveInterviews).checked = defSeries.SaveInterviews !== undefined ? defSeries.SaveInterviews : true;
+            document.getElementById(DomIds.Settings.Defaults.SaveGenericExtras).checked = defSeries.SaveGenericExtras !== undefined ? defSeries.SaveGenericExtras : true;
 
-            document.querySelector('#' + DomIds.Settings.Defaults.OriginalLanguage).value = defMeta.OriginalLanguage || "";
-            document.querySelector('#' + DomIds.Settings.Defaults.CreateNfo).checked = defMeta.CreateNfo || false;
-            document.querySelector('#' + DomIds.Settings.Defaults.AppendDate).checked = defMeta.AppendDateToTitle || false;
-            document.querySelector('#' + DomIds.Settings.Defaults.AppendTime).checked = defMeta.AppendTimeToTitle || false;
+            document.getElementById(DomIds.Settings.Defaults.OriginalLanguage).value = defMeta.OriginalLanguage || "";
+            document.getElementById(DomIds.Settings.Defaults.CreateNfo).checked = defMeta.CreateNfo || false;
+            document.getElementById(DomIds.Settings.Defaults.AppendDate).checked = defMeta.AppendDateToTitle || false;
+            document.getElementById(DomIds.Settings.Defaults.AppendTime).checked = defMeta.AppendTimeToTitle || false;
 
-            document.querySelector('#' + DomIds.Settings.Defaults.AllowAudioDesc).checked = defAccess.AllowAudioDescription || false;
-            document.querySelector('#' + DomIds.Settings.Defaults.AllowSignLanguage).checked = defAccess.AllowSignLanguage || false;
+            document.getElementById(DomIds.Settings.Defaults.AllowAudioDesc).checked = defAccess.AllowAudioDescription || false;
+            document.getElementById(DomIds.Settings.Defaults.AllowSignLanguage).checked = defAccess.AllowSignLanguage || false;
 
             this.renderSubscriptionsList();
             this.adoptionController.populateAbos(config.Subscriptions);
@@ -1950,7 +1950,7 @@ class MediathekPluginConfig {
         document.querySelectorAll('.mvpl-tab-content').forEach(el => el.style.display = 'none');
         document.getElementById(DomIds.Tabs.Prefix + tabId).style.display = 'block';
 
-        const buttons = document.querySelectorAll('#' + DomIds.Tabs.Container + ' button');
+        const buttons = document.querySelectorAll('.' + DomIds.Tabs.Container + ' button');
         buttons.forEach(btn => {
             btn.classList.remove('selected');
             btn.setAttribute('aria-selected', 'false');
@@ -2420,7 +2420,7 @@ class MediathekPluginConfig {
      */
     bindEvents() {
         // Page Show
-        document.querySelector('#' + DomIds.Common.View).addEventListener('pageshow', () => {
+        document.getElementById(DomIds.Common.View).addEventListener('pageshow', () => {
             this.loadConfig();
         });
 
@@ -2434,63 +2434,63 @@ class MediathekPluginConfig {
         // Main Config Form
         document.getElementById(DomIds.Settings.Form).addEventListener('submit', (e) => {
             e.preventDefault();
-            this.currentConfig.Paths.DefaultDownloadPath = document.querySelector('#' + DomIds.Settings.Paths.DefaultDownload).value;
-            this.currentConfig.Paths.DefaultSubscriptionShowPath = document.querySelector('#' + DomIds.Settings.Paths.SubscriptionShow).value;
-            this.currentConfig.Paths.DefaultSubscriptionMoviePath = document.querySelector('#' + DomIds.Settings.Paths.SubscriptionMovie).value;
-            this.currentConfig.Paths.DefaultManualShowPath = document.querySelector('#' + DomIds.Settings.Paths.ManualShow).value;
-            this.currentConfig.Paths.DefaultManualMoviePath = document.querySelector('#' + DomIds.Settings.Paths.ManualMovie).value;
-            this.currentConfig.Paths.TempDownloadPath = document.querySelector('#' + DomIds.Settings.Paths.TempDownload).value;
+            this.currentConfig.Paths.DefaultDownloadPath = document.getElementById(DomIds.Settings.Paths.DefaultDownload).value;
+            this.currentConfig.Paths.DefaultSubscriptionShowPath = document.getElementById(DomIds.Settings.Paths.SubscriptionShow).value;
+            this.currentConfig.Paths.DefaultSubscriptionMoviePath = document.getElementById(DomIds.Settings.Paths.SubscriptionMovie).value;
+            this.currentConfig.Paths.DefaultManualShowPath = document.getElementById(DomIds.Settings.Paths.ManualShow).value;
+            this.currentConfig.Paths.DefaultManualMoviePath = document.getElementById(DomIds.Settings.Paths.ManualMovie).value;
+            this.currentConfig.Paths.TempDownloadPath = document.getElementById(DomIds.Settings.Paths.TempDownload).value;
 
-            this.currentConfig.Download.DownloadSubtitles = document.querySelector('#' + DomIds.Settings.Download.Subtitles).checked;
-            this.currentConfig.Network.AllowUnknownDomains = document.querySelector('#' + DomIds.Settings.Network.AllowUnknownDomains).checked;
-            this.currentConfig.Network.AllowHttp = document.querySelector('#' + DomIds.Settings.Network.AllowHttp).checked;
-            this.currentConfig.Download.ScanLibraryAfterDownload = document.querySelector('#' + DomIds.Settings.Download.ScanLibrary).checked;
-            this.currentConfig.Download.EnableDirectAudioExtraction = document.querySelector('#' + DomIds.Settings.Download.DirectAudioExtraction).checked;
-            this.currentConfig.Maintenance.EnableStrmCleanup = document.querySelector('#' + DomIds.Settings.Maintenance.StrmCleanup).checked;
-            this.currentConfig.Search.FetchStreamSizes = document.querySelector('#' + DomIds.Settings.Search.FetchStreamSizes).checked;
-            this.currentConfig.Search.SearchInFutureBroadcasts = document.querySelector('#' + DomIds.Settings.Search.SearchFutureBroadcasts).checked;
-            this.currentConfig.Maintenance.AllowDownloadOnUnknownDiskSpace = document.querySelector('#' + DomIds.Settings.Maintenance.AllowDownloadUnknownDiskSpace).checked;
+            this.currentConfig.Download.DownloadSubtitles = document.getElementById(DomIds.Settings.Download.Subtitles).checked;
+            this.currentConfig.Network.AllowUnknownDomains = document.getElementById(DomIds.Settings.Network.AllowUnknownDomains).checked;
+            this.currentConfig.Network.AllowHttp = document.getElementById(DomIds.Settings.Network.AllowHttp).checked;
+            this.currentConfig.Download.ScanLibraryAfterDownload = document.getElementById(DomIds.Settings.Download.ScanLibrary).checked;
+            this.currentConfig.Download.EnableDirectAudioExtraction = document.getElementById(DomIds.Settings.Download.DirectAudioExtraction).checked;
+            this.currentConfig.Maintenance.EnableStrmCleanup = document.getElementById(DomIds.Settings.Maintenance.StrmCleanup).checked;
+            this.currentConfig.Search.FetchStreamSizes = document.getElementById(DomIds.Settings.Search.FetchStreamSizes).checked;
+            this.currentConfig.Search.SearchInFutureBroadcasts = document.getElementById(DomIds.Settings.Search.SearchFutureBroadcasts).checked;
+            this.currentConfig.Maintenance.AllowDownloadOnUnknownDiskSpace = document.getElementById(DomIds.Settings.Maintenance.AllowDownloadUnknownDiskSpace).checked;
 
-            const minFreeSpaceMiB = parseInt(document.querySelector('#' + DomIds.Settings.Download.MinFreeDiskSpace).value, 10);
+            const minFreeSpaceMiB = parseInt(document.getElementById(DomIds.Settings.Download.MinFreeDiskSpace).value, 10);
             this.currentConfig.Download.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
-            this.currentConfig.Paths.UseTopicForMoviePath = document.querySelector('#' + DomIds.Settings.Paths.UseTopicForMoviePath).checked;
+            this.currentConfig.Paths.UseTopicForMoviePath = document.getElementById(DomIds.Settings.Paths.UseTopicForMoviePath).checked;
 
-            const maxBandwidth = parseInt(document.querySelector('#' + DomIds.Settings.Download.MaxBandwidth).value, 10);
+            const maxBandwidth = parseInt(document.getElementById(DomIds.Settings.Download.MaxBandwidth).value, 10);
             this.currentConfig.Download.MaxBandwidthMBits = isNaN(maxBandwidth) ? 0 : maxBandwidth;
 
             // Save Subscription Defaults
             this.currentConfig.SubscriptionDefaults = {
                 DownloadSettings: {
-                    UseStreamingUrlFiles: document.querySelector('#' + DomIds.Settings.Defaults.UseStreamingUrlFiles).checked,
-                    DownloadFullVideoForSecondaryAudio: document.querySelector('#' + DomIds.Settings.Defaults.DownloadFullVideoSecondaryAudio).checked,
-                    AlwaysCreateSubfolder: document.querySelector('#' + DomIds.Settings.Defaults.AlwaysCreateSubfolder).checked,
-                    EnhancedDuplicateDetection: document.querySelector('#' + DomIds.Settings.Defaults.EnhancedDuplicateDetection).checked,
-                    AutoUpgradeToHigherQuality: document.querySelector('#' + DomIds.Settings.Defaults.AutoUpgradeHigherQuality).checked,
-                    AllowFallbackToLowerQuality: document.querySelector('#' + DomIds.Settings.Defaults.AllowFallbackLowerQuality).checked,
-                    QualityCheckWithUrl: document.querySelector('#' + DomIds.Settings.Defaults.QualityCheckWithUrl).checked
+                    UseStreamingUrlFiles: document.getElementById(DomIds.Settings.Defaults.UseStreamingUrlFiles).checked,
+                    DownloadFullVideoForSecondaryAudio: document.getElementById(DomIds.Settings.Defaults.DownloadFullVideoSecondaryAudio).checked,
+                    AlwaysCreateSubfolder: document.getElementById(DomIds.Settings.Defaults.AlwaysCreateSubfolder).checked,
+                    EnhancedDuplicateDetection: document.getElementById(DomIds.Settings.Defaults.EnhancedDuplicateDetection).checked,
+                    AutoUpgradeToHigherQuality: document.getElementById(DomIds.Settings.Defaults.AutoUpgradeHigherQuality).checked,
+                    AllowFallbackToLowerQuality: document.getElementById(DomIds.Settings.Defaults.AllowFallbackLowerQuality).checked,
+                    QualityCheckWithUrl: document.getElementById(DomIds.Settings.Defaults.QualityCheckWithUrl).checked
                 },
                 SearchSettings: {
-                    MinDurationMinutes: document.querySelector('#' + DomIds.Settings.Defaults.MinDuration).value ? parseInt(document.querySelector('#' + DomIds.Settings.Defaults.MinDuration).value, 10) : null,
-                    MaxDurationMinutes: document.querySelector('#' + DomIds.Settings.Defaults.MaxDuration).value ? parseInt(document.querySelector('#' + DomIds.Settings.Defaults.MaxDuration).value, 10) : null
+                    MinDurationMinutes: document.getElementById(DomIds.Settings.Defaults.MinDuration).value ? parseInt(document.getElementById(DomIds.Settings.Defaults.MinDuration).value, 10) : null,
+                    MaxDurationMinutes: document.getElementById(DomIds.Settings.Defaults.MaxDuration).value ? parseInt(document.getElementById(DomIds.Settings.Defaults.MaxDuration).value, 10) : null
                 },
                 SeriesSettings: {
-                    EnforceSeriesParsing: document.querySelector('#' + DomIds.Settings.Defaults.EnforceSeries).checked,
-                    AllowAbsoluteEpisodeNumbering: document.querySelector('#' + DomIds.Settings.Defaults.AbsoluteEpisodeNumbering).checked,
-                    TreatNonEpisodesAsExtras: document.querySelector('#' + DomIds.Settings.Defaults.TreatNonEpisodesAsExtras).checked,
-                    SaveExtrasAsStrm: document.querySelector('#' + DomIds.Settings.Defaults.SaveExtrasAsStrm).checked,
-                    SaveTrailers: document.querySelector('#' + DomIds.Settings.Defaults.SaveTrailers).checked,
-                    SaveInterviews: document.querySelector('#' + DomIds.Settings.Defaults.SaveInterviews).checked,
-                    SaveGenericExtras: document.querySelector('#' + DomIds.Settings.Defaults.SaveGenericExtras).checked
+                    EnforceSeriesParsing: document.getElementById(DomIds.Settings.Defaults.EnforceSeries).checked,
+                    AllowAbsoluteEpisodeNumbering: document.getElementById(DomIds.Settings.Defaults.AbsoluteEpisodeNumbering).checked,
+                    TreatNonEpisodesAsExtras: document.getElementById(DomIds.Settings.Defaults.TreatNonEpisodesAsExtras).checked,
+                    SaveExtrasAsStrm: document.getElementById(DomIds.Settings.Defaults.SaveExtrasAsStrm).checked,
+                    SaveTrailers: document.getElementById(DomIds.Settings.Defaults.SaveTrailers).checked,
+                    SaveInterviews: document.getElementById(DomIds.Settings.Defaults.SaveInterviews).checked,
+                    SaveGenericExtras: document.getElementById(DomIds.Settings.Defaults.SaveGenericExtras).checked
                 },
                 MetadataSettings: {
-                    OriginalLanguage: document.querySelector('#' + DomIds.Settings.Defaults.OriginalLanguage).value,
-                    CreateNfo: document.querySelector('#' + DomIds.Settings.Defaults.CreateNfo).checked,
-                    AppendDateToTitle: document.querySelector('#' + DomIds.Settings.Defaults.AppendDate).checked,
-                    AppendTimeToTitle: document.querySelector('#' + DomIds.Settings.Defaults.AppendTime).checked
+                    OriginalLanguage: document.getElementById(DomIds.Settings.Defaults.OriginalLanguage).value,
+                    CreateNfo: document.getElementById(DomIds.Settings.Defaults.CreateNfo).checked,
+                    AppendDateToTitle: document.getElementById(DomIds.Settings.Defaults.AppendDate).checked,
+                    AppendTimeToTitle: document.getElementById(DomIds.Settings.Defaults.AppendTime).checked
                 },
                 AccessibilitySettings: {
-                    AllowAudioDescription: document.querySelector('#' + DomIds.Settings.Defaults.AllowAudioDesc).checked,
-                    AllowSignLanguage: document.querySelector('#' + DomIds.Settings.Defaults.AllowSignLanguage).checked
+                    AllowAudioDescription: document.getElementById(DomIds.Settings.Defaults.AllowAudioDesc).checked,
+                    AllowSignLanguage: document.getElementById(DomIds.Settings.Defaults.AllowSignLanguage).checked
                 }
             };
 
