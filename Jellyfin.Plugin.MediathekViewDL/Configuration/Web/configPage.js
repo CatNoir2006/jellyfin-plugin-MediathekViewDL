@@ -61,7 +61,7 @@ class Helper {
                 });
             } else {
                 let currentValue = document.getElementById(inputId).value;
-                let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
+                let newPath = prompt(headerText + '\n' + Language.General.CurrentPath + ': ' + currentValue, currentValue);
                 if (newPath !== null && newPath.trim() !== '') {
                     document.getElementById(inputId).value = newPath.trim();
                 }
@@ -69,7 +69,7 @@ class Helper {
         } catch (e) {
             console.error('Error opening folder dialog:', e);
             let currentValue = document.getElementById(inputId).value;
-            let newPath = prompt(headerText + '\nAktueller Pfad: ' + currentValue, currentValue);
+            let newPath = prompt(headerText + '\n' + Language.General.CurrentPath + ': ' + currentValue, currentValue);
             if (newPath !== null && newPath.trim() !== '') {
                 document.getElementById(inputId).value = newPath.trim();
             }
@@ -138,7 +138,7 @@ class Helper {
      * @param defaultMessage A fallback message if no specific error is found
      * @returns {Promise<string>} The extracted error message
      */
-    static async getErrorMessage(err, defaultMessage = 'Unbekannter Fehler') {
+    static async getErrorMessage(err, defaultMessage = Language.General.UnknownError) {
         if (!err) return defaultMessage;
 
         // Support for Fetch Response objects (asynchronous)
@@ -182,7 +182,7 @@ class Helper {
      * @param msgPrefix Text to prefix the error message with (optional)
      * @param defaultMessage A fallback message if no specific error is found
      */
-    static showError(err, msgPrefix = '', defaultMessage = 'Unbekannter Fehler') {
+    static showError(err, msgPrefix = '', defaultMessage = Language.General.UnknownError) {
         this.getErrorMessage(err, defaultMessage).then(message => {
             Helper.showToast(msgPrefix + message);
         });
@@ -338,7 +338,20 @@ const Language = {
         Cancel: "Abbrechen",
         Ok: "OK",
         Save: "Speichern",
-        EmptyId: '00000000-0000-0000-0000-000000000000'
+        EmptyId: '00000000-0000-0000-0000-000000000000',
+        CurrentPath: "Aktueller Pfad",
+        NotConfigured: "Nicht konfiguriert",
+        SettingsSaved: "Einstellungen gespeichert.",
+        InitializingController: "Initialisiere DownloadsController",
+        SelectGlobalDefaultDownloadPath: "Globalen Standard Download Pfad wählen",
+        SelectDefaultShowPathAbo: "Standard Serien Pfad (Abo) wählen",
+        SelectDefaultMoviePathAbo: "Standard Film Pfad (Abo) wählen",
+        SelectDefaultShowPathManual: "Standard Serien Pfad (Manuell) wählen",
+        SelectDefaultMoviePathManual: "Standard Film Pfad (Manuell) wählen",
+        SelectTempDownloadPath: "Temporären Download Pfad wählen",
+        MinutesShort: " min",
+        UnknownError: "Unbekannter Fehler",
+        AboNamePlaceholder: "[AboName]"
     },
     Search: {
         SearchTearm: "Bitte Suchbegriff eingeben",
@@ -353,7 +366,13 @@ const Language = {
         VideoMissing: "Keine Video-URL verfügbar.",
         Error: "Fehler bei der Suche: ",
         ErrorDownloadStart: "Fehler beim Starten des Downloads: ",
-        InQueue: (title) => 'Download für ' + title + ' in Warteschlange.'
+        InQueue: (title) => 'Download für ' + title + ' in Warteschlange.',
+        DownloadStarted: (title) => "Download für '" + title + "' gestartet.",
+        NoSubtitles: "Keine Untertitel verfügbar für dieses Video.",
+        ErrorTestingAbo: "Fehler beim Testen des Abonnements: ",
+        NoTestHits: "Keine Treffer für diese Konfiguration.",
+        TestResultsCount: (count) => count + " Einträge gefunden, die heruntergeladen würden:",
+        Video: "Video"
     },
     Download: {
         Queued: "Warteschlange",
@@ -379,18 +398,62 @@ const Language = {
         CancelFailed: "Fehler beim Abbrechen",
         ErrorAktivDownloads: "Fehler beim Abrufen aktiver Downloads: ",
         ErrorDownloadHistory: "Fehler beim Abrufen des Downloadverlaufs: ",
+        Date: "Datum: ",
+        Files: " Dateien"
     },
     Adoption: {
         NoData: "Noch keine Daten ..."
+    },
+    LiveTv: {
+        TunerAdded: "Zapp Tuner erfolgreich hinzugefügt.",
+        ErrorAddTuner: "Fehler beim Hinzufügen des Tuners: ",
+        GuideProviderAdded: "Zapp Guide Provider erfolgreich hinzugefügt.",
+        ErrorAddGuideProvider: "Fehler beim Hinzufügen des Guide Providers: "
+    },
+    Subscription: {
+        UsedPaths: "Verwendete Pfade:",
+        Movies: "Filme",
+        Series: "Serien",
+        SelectedPath: "Ausgewählter Pfad für Film und Serie:",
+        DefaultPathUsed: "Standartpfad wird verwendet:",
+        EditSubscription: "Abonnement bearbeiten",
+        CreateSubscription: "Neues Abonnement erstellen",
+        NotConfigured: "Nicht konfiguriert", // Already added, but good to keep it in mind
+        NoActiveSubscriptions: "Keine aktiven Abonnements.",
+        Disable: "Deaktivieren",
+        Enable: "Aktivieren",
+        ResetProcessedItems: "Verarbeitete Items zurücksetzen",
+        Edit: "Bearbeiten",
+        Delete: "Löschen",
+        ProcessedItemsReset: "Verarbeitete Items für Abonnement zurückgesetzt.",
+        ErrorResettingProcessedItems: "Fehler beim Zurücksetzen der verarbeiteten Items: ",
+        DefineAtLeastOneQuery: "Bitte mindestens eine Suchanfrage definieren.",
+        ConfirmDelete: "Soll dieses Abonnement wirklich gelöscht werden?",
+        ConfirmDeleteTitle: "Löschen bestätigen",
+        Queries: "Queries: ",
+        LastDownload: "Letzter Download: ",
+        Never: "Nie",
+        Disabled: " (Deaktiviert)",
+        ConfirmResetProcessedItemsMessage: "Dies wird die Liste der bereits verarbeiteten Items für dieses Abonnement zurücksetzen. Es kann dazu führen, dass bereits heruntergeladene Inhalte erneut heruntergeladen werden, wenn sie noch in den Suchergebnissen der MediathekView API erscheinen. Fortfahren?",
+        SearchText: "Suchtext",
+        Title: "Titel",
+        Topic: "Thema",
+        Description: "Beschreibung",
+        Channel: "Sender",
+        RemoveQuery: "Anfrage entfernen",
+        SelectAboPath: "Abo Pfad wählen",
+        ErrorInitializationStatus: "Fehler beim Prüfen des Initialisierungsstatus"
+    },
+    AdvancedDownload: {
+        SelectDownloadPath: "Download Pfad wählen",
+        TitlePrefix: "Erweiterter Download: "
     }
-
 }
 
 const DomIds = {
     Tabs: {
         Subscription: "subscription"
     },
-    Abo: {},
     Download: {
         AktivList: "activeDownloadsList",
         HistoryList: "downloadHistoryList"
@@ -416,6 +479,15 @@ const DomIds = {
         TableContainer: "adoptionTableContainer",
         LocalTable: "localFilesTable",
         ExternalTable: "apiResultsTable",
+    },
+    AdvancedDownload: {
+        Modal: "advancedDownloadModal",
+        Title: "advancedDownloadTitle",
+        Path: "advDlPath",
+        Filename: "advDlFilename",
+        Subtitles: "advDlSubtitles",
+        SubtitlesDesc: "advDlSubtitlesDesc",
+        BtnSelectPath: "btnSelectPath"
     }
 }
 
@@ -428,7 +500,13 @@ const Icons = {
     Subtitle: "closed_caption",
     Cancel: "cancel",
     Expand: "expand_more",
-    Collapse: "expand_less"
+    Collapse: "expand_less",
+    ToggleOn: 'pause_circle_outline',
+    ToggleOff: 'play_circle_outline',
+    Refresh: 'refresh',
+    Edit: 'edit',
+    Delete: 'delete',
+    Remove: 'remove_circle_outline'
 }
 
 /**
@@ -522,7 +600,7 @@ class SearchController {
 
     createSearchResultItem(item, index) {
         const durationSeconds = StringHelper.parseTimeSpan(item.Duration);
-        const durationStr = Math.max(1, Math.floor(durationSeconds / 60)) + " min"; // Each Video should show up with at least 1 min.
+        const durationStr = Math.max(1, Math.floor(durationSeconds / 60)) + Language.General.MinutesShort; // Each Video should show up with at least 1 min.
         const actions = document.createElement('div');
         actions.classList.add('flex-gap-10');
 
@@ -667,7 +745,7 @@ class DownloadsController {
     }
 
     init() {
-        this.config.debugLog("Initialisiere DownloadsController");
+        this.config.debugLog(Language.General.InitializingController);
         // Initial load handled by switchTab
     }
 
@@ -911,7 +989,7 @@ class DownloadsController {
 
         const body1 = document.createElement('div');
         body1.className = 'listItemBodyText secondary';
-        body1.textContent = 'Datum: ' + timestamp + (group.entries.length > 1 ? ' (' + group.entries.length + ' Dateien)' : '');
+        body1.textContent = Language.Download.Date + timestamp + (group.entries.length > 1 ? ' (' + group.entries.length + Language.Download.Files + ')' : '');
 
         const groupItem = this.config.createListItem(displayTitle + downloadTrigger, body1, "", actions);
 
@@ -1055,10 +1133,10 @@ class SetupLiveTvController {
             contentType: 'application/json'
         }).then(() => {
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Zapp Tuner erfolgreich hinzugefügt.");
+            Helper.showToast(Language.LiveTv.TunerAdded);
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
-            Helper.showError(err, "Fehler beim Hinzufügen des Tuners: ");
+            Helper.showError(err, Language.LiveTv.ErrorAddTuner);
         });
     }
 
@@ -1077,10 +1155,10 @@ class SetupLiveTvController {
             contentType: 'application/json'
         }).then(() => {
             Dashboard.hideLoadingMsg();
-            Helper.showToast("Zapp Guide Provider erfolgreich hinzugefügt.");
+            Helper.showToast(Language.LiveTv.GuideProviderAdded);
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
-            Helper.showError(err, "Fehler beim Hinzufügen des Guide Providers: ");
+            Helper.showError(err, Language.LiveTv.ErrorAddGuideProvider);
         });
     }
 }
@@ -1260,14 +1338,14 @@ class SubscriptionEditor {
         if (!el) return;
 
         if (StringHelper.isNullOrWhitespace(el.value)) {
-            const defaultMoviePath = window.MediathekViewDL.config.currentConfig.Paths.DefaultSubscriptionMoviePath || 'Nicht konfiguriert';
-            const defaultShowPath = window.MediathekViewDL.config.currentConfig.Paths.DefaultSubscriptionShowPath || 'Nicht konfiguriert';
+            const defaultMoviePath = window.MediathekViewDL.config.currentConfig.Paths.DefaultSubscriptionMoviePath || Language.General.NotConfigured;
+            const defaultShowPath = window.MediathekViewDL.config.currentConfig.Paths.DefaultSubscriptionShowPath || Language.General.NotConfigured;
             const useTopicForMoviePath = window.MediathekViewDL.config.currentConfig.Paths.UseTopicForMoviePath;
             const alwaysCreateSubfolder = document.getElementById('subAlwaysCreateSubfolder').checked;
-            const subName = document.getElementById('subName').value || '[AboName]';
+            const subName = document.getElementById('subName').value || Language.General.AboNamePlaceholder;
 
             const joinPath = (path, part) => {
-                if (!path || path === 'Nicht konfiguriert') return path;
+                if (!path || path === Language.General.NotConfigured) return path;
                 const separator = path.indexOf('\\') !== -1 ? '\\' : '/';
                 if (path.endsWith('/') || path.endsWith('\\')) {
                     return path + part;
@@ -1278,9 +1356,11 @@ class SubscriptionEditor {
             const resolvedMoviePath = (useTopicForMoviePath || alwaysCreateSubfolder) ? joinPath(defaultMoviePath, subName) : defaultMoviePath;
             const resolvedShowPath = joinPath(defaultShowPath, subName);
             this.updatePathPlaceholderText(resolvedMoviePath, resolvedShowPath);
-            el.title = "Verwendete Pfade:\nFilme: " + resolvedMoviePath + "\nSerien: " + resolvedShowPath;
+            el.title = Language.Subscription.UsedPaths + '\n' +
+                Language.Subscription.Movies + ': ' + resolvedMoviePath + '\n' +
+                Language.Subscription.Series + ': ' + resolvedShowPath;
         } else {
-            el.title = "Ausgewählter Pfad für Film und Serie:\n" + el.value;
+            el.title = Language.Subscription.SelectedPath + '\n' + el.value;
         }
     }
 
@@ -1288,9 +1368,9 @@ class SubscriptionEditor {
         const el = document.getElementById('subPath');
         if (!el) return;
 
-        let message = 'Standartpfad wird verwendet:';
-        message += '  Serie: "' + defaultShowPath + '"';
-        message += '  Film: "' + defaultMoviePath + '"';
+        let message = Language.Subscription.DefaultPathUsed;
+        message += Language.Subscription.Series + ': "' + defaultShowPath + '"';
+        message += Language.Subscription.Movies + ': "' + defaultMoviePath + '"';
         el.placeholder = message;
     }
 
@@ -1500,7 +1580,7 @@ class SubscriptionEditor {
         if (titleText) {
             title.innerText = titleText;
         } else {
-            title.innerText = sub ? "Abonnement bearbeiten" : "Neues Abonnement erstellen";
+            title.innerText = sub ? Language.Subscription.EditSubscription : Language.Subscription.CreateSubscription;
         }
 
         this.setEditorValues(sub);
@@ -1621,7 +1701,7 @@ class MediathekPluginConfig {
             } else {
                 overlay.classList.add('mvpl-hidden');
             }
-        }).catch(err => console.error("Error checking initialization status", err));
+        }).catch(err => console.error(Language.Subscription.ErrorInitializationStatus, err));
 
         // noinspection JSUnresolvedReference
         Dashboard.showLoadingMsg();
@@ -1646,7 +1726,7 @@ class MediathekPluginConfig {
             document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked = config.Maintenance.AllowDownloadOnUnknownDiskSpace;
             document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.Download.MinFreeDiskSpaceBytes ? (config.Download.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
             document.querySelector('#txtMaxBandwidthMBits').value = config.Download.MaxBandwidthMBits || 0;
-            document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : "Noch nie";
+            document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : Language.Subscription.Never;
             document.querySelector('#chkMoviePathWithTopic').checked = config.Paths.UseTopicForMoviePath;
 
             // Load Subscription Defaults
@@ -1700,7 +1780,7 @@ class MediathekPluginConfig {
         ApiClient.updatePluginConfiguration(this.pluginId, this.currentConfig).then((result) => {
             // noinspection JSUnresolvedReference
             Dashboard.processPluginConfigurationUpdateResult(result);
-            Helper.showToast("Einstellungen gespeichert.");
+            Helper.showToast(Language.General.SettingsSaved);
             this.loadConfig();
         });
     }
@@ -1782,7 +1862,7 @@ class MediathekPluginConfig {
 
         if (!this.currentConfig.Subscriptions || this.currentConfig.Subscriptions.length === 0) {
             const noSubs = document.createElement('p');
-            noSubs.textContent = "Keine aktiven Abonnements.";
+            noSubs.textContent = Language.Subscription.NoActiveSubscriptions;
             list.appendChild(noSubs);
             return;
         }
@@ -1795,25 +1875,25 @@ class MediathekPluginConfig {
             const queriesSummary = (search.Criteria || []).map(function (q) {
                 return q.Query;
             }).join(', ');
-            const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : "Nie";
+            const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : Language.Subscription.Never;
 
             const actions = document.createElement('div');
             actions.classList.add('flex-gap-5');
 
             // Toggle Button
-            const toggleIcon = sub.IsEnabled ? 'pause_circle_outline' : 'play_circle_outline';
-            const toggleTitle = sub.IsEnabled ? 'Deaktivieren' : 'Aktivieren';
+            const toggleIcon = sub.IsEnabled ? Icons.ToggleOn : Icons.ToggleOff;
+            const toggleTitle = sub.IsEnabled ? Language.Subscription.Disable : Language.Subscription.Enable;
             actions.appendChild(this.dom.createIconButton(toggleIcon, toggleTitle, () => this.toggleSubscription(sub.Id)));
 
-            actions.appendChild(this.dom.createIconButton('refresh', 'Verarbeitete Items zurücksetzen', () => this.resetProcessedItems(sub.Id)));
-            actions.appendChild(this.dom.createIconButton('edit', 'Bearbeiten', () => this.subscriptionEditor.show(sub)));
-            actions.appendChild(this.dom.createIconButton('delete', 'Löschen', () => this.deleteSubscription(sub.Id)));
+            actions.appendChild(this.dom.createIconButton(Icons.Refresh, Language.Subscription.ResetProcessedItems, () => this.resetProcessedItems(sub.Id)));
+            actions.appendChild(this.dom.createIconButton(Icons.Edit, Language.Subscription.Edit, () => this.subscriptionEditor.show(sub)));
+            actions.appendChild(this.dom.createIconButton(Icons.Delete, Language.Subscription.Delete, () => this.deleteSubscription(sub.Id)));
 
             // Add Status to title
-            const statusText = sub.IsEnabled ? "" : " (Deaktiviert)";
+            const statusText = sub.IsEnabled ? "" : Language.Subscription.Disabled;
             const title = sub.Name + statusText;
-            const bodyText1 = 'Queries: ' + queriesSummary;
-            const bodyText2 = 'Letzter Download: ' + lastDownloadText;
+            const bodyText1 = Language.Subscription.Queries + queriesSummary;
+            const bodyText2 = Language.Subscription.LastDownload + lastDownloadText;
 
             const listItem = this.createListItem(title, bodyText1, bodyText2, actions);
 
@@ -1845,7 +1925,7 @@ class MediathekPluginConfig {
     }
 
     resetProcessedItems(id) {
-        Helper.confirmationPopup("Dies wird die Liste der bereits verarbeiteten Items für dieses Abonnement zurücksetzen. Es kann dazu führen, dass bereits heruntergeladene Inhalte erneut heruntergeladen werden, wenn sie noch in den Suchergebnissen der MediathekView API erscheinen. Fortfahren?", "Verarbeitete Items zurücksetzen", (confirmed) => {
+        Helper.confirmationPopup(Language.Subscription.ConfirmResetProcessedItemsMessage, Language.Subscription.ResetProcessedItems, (confirmed) => {
             if (confirmed) {
                 // noinspection JSUnresolvedReference
                 Dashboard.showLoadingMsg();
@@ -1856,12 +1936,12 @@ class MediathekPluginConfig {
                 }).then((result) => {
                     // noinspection JSUnresolvedReference
                     Dashboard.hideLoadingMsg();
-                    Helper.showToast("Verarbeitete Items für Abonnement zurückgesetzt.");
+                    Helper.showToast(Language.Subscription.ProcessedItemsReset);
                     this.loadConfig(); // Refresh the configuration to update the UI
                 }).catch((err) => {
                     // noinspection JSUnresolvedReference
                     Dashboard.hideLoadingMsg();
-                    Helper.showError(err, "Fehler beim Zurücksetzen der verarbeiteten Items: ");
+                    Helper.showError(err, Language.Subscription.ErrorResettingProcessedItems);
                 });
             }
         });
@@ -1880,29 +1960,29 @@ class MediathekPluginConfig {
             value: queryText,
             attributes: {
                 'is': 'emby-input',
-                'placeholder': 'Suchtext',
+                'placeholder': Language.Subscription.SearchText,
                 'required': 'true'
             }
         });
 
-        const cbTitle = this.dom.createCheckbox('Titel', fields.includes('Title'), {
+        const cbTitle = this.dom.createCheckbox(Language.Subscription.Title, fields.includes('Title'), {
             value: 'Title',
             className: 'subQueryField'
         });
-        const cbTopic = this.dom.createCheckbox('Thema', fields.includes('Topic'), {
+        const cbTopic = this.dom.createCheckbox(Language.Subscription.Topic, fields.includes('Topic'), {
             value: 'Topic',
             className: 'subQueryField'
         });
-        const cbDescription = this.dom.createCheckbox('Beschreibung', fields.includes('Description'), {
+        const cbDescription = this.dom.createCheckbox(Language.Subscription.Description, fields.includes('Description'), {
             value: 'Description',
             className: 'subQueryField'
         });
-        const cbChannel = this.dom.createCheckbox('Sender', fields.includes('Channel'), {
+        const cbChannel = this.dom.createCheckbox(Language.Subscription.Channel, fields.includes('Channel'), {
             value: 'Channel',
             className: 'subQueryField'
         });
 
-        const removeBtn = this.dom.createIconButton('remove_circle_outline', 'Anfrage entfernen', (e) => {
+        const removeBtn = this.dom.createIconButton(Icons.Remove, Language.Subscription.RemoveQuery, (e) => {
             e.target.closest('.mvpl-query-row').remove();
         });
         removeBtn.classList.add('btnRemoveQuery');
@@ -1926,7 +2006,7 @@ class MediathekPluginConfig {
         const subData = this.subscriptionEditor.getEditorValues();
 
         if (!subData.Search || !subData.Search.Criteria || subData.Search.Criteria.length === 0) {
-            Helper.showToast("Bitte mindestens eine Suchanfrage definieren.");
+            Helper.showToast(Language.Subscription.DefineAtLeastOneQuery);
             return;
         }
 
@@ -1960,7 +2040,7 @@ class MediathekPluginConfig {
     }
 
     deleteSubscription(id) {
-        Helper.confirmationPopup("Soll dieses Abonnement wirklich gelöscht werden?", "Löschen bestätigen", (confirmed) => {
+        Helper.confirmationPopup(Language.Subscription.ConfirmDelete, Language.Subscription.ConfirmDeleteTitle, (confirmed) => {
             if (confirmed) {
                 this.currentConfig.Subscriptions = this.currentConfig.Subscriptions.filter(function (s) {
                     return s.Id !== id;
@@ -2033,14 +2113,14 @@ class MediathekPluginConfig {
         this.currentItemForAdvancedDl = item;
         if (!this.currentItemForAdvancedDl) return;
 
-        document.getElementById('advancedDownloadTitle').innerText = 'Erweiterter Download: ' + this.currentItemForAdvancedDl.Title;
+        document.getElementById(DomIds.AdvancedDownload.Title).innerText = Language.AdvancedDownload.TitlePrefix + this.currentItemForAdvancedDl.Title;
         document.getElementById('advancedDownloadIndex').value = ""; // Not needed anymore contextually but keeping element
 
-        document.getElementById('advDlPath').value = this.currentConfig.DefaultDownloadPath || '';
+        document.getElementById(DomIds.AdvancedDownload.Path).value = this.currentConfig.Paths.DefaultDownloadPath || '';
 
-        let proposedFilename = (this.currentItemForAdvancedDl.Topic || 'video') + " - " + (this.currentItemForAdvancedDl.Title || 'video');
+        let proposedFilename = (this.currentItemForAdvancedDl.Topic || Language.Search.Video) + " - " + (this.currentItemForAdvancedDl.Title || Language.Search.Video);
         proposedFilename = proposedFilename.replace(/["\/\\?%*:|<>]/g, '-') + '.mp4';
-        document.getElementById('advDlFilename').value = proposedFilename;
+        document.getElementById(DomIds.AdvancedDownload.Filename).value = proposedFilename;
 
         this.getVideoInfo(item, (videoInfo) => {
             console.log("Got VideoInfo: ", videoInfo);
@@ -2064,7 +2144,7 @@ class MediathekPluginConfig {
         if (subtitleUrls.length === 0) {
             advDlSub.checked = false;
             advDlSub.disabled = true;
-            advDlSubDesc.textContent = "Keine Untertitel verfügbar für dieses Video.";
+            advDlSubDesc.textContent = Language.Search.NoSubtitles;
         } else {
             advDlSub.disabled = false;
             advDlSubDesc.textContent = "";
@@ -2099,17 +2179,17 @@ class MediathekPluginConfig {
         }).then((result) => {
             Dashboard.hideLoadingMsg();
             this.closeAdvancedDownloadDialog();
-            Helper.showToast("Download für '" + this.currentItemForAdvancedDl.Title + "' gestartet.");
+            Helper.showToast(Language.Search.DownloadStarted(this.currentItemForAdvancedDl.Title));
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
-            Helper.showError(err, "Fehler beim Starten des Downloads: ");
+            Helper.showError(err, Language.Search.ErrorDownloadStart);
         });
     }
 
     testSubscription() {
         const subData = this.subscriptionEditor.getEditorValues();
         if (!subData.Search || !subData.Search.Criteria || subData.Search.Criteria.length === 0) {
-            Helper.showToast("Bitte mindestens eine Suchanfrage definieren.");
+            Helper.showToast(Language.Subscription.DefineAtLeastOneQuery);
             return;
         }
 
@@ -2141,7 +2221,7 @@ class MediathekPluginConfig {
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
             console.error("Test subscription error:", err);
-            Helper.showError(err, "Fehler beim Testen des Abonnements: ");
+            Helper.showError(err, Language.Search.ErrorTestingAbo);
         });
     }
 
@@ -2157,13 +2237,12 @@ class MediathekPluginConfig {
 
         if (!results || results.length === 0) {
             const noRes = document.createElement('p');
-            noRes.textContent = "Keine Treffer für diese Konfiguration.";
+            noRes.textContent = Language.Search.NoTestHits;
             container.appendChild(noRes);
             return;
         }
 
-        countContainer.textContent = results.length + " Einträge gefunden, die heruntergeladen würden:";
-
+                    countContainer.textContent = Language.Search.TestResultsCount(results.length);
         const paperList = document.createElement('div');
         paperList.classList.add('paperList');
 
@@ -2265,22 +2344,22 @@ class MediathekPluginConfig {
 
         // Path selector in main config
         document.getElementById('btnSelectPath').addEventListener('click', () => {
-            Helper.openFolderDialog('txtDefaultDownloadPath', 'Globalen Standard Download Pfad wählen');
+            Helper.openFolderDialog('txtDefaultDownloadPath', Language.General.SelectGlobalDefaultDownloadPath);
         });
         document.getElementById('btnSelectSubscriptionShowPath').addEventListener('click', () => {
-            Helper.openFolderDialog('txtDefaultSubscriptionShowPath', 'Standard Serien Pfad (Abo) wählen');
+            Helper.openFolderDialog('txtDefaultSubscriptionShowPath', Language.General.SelectDefaultShowPathAbo);
         });
         document.getElementById('btnSelectSubscriptionMoviePath').addEventListener('click', () => {
-            Helper.openFolderDialog('txtDefaultSubscriptionMoviePath', 'Standard Film Pfad (Abo) wählen');
+            Helper.openFolderDialog('txtDefaultSubscriptionMoviePath', Language.General.SelectDefaultMoviePathAbo);
         });
         document.getElementById('btnSelectManualShowPath').addEventListener('click', () => {
-            Helper.openFolderDialog('txtDefaultManualShowPath', 'Standard Serien Pfad (Manuell) wählen');
+            Helper.openFolderDialog('txtDefaultManualShowPath', Language.General.SelectDefaultShowPathManual);
         });
         document.getElementById('btnSelectManualMoviePath').addEventListener('click', () => {
-            Helper.openFolderDialog('txtDefaultManualMoviePath', 'Standard Film Pfad (Manuell) wählen');
+            Helper.openFolderDialog('txtDefaultManualMoviePath', Language.General.SelectDefaultMoviePathManual);
         });
         document.getElementById('btnSelectTempPath').addEventListener('click', () => {
-            Helper.openFolderDialog('txtTempDownloadPath', 'Temporären Download Pfad wählen');
+            Helper.openFolderDialog('txtTempDownloadPath', Language.General.SelectTempDownloadPath);
         });
 
         document.getElementById('chkMoviePathWithTopic').addEventListener('change', (e) => {
@@ -2290,7 +2369,7 @@ class MediathekPluginConfig {
 
         // Path selectors in subscription editor
         document.getElementById('btnSelectSubPath').addEventListener('click', () => {
-            Helper.openFolderDialog('subPath', 'Abo Pfad wählen');
+            Helper.openFolderDialog('subPath', Language.Subscription.SelectAboPath);
             this.subscriptionEditor.updateSubPathHoverText();
         });
         document.getElementById('subPath').addEventListener('input', () => {
@@ -2303,8 +2382,8 @@ class MediathekPluginConfig {
             this.subscriptionEditor.updateSubPathHoverText();
         });
         // Path selector in advanced download dialog
-        document.getElementById('btnSelectAdvPath').addEventListener('click', () => {
-            Helper.openFolderDialog('advDlPath', 'Download Pfad wählen');
+        document.getElementById(DomIds.AdvancedDownload.BtnSelectPath).addEventListener('click', () => {
+            Helper.openFolderDialog(DomIds.AdvancedDownload.Path, Language.AdvancedDownload.SelectDownloadPath);
         });
 
         // Subscription Management
