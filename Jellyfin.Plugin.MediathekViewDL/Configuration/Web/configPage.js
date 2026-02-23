@@ -451,8 +451,27 @@ const Language = {
 }
 
 const DomIds = {
+    Common: {
+        View: "MediathekViewDLConfigPage",
+        CriticalErrorOverlay: "mvpl-critical-error-overlay",
+        CriticalErrorMessage: "mvpl-critical-error-message"
+    },
     Tabs: {
-        Subscription: "subscription"
+        Prefix: "tab-",
+        ButtonPrefix: "mvpl-btn-tab-",
+        Container: "mvpl-tabs-spacer",
+        Search: "search",
+        Settings: "settings",
+        Subscriptions: "subscriptions",
+        Downloads: "downloads",
+        Adoption: "adoption",
+        Buttons: {
+            Search: "mvpl-btn-tab-search",
+            Settings: "mvpl-btn-tab-settings",
+            Subscriptions: "mvpl-btn-tab-subscriptions",
+            Downloads: "mvpl-btn-tab-downloads",
+            Adoption: "mvpl-btn-tab-adoption"
+        }
     },
     Download: {
         AktivList: "activeDownloadsList",
@@ -468,7 +487,83 @@ const DomIds = {
         MaxDuration: "numMaxDuration",
         MinBroadcastDate: "dateMinBroadcast",
         MaxBroadcastDate: "dateMaxBroadcast",
-        Results: "searchResults"
+        Results: "searchResults",
+        BtnHelp: "mvpl-btn-search-help"
+    },
+    Settings: {
+        Form: "MediathekGeneralConfigForm",
+        LastRun: "lblLastRun",
+        Paths: {
+            DefaultDownload: "txtDefaultDownloadPath",
+            SubscriptionShow: "txtDefaultSubscriptionShowPath",
+            SubscriptionMovie: "txtDefaultSubscriptionMoviePath",
+            ManualShow: "txtDefaultManualShowPath",
+            ManualMovie: "txtDefaultManualMoviePath",
+            TempDownload: "txtTempDownloadPath",
+            UseTopicForMoviePath: "chkMoviePathWithTopic",
+            Buttons: {
+                SelectDefaultDownload: "btnSelectPath",
+                SelectSubscriptionShow: "btnSelectSubscriptionShowPath",
+                SelectSubscriptionMovie: "btnSelectSubscriptionMoviePath",
+                SelectManualShow: "btnSelectManualShowPath",
+                SelectManualMovie: "btnSelectManualMoviePath",
+                SelectTemp: "btnSelectTempPath"
+            }
+        },
+        Download: {
+            Subtitles: "chkDownloadSubtitles",
+            ScanLibrary: "chkScanLibraryAfterDownload",
+            DirectAudioExtraction: "chkEnableDirectAudioExtraction",
+            MinFreeDiskSpace: "txtMinFreeDiskSpaceMiB",
+            MaxBandwidth: "txtMaxBandwidthMBits"
+        },
+        Network: {
+            AllowUnknownDomains: "chkAllowUnknownDomains",
+            AllowHttp: "chkAllowHttp"
+        },
+        Maintenance: {
+            StrmCleanup: "chkEnableStrmCleanup",
+            AllowDownloadUnknownDiskSpace: "chkAllowDownloadOnUnknownDiskSpace"
+        },
+        Search: {
+            FetchStreamSizes: "chkFetchStreamSizes",
+            SearchFutureBroadcasts: "chkSearchInFutureBroadcasts"
+        },
+        Defaults: {
+            MinDuration: "defSubMinDuration",
+            MaxDuration: "defSubMaxDuration",
+            UseStreamingUrlFiles: "defSubUseStreamingUrlFiles",
+            DownloadFullVideoSecondaryAudio: "defSubDownloadFullVideoForSecondaryAudio",
+            AlwaysCreateSubfolder: "defSubAlwaysCreateSubfolder",
+            EnhancedDuplicateDetection: "defSubEnhancedDuplicateDetection",
+            AutoUpgradeHigherQuality: "defSubAutoUpgradeToHigherQuality",
+            AllowFallbackLowerQuality: "defSubAllowFallbackToLowerQuality",
+            QualityCheckWithUrl: "defSubQualityCheckWithUrl",
+            EnforceSeries: "defSubEnforceSeries",
+            AbsoluteEpisodeNumbering: "defSubAllowAbsoluteEpisodeNumbering",
+            TreatNonEpisodesAsExtras: "defSubTreatNonEpisodesAsExtras",
+            SaveExtrasAsStrm: "defSubSaveExtrasAsStrm",
+            SaveTrailers: "defSubSaveTrailers",
+            SaveInterviews: "defSubSaveInterviews",
+            SaveGenericExtras: "defSubSaveGenericExtras",
+            OriginalLanguage: "defSubOriginalLanguage",
+            CreateNfo: "defSubCreateNfo",
+            AppendDate: "defSubAppendDateToTitle",
+            AppendTime: "defSubAppendTimeToTitle",
+            AllowAudioDesc: "defSubAllowAudioDesc",
+            AllowSignLanguage: "defSubAllowSignLanguage",
+            Containers: {
+                SaveTrailers: "defSubSaveTrailersContainer",
+                SaveInterviews: "defSubSaveInterviewsContainer",
+                SaveGenericExtras: "defSubSaveGenericExtrasContainer",
+                SaveExtrasAsStrm: "defSubSaveExtrasAsStrmContainer",
+                AbsoluteEpisodeNumbering: "defSubAllowAbsoluteEpisodeNumberingContainer",
+                DownloadFullVideoSecondaryAudio: "defSubDownloadFullVideoForSecondaryAudioContainer",
+                UseStreamingUrlFiles: "defSubUseStreamingUrlFilesContainer",
+                QualityCheckWithUrl: "defSubQualityCheckWithUrlContainer",
+                AppendTime: "defSubAppendTimeToTitleContainer"
+            }
+        }
     },
     LiveTv:{
         Tuner: "mvpl-btn-setup-tuner",
@@ -480,14 +575,77 @@ const DomIds = {
         LocalTable: "localFilesTable",
         ExternalTable: "apiResultsTable",
     },
+    Subscription: {
+        List: "subscriptionList",
+        BtnNew: "mvpl-btn-new-sub",
+        Editor: {
+            Container: "subscriptionEditor",
+            Form: "mvpl-form-subscription",
+            Title: "subEditorTitle",
+            Id: "subId",
+            Name: "subName",
+            OriginalLanguage: "subOriginalLanguage",
+            MinDuration: "subMinDuration",
+            MaxDuration: "subMaxDuration",
+            MinBroadcastDate: "subMinBroadcastDate",
+            MaxBroadcastDate: "subMaxBroadcastDate",
+            Path: "subPath",
+            EnforceSeries: "subEnforceSeries",
+            CreateNfo: "subCreateNfo",
+            AllowAudioDesc: "subAllowAudioDesc",
+            AbsoluteEpisodeNumbering: "subAllowAbsoluteEpisodeNumbering",
+            AppendDate: "subAppendDateToTitle",
+            AppendTime: "subAppendTimeToTitle",
+            AllowSignLanguage: "subAllowSignLanguage",
+            AlwaysCreateSubfolder: "subAlwaysCreateSubfolder",
+            EnhancedDuplicateDetection: "subEnhancedDuplicateDetection",
+            AutoUpgradeHigherQuality: "subAutoUpgradeToHigherQuality",
+            TreatNonEpisodesAsExtras: "subTreatNonEpisodesAsExtras",
+            SaveTrailers: "subSaveTrailers",
+            SaveInterviews: "subSaveInterviews",
+            SaveGenericExtras: "subSaveGenericExtras",
+            SaveExtrasAsStrm: "subSaveExtrasAsStrm",
+            UseStreamingUrlFiles: "subUseStreamingUrlFiles",
+            DownloadFullVideoSecondaryAudio: "subDownloadFullVideoForSecondaryAudio",
+            AllowFallbackLowerQuality: "subAllowFallbackToLowerQuality",
+            QualityCheckWithUrl: "subQualityCheckWithUrl",
+            QueriesContainer: "queriesContainer",
+            BtnAddQuery: "mvpl-btn-add-query",
+            BtnTest: "mvpl-btn-test-sub",
+            BtnCancel: "mvpl-btn-cancel-sub",
+            BtnSelectPath: "btnSelectSubPath",
+            Containers: {
+                SaveTrailers: "subSaveTrailersContainer",
+                SaveInterviews: "subSaveInterviewsContainer",
+                SaveGenericExtras: "subSaveGenericExtrasContainer",
+                SaveExtrasAsStrm: "subSaveExtrasAsStrmContainer",
+                AbsoluteEpisodeNumbering: "subAllowAbsoluteEpisodeNumberingContainer",
+                DownloadFullVideoSecondaryAudio: "subDownloadFullVideoForSecondaryAudioContainer",
+                UseStreamingUrlFiles: "subUseStreamingUrlFilesContainer",
+                QualityCheckWithUrl: "subQualityCheckWithUrlContainer",
+                AppendTime: "subAppendTimeToTitleContainer"
+            }
+        },
+        TestModal: {
+            Container: "testSubscriptionModal",
+            Results: "testSubscriptionResults",
+            Count: "testSubscriptionCount",
+            BtnClose: "mvpl-btn-close-test-results"
+        }
+    },
     AdvancedDownload: {
         Modal: "advancedDownloadModal",
+        Form: "mvpl-adv-download-form",
         Title: "advancedDownloadTitle",
         Path: "advDlPath",
         Filename: "advDlFilename",
         Subtitles: "advDlSubtitles",
         SubtitlesDesc: "advDlSubtitlesDesc",
-        BtnSelectPath: "btnSelectPath"
+        BtnSelectPath: "btnSelectPath",
+        BtnClose: "mvpl-btn-close-adv-download",
+        BtnDuckDuckGoTmdb: "mvpl-btn-duckduckgo-tmdb",
+        BtnDuckDuckGo: "mvpl-btn-duckduckgo",
+        Index: "advancedDownloadIndex"
     }
 }
 
@@ -661,7 +819,7 @@ class SearchController {
             url: url,
             data: JSON.stringify(item),
             contentType: 'application/json'
-        }).then((result) => {
+        }).then(() => {
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
             Helper.showToast(Language.Search.InQueue(item.Title));
@@ -673,7 +831,7 @@ class SearchController {
     }
 
     createSubFromSearch(btn, title, channel, topic) {
-        this.config.switchTab(DomIds.Tabs.Subscription);
+        this.config.switchTab(DomIds.Tabs.Subscriptions);
         const def = this.config.currentConfig.SubscriptionDefaults || {};
         const defDl = def.DownloadSettings || {};
         const defSearch = def.SearchSettings || {};
@@ -1170,111 +1328,111 @@ class DependencyManager {
     constructor() {
         this.rules = [
             {
-                controllerId: 'subTreatNonEpisodesAsExtras',
-                dependentId: 'subSaveTrailersContainer',
+                controllerId: DomIds.Subscription.Editor.TreatNonEpisodesAsExtras,
+                dependentId: DomIds.Subscription.Editor.Containers.SaveTrailers,
                 showWhen: true,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'subTreatNonEpisodesAsExtras',
-                dependentId: 'subSaveInterviewsContainer',
+                controllerId: DomIds.Subscription.Editor.TreatNonEpisodesAsExtras,
+                dependentId: DomIds.Subscription.Editor.Containers.SaveInterviews,
                 showWhen: true,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'subTreatNonEpisodesAsExtras',
-                dependentId: 'subSaveGenericExtrasContainer',
+                controllerId: DomIds.Subscription.Editor.TreatNonEpisodesAsExtras,
+                dependentId: DomIds.Subscription.Editor.Containers.SaveGenericExtras,
                 showWhen: true,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'subTreatNonEpisodesAsExtras',
-                dependentId: 'subSaveExtrasAsStrmContainer',
+                controllerId: DomIds.Subscription.Editor.TreatNonEpisodesAsExtras,
+                dependentId: DomIds.Subscription.Editor.Containers.SaveExtrasAsStrm,
                 showWhen: true,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'subEnforceSeries',
-                dependentId: 'subAllowAbsoluteEpisodeNumberingContainer',
+                controllerId: DomIds.Subscription.Editor.EnforceSeries,
+                dependentId: DomIds.Subscription.Editor.Containers.AbsoluteEpisodeNumbering,
                 showWhen: true,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'subUseStreamingUrlFiles',
-                dependentId: 'subDownloadFullVideoForSecondaryAudioContainer',
+                controllerId: DomIds.Subscription.Editor.UseStreamingUrlFiles,
+                dependentId: DomIds.Subscription.Editor.Containers.DownloadFullVideoSecondaryAudio,
                 showWhen: false,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'subDownloadFullVideoForSecondaryAudio',
-                dependentId: 'subUseStreamingUrlFilesContainer',
+                controllerId: DomIds.Subscription.Editor.DownloadFullVideoSecondaryAudio,
+                dependentId: DomIds.Subscription.Editor.Containers.UseStreamingUrlFiles,
                 showWhen: false,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'subAllowFallbackToLowerQuality',
-                dependentId: 'subQualityCheckWithUrlContainer',
+                controllerId: DomIds.Subscription.Editor.AllowFallbackLowerQuality,
+                dependentId: DomIds.Subscription.Editor.Containers.QualityCheckWithUrl,
                 showWhen: true,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'subAppendDateToTitle',
-                dependentId: 'subAppendTimeToTitleContainer',
+                controllerId: DomIds.Subscription.Editor.AppendDate,
+                dependentId: DomIds.Subscription.Editor.Containers.AppendTime,
                 showWhen: true,
                 disableWhenHidden: true
             },
             // Rules for Subscription Defaults
             {
-                controllerId: 'defSubTreatNonEpisodesAsExtras',
-                dependentId: 'defSubSaveTrailersContainer',
+                controllerId: DomIds.Settings.Defaults.TreatNonEpisodesAsExtras,
+                dependentId: DomIds.Settings.Defaults.Containers.SaveTrailers,
                 showWhen: true,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'defSubTreatNonEpisodesAsExtras',
-                dependentId: 'defSubSaveInterviewsContainer',
+                controllerId: DomIds.Settings.Defaults.TreatNonEpisodesAsExtras,
+                dependentId: DomIds.Settings.Defaults.Containers.SaveInterviews,
                 showWhen: true,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'defSubTreatNonEpisodesAsExtras',
-                dependentId: 'defSubSaveGenericExtrasContainer',
+                controllerId: DomIds.Settings.Defaults.TreatNonEpisodesAsExtras,
+                dependentId: DomIds.Settings.Defaults.Containers.SaveGenericExtras,
                 showWhen: true,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'defSubTreatNonEpisodesAsExtras',
-                dependentId: 'defSubSaveExtrasAsStrmContainer',
+                controllerId: DomIds.Settings.Defaults.TreatNonEpisodesAsExtras,
+                dependentId: DomIds.Settings.Defaults.Containers.SaveExtrasAsStrm,
                 showWhen: true,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'defSubEnforceSeries',
-                dependentId: 'defSubAllowAbsoluteEpisodeNumberingContainer',
+                controllerId: DomIds.Settings.Defaults.EnforceSeries,
+                dependentId: DomIds.Settings.Defaults.Containers.AbsoluteEpisodeNumbering,
                 showWhen: true,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'defSubUseStreamingUrlFiles',
-                dependentId: 'defSubDownloadFullVideoForSecondaryAudioContainer',
+                controllerId: DomIds.Settings.Defaults.UseStreamingUrlFiles,
+                dependentId: DomIds.Settings.Defaults.Containers.DownloadFullVideoSecondaryAudio,
                 showWhen: false,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'defSubDownloadFullVideoForSecondaryAudio',
-                dependentId: 'defSubUseStreamingUrlFilesContainer',
+                controllerId: DomIds.Settings.Defaults.DownloadFullVideoSecondaryAudio,
+                dependentId: DomIds.Settings.Defaults.Containers.UseStreamingUrlFiles,
                 showWhen: false,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'defSubAllowFallbackToLowerQuality',
-                dependentId: 'defSubQualityCheckWithUrlContainer',
+                controllerId: DomIds.Settings.Defaults.AllowFallbackLowerQuality,
+                dependentId: DomIds.Settings.Defaults.Containers.QualityCheckWithUrl,
                 showWhen: true,
                 disableWhenHidden: true
             },
             {
-                controllerId: 'defSubAppendDateToTitle',
-                dependentId: 'defSubAppendTimeToTitleContainer',
+                controllerId: DomIds.Settings.Defaults.AppendDate,
+                dependentId: DomIds.Settings.Defaults.Containers.AppendTime,
                 showWhen: true,
                 disableWhenHidden: true
             }
@@ -1334,15 +1492,15 @@ class SubscriptionEditor {
      * Updates the hover text (title attribute) for the subPath input.
      */
     updateSubPathHoverText() {
-        const el = document.getElementById('subPath');
+        const el = document.getElementById(DomIds.Subscription.Editor.Path);
         if (!el) return;
 
         if (StringHelper.isNullOrWhitespace(el.value)) {
             const defaultMoviePath = window.MediathekViewDL.config.currentConfig.Paths.DefaultSubscriptionMoviePath || Language.General.NotConfigured;
             const defaultShowPath = window.MediathekViewDL.config.currentConfig.Paths.DefaultSubscriptionShowPath || Language.General.NotConfigured;
             const useTopicForMoviePath = window.MediathekViewDL.config.currentConfig.Paths.UseTopicForMoviePath;
-            const alwaysCreateSubfolder = document.getElementById('subAlwaysCreateSubfolder').checked;
-            const subName = document.getElementById('subName').value || Language.General.AboNamePlaceholder;
+            const alwaysCreateSubfolder = document.getElementById(DomIds.Subscription.Editor.AlwaysCreateSubfolder).checked;
+            const subName = document.getElementById(DomIds.Subscription.Editor.Name).value || Language.General.AboNamePlaceholder;
 
             const joinPath = (path, part) => {
                 if (!path || path === Language.General.NotConfigured) return path;
@@ -1365,7 +1523,7 @@ class SubscriptionEditor {
     }
 
     updatePathPlaceholderText(defaultMoviePath = '-', defaultShowPath = '-') {
-        const el = document.getElementById('subPath');
+        const el = document.getElementById(DomIds.Subscription.Editor.Path);
         if (!el) return;
 
         let message = Language.Subscription.DefaultPathUsed;
@@ -1388,37 +1546,37 @@ class SubscriptionEditor {
             const defMeta = def.MetadataSettings || {};
             const defAccess = def.AccessibilitySettings || {};
 
-            document.getElementById('subId').value = "";
-            document.getElementById('subName').value = "";
-            document.getElementById('subOriginalLanguage').value = defMeta.OriginalLanguage || "";
-            document.getElementById('subMinDuration').value = defSearch.MinDurationMinutes || "";
-            document.getElementById('subMaxDuration').value = defSearch.MaxDurationMinutes || "";
-            document.getElementById('subMinBroadcastDate').value = "";
-            document.getElementById('subMaxBroadcastDate').value = "";
-            document.getElementById('subPath').value = "";
+            document.getElementById(DomIds.Subscription.Editor.Id).value = "";
+            document.getElementById(DomIds.Subscription.Editor.Name).value = "";
+            document.getElementById(DomIds.Subscription.Editor.OriginalLanguage).value = defMeta.OriginalLanguage || "";
+            document.getElementById(DomIds.Subscription.Editor.MinDuration).value = defSearch.MinDurationMinutes || "";
+            document.getElementById(DomIds.Subscription.Editor.MaxDuration).value = defSearch.MaxDurationMinutes || "";
+            document.getElementById(DomIds.Subscription.Editor.MinBroadcastDate).value = "";
+            document.getElementById(DomIds.Subscription.Editor.MaxBroadcastDate).value = "";
+            document.getElementById(DomIds.Subscription.Editor.Path).value = "";
             this.updateSubPathHoverText();
 
-            document.getElementById('subEnforceSeries').checked = defSeries.EnforceSeriesParsing || false;
-            document.getElementById('subCreateNfo').checked = defMeta.CreateNfo || false;
-            document.getElementById('subAllowAudioDesc').checked = defAccess.AllowAudioDescription || false;
-            document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = defSeries.AllowAbsoluteEpisodeNumbering || false;
-            document.getElementById('subAppendDateToTitle').checked = defMeta.AppendDateToTitle || false;
-            document.getElementById('subAppendTimeToTitle').checked = defMeta.AppendTimeToTitle || false;
-            document.getElementById('subAllowSignLanguage').checked = defAccess.AllowSignLanguage || false;
-            document.getElementById('subTreatNonEpisodesAsExtras').checked = defSeries.TreatNonEpisodesAsExtras || false;
-            document.getElementById('subSaveTrailers').checked = defSeries.SaveTrailers !== undefined ? defSeries.SaveTrailers : true;
-            document.getElementById('subSaveInterviews').checked = defSeries.SaveInterviews !== undefined ? defSeries.SaveInterviews : true;
-            document.getElementById('subSaveGenericExtras').checked = defSeries.SaveGenericExtras !== undefined ? defSeries.SaveGenericExtras : true;
-            document.getElementById('subSaveExtrasAsStrm').checked = defSeries.SaveExtrasAsStrm || false;
-            document.getElementById('subUseStreamingUrlFiles').checked = defDl.UseStreamingUrlFiles || false;
-            document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = defDl.DownloadFullVideoForSecondaryAudio || false;
-            document.getElementById('subAlwaysCreateSubfolder').checked = defDl.AlwaysCreateSubfolder || false;
-            document.getElementById('subEnhancedDuplicateDetection').checked = defDl.EnhancedDuplicateDetection || false;
-            document.getElementById('subAutoUpgradeToHigherQuality').checked = defDl.AutoUpgradeToHigherQuality || false;
-            document.getElementById('subAllowFallbackToLowerQuality').checked = defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true;
-            document.getElementById('subQualityCheckWithUrl').checked = defDl.QualityCheckWithUrl || false;
+            document.getElementById(DomIds.Subscription.Editor.EnforceSeries).checked = defSeries.EnforceSeriesParsing || false;
+            document.getElementById(DomIds.Subscription.Editor.CreateNfo).checked = defMeta.CreateNfo || false;
+            document.getElementById(DomIds.Subscription.Editor.AllowAudioDesc).checked = defAccess.AllowAudioDescription || false;
+            document.getElementById(DomIds.Subscription.Editor.AbsoluteEpisodeNumbering).checked = defSeries.AllowAbsoluteEpisodeNumbering || false;
+            document.getElementById(DomIds.Subscription.Editor.AppendDate).checked = defMeta.AppendDateToTitle || false;
+            document.getElementById(DomIds.Subscription.Editor.AppendTime).checked = defMeta.AppendTimeToTitle || false;
+            document.getElementById(DomIds.Subscription.Editor.AllowSignLanguage).checked = defAccess.AllowSignLanguage || false;
+            document.getElementById(DomIds.Subscription.Editor.TreatNonEpisodesAsExtras).checked = defSeries.TreatNonEpisodesAsExtras || false;
+            document.getElementById(DomIds.Subscription.Editor.SaveTrailers).checked = defSeries.SaveTrailers !== undefined ? defSeries.SaveTrailers : true;
+            document.getElementById(DomIds.Subscription.Editor.SaveInterviews).checked = defSeries.SaveInterviews !== undefined ? defSeries.SaveInterviews : true;
+            document.getElementById(DomIds.Subscription.Editor.SaveGenericExtras).checked = defSeries.SaveGenericExtras !== undefined ? defSeries.SaveGenericExtras : true;
+            document.getElementById(DomIds.Subscription.Editor.SaveExtrasAsStrm).checked = defSeries.SaveExtrasAsStrm || false;
+            document.getElementById(DomIds.Subscription.Editor.UseStreamingUrlFiles).checked = defDl.UseStreamingUrlFiles || false;
+            document.getElementById(DomIds.Subscription.Editor.DownloadFullVideoSecondaryAudio).checked = defDl.DownloadFullVideoForSecondaryAudio || false;
+            document.getElementById(DomIds.Subscription.Editor.AlwaysCreateSubfolder).checked = defDl.AlwaysCreateSubfolder || false;
+            document.getElementById(DomIds.Subscription.Editor.EnhancedDuplicateDetection).checked = defDl.EnhancedDuplicateDetection || false;
+            document.getElementById(DomIds.Subscription.Editor.AutoUpgradeHigherQuality).checked = defDl.AutoUpgradeToHigherQuality || false;
+            document.getElementById(DomIds.Subscription.Editor.AllowFallbackLowerQuality).checked = defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true;
+            document.getElementById(DomIds.Subscription.Editor.QualityCheckWithUrl).checked = defDl.QualityCheckWithUrl || false;
 
-            document.getElementById('queriesContainer').textContent = '';
+            document.getElementById(DomIds.Subscription.Editor.QueriesContainer).textContent = '';
             this.config.addQueryRow(null);
 
             // Force update dependencies to hide unchecked dependent fields
@@ -1426,8 +1584,8 @@ class SubscriptionEditor {
             return;
         }
 
-        document.getElementById('subId').value = sub.Id || "";
-        document.getElementById('subName').value = sub.Name;
+        document.getElementById(DomIds.Subscription.Editor.Id).value = sub.Id || "";
+        document.getElementById(DomIds.Subscription.Editor.Name).value = sub.Name;
 
         // Ensure nested objects exist to avoid errors
         const search = sub.Search || {};
@@ -1436,36 +1594,36 @@ class SubscriptionEditor {
         const metadata = sub.Metadata || {};
         const accessibility = sub.Accessibility || {};
 
-        document.getElementById('subOriginalLanguage').value = metadata.OriginalLanguage || "";
-        document.getElementById('subMinDuration').value = search.MinDurationMinutes || "";
-        document.getElementById('subMaxDuration').value = search.MaxDurationMinutes || "";
-        document.getElementById('subMinBroadcastDate').value = search.MinBroadcastDate ? search.MinBroadcastDate.split('T')[0] : "";
-        document.getElementById('subMaxBroadcastDate').value = search.MaxBroadcastDate ? search.MaxBroadcastDate.split('T')[0] : "";
-        document.getElementById('subPath').value = download.DownloadPath || "";
+        document.getElementById(DomIds.Subscription.Editor.OriginalLanguage).value = metadata.OriginalLanguage || "";
+        document.getElementById(DomIds.Subscription.Editor.MinDuration).value = search.MinDurationMinutes || "";
+        document.getElementById(DomIds.Subscription.Editor.MaxDuration).value = search.MaxDurationMinutes || "";
+        document.getElementById(DomIds.Subscription.Editor.MinBroadcastDate).value = search.MinBroadcastDate ? search.MinBroadcastDate.split('T')[0] : "";
+        document.getElementById(DomIds.Subscription.Editor.MaxBroadcastDate).value = search.MaxBroadcastDate ? search.MaxBroadcastDate.split('T')[0] : "";
+        document.getElementById(DomIds.Subscription.Editor.Path).value = download.DownloadPath || "";
         this.updateSubPathHoverText();
 
-        document.getElementById('subEnforceSeries').checked = series.EnforceSeriesParsing;
-        document.getElementById('subCreateNfo').checked = metadata.CreateNfo !== undefined ? metadata.CreateNfo : false;
-        document.getElementById('subAllowAudioDesc').checked = accessibility.AllowAudioDescription;
-        document.getElementById('subAllowAbsoluteEpisodeNumbering').checked = series.AllowAbsoluteEpisodeNumbering;
-        document.getElementById('subAppendDateToTitle').checked = metadata.AppendDateToTitle !== undefined ? metadata.AppendDateToTitle : false;
-        document.getElementById('subAppendTimeToTitle').checked = metadata.AppendTimeToTitle !== undefined ? metadata.AppendTimeToTitle : false;
-        document.getElementById('subAllowSignLanguage').checked = accessibility.AllowSignLanguage;
-        document.getElementById('subAlwaysCreateSubfolder').checked = download.AlwaysCreateSubfolder || false;
-        document.getElementById('subEnhancedDuplicateDetection').checked = download.EnhancedDuplicateDetection;
-        document.getElementById('subAutoUpgradeToHigherQuality').checked = download.AutoUpgradeToHigherQuality !== undefined ? download.AutoUpgradeToHigherQuality : false;
-        document.getElementById('subTreatNonEpisodesAsExtras').checked = series.TreatNonEpisodesAsExtras;
-        document.getElementById('subSaveTrailers').checked = series.SaveTrailers !== undefined ? series.SaveTrailers : true;
-        document.getElementById('subSaveInterviews').checked = series.SaveInterviews !== undefined ? series.SaveInterviews : true;
-        document.getElementById('subSaveGenericExtras').checked = series.SaveGenericExtras !== undefined ? series.SaveGenericExtras : true;
-        document.getElementById('subSaveExtrasAsStrm').checked = series.SaveExtrasAsStrm;
-        document.getElementById('subUseStreamingUrlFiles').checked = download.UseStreamingUrlFiles;
-        document.getElementById('subDownloadFullVideoForSecondaryAudio').checked = download.DownloadFullVideoForSecondaryAudio;
-        document.getElementById('subAllowFallbackToLowerQuality').checked = download.AllowFallbackToLowerQuality !== undefined ? download.AllowFallbackToLowerQuality : true;
-        document.getElementById('subQualityCheckWithUrl').checked = download.QualityCheckWithUrl !== undefined ? download.QualityCheckWithUrl : false;
+        document.getElementById(DomIds.Subscription.Editor.EnforceSeries).checked = series.EnforceSeriesParsing;
+        document.getElementById(DomIds.Subscription.Editor.CreateNfo).checked = metadata.CreateNfo !== undefined ? metadata.CreateNfo : false;
+        document.getElementById(DomIds.Subscription.Editor.AllowAudioDesc).checked = accessibility.AllowAudioDescription;
+        document.getElementById(DomIds.Subscription.Editor.AbsoluteEpisodeNumbering).checked = series.AllowAbsoluteEpisodeNumbering;
+        document.getElementById(DomIds.Subscription.Editor.AppendDate).checked = metadata.AppendDateToTitle !== undefined ? metadata.AppendDateToTitle : false;
+        document.getElementById(DomIds.Subscription.Editor.AppendTime).checked = metadata.AppendTimeToTitle !== undefined ? metadata.AppendTimeToTitle : false;
+        document.getElementById(DomIds.Subscription.Editor.AllowSignLanguage).checked = accessibility.AllowSignLanguage;
+        document.getElementById(DomIds.Subscription.Editor.AlwaysCreateSubfolder).checked = download.AlwaysCreateSubfolder || false;
+        document.getElementById(DomIds.Subscription.Editor.EnhancedDuplicateDetection).checked = download.EnhancedDuplicateDetection;
+        document.getElementById(DomIds.Subscription.Editor.AutoUpgradeHigherQuality).checked = download.AutoUpgradeToHigherQuality !== undefined ? download.AutoUpgradeToHigherQuality : false;
+        document.getElementById(DomIds.Subscription.Editor.TreatNonEpisodesAsExtras).checked = series.TreatNonEpisodesAsExtras;
+        document.getElementById(DomIds.Subscription.Editor.SaveTrailers).checked = series.SaveTrailers !== undefined ? series.SaveTrailers : true;
+        document.getElementById(DomIds.Subscription.Editor.SaveInterviews).checked = series.SaveInterviews !== undefined ? series.SaveInterviews : true;
+        document.getElementById(DomIds.Subscription.Editor.SaveGenericExtras).checked = series.SaveGenericExtras !== undefined ? series.SaveGenericExtras : true;
+        document.getElementById(DomIds.Subscription.Editor.SaveExtrasAsStrm).checked = series.SaveExtrasAsStrm;
+        document.getElementById(DomIds.Subscription.Editor.UseStreamingUrlFiles).checked = download.UseStreamingUrlFiles;
+        document.getElementById(DomIds.Subscription.Editor.DownloadFullVideoSecondaryAudio).checked = download.DownloadFullVideoForSecondaryAudio;
+        document.getElementById(DomIds.Subscription.Editor.AllowFallbackLowerQuality).checked = download.AllowFallbackToLowerQuality !== undefined ? download.AllowFallbackToLowerQuality : true;
+        document.getElementById(DomIds.Subscription.Editor.QualityCheckWithUrl).checked = download.QualityCheckWithUrl !== undefined ? download.QualityCheckWithUrl : false;
 
 
-        const queriesContainer = document.getElementById('queriesContainer');
+        const queriesContainer = document.getElementById(DomIds.Subscription.Editor.QueriesContainer);
         queriesContainer.textContent = '';
         const criteria = search.Criteria || [];
         if (criteria.length > 0) {
@@ -1482,36 +1640,36 @@ class SubscriptionEditor {
      * @returns {Object} The subscription object.
      */
     getEditorValues() {
-        const id = document.getElementById('subId').value;
-        const name = document.getElementById('subName').value;
-        const originalLanguage = document.getElementById('subOriginalLanguage').value;
-        const minDuration = document.getElementById('subMinDuration').value;
-        const maxDuration = document.getElementById('subMaxDuration').value;
-        const minBroadcastDate = document.getElementById('subMinBroadcastDate').value;
-        const maxBroadcastDate = document.getElementById('subMaxBroadcastDate').value;
-        const path = document.getElementById('subPath').value;
-        const enforce = document.getElementById('subEnforceSeries').checked;
-        const createNfo = document.getElementById('subCreateNfo').checked;
-        const allowAudio = document.getElementById('subAllowAudioDesc').checked;
-        const allowAbsolute = document.getElementById('subAllowAbsoluteEpisodeNumbering').checked;
-        const appendDateToTitle = document.getElementById('subAppendDateToTitle').checked;
-        const appendTimeToTitle = document.getElementById('subAppendTimeToTitle').checked;
-        const allowSignLanguage = document.getElementById('subAllowSignLanguage').checked;
-        const alwaysCreateSubfolder = document.getElementById('subAlwaysCreateSubfolder').checked;
-        const enhancedDuplicateDetection = document.getElementById('subEnhancedDuplicateDetection').checked;
-        const autoUpgradeToHigherQuality = document.getElementById('subAutoUpgradeToHigherQuality').checked;
-        const treatNonEpisodesAsExtras = document.getElementById('subTreatNonEpisodesAsExtras').checked;
-        const saveTrailers = document.getElementById('subSaveTrailers').checked;
-        const saveInterviews = document.getElementById('subSaveInterviews').checked;
-        const saveGenericExtras = document.getElementById('subSaveGenericExtras').checked;
-        const saveExtrasAsStrm = document.getElementById('subSaveExtrasAsStrm').checked;
-        const useStreamingUrlFiles = document.getElementById('subUseStreamingUrlFiles').checked;
-        const downloadFullVideoForSecondaryAudio = document.getElementById('subDownloadFullVideoForSecondaryAudio').checked;
-        const allowFallbackToLowerQuality = document.getElementById('subAllowFallbackToLowerQuality').checked;
-        const qualityCheckWithUrl = document.getElementById('subQualityCheckWithUrl').checked;
+        const id = document.getElementById(DomIds.Subscription.Editor.Id).value;
+        const name = document.getElementById(DomIds.Subscription.Editor.Name).value;
+        const originalLanguage = document.getElementById(DomIds.Subscription.Editor.OriginalLanguage).value;
+        const minDuration = document.getElementById(DomIds.Subscription.Editor.MinDuration).value;
+        const maxDuration = document.getElementById(DomIds.Subscription.Editor.MaxDuration).value;
+        const minBroadcastDate = document.getElementById(DomIds.Subscription.Editor.MinBroadcastDate).value;
+        const maxBroadcastDate = document.getElementById(DomIds.Subscription.Editor.MaxBroadcastDate).value;
+        const path = document.getElementById(DomIds.Subscription.Editor.Path).value;
+        const enforce = document.getElementById(DomIds.Subscription.Editor.EnforceSeries).checked;
+        const createNfo = document.getElementById(DomIds.Subscription.Editor.CreateNfo).checked;
+        const allowAudio = document.getElementById(DomIds.Subscription.Editor.AllowAudioDesc).checked;
+        const allowAbsolute = document.getElementById(DomIds.Subscription.Editor.AbsoluteEpisodeNumbering).checked;
+        const appendDateToTitle = document.getElementById(DomIds.Subscription.Editor.AppendDate).checked;
+        const appendTimeToTitle = document.getElementById(DomIds.Subscription.Editor.AppendTime).checked;
+        const allowSignLanguage = document.getElementById(DomIds.Subscription.Editor.AllowSignLanguage).checked;
+        const alwaysCreateSubfolder = document.getElementById(DomIds.Subscription.Editor.AlwaysCreateSubfolder).checked;
+        const enhancedDuplicateDetection = document.getElementById(DomIds.Subscription.Editor.EnhancedDuplicateDetection).checked;
+        const autoUpgradeToHigherQuality = document.getElementById(DomIds.Subscription.Editor.AutoUpgradeHigherQuality).checked;
+        const treatNonEpisodesAsExtras = document.getElementById(DomIds.Subscription.Editor.TreatNonEpisodesAsExtras).checked;
+        const saveTrailers = document.getElementById(DomIds.Subscription.Editor.SaveTrailers).checked;
+        const saveInterviews = document.getElementById(DomIds.Subscription.Editor.SaveInterviews).checked;
+        const saveGenericExtras = document.getElementById(DomIds.Subscription.Editor.SaveGenericExtras).checked;
+        const saveExtrasAsStrm = document.getElementById(DomIds.Subscription.Editor.SaveExtrasAsStrm).checked;
+        const useStreamingUrlFiles = document.getElementById(DomIds.Subscription.Editor.UseStreamingUrlFiles).checked;
+        const downloadFullVideoForSecondaryAudio = document.getElementById(DomIds.Subscription.Editor.DownloadFullVideoSecondaryAudio).checked;
+        const allowFallbackToLowerQuality = document.getElementById(DomIds.Subscription.Editor.AllowFallbackLowerQuality).checked;
+        const qualityCheckWithUrl = document.getElementById(DomIds.Subscription.Editor.QualityCheckWithUrl).checked;
 
         const criteria = [];
-        document.querySelectorAll('#queriesContainer .mvpl-query-row').forEach(function (row) {
+        document.querySelectorAll('#' + DomIds.Subscription.Editor.QueriesContainer + ' .mvpl-query-row').forEach(function (row) {
             const queryText = row.querySelector('.subQueryText').value;
             if (queryText) {
                 const fields = [];
@@ -1574,8 +1732,8 @@ class SubscriptionEditor {
      * @param {string|null} titleText - Optional title override.
      */
     show(sub, titleText) {
-        const editor = document.getElementById('subscriptionEditor');
-        const title = document.getElementById('subEditorTitle');
+        const editor = document.getElementById(DomIds.Subscription.Editor.Container);
+        const title = document.getElementById(DomIds.Subscription.Editor.Title);
 
         if (titleText) {
             title.innerText = titleText;
@@ -1594,7 +1752,7 @@ class SubscriptionEditor {
      * Closes the subscription editor modal.
      */
     close() {
-        document.getElementById('subscriptionEditor').style.display = 'none';
+        document.getElementById(DomIds.Subscription.Editor.Container).style.display = 'none';
     }
 }
 
@@ -1663,8 +1821,7 @@ class MediathekPluginConfig {
             this.measureSpan.style.letterSpacing = styles.letterSpacing;
             this.measureSpan.style.textTransform = styles.textTransform;
 
-            const text = input.value || input.placeholder || '';
-            this.measureSpan.textContent = text;
+            this.measureSpan.textContent = input.value || input.placeholder || '';
 
             // Add some padding (e.g. 25px) to account for internal padding of input
             let newWidth = Math.max(minWidth, this.measureSpan.offsetWidth + 25);
@@ -1690,14 +1847,14 @@ class MediathekPluginConfig {
         // Check for initialization errors first
         const errorUrl = ApiClient.getUrl('/' + this.pluginName + '/InitializationError');
         ApiClient.getJSON(errorUrl).then((errorMessage) => {
-            const overlay = document.getElementById('mvpl-critical-error-overlay');
-            const errorMsg = document.getElementById('mvpl-critical-error-message');
+            const overlay = document.getElementById(DomIds.Common.CriticalErrorOverlay);
+            const errorMsg = document.getElementById(DomIds.Common.CriticalErrorMessage);
             if (errorMessage) {
                 overlay.classList.remove('mvpl-hidden');
                 errorMsg.textContent = errorMessage;
                 // Also disable the main form to be safe
-                document.getElementById('MediathekGeneralConfigForm').style.pointerEvents = 'none';
-                document.getElementById('MediathekGeneralConfigForm').style.opacity = '0.5';
+                document.getElementById(DomIds.Settings.Form).style.pointerEvents = 'none';
+                document.getElementById(DomIds.Settings.Form).style.opacity = '0.5';
             } else {
                 overlay.classList.add('mvpl-hidden');
             }
@@ -1709,25 +1866,25 @@ class MediathekPluginConfig {
         ApiClient.getPluginConfiguration(this.pluginId).then((config) => {
             this.currentConfig = config;
 
-            document.querySelector('#txtDefaultDownloadPath').value = config.Paths.DefaultDownloadPath || "";
-            document.querySelector('#txtDefaultSubscriptionShowPath').value = config.Paths.DefaultSubscriptionShowPath || "";
-            document.querySelector('#txtDefaultSubscriptionMoviePath').value = config.Paths.DefaultSubscriptionMoviePath || "";
-            document.querySelector('#txtDefaultManualShowPath').value = config.Paths.DefaultManualShowPath || "";
-            document.querySelector('#txtDefaultManualMoviePath').value = config.Paths.DefaultManualMoviePath || "";
-            document.querySelector('#txtTempDownloadPath').value = config.Paths.TempDownloadPath || "";
-            document.querySelector('#chkDownloadSubtitles').checked = config.Download.DownloadSubtitles;
-            document.querySelector('#chkAllowUnknownDomains').checked = config.Network.AllowUnknownDomains;
-            document.querySelector('#chkAllowHttp').checked = config.Network.AllowHttp;
-            document.querySelector('#chkScanLibraryAfterDownload').checked = config.Download.ScanLibraryAfterDownload;
-            document.querySelector('#chkEnableDirectAudioExtraction').checked = config.Download.EnableDirectAudioExtraction;
-            document.querySelector('#chkEnableStrmCleanup').checked = config.Maintenance.EnableStrmCleanup;
-            document.querySelector('#chkFetchStreamSizes').checked = config.Search.FetchStreamSizes;
-            document.querySelector('#chkSearchInFutureBroadcasts').checked = config.Search.SearchInFutureBroadcasts;
-            document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked = config.Maintenance.AllowDownloadOnUnknownDiskSpace;
-            document.querySelector('#txtMinFreeDiskSpaceMiB').value = config.Download.MinFreeDiskSpaceBytes ? (config.Download.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
-            document.querySelector('#txtMaxBandwidthMBits').value = config.Download.MaxBandwidthMBits || 0;
-            document.querySelector('#lblLastRun').innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : Language.Subscription.Never;
-            document.querySelector('#chkMoviePathWithTopic').checked = config.Paths.UseTopicForMoviePath;
+            document.querySelector('#' + DomIds.Settings.Paths.DefaultDownload).value = config.Paths.DefaultDownloadPath || "";
+            document.querySelector('#' + DomIds.Settings.Paths.SubscriptionShow).value = config.Paths.DefaultSubscriptionShowPath || "";
+            document.querySelector('#' + DomIds.Settings.Paths.SubscriptionMovie).value = config.Paths.DefaultSubscriptionMoviePath || "";
+            document.querySelector('#' + DomIds.Settings.Paths.ManualShow).value = config.Paths.DefaultManualShowPath || "";
+            document.querySelector('#' + DomIds.Settings.Paths.ManualMovie).value = config.Paths.DefaultManualMoviePath || "";
+            document.querySelector('#' + DomIds.Settings.Paths.TempDownload).value = config.Paths.TempDownloadPath || "";
+            document.querySelector('#' + DomIds.Settings.Download.Subtitles).checked = config.Download.DownloadSubtitles;
+            document.querySelector('#' + DomIds.Settings.Network.AllowUnknownDomains).checked = config.Network.AllowUnknownDomains;
+            document.querySelector('#' + DomIds.Settings.Network.AllowHttp).checked = config.Network.AllowHttp;
+            document.querySelector('#' + DomIds.Settings.Download.ScanLibrary).checked = config.Download.ScanLibraryAfterDownload;
+            document.querySelector('#' + DomIds.Settings.Download.DirectAudioExtraction).checked = config.Download.EnableDirectAudioExtraction;
+            document.querySelector('#' + DomIds.Settings.Maintenance.StrmCleanup).checked = config.Maintenance.EnableStrmCleanup;
+            document.querySelector('#' + DomIds.Settings.Search.FetchStreamSizes).checked = config.Search.FetchStreamSizes;
+            document.querySelector('#' + DomIds.Settings.Search.SearchFutureBroadcasts).checked = config.Search.SearchInFutureBroadcasts;
+            document.querySelector('#' + DomIds.Settings.Maintenance.AllowDownloadUnknownDiskSpace).checked = config.Maintenance.AllowDownloadOnUnknownDiskSpace;
+            document.querySelector('#' + DomIds.Settings.Download.MinFreeDiskSpace).value = config.Download.MinFreeDiskSpaceBytes ? (config.Download.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
+            document.querySelector('#' + DomIds.Settings.Download.MaxBandwidth).value = config.Download.MaxBandwidthMBits || 0;
+            document.querySelector('#' + DomIds.Settings.LastRun).innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : Language.Subscription.Never;
+            document.querySelector('#' + DomIds.Settings.Paths.UseTopicForMoviePath).checked = config.Paths.UseTopicForMoviePath;
 
             // Load Subscription Defaults
             const def = config.SubscriptionDefaults || {};
@@ -1737,31 +1894,31 @@ class MediathekPluginConfig {
             const defMeta = def.MetadataSettings || {};
             const defAccess = def.AccessibilitySettings || {};
 
-            document.querySelector('#defSubMinDuration').value = defSearch.MinDurationMinutes || "";
-            document.querySelector('#defSubMaxDuration').value = defSearch.MaxDurationMinutes || "";
-            document.querySelector('#defSubUseStreamingUrlFiles').checked = defDl.UseStreamingUrlFiles || false;
-            document.querySelector('#defSubDownloadFullVideoForSecondaryAudio').checked = defDl.DownloadFullVideoForSecondaryAudio || false;
-            document.querySelector('#defSubAlwaysCreateSubfolder').checked = defDl.AlwaysCreateSubfolder || false;
-            document.querySelector('#defSubEnhancedDuplicateDetection').checked = defDl.EnhancedDuplicateDetection || false;
-            document.querySelector('#defSubAutoUpgradeToHigherQuality').checked = defDl.AutoUpgradeToHigherQuality || false;
-            document.querySelector('#defSubAllowFallbackToLowerQuality').checked = defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true;
-            document.querySelector('#defSubQualityCheckWithUrl').checked = defDl.QualityCheckWithUrl || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.MinDuration).value = defSearch.MinDurationMinutes || "";
+            document.querySelector('#' + DomIds.Settings.Defaults.MaxDuration).value = defSearch.MaxDurationMinutes || "";
+            document.querySelector('#' + DomIds.Settings.Defaults.UseStreamingUrlFiles).checked = defDl.UseStreamingUrlFiles || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.DownloadFullVideoSecondaryAudio).checked = defDl.DownloadFullVideoForSecondaryAudio || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.AlwaysCreateSubfolder).checked = defDl.AlwaysCreateSubfolder || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.EnhancedDuplicateDetection).checked = defDl.EnhancedDuplicateDetection || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.AutoUpgradeHigherQuality).checked = defDl.AutoUpgradeToHigherQuality || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.AllowFallbackLowerQuality).checked = defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true;
+            document.querySelector('#' + DomIds.Settings.Defaults.QualityCheckWithUrl).checked = defDl.QualityCheckWithUrl || false;
 
-            document.querySelector('#defSubEnforceSeries').checked = defSeries.EnforceSeriesParsing || false;
-            document.querySelector('#defSubAllowAbsoluteEpisodeNumbering').checked = defSeries.AllowAbsoluteEpisodeNumbering || false;
-            document.querySelector('#defSubTreatNonEpisodesAsExtras').checked = defSeries.TreatNonEpisodesAsExtras || false;
-            document.querySelector('#defSubSaveExtrasAsStrm').checked = defSeries.SaveExtrasAsStrm || false;
-            document.querySelector('#defSubSaveTrailers').checked = defSeries.SaveTrailers !== undefined ? defSeries.SaveTrailers : true;
-            document.querySelector('#defSubSaveInterviews').checked = defSeries.SaveInterviews !== undefined ? defSeries.SaveInterviews : true;
-            document.querySelector('#defSubSaveGenericExtras').checked = defSeries.SaveGenericExtras !== undefined ? defSeries.SaveGenericExtras : true;
+            document.querySelector('#' + DomIds.Settings.Defaults.EnforceSeries).checked = defSeries.EnforceSeriesParsing || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.AbsoluteEpisodeNumbering).checked = defSeries.AllowAbsoluteEpisodeNumbering || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.TreatNonEpisodesAsExtras).checked = defSeries.TreatNonEpisodesAsExtras || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.SaveExtrasAsStrm).checked = defSeries.SaveExtrasAsStrm || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.SaveTrailers).checked = defSeries.SaveTrailers !== undefined ? defSeries.SaveTrailers : true;
+            document.querySelector('#' + DomIds.Settings.Defaults.SaveInterviews).checked = defSeries.SaveInterviews !== undefined ? defSeries.SaveInterviews : true;
+            document.querySelector('#' + DomIds.Settings.Defaults.SaveGenericExtras).checked = defSeries.SaveGenericExtras !== undefined ? defSeries.SaveGenericExtras : true;
 
-            document.querySelector('#defSubOriginalLanguage').value = defMeta.OriginalLanguage || "";
-            document.querySelector('#defSubCreateNfo').checked = defMeta.CreateNfo || false;
-            document.querySelector('#defSubAppendDateToTitle').checked = defMeta.AppendDateToTitle || false;
-            document.querySelector('#defSubAppendTimeToTitle').checked = defMeta.AppendTimeToTitle || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.OriginalLanguage).value = defMeta.OriginalLanguage || "";
+            document.querySelector('#' + DomIds.Settings.Defaults.CreateNfo).checked = defMeta.CreateNfo || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.AppendDate).checked = defMeta.AppendDateToTitle || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.AppendTime).checked = defMeta.AppendTimeToTitle || false;
 
-            document.querySelector('#defSubAllowAudioDesc').checked = defAccess.AllowAudioDescription || false;
-            document.querySelector('#defSubAllowSignLanguage').checked = defAccess.AllowSignLanguage || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.AllowAudioDesc).checked = defAccess.AllowAudioDescription || false;
+            document.querySelector('#' + DomIds.Settings.Defaults.AllowSignLanguage).checked = defAccess.AllowSignLanguage || false;
 
             this.renderSubscriptionsList();
             this.adoptionController.populateAbos(config.Subscriptions);
@@ -1791,21 +1948,21 @@ class MediathekPluginConfig {
      */
     switchTab(tabId) {
         document.querySelectorAll('.mvpl-tab-content').forEach(el => el.style.display = 'none');
-        document.getElementById('tab-' + tabId).style.display = 'block';
+        document.getElementById(DomIds.Tabs.Prefix + tabId).style.display = 'block';
 
-        const buttons = document.querySelectorAll('.mvpl-tabs-spacer button');
+        const buttons = document.querySelectorAll('#' + DomIds.Tabs.Container + ' button');
         buttons.forEach(btn => {
             btn.classList.remove('selected');
             btn.setAttribute('aria-selected', 'false');
         });
 
-        const selectedBtn = document.getElementById('mvpl-btn-tab-' + tabId);
+        const selectedBtn = document.getElementById(DomIds.Tabs.ButtonPrefix + tabId);
         if (selectedBtn) {
             selectedBtn.classList.add('selected');
             selectedBtn.setAttribute('aria-selected', 'true');
         }
 
-        if (tabId === 'downloads') {
+        if (tabId === DomIds.Tabs.Downloads) {
             this.downloadsController.startPolling();
         } else {
             this.downloadsController.stopPolling();
@@ -1857,7 +2014,7 @@ class MediathekPluginConfig {
 
     // ---SUBSCRIPTION LOGIC ---
     renderSubscriptionsList() {
-        const list = document.getElementById('subscriptionList');
+        const list = document.getElementById(DomIds.Subscription.List);
         list.textContent = "";
 
         if (!this.currentConfig.Subscriptions || this.currentConfig.Subscriptions.length === 0) {
@@ -1933,7 +2090,7 @@ class MediathekPluginConfig {
                 ApiClient.ajax({
                     type: "POST",
                     url: ApiClient.getUrl('/' + this.pluginName + '/ResetProcessedItems?subscriptionId=' + id),
-                }).then((result) => {
+                }).then(() => {
                     // noinspection JSUnresolvedReference
                     Dashboard.hideLoadingMsg();
                     Helper.showToast(Language.Subscription.ProcessedItemsReset);
@@ -1999,7 +2156,7 @@ class MediathekPluginConfig {
             ]
         });
 
-        document.getElementById('queriesContainer').appendChild(newRow);
+        document.getElementById(DomIds.Subscription.Editor.QueriesContainer).appendChild(newRow);
     }
 
     saveSubscription() {
@@ -2114,7 +2271,7 @@ class MediathekPluginConfig {
         if (!this.currentItemForAdvancedDl) return;
 
         document.getElementById(DomIds.AdvancedDownload.Title).innerText = Language.AdvancedDownload.TitlePrefix + this.currentItemForAdvancedDl.Title;
-        document.getElementById('advancedDownloadIndex').value = ""; // Not needed anymore contextually but keeping element
+        document.getElementById(DomIds.AdvancedDownload.Index).value = ""; // Not needed anymore contextually but keeping element
 
         document.getElementById(DomIds.AdvancedDownload.Path).value = this.currentConfig.Paths.DefaultDownloadPath || '';
 
@@ -2128,18 +2285,18 @@ class MediathekPluginConfig {
                 console.log("Got RecommendedPath: ", recommended);
                 if (recommended) {
                     if (recommended.FileName) {
-                        document.getElementById('advDlFilename').value = recommended.FileName;
+                        document.getElementById(DomIds.AdvancedDownload.Filename).value = recommended.FileName;
                     }
                     if (recommended.Path) {
-                        document.getElementById('advDlPath').value = recommended.Path;
+                        document.getElementById(DomIds.AdvancedDownload.Path).value = recommended.Path;
                     }
                 }
             });
         });
 
 
-        let advDlSub = document.getElementById('advDlSubtitles');
-        let advDlSubDesc = document.getElementById('advDlSubtitlesDesc');
+        let advDlSub = document.getElementById(DomIds.AdvancedDownload.Subtitles);
+        let advDlSubDesc = document.getElementById(DomIds.AdvancedDownload.SubtitlesDesc);
         const subtitleUrls = this.currentItemForAdvancedDl.SubtitleUrls || [];
         if (subtitleUrls.length === 0) {
             advDlSub.checked = false;
@@ -2151,11 +2308,11 @@ class MediathekPluginConfig {
         }
 
 
-        document.getElementById('advancedDownloadModal').style.display = 'flex';
+        document.getElementById(DomIds.AdvancedDownload.Modal).style.display = 'flex';
     }
 
     closeAdvancedDownloadDialog() {
-        document.getElementById('advancedDownloadModal').style.display = 'none';
+        document.getElementById(DomIds.AdvancedDownload.Modal).style.display = 'none';
     }
 
     performAdvancedDownload() {
@@ -2163,9 +2320,9 @@ class MediathekPluginConfig {
 
         const downloadOptions = {
             item: this.currentItemForAdvancedDl,
-            downloadPath: document.getElementById('advDlPath').value,
-            fileName: document.getElementById('advDlFilename').value,
-            downloadSubtitles: document.getElementById('advDlSubtitles').checked
+            downloadPath: document.getElementById(DomIds.AdvancedDownload.Path).value,
+            fileName: document.getElementById(DomIds.AdvancedDownload.Filename).value,
+            downloadSubtitles: document.getElementById(DomIds.AdvancedDownload.Subtitles).checked
         };
 
         const url = ApiClient.getUrl('/' + this.pluginName + '/AdvancedDownload');
@@ -2176,7 +2333,7 @@ class MediathekPluginConfig {
             url: url,
             data: JSON.stringify(downloadOptions),
             contentType: 'application/json'
-        }).then((result) => {
+        }).then(() => {
             Dashboard.hideLoadingMsg();
             this.closeAdvancedDownloadDialog();
             Helper.showToast(Language.Search.DownloadStarted(this.currentItemForAdvancedDl.Title));
@@ -2217,7 +2374,7 @@ class MediathekPluginConfig {
                 }
             }
             this.renderTestResults(results);
-            document.getElementById('testSubscriptionModal').style.display = 'flex';
+            document.getElementById(DomIds.Subscription.TestModal.Container).style.display = 'flex';
         }).catch((err) => {
             Dashboard.hideLoadingMsg();
             console.error("Test subscription error:", err);
@@ -2226,12 +2383,12 @@ class MediathekPluginConfig {
     }
 
     closeTestSubscriptionDialog() {
-        document.getElementById('testSubscriptionModal').style.display = 'none';
+        document.getElementById(DomIds.Subscription.TestModal.Container).style.display = 'none';
     }
 
     renderTestResults(results) {
-        const container = document.getElementById('testSubscriptionResults');
-        const countContainer = document.getElementById('testSubscriptionCount');
+        const container = document.getElementById(DomIds.Subscription.TestModal.Results);
+        const countContainer = document.getElementById(DomIds.Subscription.TestModal.Count);
         container.textContent = "";
         countContainer.textContent = "";
 
@@ -2263,77 +2420,77 @@ class MediathekPluginConfig {
      */
     bindEvents() {
         // Page Show
-        document.querySelector('#MediathekViewDLConfigPage').addEventListener('pageshow', () => {
+        document.querySelector('#' + DomIds.Common.View).addEventListener('pageshow', () => {
             this.loadConfig();
         });
 
         // Tab Navigation
-        document.getElementById('mvpl-btn-tab-search').addEventListener('click', () => this.switchTab('search'));
-        document.getElementById('mvpl-btn-tab-settings').addEventListener('click', () => this.switchTab('settings'));
-        document.getElementById('mvpl-btn-tab-subscriptions').addEventListener('click', () => this.switchTab('subscriptions'));
-        document.getElementById('mvpl-btn-tab-downloads').addEventListener('click', () => this.switchTab('downloads'));
-        document.getElementById('mvpl-btn-tab-adoption').addEventListener('click', () => this.switchTab('adoption'));
+        document.getElementById(DomIds.Tabs.Buttons.Search).addEventListener('click', () => this.switchTab(DomIds.Tabs.Search));
+        document.getElementById(DomIds.Tabs.Buttons.Settings).addEventListener('click', () => this.switchTab(DomIds.Tabs.Settings));
+        document.getElementById(DomIds.Tabs.Buttons.Subscriptions).addEventListener('click', () => this.switchTab(DomIds.Tabs.Subscriptions));
+        document.getElementById(DomIds.Tabs.Buttons.Downloads).addEventListener('click', () => this.switchTab(DomIds.Tabs.Downloads));
+        document.getElementById(DomIds.Tabs.Buttons.Adoption).addEventListener('click', () => this.switchTab(DomIds.Tabs.Adoption));
 
         // Main Config Form
-        document.getElementById('MediathekGeneralConfigForm').addEventListener('submit', (e) => {
+        document.getElementById(DomIds.Settings.Form).addEventListener('submit', (e) => {
             e.preventDefault();
-            this.currentConfig.Paths.DefaultDownloadPath = document.querySelector('#txtDefaultDownloadPath').value;
-            this.currentConfig.Paths.DefaultSubscriptionShowPath = document.querySelector('#txtDefaultSubscriptionShowPath').value;
-            this.currentConfig.Paths.DefaultSubscriptionMoviePath = document.querySelector('#txtDefaultSubscriptionMoviePath').value;
-            this.currentConfig.Paths.DefaultManualShowPath = document.querySelector('#txtDefaultManualShowPath').value;
-            this.currentConfig.Paths.DefaultManualMoviePath = document.querySelector('#txtDefaultManualMoviePath').value;
-            this.currentConfig.Paths.TempDownloadPath = document.querySelector('#txtTempDownloadPath').value;
+            this.currentConfig.Paths.DefaultDownloadPath = document.querySelector('#' + DomIds.Settings.Paths.DefaultDownload).value;
+            this.currentConfig.Paths.DefaultSubscriptionShowPath = document.querySelector('#' + DomIds.Settings.Paths.SubscriptionShow).value;
+            this.currentConfig.Paths.DefaultSubscriptionMoviePath = document.querySelector('#' + DomIds.Settings.Paths.SubscriptionMovie).value;
+            this.currentConfig.Paths.DefaultManualShowPath = document.querySelector('#' + DomIds.Settings.Paths.ManualShow).value;
+            this.currentConfig.Paths.DefaultManualMoviePath = document.querySelector('#' + DomIds.Settings.Paths.ManualMovie).value;
+            this.currentConfig.Paths.TempDownloadPath = document.querySelector('#' + DomIds.Settings.Paths.TempDownload).value;
 
-            this.currentConfig.Download.DownloadSubtitles = document.querySelector('#chkDownloadSubtitles').checked;
-            this.currentConfig.Network.AllowUnknownDomains = document.querySelector('#chkAllowUnknownDomains').checked;
-            this.currentConfig.Network.AllowHttp = document.querySelector('#chkAllowHttp').checked;
-            this.currentConfig.Download.ScanLibraryAfterDownload = document.querySelector('#chkScanLibraryAfterDownload').checked;
-            this.currentConfig.Download.EnableDirectAudioExtraction = document.querySelector('#chkEnableDirectAudioExtraction').checked;
-            this.currentConfig.Maintenance.EnableStrmCleanup = document.querySelector('#chkEnableStrmCleanup').checked;
-            this.currentConfig.Search.FetchStreamSizes = document.querySelector('#chkFetchStreamSizes').checked;
-            this.currentConfig.Search.SearchInFutureBroadcasts = document.querySelector('#chkSearchInFutureBroadcasts').checked;
-            this.currentConfig.Maintenance.AllowDownloadOnUnknownDiskSpace = document.querySelector('#chkAllowDownloadOnUnknownDiskSpace').checked;
+            this.currentConfig.Download.DownloadSubtitles = document.querySelector('#' + DomIds.Settings.Download.Subtitles).checked;
+            this.currentConfig.Network.AllowUnknownDomains = document.querySelector('#' + DomIds.Settings.Network.AllowUnknownDomains).checked;
+            this.currentConfig.Network.AllowHttp = document.querySelector('#' + DomIds.Settings.Network.AllowHttp).checked;
+            this.currentConfig.Download.ScanLibraryAfterDownload = document.querySelector('#' + DomIds.Settings.Download.ScanLibrary).checked;
+            this.currentConfig.Download.EnableDirectAudioExtraction = document.querySelector('#' + DomIds.Settings.Download.DirectAudioExtraction).checked;
+            this.currentConfig.Maintenance.EnableStrmCleanup = document.querySelector('#' + DomIds.Settings.Maintenance.StrmCleanup).checked;
+            this.currentConfig.Search.FetchStreamSizes = document.querySelector('#' + DomIds.Settings.Search.FetchStreamSizes).checked;
+            this.currentConfig.Search.SearchInFutureBroadcasts = document.querySelector('#' + DomIds.Settings.Search.SearchFutureBroadcasts).checked;
+            this.currentConfig.Maintenance.AllowDownloadOnUnknownDiskSpace = document.querySelector('#' + DomIds.Settings.Maintenance.AllowDownloadUnknownDiskSpace).checked;
 
-            const minFreeSpaceMiB = parseInt(document.querySelector('#txtMinFreeDiskSpaceMiB').value, 10);
+            const minFreeSpaceMiB = parseInt(document.querySelector('#' + DomIds.Settings.Download.MinFreeDiskSpace).value, 10);
             this.currentConfig.Download.MinFreeDiskSpaceBytes = isNaN(minFreeSpaceMiB) ? (1.5 * 1024 * 1024 * 1024) : (minFreeSpaceMiB * 1024 * 1024);
-            this.currentConfig.Paths.UseTopicForMoviePath = document.querySelector('#chkMoviePathWithTopic').checked;
+            this.currentConfig.Paths.UseTopicForMoviePath = document.querySelector('#' + DomIds.Settings.Paths.UseTopicForMoviePath).checked;
 
-            const maxBandwidth = parseInt(document.querySelector('#txtMaxBandwidthMBits').value, 10);
+            const maxBandwidth = parseInt(document.querySelector('#' + DomIds.Settings.Download.MaxBandwidth).value, 10);
             this.currentConfig.Download.MaxBandwidthMBits = isNaN(maxBandwidth) ? 0 : maxBandwidth;
 
             // Save Subscription Defaults
             this.currentConfig.SubscriptionDefaults = {
                 DownloadSettings: {
-                    UseStreamingUrlFiles: document.querySelector('#defSubUseStreamingUrlFiles').checked,
-                    DownloadFullVideoForSecondaryAudio: document.querySelector('#defSubDownloadFullVideoForSecondaryAudio').checked,
-                    AlwaysCreateSubfolder: document.querySelector('#defSubAlwaysCreateSubfolder').checked,
-                    EnhancedDuplicateDetection: document.querySelector('#defSubEnhancedDuplicateDetection').checked,
-                    AutoUpgradeToHigherQuality: document.querySelector('#defSubAutoUpgradeToHigherQuality').checked,
-                    AllowFallbackToLowerQuality: document.querySelector('#defSubAllowFallbackToLowerQuality').checked,
-                    QualityCheckWithUrl: document.querySelector('#defSubQualityCheckWithUrl').checked
+                    UseStreamingUrlFiles: document.querySelector('#' + DomIds.Settings.Defaults.UseStreamingUrlFiles).checked,
+                    DownloadFullVideoForSecondaryAudio: document.querySelector('#' + DomIds.Settings.Defaults.DownloadFullVideoSecondaryAudio).checked,
+                    AlwaysCreateSubfolder: document.querySelector('#' + DomIds.Settings.Defaults.AlwaysCreateSubfolder).checked,
+                    EnhancedDuplicateDetection: document.querySelector('#' + DomIds.Settings.Defaults.EnhancedDuplicateDetection).checked,
+                    AutoUpgradeToHigherQuality: document.querySelector('#' + DomIds.Settings.Defaults.AutoUpgradeHigherQuality).checked,
+                    AllowFallbackToLowerQuality: document.querySelector('#' + DomIds.Settings.Defaults.AllowFallbackLowerQuality).checked,
+                    QualityCheckWithUrl: document.querySelector('#' + DomIds.Settings.Defaults.QualityCheckWithUrl).checked
                 },
                 SearchSettings: {
-                    MinDurationMinutes: document.querySelector('#defSubMinDuration').value ? parseInt(document.querySelector('#defSubMinDuration').value, 10) : null,
-                    MaxDurationMinutes: document.querySelector('#defSubMaxDuration').value ? parseInt(document.querySelector('#defSubMaxDuration').value, 10) : null
+                    MinDurationMinutes: document.querySelector('#' + DomIds.Settings.Defaults.MinDuration).value ? parseInt(document.querySelector('#' + DomIds.Settings.Defaults.MinDuration).value, 10) : null,
+                    MaxDurationMinutes: document.querySelector('#' + DomIds.Settings.Defaults.MaxDuration).value ? parseInt(document.querySelector('#' + DomIds.Settings.Defaults.MaxDuration).value, 10) : null
                 },
                 SeriesSettings: {
-                    EnforceSeriesParsing: document.querySelector('#defSubEnforceSeries').checked,
-                    AllowAbsoluteEpisodeNumbering: document.querySelector('#defSubAllowAbsoluteEpisodeNumbering').checked,
-                    TreatNonEpisodesAsExtras: document.querySelector('#defSubTreatNonEpisodesAsExtras').checked,
-                    SaveExtrasAsStrm: document.querySelector('#defSubSaveExtrasAsStrm').checked,
-                    SaveTrailers: document.querySelector('#defSubSaveTrailers').checked,
-                    SaveInterviews: document.querySelector('#defSubSaveInterviews').checked,
-                    SaveGenericExtras: document.querySelector('#defSubSaveGenericExtras').checked
+                    EnforceSeriesParsing: document.querySelector('#' + DomIds.Settings.Defaults.EnforceSeries).checked,
+                    AllowAbsoluteEpisodeNumbering: document.querySelector('#' + DomIds.Settings.Defaults.AbsoluteEpisodeNumbering).checked,
+                    TreatNonEpisodesAsExtras: document.querySelector('#' + DomIds.Settings.Defaults.TreatNonEpisodesAsExtras).checked,
+                    SaveExtrasAsStrm: document.querySelector('#' + DomIds.Settings.Defaults.SaveExtrasAsStrm).checked,
+                    SaveTrailers: document.querySelector('#' + DomIds.Settings.Defaults.SaveTrailers).checked,
+                    SaveInterviews: document.querySelector('#' + DomIds.Settings.Defaults.SaveInterviews).checked,
+                    SaveGenericExtras: document.querySelector('#' + DomIds.Settings.Defaults.SaveGenericExtras).checked
                 },
                 MetadataSettings: {
-                    OriginalLanguage: document.querySelector('#defSubOriginalLanguage').value,
-                    CreateNfo: document.querySelector('#defSubCreateNfo').checked,
-                    AppendDateToTitle: document.querySelector('#defSubAppendDateToTitle').checked,
-                    AppendTimeToTitle: document.querySelector('#defSubAppendTimeToTitle').checked
+                    OriginalLanguage: document.querySelector('#' + DomIds.Settings.Defaults.OriginalLanguage).value,
+                    CreateNfo: document.querySelector('#' + DomIds.Settings.Defaults.CreateNfo).checked,
+                    AppendDateToTitle: document.querySelector('#' + DomIds.Settings.Defaults.AppendDate).checked,
+                    AppendTimeToTitle: document.querySelector('#' + DomIds.Settings.Defaults.AppendTime).checked
                 },
                 AccessibilitySettings: {
-                    AllowAudioDescription: document.querySelector('#defSubAllowAudioDesc').checked,
-                    AllowSignLanguage: document.querySelector('#defSubAllowSignLanguage').checked
+                    AllowAudioDescription: document.querySelector('#' + DomIds.Settings.Defaults.AllowAudioDesc).checked,
+                    AllowSignLanguage: document.querySelector('#' + DomIds.Settings.Defaults.AllowSignLanguage).checked
                 }
             };
 
@@ -2343,42 +2500,42 @@ class MediathekPluginConfig {
         });
 
         // Path selector in main config
-        document.getElementById('btnSelectPath').addEventListener('click', () => {
-            Helper.openFolderDialog('txtDefaultDownloadPath', Language.General.SelectGlobalDefaultDownloadPath);
+        document.getElementById(DomIds.Settings.Paths.Buttons.SelectDefaultDownload).addEventListener('click', () => {
+            Helper.openFolderDialog(DomIds.Settings.Paths.DefaultDownload, Language.General.SelectGlobalDefaultDownloadPath);
         });
-        document.getElementById('btnSelectSubscriptionShowPath').addEventListener('click', () => {
-            Helper.openFolderDialog('txtDefaultSubscriptionShowPath', Language.General.SelectDefaultShowPathAbo);
+        document.getElementById(DomIds.Settings.Paths.Buttons.SelectSubscriptionShow).addEventListener('click', () => {
+            Helper.openFolderDialog(DomIds.Settings.Paths.SubscriptionShow, Language.General.SelectDefaultShowPathAbo);
         });
-        document.getElementById('btnSelectSubscriptionMoviePath').addEventListener('click', () => {
-            Helper.openFolderDialog('txtDefaultSubscriptionMoviePath', Language.General.SelectDefaultMoviePathAbo);
+        document.getElementById(DomIds.Settings.Paths.Buttons.SelectSubscriptionMovie).addEventListener('click', () => {
+            Helper.openFolderDialog(DomIds.Settings.Paths.SubscriptionMovie, Language.General.SelectDefaultMoviePathAbo);
         });
-        document.getElementById('btnSelectManualShowPath').addEventListener('click', () => {
-            Helper.openFolderDialog('txtDefaultManualShowPath', Language.General.SelectDefaultShowPathManual);
+        document.getElementById(DomIds.Settings.Paths.Buttons.SelectManualShow).addEventListener('click', () => {
+            Helper.openFolderDialog(DomIds.Settings.Paths.ManualShow, Language.General.SelectDefaultShowPathManual);
         });
-        document.getElementById('btnSelectManualMoviePath').addEventListener('click', () => {
-            Helper.openFolderDialog('txtDefaultManualMoviePath', Language.General.SelectDefaultMoviePathManual);
+        document.getElementById(DomIds.Settings.Paths.Buttons.SelectManualMovie).addEventListener('click', () => {
+            Helper.openFolderDialog(DomIds.Settings.Paths.ManualMovie, Language.General.SelectDefaultMoviePathManual);
         });
-        document.getElementById('btnSelectTempPath').addEventListener('click', () => {
-            Helper.openFolderDialog('txtTempDownloadPath', Language.General.SelectTempDownloadPath);
+        document.getElementById(DomIds.Settings.Paths.Buttons.SelectTemp).addEventListener('click', () => {
+            Helper.openFolderDialog(DomIds.Settings.Paths.TempDownload, Language.General.SelectTempDownloadPath);
         });
 
-        document.getElementById('chkMoviePathWithTopic').addEventListener('change', (e) => {
+        document.getElementById(DomIds.Settings.Paths.UseTopicForMoviePath).addEventListener('change', (e) => {
             this.currentConfig.Paths.UseTopicForMoviePath = e.target.checked;
             this.subscriptionEditor.updateSubPathHoverText();
         });
 
         // Path selectors in subscription editor
-        document.getElementById('btnSelectSubPath').addEventListener('click', () => {
-            Helper.openFolderDialog('subPath', Language.Subscription.SelectAboPath);
+        document.getElementById(DomIds.Subscription.Editor.BtnSelectPath).addEventListener('click', () => {
+            Helper.openFolderDialog(DomIds.Subscription.Editor.Path, Language.Subscription.SelectAboPath);
             this.subscriptionEditor.updateSubPathHoverText();
         });
-        document.getElementById('subPath').addEventListener('input', () => {
+        document.getElementById(DomIds.Subscription.Editor.Path).addEventListener('input', () => {
             this.subscriptionEditor.updateSubPathHoverText();
         });
-        document.getElementById('subName').addEventListener('input', () => {
+        document.getElementById(DomIds.Subscription.Editor.Name).addEventListener('input', () => {
             this.subscriptionEditor.updateSubPathHoverText();
         });
-        document.getElementById('subAlwaysCreateSubfolder').addEventListener('change', () => {
+        document.getElementById(DomIds.Subscription.Editor.AlwaysCreateSubfolder).addEventListener('change', () => {
             this.subscriptionEditor.updateSubPathHoverText();
         });
         // Path selector in advanced download dialog
@@ -2387,54 +2544,54 @@ class MediathekPluginConfig {
         });
 
         // Subscription Management
-        document.getElementById('mvpl-btn-new-sub').addEventListener('click', () => {
+        document.getElementById(DomIds.Subscription.BtnNew).addEventListener('click', () => {
             this.subscriptionEditor.show(null);
         });
 
-        document.getElementById('mvpl-form-subscription').addEventListener('submit', (e) => {
+        document.getElementById(DomIds.Subscription.Editor.Form).addEventListener('submit', (e) => {
             e.preventDefault();
             this.saveSubscription();
             return false;
         });
 
-        document.getElementById('mvpl-btn-add-query').addEventListener('click', () => {
+        document.getElementById(DomIds.Subscription.Editor.BtnAddQuery).addEventListener('click', () => {
             this.addQueryRow();
         });
 
-        document.getElementById('mvpl-btn-search-help').addEventListener('click', () => {
+        document.getElementById(DomIds.Search.BtnHelp).addEventListener('click', () => {
             window.open('https://github.com/mediathekview/mediathekviewweb/blob/master/README.md#suchlogik-anwenden', '_blank');
         });
 
-        document.getElementById('mvpl-btn-test-sub').addEventListener('click', () => {
+        document.getElementById(DomIds.Subscription.Editor.BtnTest).addEventListener('click', () => {
             this.testSubscription();
         });
 
-        document.getElementById('mvpl-btn-cancel-sub').addEventListener('click', () => {
+        document.getElementById(DomIds.Subscription.Editor.BtnCancel).addEventListener('click', () => {
             this.subscriptionEditor.close();
         });
 
         // Test Results
-        document.getElementById('mvpl-btn-close-test-results').addEventListener('click', () => {
+        document.getElementById(DomIds.Subscription.TestModal.BtnClose).addEventListener('click', () => {
             this.closeTestSubscriptionDialog();
         });
 
         // Advanced Download
-        document.getElementById('mvpl-adv-download-form').addEventListener('submit', (e) => {
+        document.getElementById(DomIds.AdvancedDownload.Form).addEventListener('submit', (e) => {
             e.preventDefault();
             this.performAdvancedDownload();
             return false;
         });
 
-        document.getElementById('mvpl-btn-close-adv-download').addEventListener('click', () => {
+        document.getElementById(DomIds.AdvancedDownload.BtnClose).addEventListener('click', () => {
             this.closeAdvancedDownloadDialog();
         });
 
-        document.getElementById('mvpl-btn-duckduckgo-tmdb').addEventListener('click', () => {
+        document.getElementById(DomIds.AdvancedDownload.BtnDuckDuckGoTmdb).addEventListener('click', () => {
             const query = this.currentItemForAdvancedDl.Topic + ' ' + this.currentItemForAdvancedDl.Title;
             Helper.openDuckDuckGoSearch(query, 'themoviedb.org', true);
         });
 
-        document.getElementById('mvpl-btn-duckduckgo').addEventListener('click', () => {
+        document.getElementById(DomIds.AdvancedDownload.BtnDuckDuckGo).addEventListener('click', () => {
             const query = this.currentItemForAdvancedDl.Topic + ' ' + this.currentItemForAdvancedDl.Title;
             Helper.openDuckDuckGoSearch(query, 'themoviedb.org');
         });
