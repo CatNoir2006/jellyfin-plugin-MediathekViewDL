@@ -58,9 +58,9 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         {
             // Arrange
             var localInfo = new VideoInfo { Title = "Other Title" };
-            var apiItem = new ResultItemDto 
-            { 
-                Id = "123", 
+            var apiItem = new ResultItemDto
+            {
+                Id = "123",
                 Title = "API Title",
                 Topic = "Topic",
                 Channel = "Channel",
@@ -69,7 +69,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 SubtitleUrls = new List<SubtitleUrlDto>(),
                 ExternalIds = new List<ExternalId>()
             };
-            
+
             var apiResult = new ApiResultWithInfo(apiItem, new VideoInfo { Title = "API Title" });
             string urlFromInfo = "http://exact-match.com/video.mp4";
 
@@ -85,25 +85,25 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public void CalculateMatchScoreWithSource_SeasonEpisodeMatch_BoostsScore()
         {
             // Arrange
-            var localInfo = new VideoInfo 
-            { 
-                Title = "Sendung mit der Maus", 
+            var localInfo = new VideoInfo
+            {
+                Title = "Sendung mit der Maus",
                 Topic = "Kindersendung",
                 IsShow = true,
                 SeasonNumber = 1,
                 EpisodeNumber = 5
             };
-            var apiInfo = new VideoInfo 
-            { 
-                Title = "Sendung mit der Maus", 
+            var apiInfo = new VideoInfo
+            {
+                Title = "Sendung mit der Maus",
                 Topic = "Kindersendung",
                 IsShow = true,
                 SeasonNumber = 1,
                 EpisodeNumber = 5
             };
-            var apiItem = new ResultItemDto 
-            { 
-                Id = "123", 
+            var apiItem = new ResultItemDto
+            {
+                Id = "123",
                 Title = "Sendung mit der Maus",
                 Topic = "Kindersendung",
                 Channel = "ARD",
@@ -127,25 +127,25 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public void CalculateMatchScoreWithSource_MismatchedSeasonEpisode_PenalizesScore()
         {
             // Arrange
-            var localInfo = new VideoInfo 
-            { 
-                Title = "Sendung mit der Maus", 
+            var localInfo = new VideoInfo
+            {
+                Title = "Sendung mit der Maus",
                 Topic = "Kindersendung",
                 IsShow = true,
                 SeasonNumber = 1,
                 EpisodeNumber = 5
             };
-            var apiInfo = new VideoInfo 
-            { 
-                Title = "Sendung mit der Maus", 
+            var apiInfo = new VideoInfo
+            {
+                Title = "Sendung mit der Maus",
                 Topic = "Kindersendung",
                 IsShow = true,
                 SeasonNumber = 1,
                 EpisodeNumber = 6 // Mismatch
             };
-            var apiItem = new ResultItemDto 
-            { 
-                Id = "123", 
+            var apiItem = new ResultItemDto
+            {
+                Id = "123",
                 Title = "Sendung mit der Maus",
                 Topic = "Kindersendung",
                 Channel = "ARD",
@@ -168,27 +168,27 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public void CalculateMatchScoreWithSource_MultipleMismatches_CorrectlyReducesScore()
         {
             // Arrange
-            var localInfo = new VideoInfo 
-            { 
-                Title = "Sendung mit der Maus", 
+            var localInfo = new VideoInfo
+            {
+                Title = "Sendung mit der Maus",
                 Topic = "Kindersendung",
                 IsShow = true,
                 SeasonNumber = 1,
                 EpisodeNumber = 5,
                 AbsoluteEpisodeNumber = 100
             };
-            var apiInfo = new VideoInfo 
-            { 
-                Title = "Sendung mit der Maus", 
+            var apiInfo = new VideoInfo
+            {
+                Title = "Sendung mit der Maus",
                 Topic = "Kindersendung",
                 IsShow = true,
                 SeasonNumber = 1,
                 EpisodeNumber = 6, // Mismatch
                 AbsoluteEpisodeNumber = 101 // Mismatch
             };
-            var apiItem = new ResultItemDto 
-            { 
-                Id = "123", 
+            var apiItem = new ResultItemDto
+            {
+                Id = "123",
                 Title = "Sendung mit der Maus",
                 Topic = "Kindersendung",
                 Channel = "ARD",
@@ -213,9 +213,9 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             // Arrange
             var localInfo = new VideoInfo { Title = "Tatort - Mord im Norden", Topic = "Krimi" };
             var apiInfo = new VideoInfo { Title = "Tatort: Mord im Norden", Topic = "Krimi" }; // Slight difference
-            var apiItem = new ResultItemDto 
-            { 
-                Id = "123", 
+            var apiItem = new ResultItemDto
+            {
+                Id = "123",
                 Title = "Tatort: Mord im Norden",
                 Topic = "Krimi",
                 Channel = "ARD",
@@ -244,22 +244,30 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             config.Subscriptions.Add(subscription);
             _configProviderMock.Setup(x => x.Configuration).Returns(config);
 
-            var apiItem1 = new ResultItemDto 
-            { 
-                Id = "api1", Title = "Sendung A", Topic = "Topic", Channel = "ARD", Description = "Desc",
-                VideoUrls = new List<VideoUrlDto>(), SubtitleUrls = new List<SubtitleUrlDto>(), ExternalIds = new List<ExternalId>()
+            var apiItem1 = new ResultItemDto
+            {
+                Id = "api1",
+                Title = "Sendung A",
+                Topic = "Topic",
+                Channel = "ARD",
+                Description = "Desc",
+                VideoUrls = new List<VideoUrlDto>(),
+                SubtitleUrls = new List<SubtitleUrlDto>(),
+                ExternalIds = new List<ExternalId>()
             };
-            var apiItem2 = new ResultItemDto 
-            { 
-                Id = "api2", Title = "Sendung B", Topic = "Topic", Channel = "ZDF", Description = "Desc",
-                VideoUrls = new List<VideoUrlDto>(), SubtitleUrls = new List<SubtitleUrlDto>(), ExternalIds = new List<ExternalId>()
+            var apiItem2 = new ResultItemDto
+            {
+                Id = "api2",
+                Title = "Sendung B",
+                Topic = "Topic",
+                Channel = "ZDF",
+                Description = "Desc",
+                VideoUrls = new List<VideoUrlDto>(),
+                SubtitleUrls = new List<SubtitleUrlDto>(),
+                ExternalIds = new List<ExternalId>()
             };
 
-            var apiResults = new List<(ResultItemDto, VideoInfo)>
-            {
-                (apiItem1, new VideoInfo { Title = "Sendung A", Topic = "Topic" }),
-                (apiItem2, new VideoInfo { Title = "Sendung B", Topic = "Topic" })
-            };
+            var apiResults = new List<(ResultItemDto, VideoInfo)> { (apiItem1, new VideoInfo { Title = "Sendung A", Topic = "Topic" }), (apiItem2, new VideoInfo { Title = "Sendung B", Topic = "Topic" }) };
 
             _subscriptionProcessorMock.Setup(x => x.GetEligibleItemsAsync(It.IsAny<Subscription>(), It.IsAny<CancellationToken>()))
                 .Returns(apiResults.ToAsyncEnumerable());
@@ -267,11 +275,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _fileNameBuilderMock.Setup(x => x.GetSubscriptionBaseDirectories(It.IsAny<Subscription>(), It.IsAny<DownloadContext>()))
                 .Returns(new List<string> { "/downloads/TestSub" });
 
-            var scannedFiles = new List<ScannedFile>
-            {
-                new ScannedFile { FilePath = "/downloads/TestSub/Sendung A.mkv", Type = FileType.Video, VideoInfo = new VideoInfo { Title = "Sendung A", Topic = "Topic" } },
-                new ScannedFile { FilePath = "/downloads/TestSub/Sendung B.mkv", Type = FileType.Video, VideoInfo = new VideoInfo { Title = "Sendung B", Topic = "Topic" } }
-            };
+            var scannedFiles = new List<ScannedFile> { new ScannedFile { FilePath = "/downloads/TestSub/Sendung A.mkv", Type = FileType.Video, VideoInfo = new VideoInfo { Title = "Sendung A", Topic = "Topic" } }, new ScannedFile { FilePath = "/downloads/TestSub/Sendung B.mkv", Type = FileType.Video, VideoInfo = new VideoInfo { Title = "Sendung B", Topic = "Topic" } } };
 
             _localMediaScannerMock.Setup(x => x.ScanSubscriptionDirectory(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(new LocalScanResult { Files = new Collection<ScannedFile>(scannedFiles) });
@@ -299,12 +303,12 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         {
             var method = typeof(FileAdoptionService).GetMethod("CalculateMatchScoreWithSource", BindingFlags.NonPublic | BindingFlags.Instance);
             var result = method.Invoke(_service, new object[] { localInfo, apiResult, urlFromInfo });
-            
+
             // Handle the ValueTuple return type from Reflection
             var type = result.GetType();
             var score = (double)type.GetField("Item1").GetValue(result);
             var source = (AdoptionMatchSource)type.GetField("Item2").GetValue(result);
-            
+
             return (score, source);
         }
     }

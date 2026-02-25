@@ -73,11 +73,7 @@ public class FileAdoptionService : IFileAdoptionService
         if (subscription == null)
         {
             _logger.LogWarning("Subscription {SubscriptionId} not found.", subscriptionId);
-            return new AdoptionInfo
-            {
-                Candidates = Array.Empty<AdoptionCandidate>(),
-                ApiResults = Array.Empty<ApiResultWithInfo>()
-            };
+            return new AdoptionInfo { Candidates = Array.Empty<AdoptionCandidate>(), ApiResults = Array.Empty<ApiResultWithInfo>() };
         }
 
         // Create a copy of the subscription with IgnoreLocalFiles and IgnoreHistory set to true
@@ -129,19 +125,10 @@ public class FileAdoptionService : IFileAdoptionService
 
             var matches = await FindMatchesAsync(subscription, video, relatedFiles, apiItems, history, cancellationToken).ConfigureAwait(false);
 
-            candidates.Add(new AdoptionCandidate
-            {
-                Id = video.FilePath,
-                FilePaths = allFiles,
-                Matches = matches
-            });
+            candidates.Add(new AdoptionCandidate { Id = video.FilePath, FilePaths = allFiles, Matches = matches });
         }
 
-        return new AdoptionInfo
-        {
-            Candidates = candidates,
-            ApiResults = apiItems
-        };
+        return new AdoptionInfo { Candidates = candidates, ApiResults = apiItems };
     }
 
     /// <inheritdoc />
@@ -292,13 +279,13 @@ public class FileAdoptionService : IFileAdoptionService
             if (localInfo.SeasonNumber == apiInfo.SeasonNumber && localInfo.EpisodeNumber == apiInfo.EpisodeNumber)
             {
                 // Apply multiplier of 1.4 for exact S/E match
-                scores.Add(new AdoptionScore(1.0, 1.4, AdoptionScoreType.Multiply));
+                scores.Add(new AdoptionScore(1.4, 0, AdoptionScoreType.Multiply));
                 source = AdoptionMatchSource.SeriesNumbering;
             }
             else
             {
                 // Penalize if season/episode numbers are present but don't match, as this is a strong signal they might be different
-                scores.Add(new AdoptionScore(1.0, -1.4, AdoptionScoreType.Multiply));
+                scores.Add(new AdoptionScore(1.0 / 1.4, 0, AdoptionScoreType.Multiply));
             }
         }
 
@@ -308,13 +295,13 @@ public class FileAdoptionService : IFileAdoptionService
             if (localInfo.AbsoluteEpisodeNumber == apiInfo.AbsoluteEpisodeNumber)
             {
                 // Apply multiplier of 1.3 for absolute episode match
-                scores.Add(new AdoptionScore(1.0, 1.3, AdoptionScoreType.Multiply));
+                scores.Add(new AdoptionScore(1.3, 0, AdoptionScoreType.Multiply));
                 source = AdoptionMatchSource.SeriesNumbering;
             }
             else
             {
                 // Penalize if absolute numbers are present but don't match, as this is a strong signal they might be different
-                scores.Add(new AdoptionScore(1.0, -1.3, AdoptionScoreType.Multiply));
+                scores.Add(new AdoptionScore(1.0 / 1.3, 0, AdoptionScoreType.Multiply));
             }
         }
 
@@ -336,19 +323,7 @@ public class FileAdoptionService : IFileAdoptionService
             }
             else if (score.Type == AdoptionScoreType.Multiply)
             {
-                if (score.Value >= 1.0)
-                {
-                    if (score.Weight >= 0)
-                    {
-                        multiplier *= score.Weight;
-                    }
-                    else
-                    {
-                        // Penalties (negative weights) reduce the score.
-                        // We divide by the absolute value to ensure consistent reduction.
-                        multiplier /= Math.Abs(score.Weight);
-                    }
-                }
+                multiplier *= score.Value;
             }
         }
 

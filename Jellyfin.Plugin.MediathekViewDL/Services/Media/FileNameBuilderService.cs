@@ -86,13 +86,15 @@ public class FileNameBuilderService : IFileNameBuilderService
         var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
         {
-            yield break;
+            return Enumerable.Empty<string>();
         }
+
+        var results = new List<string>();
 
         if (!string.IsNullOrWhiteSpace(subscription.Download.DownloadPath))
         {
-            yield return subscription.Download.DownloadPath;
-            yield break;
+            results.Add(subscription.Download.DownloadPath);
+            return results;
         }
 
         string subscriptionPath = SanitizeDirectoryName(subscription.Name);
@@ -101,7 +103,7 @@ public class FileNameBuilderService : IFileNameBuilderService
         string showDefault = GetDefaultPathForContext(config, context, true);
         if (!string.IsNullOrWhiteSpace(showDefault))
         {
-            yield return Path.Combine(showDefault, subscriptionPath);
+            results.Add(Path.Combine(showDefault, subscriptionPath));
         }
 
         // Path for Movies
@@ -110,13 +112,15 @@ public class FileNameBuilderService : IFileNameBuilderService
         {
             if (config.Paths.UseTopicForMoviePath || subscription.Download.AlwaysCreateSubfolder)
             {
-                yield return Path.Combine(movieDefault, subscriptionPath);
+                results.Add(Path.Combine(movieDefault, subscriptionPath));
             }
             else
             {
-                yield return movieDefault;
+                results.Add(movieDefault);
             }
         }
+
+        return results.Distinct(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>

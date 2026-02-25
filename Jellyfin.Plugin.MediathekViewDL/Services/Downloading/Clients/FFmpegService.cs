@@ -143,20 +143,20 @@ public class FFmpegService : IFFmpegService
 
         _logger.LogDebug("Probing media info for '{UrlOrPath}' ", actualUrlOrPath);
 
-        // Security check: If it's a URL, validate it
-        if (actualUrlOrPath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || actualUrlOrPath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        // Security check: If it's not a verified local file path, it must be a valid URL
+        if (!File.Exists(actualUrlOrPath))
         {
             try
             {
                 if (!await _strmValidationService.ValidateUrlAsync(actualUrlOrPath, cancellationToken).ConfigureAwait(false))
                 {
-                    _logger.LogError("URL validation failed for '{Url}'", actualUrlOrPath);
+                    _logger.LogError("Validation failed for '{Input}' (not a local file and URL validation failed)", actualUrlOrPath);
                     return null;
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "URL validation threw exception for '{Url}'", actualUrlOrPath);
+                _logger.LogError(ex, "Validation threw exception for '{Input}'", actualUrlOrPath);
                 return null;
             }
         }
@@ -406,7 +406,7 @@ public class FFmpegService : IFFmpegService
             var match = TimeRegex.Match(line);
             if (match.Success)
             {
-                 if (TimeSpan.TryParse(match.Groups[1].Value, CultureInfo.InvariantCulture, out var currentTime))
+                if (TimeSpan.TryParse(match.Groups[1].Value, CultureInfo.InvariantCulture, out var currentTime))
                 {
                     var percentage = (currentTime.TotalSeconds / totalDuration.TotalSeconds) * 100;
                     if (percentage > 100)
