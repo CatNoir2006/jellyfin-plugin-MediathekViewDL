@@ -14,6 +14,8 @@ Dieses Plugin integriert die [MediathekViewWeb-API](https://mediathekviewweb.de/
     *   [Manuelle Suche](#-manuelle-suche)
     *   [Allgemeine Einstellungen](#-allgemeine-einstellungen)
     *   [Abonnements (Automatische Downloads)](#-abonnements-automatische-downloads)
+    *   [Downloads](#-downloads)
+    *   [Datei-Adoption (Manuelle Zuordnung)](#-datei-adoption-manuelle-zuordnung)
 *   [🧠 Funktionsweise](#-funktionsweise)
 *   [❤️ Danksagung & Disclaimer](#-danksagung--disclaimer)
 
@@ -100,14 +102,17 @@ Hier konfigurieren Sie das globale Verhalten des Plugins. Die Einstellungen sind
 <img src="Images/Einstellungen.png" width="800" alt="Einstellungen">
 </details>
 
-*   **Pfade-Einstellungen:** Definieren Sie getrennte Standardpfade für Serien und Filme (Abonnements vs. Manuell).
-*   **Temporärer Download-Pfad:** Ein optionaler Ordner zum Zwischenspeichern von Downloads (schont SSDs).
-*   **Abo-Standardwerte:** Legen Sie fest, mit welchen Einstellungen neue Abonnements initial erstellt werden.
-*   **Wartung:** Aktiviert die automatische Bereinigung ungültiger `.strm`-Dateien (Link-Check).
-*   **Untertitel herunterladen:** Aktiviert den automatischen Untertitel-Download.
-*   **Minimaler freier Speicherplatz:** Stoppt Downloads bei wenig Speicherplatz (konfigurierbar).
-*   **Maximale Bandbreite:** Begrenzung in MBit/s (0 = unbegrenzt).
-*   **Bibliotheks-Scan:** Aktualisiert die Jellyfin-Bibliothek automatisch nach fertigen Downloads.
+| Einstellung | Beschreibung |
+| :--- | :--- |
+| **Pfade-Einstellungen** | Definieren Sie getrennte Standardpfade für Serien und Filme (Abonnements vs. Manuell). |
+| **Temporärer Download-Pfad** | Ein optionaler Ordner zum Zwischenspeichern von Downloads (schont SSDs). |
+| **Abo-Standardwerte** | Legen Sie fest, mit welchen Einstellungen neue Abonnements initial erstellt werden. |
+| **Wartung** | Aktiviert die automatische Bereinigung ungültiger `.strm`-Dateien (Link-Check). |
+| **Suchtiefe & Seitengröße** | Konfigurieren Sie, wie viele Ergebnisse pro API-Anfrage geladen werden und wie viele Seiten maximal durchsucht werden sollen (optimiert die Geschwindigkeit vs. Vollständigkeit). |
+| **Untertitel herunterladen** | Aktiviert den automatischen Untertitel-Download. |
+| **Minimaler freier Speicherplatz** | Stoppt Downloads bei wenig Speicherplatz (konfigurierbar). |
+| **Maximale Bandbreite** | Begrenzung in MBit/s (0 = unbegrenzt). |
+| **Bibliotheks-Scan** | Aktualisiert die Jellyfin-Bibliothek automatisch nach fertigen Downloads. |
 
 ### 📺 Abonnements (Automatische Downloads)
 (Tab: *Abo Verwaltung*)
@@ -164,6 +169,15 @@ Behalten Sie den Überblick über laufende und vergangene Downloads.
 *   **Aktive Downloads:** Zeigt den aktuellen Fortschritt, Status und Geschwindigkeit. Laufende Downloads können hier abgebrochen werden.
 *   **Historie:** Eine Liste der erfolgreich abgeschlossenen Downloads.
 
+### 🧩 Datei-Adoption (Manuelle Zuordnung)
+(Tab: *Datei Adoption*)
+
+Dieses Feature ermöglicht es, bereits lokal vorhandene Dateien (z.B. manuelle Downloads oder alte Bestände) einem Abonnement und der internen Datenbank zuzuordnen. Dies verhindert, dass das Plugin dieselben Inhalte erneut herunterlädt.
+
+*   **Intelligentes Matching:** Das Plugin scannt Ihre lokalen Ordner und vergleicht sie mit den API-Ergebnissen der Mediathek.
+*   **Confidence-Score:** Zeigt an, wie sicher sich das Plugin bei einer Zuordnung ist (basierend auf Titel, S/E-Nummerierung oder URLs aus `.txt`-Infodateien).
+*   **Filter & Batch-Aktion:** Filtern Sie nach Sicherheit (%) oder Match-Quelle (z.B. "Fuzzy-Suche" oder "URL-Treffer") und bestätigen Sie alle gefilterten Ergebnisse mit einem Klick.
+
 ---
 
 ## 🧠 Funktionsweise
@@ -183,4 +197,4 @@ Das Plugin arbeitet im Hintergrund mit einem **Scheduled Task** (Geplante Aufgab
 ---
 ## Letze Anpassung der Readme
 * Plugin: v0.7.2.0
-* Commit: c190e6b
+* Commit: cc5a847
