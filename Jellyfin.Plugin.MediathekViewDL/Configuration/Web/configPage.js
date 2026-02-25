@@ -372,7 +372,8 @@ const Language = {
         ErrorTestingAbo: "Fehler beim Testen des Abonnements: ",
         NoTestHits: "Keine Treffer für diese Konfiguration.",
         TestResultsCount: (count) => count + " Einträge gefunden, die heruntergeladen würden:",
-        Video: "Video"
+        Video: "Video",
+        TotalItemsInfo: (total) => "Aktuelle Konfiguration: Bis zu " + total + " Medien können pro Suche/Abo-Lauf gefunden werden."
     },
     Download: {
         Queued: "Warteschlange",
@@ -536,7 +537,10 @@ const DomIds = {
         },
         Search: {
             FetchStreamSizes: "chkFetchStreamSizes",
-            SearchFutureBroadcasts: "chkSearchInFutureBroadcasts"
+            SearchFutureBroadcasts: "chkSearchInFutureBroadcasts",
+            PageSize: "txtSearchPageSize",
+            MaxPages: "txtSearchMaxPages",
+            TotalItemsInfo: "lblSearchTotalItemsInfo"
         },
         Defaults: {
             MinDuration: "defSubMinDuration",
@@ -2246,6 +2250,8 @@ class MediathekPluginConfig {
             document.getElementById(DomIds.Settings.Search.FetchStreamSizes).checked = config.Search.FetchStreamSizes;
             document.getElementById(DomIds.Settings.Search.SearchFutureBroadcasts).checked = config.Search.SearchInFutureBroadcasts;
             document.getElementById(DomIds.Settings.Maintenance.AllowDownloadUnknownDiskSpace).checked = config.Maintenance.AllowDownloadOnUnknownDiskSpace;
+            document.getElementById(DomIds.Settings.Search.PageSize).value = config.Search.PageSize || 50;
+            document.getElementById(DomIds.Settings.Search.MaxPages).value = config.Search.MaxPages || 5;
             document.getElementById(DomIds.Settings.Download.MinFreeDiskSpace).value = config.Download.MinFreeDiskSpaceBytes ? (config.Download.MinFreeDiskSpaceBytes / (1024 * 1024)) : "";
             document.getElementById(DomIds.Settings.Download.MaxBandwidth).value = config.Download.MaxBandwidthMBits || 0;
             document.getElementById(DomIds.Settings.LastRun).innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : Language.Subscription.Never;
@@ -2287,9 +2293,24 @@ class MediathekPluginConfig {
 
             this.renderSubscriptionsList();
             this.adoptionController.populateAbos(config.Subscriptions);
+            this.updateSearchTotalItemsInfo();
             // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
         });
+    }
+
+    /**
+     * Updates the info text showing the total potential search results.
+     */
+    updateSearchTotalItemsInfo() {
+        const pageSize = parseInt(document.getElementById(DomIds.Settings.Search.PageSize).value, 10) || 0;
+        const maxPages = parseInt(document.getElementById(DomIds.Settings.Search.MaxPages).value, 10) || 0;
+        const total = pageSize * maxPages;
+
+        const label = document.getElementById(DomIds.Settings.Search.TotalItemsInfo);
+        if (label) {
+            label.textContent = Language.Search.TotalItemsInfo(total);
+        }
     }
 
     /**
@@ -2814,6 +2835,8 @@ class MediathekPluginConfig {
             this.currentConfig.Maintenance.EnableStrmCleanup = document.getElementById(DomIds.Settings.Maintenance.StrmCleanup).checked;
             this.currentConfig.Search.FetchStreamSizes = document.getElementById(DomIds.Settings.Search.FetchStreamSizes).checked;
             this.currentConfig.Search.SearchInFutureBroadcasts = document.getElementById(DomIds.Settings.Search.SearchFutureBroadcasts).checked;
+            this.currentConfig.Search.PageSize = parseInt(document.getElementById(DomIds.Settings.Search.PageSize).value, 10) || 50;
+            this.currentConfig.Search.MaxPages = parseInt(document.getElementById(DomIds.Settings.Search.MaxPages).value, 10) || 5;
             this.currentConfig.Maintenance.AllowDownloadOnUnknownDiskSpace = document.getElementById(DomIds.Settings.Maintenance.AllowDownloadUnknownDiskSpace).checked;
 
             const minFreeSpaceMiB = parseInt(document.getElementById(DomIds.Settings.Download.MinFreeDiskSpace).value, 10);
@@ -2883,6 +2906,9 @@ class MediathekPluginConfig {
         document.getElementById(DomIds.Settings.Paths.Buttons.SelectTemp).addEventListener('click', () => {
             Helper.openFolderDialog(DomIds.Settings.Paths.TempDownload, Language.General.SelectTempDownloadPath);
         });
+
+        document.getElementById(DomIds.Settings.Search.PageSize).addEventListener('input', () => this.updateSearchTotalItemsInfo());
+        document.getElementById(DomIds.Settings.Search.MaxPages).addEventListener('input', () => this.updateSearchTotalItemsInfo());
 
         document.getElementById(DomIds.Settings.Paths.UseTopicForMoviePath).addEventListener('change', (e) => {
             this.currentConfig.Paths.UseTopicForMoviePath = e.target.checked;

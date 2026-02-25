@@ -606,14 +606,14 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// Queries the MediathekView API for results matching the subscription.
     /// </summary>
     /// <param name="subscription">The subscription to query for.</param>
-    /// <param name="pageSize">The number of results per page.</param>
-    /// <param name="maxPages">The maximum number of pages to retrieve.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The collection of result items retrieved from the API.</returns>
-    private async IAsyncEnumerable<ResultItemDto> QueryApiAsync(Subscription subscription, int pageSize = 50, int maxPages = 20, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    private async IAsyncEnumerable<ResultItemDto> QueryApiAsync(Subscription subscription, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var currentPage = 0;
         var hasMoreResults = true;
+        var pageSize = _configurationProvider.Configuration.Search.PageSize;
+        var maxPages = _configurationProvider.Configuration.Search.MaxPages;
 
         while (hasMoreResults && currentPage < maxPages)
         {

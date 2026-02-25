@@ -273,6 +273,22 @@
                                     </label>
                                     <div class="fieldDescription">Manchmal sind Videos auch schon vor der eigentlichen TV-Ausstrahlung in der Mediathek verfügbar.</div>
                                 </div>
+
+                                <div class="inputContainer">
+                                    <label class="inputLabel" for="txtSearchPageSize">Seitengröße (API-Anfragen)</label>
+                                    <input is="emby-input" type="number" id="txtSearchPageSize" min="1" max="100"/>
+                                    <div class="fieldDescription">Bestimmt, wie viele Ergebnisse pro Seite von der MediathekView API abgefragt werden.</div>
+                                </div>
+
+                                <div class="inputContainer">
+                                    <label class="inputLabel" for="txtSearchMaxPages">Maximale Seitenanzahl</label>
+                                    <input is="emby-input" type="number" id="txtSearchMaxPages" min="1" max="100"/>
+                                    <div class="fieldDescription">Maximale Anzahl an Seiten, die für eine einzelne Suchanfrage oder beim Abo-Lauf abgerufen werden.</div>
+                                </div>
+
+                                <div class="fieldDescription mvpl-margin-top-10" id="lblSearchTotalItemsInfo" style="font-weight: bold; color: #00a4dc;">
+                                    <!-- Dynamischer Info-Text -->
+                                </div>
                             </div>
                         </details>
 

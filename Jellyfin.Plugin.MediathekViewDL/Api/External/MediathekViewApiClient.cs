@@ -76,8 +76,8 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         CancellationToken cancellationToken)
     {
         var allResults = new List<ResultItemDto>();
-        const int pageSize = 50;
-        const int maxPages = 5;
+        var pageSize = _configurationProvider.Configuration.Search.PageSize;
+        var maxPages = _configurationProvider.Configuration.Search.MaxPages;
         var currentOffset = 0;
         var page = 0;
 
