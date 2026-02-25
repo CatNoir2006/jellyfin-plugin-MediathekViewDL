@@ -15,4 +15,9 @@ public record MaintenanceOptions
     /// This can happen with network shares or non-standard file systems.
     /// </summary>
     public bool AllowDownloadOnUnknownDiskSpace { get; set; }
+
+    /// <summary>
+    /// Gets or sets the maximum allowed duration difference for file adoption matching.
+    /// </summary>
+    public System.TimeSpan AdoptionDurationThreshold { get; set; } = System.TimeSpan.FromSeconds(15);
 }

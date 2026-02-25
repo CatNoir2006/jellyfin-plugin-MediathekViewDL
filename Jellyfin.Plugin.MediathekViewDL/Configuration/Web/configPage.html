@@ -42,6 +42,10 @@
                     <span class="material-icons file_download" aria-hidden="true"></span>
                     <span>Downloads</span>
                 </button>
+                <button type="button" class="paper-icon-button-light" id="mvpl-btn-tab-adoption" role="tab" aria-selected="false" aria-controls="tab-adoption">
+                    <span class="material-icons folder_shared" aria-hidden="true"></span>
+                    <span>Lokale Dateien Adoptieren</span>
+                </button>
             </div>
 
             <!-- TAB 1: Search -->
@@ -268,6 +272,22 @@
                                         <span>Suche in zukünftigen Ausstrahlungen</span>
                                     </label>
                                     <div class="fieldDescription">Manchmal sind Videos auch schon vor der eigentlichen TV-Ausstrahlung in der Mediathek verfügbar.</div>
+                                </div>
+
+                                <div class="inputContainer">
+                                    <label class="inputLabel" for="txtSearchPageSize">Seitengröße (API-Anfragen)</label>
+                                    <input is="emby-input" type="number" id="txtSearchPageSize" min="1" max="100"/>
+                                    <div class="fieldDescription">Bestimmt, wie viele Ergebnisse pro Seite von der MediathekView API abgefragt werden.</div>
+                                </div>
+
+                                <div class="inputContainer">
+                                    <label class="inputLabel" for="txtSearchMaxPages">Maximale Seitenanzahl</label>
+                                    <input is="emby-input" type="number" id="txtSearchMaxPages" min="1" max="100"/>
+                                    <div class="fieldDescription">Maximale Anzahl an Seiten, die für eine einzelne Suchanfrage oder beim Abo-Lauf abgerufen werden.</div>
+                                </div>
+
+                                <div class="fieldDescription mvpl-margin-top-10" id="lblSearchTotalItemsInfo" style="font-weight: bold; color: #00a4dc;">
+                                    <!-- Dynamischer Info-Text -->
                                 </div>
                             </div>
                         </details>
@@ -825,6 +845,53 @@
                 </div>
             </div>
 
+            <!-- TAB 5: Adoption -->
+            <div id="tab-adoption" class="mvpl-tab-content" role="tabpanel" aria-labelledby="mvpl-btn-tab-adoption" style="display:none;">
+                <div class="verticalSection">
+                    <div class="sectionTitleLabel">Lokale Dateien Adoptieren</div>
+                    <p class="sectionDescription">Wähle ein Abo aus, um lokale Dateien mit den Ergebnissen der MediathekView API abzugleichen und zu "adoptieren".</p>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel" for="selectAdoptionAbo">Abonnement auswählen</label>
+                        <select is="emby-select" id="selectAdoptionAbo">
+                            <option value="">Bitte wählen...</option>
+                        </select>
+                    </div>
+
+                    <div id="adoptionFilterContainer" class="mvpl-search-form-row mvpl-margin-top-10" style="display: none;">
+                        <div class="inputContainer mvpl-input-short">
+                            <label class="inputLabel" for="numAdoptionMinConfidence">Min. Sicherheit (%)</label>
+                            <input is="emby-input" type="number" id="numAdoptionMinConfidence" min="0" max="100" placeholder="0"/>
+                        </div>
+                        <div class="inputContainer mvpl-input-short">
+                            <label class="inputLabel" for="numAdoptionMaxConfidence">Max. Sicherheit (%)</label>
+                            <input is="emby-input" type="number" id="numAdoptionMaxConfidence" min="0" max="100" placeholder="100"/>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="selectAdoptionSource">Quelle</label>
+                            <select is="emby-select" id="selectAdoptionSource">
+                                <option value="All">Alles anzeigen</option>
+                                <option value="History">Bekannte (Datenbank)</option>
+                                <option value="Url">URL Treffer</option>
+                                <option value="SeriesNumbering">Serien-Nummerierung</option>
+                                <option value="Fuzzy">Namen-Suche (Fuzzy)</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <button is="emby-button" type="button" class="raised button-submit block" id="mvpl-btn-adoption-save-all">
+                                <span>Alle gefilterten bestätigen</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="adoptionTableContainer" style="display: none;">
+                        <div id="adoptionList" class="paperList mvpl-margin-top-20">
+                            <!-- Adoption-Einträge werden hier gerendert -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -1011,6 +1078,17 @@
             padding: 10px 0;
         }
 
+        .mvpl-adoption-grid {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .mvpl-adoption-column {
+            flex: 1;
+            min-width: 0;
+        }
+
         .mvpl-subscription-editor {
             display: none;
             border-top: 1px solid #444;
@@ -1117,6 +1195,35 @@
         .mvpl-download-status[data-status="Cancelled"] {
             background-color: #FF9800;
             color: white;
+        }
+
+        .mvpl-confidence-high {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .mvpl-confidence-medium {
+            color: #FF9800;
+            font-weight: bold;
+        }
+
+        .mvpl-confidence-low {
+            color: #F44336;
+            font-weight: bold;
+        }
+
+        .mvpl-api-id {
+            font-size: 0.8em;
+            opacity: 0.6;
+            margin-left: 5px;
+        }
+
+        .mvpl-adoption-item {
+            min-height: 100px;
+        }
+
+        .mvpl-adoption-item-confirmed {
+            background-color: rgba(76, 175, 80, 0.1);
         }
 
         /* Animation Classes */

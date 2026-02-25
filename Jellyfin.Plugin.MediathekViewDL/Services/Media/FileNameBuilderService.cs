@@ -77,27 +77,50 @@ public class FileNameBuilderService : IFileNameBuilderService
     /// <inheritdoc />
     public string GetSubscriptionBaseDirectory(Subscription subscription, DownloadContext context)
     {
+        return GetSubscriptionBaseDirectories(subscription, context).FirstOrDefault() ?? string.Empty;
+    }
+
+    /// <inheritdoc />
+    public IEnumerable<string> GetSubscriptionBaseDirectories(Subscription subscription, DownloadContext context)
+    {
         var config = _configurationProvider.ConfigurationOrNull;
-        string targetPath;
-
-        if (string.IsNullOrWhiteSpace(subscription.Download.DownloadPath))
+        if (config == null)
         {
-            string defaultPath = GetDefaultPathForContext(config, context, subscription.Series.EnforceSeriesParsing || subscription.Series.AllowAbsoluteEpisodeNumbering);
-            string subscriptionPath = SanitizeDirectoryName(subscription.Name);
-            if (string.IsNullOrWhiteSpace(defaultPath))
+            return Enumerable.Empty<string>();
+        }
+
+        var results = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(subscription.Download.DownloadPath))
+        {
+            results.Add(subscription.Download.DownloadPath);
+            return results;
+        }
+
+        string subscriptionPath = SanitizeDirectoryName(subscription.Name);
+
+        // Path for Shows
+        string showDefault = GetDefaultPathForContext(config, context, true);
+        if (!string.IsNullOrWhiteSpace(showDefault))
+        {
+            results.Add(Path.Combine(showDefault, subscriptionPath));
+        }
+
+        // Path for Movies
+        string movieDefault = GetDefaultPathForContext(config, context, false);
+        if (!string.IsNullOrWhiteSpace(movieDefault))
+        {
+            if (config.Paths.UseTopicForMoviePath || subscription.Download.AlwaysCreateSubfolder)
             {
-                // This will be logged later if we try to use it for an actual item, but for scanning it's fine to return empty.
-                return string.Empty;
+                results.Add(Path.Combine(movieDefault, subscriptionPath));
             }
-
-            targetPath = Path.Combine(defaultPath, subscriptionPath);
-        }
-        else
-        {
-            targetPath = subscription.Download.DownloadPath;
+            else
+            {
+                results.Add(movieDefault);
+            }
         }
 
-        return targetPath;
+        return results.Distinct(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>

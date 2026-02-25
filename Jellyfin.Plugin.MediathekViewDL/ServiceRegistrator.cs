@@ -6,6 +6,7 @@ using Jellyfin.Plugin.MediathekViewDL.Api.External;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services;
+using Jellyfin.Plugin.MediathekViewDL.Services.Adoption;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Handlers;
@@ -59,11 +60,13 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddSingleton<IVideoParser, VideoParser>();
             serviceCollection.AddSingleton<IFileNameBuilderService, FileNameBuilderService>();
             serviceCollection.AddSingleton<ILocalMediaScanner, LocalMediaScanner>();
+            serviceCollection.AddTransient<ITempMetadataCache, TempMetadataCache>();
             // IMediathekViewApiClient is already registered via AddHttpClient above
             serviceCollection.AddTransient<MediathekViewDlApiService>();
             serviceCollection.AddTransient<IFFmpegService, FFmpegService>();
             serviceCollection.AddTransient<IFileDownloader, FileDownloader>();
             serviceCollection.AddTransient<ISubscriptionProcessor, SubscriptionProcessor>();
+            serviceCollection.AddTransient<IFileAdoptionService, FileAdoptionService>();
 
             // Live TV
             serviceCollection.AddSingleton<ITunerHost, LiveTv.ZappTunerHost>();
