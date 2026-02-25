@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -125,28 +126,44 @@ public class FFmpegService : IFFmpegService
             return null;
         }
 
-        _logger.LogDebug("Probing media info for '{UrlOrPath}' ", urlOrPath);
+        string actualUrlOrPath = urlOrPath;
+        if (urlOrPath.EndsWith(".strm", StringComparison.OrdinalIgnoreCase) && File.Exists(urlOrPath))
+        {
+            try
+            {
+                actualUrlOrPath = (await File.ReadAllTextAsync(urlOrPath, cancellationToken).ConfigureAwait(false)).Trim();
+                _logger.LogDebug("Read URL from .strm file: {Url}", actualUrlOrPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to read .strm file at {Path}", urlOrPath);
+                return null;
+            }
+        }
 
-        // Arguments to get video stream info in JSON format, minimal probing
+        _logger.LogDebug("Probing media info for '{UrlOrPath}' ", actualUrlOrPath);
+
+        // Arguments to get stream info in JSON format
+        // We remove -select_streams v:0 to support audio-only files
         string[] args =
         [
             "-v", "error",
-            "-select_streams", "v:0", // Select the first video stream
-            "-show_entries", "stream=width,height,duration:format=duration,size",
+            "-show_entries", "stream=width,height,duration,codec_type:format=duration,size",
             "-of", "json",
-            urlOrPath
+            actualUrlOrPath
         ];
 
         var res = await ExecuteFFmpegAsync(args, cancellationToken, true).ConfigureAwait(false);
 
         if (res.ExitCode != 0)
         {
+            _logger.LogWarning("ffprobe failed for '{UrlOrPath}' with exit code {ExitCode}. Error: {Error}", actualUrlOrPath, res.ExitCode, res.Error);
             return null;
         }
 
         if (string.IsNullOrWhiteSpace(res.Output))
         {
-            _logger.LogWarning("ffprobe returned empty output for '{UrlOrPath}'.", urlOrPath);
+            _logger.LogWarning("ffprobe returned empty output for '{UrlOrPath}'.", actualUrlOrPath);
             return null;
         }
 
@@ -154,21 +171,33 @@ public class FFmpegService : IFFmpegService
 
         if (result?.Streams == null || result.Streams.Count == 0)
         {
-            _logger.LogWarning("No video stream found for '{UrlOrPath}' or JSON parsing failed.", urlOrPath);
+            _logger.LogWarning("No streams found for '{UrlOrPath}' or JSON parsing failed.", actualUrlOrPath);
             return null;
         }
 
-        var videoStream = result.Streams![0];
+        // Prefer video stream for width/height, but take duration from any stream or format
+        var videoStream = result.Streams.FirstOrDefault(s => s.CodecType == "video");
+        var firstStream = result.Streams[0];
         var format = result.Format;
 
         TimeSpan? duration = null;
-        if (double.TryParse(videoStream.Duration, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var streamDuration))
-        {
-            duration = TimeSpan.FromSeconds(streamDuration);
-        }
-        else if (double.TryParse(format?.Duration, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var formatDuration))
+
+        // Try to get duration from format first (usually most reliable)
+        if (double.TryParse(format?.Duration, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var formatDuration))
         {
             duration = TimeSpan.FromSeconds(formatDuration);
+        }
+        else
+        {
+            // Fallback to streams
+            foreach (var stream in result.Streams)
+            {
+                if (double.TryParse(stream.Duration, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var streamDuration))
+                {
+                    duration = TimeSpan.FromSeconds(streamDuration);
+                    break;
+                }
+            }
         }
 
         long? fileSize = null;
@@ -192,8 +221,8 @@ public class FFmpegService : IFFmpegService
         return new LocalMediaInfo
         {
             FilePath = urlOrPath,
-            Width = videoStream.Width,
-            Height = videoStream.Height,
+            Width = videoStream?.Width,
+            Height = videoStream?.Height,
             Duration = duration,
             FileSize = fileSize
         };
@@ -416,6 +445,9 @@ public class FFmpegService : IFFmpegService
 
         [JsonPropertyName("duration")]
         public string? Duration { get; init; } // ffprobe outputs duration as string "HH:MM:SS.MICROSECONDS"
+
+        [JsonPropertyName("codec_type")]
+        public string? CodecType { get; init; }
     }
 
     private sealed record FfprobeFormat

@@ -10,6 +10,7 @@ using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
+using Jellyfin.Plugin.MediathekViewDL.Services.Adoption;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Queue;
@@ -39,6 +40,7 @@ public class MediathekViewDlApiService : ControllerBase
     private readonly IDownloadQueueManager _downloadQueueManager;
     private readonly IConfigurationProvider _configurationProvider;
     private readonly IVideoParser _videoParser;
+    private readonly IFileAdoptionService _fileAdoptionService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekViewDlApiService"/> class.
@@ -52,6 +54,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="downloadQueueManager">The download queue manager.</param>
     /// <param name="configurationProvider">The configuration provider.</param>
     /// <param name="videoParser">The video parser.</param>
+    /// <param name="fileAdoptionService">The file adoption service.</param>
     public MediathekViewDlApiService(
         ILogger<MediathekViewDlApiService> logger,
         IMediathekViewApiClient apiClient,
@@ -61,7 +64,8 @@ public class MediathekViewDlApiService : ControllerBase
         IDownloadHistoryRepository downloadHistoryRepository,
         IDownloadQueueManager downloadQueueManager,
         IConfigurationProvider configurationProvider,
-        IVideoParser videoParser)
+        IVideoParser videoParser,
+        IFileAdoptionService fileAdoptionService)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -72,6 +76,7 @@ public class MediathekViewDlApiService : ControllerBase
         _downloadQueueManager = downloadQueueManager;
         _configurationProvider = configurationProvider;
         _videoParser = videoParser;
+        _fileAdoptionService = fileAdoptionService;
     }
 
     /// <summary>
@@ -492,5 +497,64 @@ public class MediathekViewDlApiService : ControllerBase
 
         _logger.LogInformation("Processed items list reset for subscription '{SubscriptionName}' (ID: {SubscriptionId}).", subscription.Name, subscriptionId);
         return Ok($"Liste der verarbeiteten Elemente für Abonnement '{subscription.Name}' wurde zurückgesetzt.");
+    }
+
+    /// <summary>
+    /// Gets the adoption candidates for a specific subscription.
+    /// </summary>
+    /// <param name="subscriptionId">The ID of the subscription.</param>
+    /// <returns>Adoption information containing candidates and API results.</returns>
+    [HttpGet("Adoption/Candidates/{subscriptionId}")]
+    public async Task<ActionResult<AdoptionInfo>> GetAdoptionCandidates([FromRoute] Guid subscriptionId)
+    {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, new ApiErrorDto(ApiErrorId.InitializationError, Plugin.Instance.InitializationException.Message));
+        }
+
+        var config = _configurationProvider.ConfigurationOrNull;
+        if (config == null)
+        {
+            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin-Konfiguration ist nicht verfügbar."));
+        }
+
+        var subscription = config.Subscriptions.FirstOrDefault(s => s.Id == subscriptionId);
+        if (subscription == null)
+        {
+            return NotFound(new ApiErrorDto(ApiErrorId.NotFound, $"Abonnement mit der ID '{subscriptionId}' wurde nicht gefunden."));
+        }
+
+        var info = await _fileAdoptionService.GetAdoptionCandidatesAsync(subscriptionId, CancellationToken.None).ConfigureAwait(false);
+        return Ok(info);
+    }
+
+    /// <summary>
+    /// Sets an adoption match for a specific local file group.
+    /// </summary>
+    /// <param name="subscriptionId">The ID of the subscription.</param>
+    /// <param name="mapping">The adoption mapping.</param>
+    /// <returns>An OK result.</returns>
+    [HttpPost("Adoption/Match")]
+    public async Task<ActionResult> SetAdoptionMatch([FromQuery] Guid subscriptionId, [FromBody] FileAdoptionMapping mapping)
+    {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, new ApiErrorDto(ApiErrorId.InitializationError, Plugin.Instance.InitializationException.Message));
+        }
+
+        var config = _configurationProvider.ConfigurationOrNull;
+        if (config == null)
+        {
+            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin-Konfiguration ist nicht verfügbar."));
+        }
+
+        var subscription = config.Subscriptions.FirstOrDefault(s => s.Id == subscriptionId);
+        if (subscription == null)
+        {
+            return NotFound(new ApiErrorDto(ApiErrorId.NotFound, $"Abonnement mit der ID '{subscriptionId}' wurde nicht gefunden."));
+        }
+
+        await _fileAdoptionService.SetApiIdAsync(subscriptionId, mapping.CandidateId, mapping.ApiId, mapping.VideoUrl, CancellationToken.None).ConfigureAwait(false);
+        return Ok();
     }
 }

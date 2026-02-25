@@ -402,7 +402,16 @@ const Language = {
         Files: " Dateien"
     },
     Adoption: {
-        NoData: "Noch keine Daten ..."
+        NoData: "Noch keine Daten ...",
+        LocalFile: "Lokale Datei",
+        ApiMatch: "API Treffer",
+        Confidence: "Sicherheit",
+        Confirmed: "Bestätigt",
+        Confirm: "Bestätigen",
+        Search: "Suche",
+        ErrorLoading: "Fehler beim Laden der Adoption-Kandidaten: ",
+        ErrorSaving: "Fehler beim Speichern des Mappings: ",
+        MappingSaved: "Mapping erfolgreich gespeichert."
     },
     LiveTv: {
         TunerAdded: "Zapp Tuner erfolgreich hinzugefügt.",
@@ -572,8 +581,7 @@ const DomIds = {
     Adoption: {
         AboSelector: "selectAdoptionAbo",
         TableContainer: "adoptionTableContainer",
-        LocalTable: "localFilesTable",
-        ExternalTable: "apiResultsTable",
+        List: "adoptionList",
     },
     Subscription: {
         List: "subscriptionList",
@@ -1238,11 +1246,303 @@ class AdoptionController {
         }
     }
 
-    refreshData(aboId) {
-        // Vorerst noch keine Daten anzeigen
-        document.getElementById(DomIds.Adoption.LocalTable).textContent = Language.Adoption.NoData;
-        document.getElementById(DomIds.Adoption.ExternalTable).textContent = Language.Adoption.NoData;
+            refreshData(aboId) {
+
+                Dashboard.showLoadingMsg();
+
+                const url = ApiClient.getUrl('/' + this.config.pluginName + '/Adoption/Candidates/' + aboId);
+
+                ApiClient.getJSON(url).then((info) => {
+
+                    this.renderCandidates(aboId, info.Candidates, info.ApiResults);
+
+                    Dashboard.hideLoadingMsg();
+
+                }).catch((err) => {
+
+                    Dashboard.hideLoadingMsg();
+
+                    Helper.showError(err, Language.Adoption.ErrorLoading);
+
+                });
+
+            }
+
+        
+
+    renderCandidates(aboId, candidates, apiResults) {
+        const list = document.getElementById(DomIds.Adoption.List);
+        list.textContent = "";
+
+        if ((!candidates || candidates.length === 0) && (!apiResults || apiResults.length === 0)) {
+            const p = document.createElement('p');
+            p.textContent = Language.Adoption.NoData;
+            list.appendChild(p);
+            return;
+        }
+
+        // 1. Show Local Files (Candidates)
+        if (candidates && candidates.length > 0) {
+            const header = document.createElement('h2');
+            header.textContent = "Lokale Dateien & Übereinstimmungen";
+            header.style.margin = "20px 0 10px 0";
+            list.appendChild(header);
+
+            candidates.forEach((candidate) => {
+                list.appendChild(this.createAdoptionRow(aboId, candidate, apiResults));
+            });
+        }
+
+        // 2. Show Unmatched API Results
+        const matchedApiIds = new Set();
+        candidates.forEach(c => {
+            if (c.Matches) {
+                c.Matches.forEach(m => matchedApiIds.add(m.ApiId));
+            }
+        });
+
+        const unmatchedResults = apiResults.filter(res => !matchedApiIds.has(res.Item.Id));
+
+        if (unmatchedResults.length > 0) {
+            const header = document.createElement('h2');
+            header.textContent = "Nicht zugeordnete API-Ergebnisse";
+            header.style.margin = "30px 0 10px 0";
+            list.appendChild(header);
+
+            unmatchedResults.forEach(res => {
+                list.appendChild(this.createUnmatchedApiRow(res));
+            });
+        }
     }
+
+    createAdoptionRow(aboId, candidate, apiResults) {
+        const matches = candidate.Matches || [];
+        const bestMatch = matches.length > 0 ? matches[0] : null;
+        
+        const actions = document.createElement('div');
+        actions.className = 'listItemButtons flex-gap-10';
+
+        // 1. Local Part (Title and Path)
+        const localContainer = document.createElement('div');
+        localContainer.style.flex = '1';
+        localContainer.style.minWidth = '0';
+
+        const localTitle = document.createElement('div');
+        localTitle.style.fontWeight = 'bold';
+        localTitle.textContent = Helper.getFileNameFromPath(candidate.Id);
+        localContainer.appendChild(localTitle);
+
+        const localPath = document.createElement('div');
+        localPath.className = 'secondary mvpl-history-entry-path';
+        localPath.style.fontSize = '0.85em';
+        localPath.textContent = candidate.Id;
+        localContainer.appendChild(localPath);
+
+        // 2. Connector Arrow
+        const arrow = document.createElement('div');
+        arrow.className = 'material-icons';
+        arrow.textContent = 'arrow_forward';
+        arrow.style.margin = '0 20px';
+        arrow.style.opacity = '0.5';
+
+        // 3. API Part (Match or Select)
+        const apiContainer = document.createElement('div');
+        apiContainer.style.flex = '1';
+        apiContainer.style.minWidth = '0';
+
+        const matchInfo = document.createElement('div');
+        matchInfo.className = 'flex-align-center flex-gap-10';
+
+        if (bestMatch) {
+            const apiTitle = document.createElement('span');
+            apiTitle.style.fontWeight = 'bold';
+            apiTitle.textContent = bestMatch.ApiTitle || bestMatch.ApiId;
+            matchInfo.appendChild(apiTitle);
+
+            const apiId = document.createElement('span');
+            apiId.className = 'mvpl-api-id';
+            apiId.textContent = '(ID: ' + bestMatch.ApiId + ')';
+            matchInfo.appendChild(apiId);
+
+            const score = Math.round(bestMatch.Confidence);
+            const confidenceSpan = document.createElement('span');
+            confidenceSpan.textContent = score + '%';
+            if (score > 80) confidenceSpan.className = 'mvpl-confidence-high';
+            else if (score > 50) confidenceSpan.className = 'mvpl-confidence-medium';
+            else confidenceSpan.className = 'mvpl-confidence-low';
+            matchInfo.appendChild(confidenceSpan);
+
+            if (bestMatch.IsConfirmed) {
+                const confirmedBadge = document.createElement('span');
+                confirmedBadge.className = 'mvpl-download-status';
+                confirmedBadge.setAttribute('data-status', 'Finished');
+                confirmedBadge.textContent = Language.Adoption.Confirmed;
+                matchInfo.appendChild(confirmedBadge);
+            } else {
+                actions.appendChild(this.dom.createIconButton(Icons.Add, Language.Adoption.Confirm, () => this.saveMapping(aboId, candidate.Id, bestMatch.ApiId, bestMatch.VideoUrl)));
+            }
+        } else {
+            const noMatch = document.createElement('span');
+            noMatch.textContent = "- Kein Treffer -";
+            noMatch.style.fontStyle = 'italic';
+            matchInfo.appendChild(noMatch);
+        }
+
+        apiContainer.appendChild(matchInfo);
+
+        // Dropdown for manual correction (if not confirmed)
+        if (!bestMatch || !bestMatch.IsConfirmed) {
+            const selectContainer = document.createElement('div');
+            selectContainer.style.marginTop = '5px';
+
+            const select = document.createElement('select');
+            select.className = 'emby-select';
+            select.style.width = '100%';
+            select.style.maxWidth = '400px';
+            
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = "";
+            defaultOpt.text = "Anderes API-Ergebnis wählen...";
+            select.appendChild(defaultOpt);
+
+            // Add other matches first
+            if (matches.length > 1) {
+                const group = document.createElement('optgroup');
+                group.label = "Top Treffer";
+                matches.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.ApiId;
+                    opt.text = (m.ApiTitle || m.ApiId) + ' (' + Math.round(m.Confidence) + '%)';
+                    if (bestMatch && m.ApiId === bestMatch.ApiId) opt.selected = true;
+                    group.appendChild(opt);
+                });
+                select.appendChild(group);
+            }
+
+            const allGroup = document.createElement('optgroup');
+            allGroup.label = "Alle API Ergebnisse";
+            apiResults.forEach(res => {
+                // Skip if already in Top Treffer
+                if (matches.some(m => m.ApiId === res.Item.Id)) return;
+
+                const opt = document.createElement('option');
+                opt.value = res.Item.Id;
+                opt.text = res.Item.Title + ' (ID: ' + res.Item.Id + ')';
+                allGroup.appendChild(opt);
+            });
+            select.appendChild(allGroup);
+
+            select.addEventListener('change', (e) => {
+                const selectedId = e.target.value;
+                if (selectedId) {
+                    const selectedItem = apiResults.find(r => r.Item.Id === selectedId);
+                    // find in matches first to get videoUrl if available
+                    const m = matches.find(m => m.ApiId === selectedId);
+                    const videoUrl = m ? m.VideoUrl : (selectedItem ? (this.getBestVideoUrl(selectedItem.Item) || "") : "");
+                    this.saveMapping(aboId, candidate.Id, selectedId, videoUrl);
+                }
+            });
+            selectContainer.appendChild(select);
+            apiContainer.appendChild(selectContainer);
+        }
+
+        const listItem = document.createElement('div');
+        listItem.className = 'listItem listItem-border';
+        if (bestMatch && bestMatch.IsConfirmed) {
+            listItem.classList.add('mvpl-adoption-item-confirmed');
+        }
+
+        const body = document.createElement('div');
+        body.className = 'listItemBody flex-align-center';
+        body.style.width = '100%';
+        body.style.padding = '10px 15px';
+        body.appendChild(localContainer);
+        body.appendChild(arrow);
+        body.appendChild(apiContainer);
+
+        listItem.appendChild(body);
+        if (actions.hasChildNodes()) {
+            listItem.appendChild(actions);
+        }
+
+        return listItem;
+    }
+
+    createUnmatchedApiRow(apiResult) {
+        const item = apiResult.Item;
+        const listItem = document.createElement('div');
+        listItem.className = 'listItem listItem-border';
+
+        const body = document.createElement('div');
+        body.className = 'listItemBody two-line';
+
+        const title = document.createElement('h3');
+        title.className = 'listItemBodyText';
+        title.textContent = item.Title;
+        body.appendChild(title);
+
+        const subText = document.createElement('div');
+        subText.className = 'listItemBodyText secondary';
+        subText.textContent = item.Channel + ' | ' + item.Topic + ' (ID: ' + item.Id + ')';
+        body.appendChild(subText);
+
+        listItem.appendChild(body);
+        return listItem;
+    }
+
+    getBestVideoUrl(item) {
+        if (!item.VideoUrls || item.VideoUrls.length === 0) return null;
+        const sorted = [...item.VideoUrls].sort((a, b) => (b.Quality || 0) - (a.Quality || 0));
+        return sorted[0].Url;
+    }
+
+    saveMapping(aboId, candidateId, apiId, videoUrl) {
+
+                Dashboard.showLoadingMsg();
+
+                const url = ApiClient.getUrl('/' + this.config.pluginName + '/Adoption/Match'); 
+
+                
+
+                const data = {
+
+                    CandidateId: candidateId,
+
+                    ApiId: apiId,
+
+                    VideoUrl: videoUrl
+
+                };
+
+        
+
+                ApiClient.ajax({
+
+                    type: "POST",
+
+                    url: url + '?subscriptionId=' + aboId,
+
+                    data: JSON.stringify(data),
+
+                    contentType: 'application/json'
+
+                }).then(() => {
+
+                    Dashboard.hideLoadingMsg();
+
+                    Helper.showToast(Language.Adoption.MappingSaved);
+
+                    this.refreshData(aboId);
+
+                }).catch((err) => {
+
+                    Dashboard.hideLoadingMsg();
+
+                    Helper.showError(err, Language.Adoption.ErrorSaving);
+
+                });
+
+            }
 
     populateAbos(subscriptions) {
         const select = document.getElementById(DomIds.Adoption.AboSelector);

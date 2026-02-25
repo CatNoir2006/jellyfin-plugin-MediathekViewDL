@@ -14,7 +14,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Configuration;
 /// Represents a single download subscription based on a search query.
 /// </summary>
 [DebuggerDisplay("Name={Name}, Enabled={IsEnabled}, Search={Search}")]
-public class Subscription
+public record Subscription
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="Subscription"/> class.
@@ -71,6 +71,16 @@ public class Subscription
     /// This is purely for debugging and informational purposes.
     /// </summary>
     public DateTime? LastDownloadedTimestamp { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to ignore local files when processing this subscription.
+    /// </summary>
+    public bool IgnoreLocalFiles { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to ignore the download history when processing this subscription.
+    /// </summary>
+    public bool IgnoreHistory { get; set; }
 
     #pragma warning disable SA1124
     // ToDo: Remove obsolete properties on 1.0.0.0 release

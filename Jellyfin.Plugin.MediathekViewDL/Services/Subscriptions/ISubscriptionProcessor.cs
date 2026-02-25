@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 
@@ -22,6 +23,16 @@ public interface ISubscriptionProcessor
     Task<List<DownloadJob>> GetJobsForSubscriptionAsync(
         Subscription subscription,
         bool downloadSubtitles,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Gets all eligible items for a subscription from the API, applying filters based on subscription settings.
+    /// </summary>
+    /// <param name="subscription">The subscription to process.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>An async enumerable of eligible result items and their parsed video info.</returns>
+    IAsyncEnumerable<(ResultItemDto Item, VideoInfo VideoInfo)> GetEligibleItemsAsync(
+        Subscription subscription,
         CancellationToken cancellationToken);
 
     /// <summary>

@@ -843,19 +843,8 @@
                     </div>
 
                     <div id="adoptionTableContainer" style="display: none;">
-                        <div class="mvpl-adoption-grid">
-                            <div class="mvpl-adoption-column">
-                                <div class="sectionTitleLabel">Lokale Dateien</div>
-                                <div id="localFilesTable" class="paperList">
-                                    <!-- Lokale Dateien werden hier gerendert -->
-                                </div>
-                            </div>
-                            <div class="mvpl-adoption-column">
-                                <div class="sectionTitleLabel">API Ergebnisse</div>
-                                <div id="apiResultsTable" class="paperList">
-                                    <!-- API Ergebnisse werden hier gerendert -->
-                                </div>
-                            </div>
+                        <div id="adoptionList" class="paperList mvpl-margin-top-20">
+                            <!-- Adoption-Einträge werden hier gerendert -->
                         </div>
                     </div>
                 </div>
@@ -1164,6 +1153,35 @@
         .mvpl-download-status[data-status="Cancelled"] {
             background-color: #FF9800;
             color: white;
+        }
+
+        .mvpl-confidence-high {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .mvpl-confidence-medium {
+            color: #FF9800;
+            font-weight: bold;
+        }
+
+        .mvpl-confidence-low {
+            color: #F44336;
+            font-weight: bold;
+        }
+
+        .mvpl-api-id {
+            font-size: 0.8em;
+            opacity: 0.6;
+            margin-left: 5px;
+        }
+
+        .mvpl-adoption-item {
+            min-height: 100px;
+        }
+
+        .mvpl-adoption-item-confirmed {
+            background-color: rgba(76, 175, 80, 0.1);
         }
 
         /* Animation Classes */

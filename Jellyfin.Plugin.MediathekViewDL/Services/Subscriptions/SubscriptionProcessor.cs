@@ -75,15 +75,12 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     }
 
     /// <inheritdoc/>
-    public async Task<List<DownloadJob>> GetJobsForSubscriptionAsync(
+    public async IAsyncEnumerable<(ResultItemDto Item, VideoInfo VideoInfo)> GetEligibleItemsAsync(
         Subscription subscription,
-        bool downloadSubtitles,
-        CancellationToken cancellationToken)
+        [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        var jobs = new List<DownloadJob>();
-
         LocalEpisodeCache? localEpisodeCache = null;
-        if (subscription.Download.EnhancedDuplicateDetection)
+        if (subscription.Download.EnhancedDuplicateDetection && !subscription.IgnoreLocalFiles)
         {
             var subscriptionBaseDir = _fileNameBuilderService.GetSubscriptionBaseDirectory(subscription, DownloadContext.Subscription);
             if (!string.IsNullOrWhiteSpace(subscriptionBaseDir))
@@ -94,7 +91,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
         await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            if (await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false) && !subscription.Download.AutoUpgradeToHigherQuality)
+            if (!subscription.IgnoreHistory && await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false) && !subscription.Download.AutoUpgradeToHigherQuality)
             {
                 _logger.LogDebug("Skipping item '{Title}' (ID: {Id}) as it was already processed for subscription '{SubscriptionName}'.", item.Title, item.Id, subscription.Name);
                 continue;
@@ -139,7 +136,31 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 continue;
             }
 
-            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription, DownloadContext.Subscription);
+            yield return (item, tempVideoInfo!);
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<DownloadJob>> GetJobsForSubscriptionAsync(
+        Subscription subscription,
+        bool downloadSubtitles,
+        CancellationToken cancellationToken)
+    {
+        var jobs = new List<DownloadJob>();
+
+        LocalEpisodeCache? localEpisodeCache = null;
+        if (subscription.Download.EnhancedDuplicateDetection && !subscription.IgnoreLocalFiles)
+        {
+            var subscriptionBaseDir = _fileNameBuilderService.GetSubscriptionBaseDirectory(subscription, DownloadContext.Subscription);
+            if (!string.IsNullOrWhiteSpace(subscriptionBaseDir))
+            {
+                localEpisodeCache = _localMediaScanner.ScanDirectory(subscriptionBaseDir, subscription.Name);
+            }
+        }
+
+        await foreach (var (item, tempVideoInfo) in GetEligibleItemsAsync(subscription, cancellationToken).ConfigureAwait(false))
+        {
+            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo, subscription, DownloadContext.Subscription);
             if (!paths.IsValid)
             {
                 continue;
@@ -152,14 +173,14 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
 
             // Download Task
-            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo!.Title, ItemInfo = tempVideoInfo };
+            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo.Title, ItemInfo = tempVideoInfo };
 
             // Video/Main Item
             switch (paths.MainType)
             {
                 case FileType.Strm:
                     // Quality Upgrade is only available for Video
-                    if (localEpisodeCache?.Contains(tempVideoInfo) == true || await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false))
+                    if ((localEpisodeCache?.Contains(tempVideoInfo) == true || await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false)) && !subscription.Download.AutoUpgradeToHigherQuality)
                     {
                         continue;
                     }
@@ -199,7 +220,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                     break;
                 case FileType.Audio:
                     // Quality Upgrade is only available for Video
-                    if (localEpisodeCache?.Contains(tempVideoInfo) == true || await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false))
+                    if ((localEpisodeCache?.Contains(tempVideoInfo) == true || await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false)) && !subscription.Download.AutoUpgradeToHigherQuality)
                     {
                         continue;
                     }
@@ -266,51 +287,12 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     {
         // For dry-run/test, we do not scan the disk for duplicate detection to avoid security risks (CA3003)
         // and because we want to test the query logic primarily.
-        // We only pass null for the cache, effectively disabling the disk check part of ApplyFilters.
+        // We ensure IgnoreLocalFiles is set for this call.
+        var testSub = subscription with { IgnoreLocalFiles = true };
 
-        await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
+        await foreach (var (item, tempVideoInfo) in GetEligibleItemsAsync(testSub, cancellationToken).ConfigureAwait(false))
         {
-            var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
-
-            SetOvLanguageIfSet(subscription, tempVideoInfo);
-
-            if (tempVideoInfo != null && (subscription.Metadata.AppendDateToTitle || subscription.Metadata.AppendTimeToTitle))
-            {
-                var suffixParts = new List<string>();
-
-                if (subscription.Metadata.AppendDateToTitle)
-                {
-                    var dateStr = item.Timestamp.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-                    if (!tempVideoInfo.Title.Contains(dateStr, StringComparison.OrdinalIgnoreCase))
-                    {
-                        suffixParts.Add(dateStr);
-                    }
-                }
-
-                if (subscription.Metadata.AppendTimeToTitle)
-                {
-                    // using HH-mm because : is invalid in filenames
-                    var timeStr = item.Timestamp.ToString("HH-mm", CultureInfo.InvariantCulture);
-                    if (!tempVideoInfo.Title.Contains(timeStr, StringComparison.OrdinalIgnoreCase))
-                    {
-                        suffixParts.Add(timeStr);
-                    }
-                }
-
-                if (suffixParts.Count > 0)
-                {
-                    tempVideoInfo.Title = $"{tempVideoInfo.Title} - {string.Join(" ", suffixParts)}";
-                }
-
-                tempVideoInfo.IsShow = true;
-            }
-
-            if (!await MatchesSubCriteriaAsync(tempVideoInfo, subscription, item, null).ConfigureAwait(false))
-            {
-                continue;
-            }
-
-            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo!, subscription, DownloadContext.Subscription);
+            var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo, testSub, DownloadContext.Subscription);
             string path = paths.MainFilePath;
             if (!paths.IsValid)
             {

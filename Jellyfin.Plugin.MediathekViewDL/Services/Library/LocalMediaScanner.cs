@@ -18,6 +18,12 @@ public class LocalMediaScanner : ILocalMediaScanner
     // Supported video extensions
     private readonly string[] _videoExtensions = { ".mkv", ".mp4", ".avi", ".mov", ".wmv", ".m4v", ".strm", ".mka" };
 
+    // Supported subtitle extensions
+    private readonly string[] _subtitleExtensions = { ".vtt", ".ttml", ".srt" };
+
+    // Supported info extensions
+    private readonly string[] _infoExtensions = { ".txt", ".nfo" };
+
     /// <summary>
     /// Initializes a new instance of the <see cref="LocalMediaScanner"/> class.
     /// </summary>
@@ -29,62 +35,86 @@ public class LocalMediaScanner : ILocalMediaScanner
         _videoParser = videoParser;
     }
 
-    /// <summary>
-    /// Scans the specified directory for video files and builds a cache of existing episodes.
-    /// </summary>
-    /// <param name="directoryPath">The path to the directory to scan.</param>
-    /// <param name="seriesName">The name of the series (used for parsing context).</param>
-    /// <returns>A <see cref="LocalEpisodeCache"/> containing the found episodes.</returns>
+    /// <inheritdoc />
     public LocalEpisodeCache ScanDirectory(string directoryPath, string seriesName)
     {
-        var cache = new LocalEpisodeCache();
+        return ScanDirectoryInternal(directoryPath, seriesName).EpisodeCache;
+    }
+
+    /// <inheritdoc />
+    public LocalScanResult ScanSubscriptionDirectory(string directoryPath, string seriesName)
+    {
+        return ScanDirectoryInternal(directoryPath, seriesName);
+    }
+
+    private LocalScanResult ScanDirectoryInternal(string directoryPath, string seriesName)
+    {
+        var result = new LocalScanResult();
 
         if (string.IsNullOrWhiteSpace(directoryPath) || !Directory.Exists(directoryPath))
         {
             _logger.LogDebug("Directory does not exist or is invalid: {Path}", directoryPath);
-            return cache;
+            return result;
         }
 
         try
         {
-            _logger.LogInformation("Scanning local directory for existing episodes: {Path}", directoryPath);
+            _logger.LogInformation("Scanning local directory: {Path}", directoryPath);
 
-            var files = Directory.EnumerateFiles(directoryPath, "*.*", SearchOption.AllDirectories)
-                .Where(f => _videoExtensions.Contains(Path.GetExtension(f).ToLowerInvariant()));
+            var files = Directory.EnumerateFiles(directoryPath, "*.*", SearchOption.AllDirectories).ToList();
 
             foreach (var file in files)
             {
+                var extension = Path.GetExtension(file).ToLowerInvariant();
                 var fileName = Path.GetFileNameWithoutExtension(file);
 
-                // Parse the filename
-                var videoInfo = _videoParser.ParseVideoInfo(seriesName, fileName);
-
-                if (videoInfo != null)
+                if (_videoExtensions.Contains(extension))
                 {
-                    if ((videoInfo.SeasonNumber.HasValue && videoInfo.EpisodeNumber.HasValue) || videoInfo.AbsoluteEpisodeNumber.HasValue)
+                    var videoInfo = _videoParser.ParseVideoInfo(seriesName, fileName);
+                    result.Files.Add(new ScannedFile
                     {
-                        cache.Add(videoInfo.SeasonNumber, videoInfo.EpisodeNumber, videoInfo.AbsoluteEpisodeNumber, file, videoInfo.Language);
-                        _logger.LogTrace(
-                            "Found existing episode: {FileName} -> S{Season}E{Episode} (Abs: {Abs}) [{Lang}]",
-                            fileName,
-                            videoInfo.SeasonNumber,
-                            videoInfo.EpisodeNumber,
-                            videoInfo.AbsoluteEpisodeNumber,
-                            videoInfo.Language);
+                        FilePath = file,
+                        Type = extension == ".strm" ? FileType.Strm : FileType.Video,
+                        VideoInfo = videoInfo
+                    });
+
+                    if (videoInfo != null)
+                    {
+                        if ((videoInfo.SeasonNumber.HasValue && videoInfo.EpisodeNumber.HasValue) || videoInfo.AbsoluteEpisodeNumber.HasValue)
+                        {
+                            result.EpisodeCache.Add(videoInfo.SeasonNumber, videoInfo.EpisodeNumber, videoInfo.AbsoluteEpisodeNumber, file, videoInfo.Language);
+                        }
                     }
+                }
+                else if (_subtitleExtensions.Contains(extension))
+                {
+                    result.Files.Add(new ScannedFile
+                    {
+                        FilePath = file,
+                        Type = FileType.Subtitle
+                    });
+                }
+                else if (_infoExtensions.Contains(extension))
+                {
+                    result.Files.Add(new ScannedFile
+                    {
+                        FilePath = file,
+                        Type = FileType.Info
+                    });
                 }
             }
 
             _logger.LogInformation(
-                "Scan complete. Found {SECount} S/E episodes and {AbsCount} absolute numbered episodes.",
-                cache.SeasonEpisodeCount,
-                cache.AbsoluteEpisodeCount);
+                "Scan complete. Found {Total} total files, {SECount} S/E episodes and {AbsCount} absolute numbered episodes.",
+                result.Files.Count,
+                result.EpisodeCache.SeasonEpisodeCount,
+                result.EpisodeCache.AbsoluteEpisodeCount);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error scanning directory: {Path}", directoryPath);
         }
 
-        return cache;
+        return result;
     }
 }

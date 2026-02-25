@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 
@@ -39,6 +40,14 @@ public interface IFileNameBuilderService
     /// <param name="context">The download context.</param>
     /// <returns>The base directory path.</returns>
     string GetSubscriptionBaseDirectory(Subscription subscription, DownloadContext context);
+
+    /// <summary>
+    /// Gets all possible base directories for a subscription (e.g., both Show and Movie paths).
+    /// </summary>
+    /// <param name="subscription">The subscription.</param>
+    /// <param name="context">The download context.</param>
+    /// <returns>A collection of base directory paths.</returns>
+    IEnumerable<string> GetSubscriptionBaseDirectories(Subscription subscription, DownloadContext context);
 
     /// <summary>
     /// Validates if a path is safe to write to (within configured download directories or Jellyfin libraries).

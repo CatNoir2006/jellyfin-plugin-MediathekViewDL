@@ -17,6 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FuzzySharp" Version="2.0.2" GeneratePathProperty="true" />
     <PackageReference Include="Jellyfin.Controller" Version="10.11.0">
       <ExcludeAssets>$(PluginDependencyExcludeAssets)</ExcludeAssets>
     </PackageReference>
@@ -52,6 +53,10 @@
   <Target Name="CleanRuntimes" AfterTargets="Build;Publish">
     <RemoveDir Directories="$(TargetDir)runtimes" />
     <RemoveDir Directories="$(PublishDir)runtimes" />
+  </Target>
+
+  <Target Name="CopyFuzzySharp" AfterTargets="Build">
+    <Copy SourceFiles="$(PkgFuzzySharp)/lib/netstandard2.0/FuzzySharp.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

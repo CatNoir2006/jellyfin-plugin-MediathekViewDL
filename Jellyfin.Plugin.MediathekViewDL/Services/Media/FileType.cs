@@ -23,5 +23,10 @@ public enum FileType
     /// <summary>
     /// It's a Subtitle File.
     /// </summary>
-    Subtitle
+    Subtitle,
+
+    /// <summary>
+    /// It's an Info/Metadata File (e.g., .txt or .nfo).
+    /// </summary>
+    Info
 }

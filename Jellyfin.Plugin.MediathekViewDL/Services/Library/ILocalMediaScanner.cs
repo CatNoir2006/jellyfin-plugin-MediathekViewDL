@@ -12,4 +12,12 @@ public interface ILocalMediaScanner
     /// <param name="seriesName">The name of the series (used for parsing context).</param>
     /// <returns>A <see cref="LocalEpisodeCache"/> containing the found episodes.</returns>
     LocalEpisodeCache ScanDirectory(string directoryPath, string seriesName);
+
+    /// <summary>
+    /// Performs an extended scan of the specified directory, including subtitles and info files.
+    /// </summary>
+    /// <param name="directoryPath">The path to the directory to scan.</param>
+    /// <param name="seriesName">The name of the series (used for parsing context).</param>
+    /// <returns>A <see cref="LocalScanResult"/> containing all found files and the episode cache.</returns>
+    LocalScanResult ScanSubscriptionDirectory(string directoryPath, string seriesName);
 }
