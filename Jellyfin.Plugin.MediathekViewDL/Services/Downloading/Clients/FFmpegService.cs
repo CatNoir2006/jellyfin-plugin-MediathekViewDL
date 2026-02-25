@@ -143,6 +143,24 @@ public class FFmpegService : IFFmpegService
 
         _logger.LogDebug("Probing media info for '{UrlOrPath}' ", actualUrlOrPath);
 
+        // Security check: If it's a URL, validate it
+        if (actualUrlOrPath.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || actualUrlOrPath.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            try
+            {
+                if (!await _strmValidationService.ValidateUrlAsync(actualUrlOrPath, cancellationToken).ConfigureAwait(false))
+                {
+                    _logger.LogError("URL validation failed for '{Url}'", actualUrlOrPath);
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "URL validation threw exception for '{Url}'", actualUrlOrPath);
+                return null;
+            }
+        }
+
         // Arguments to get stream info in JSON format
         // We remove -select_streams v:0 to support audio-only files
         string[] args =

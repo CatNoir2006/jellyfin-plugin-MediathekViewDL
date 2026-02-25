@@ -578,7 +578,7 @@ const DomIds = {
             }
         }
     },
-    LiveTv:{
+    LiveTv: {
         Tuner: "mvpl-btn-setup-tuner",
         Guide: "mvpl-btn-setup-guide"
     },
@@ -1255,7 +1255,7 @@ class AdoptionController {
     onAboSelected(aboId) {
         const tableContainer = document.getElementById(DomIds.Adoption.TableContainer);
         const filterContainer = document.getElementById(DomIds.Adoption.FilterContainer);
-        
+
         if (aboId) {
             tableContainer.style.display = 'block';
             filterContainer.style.display = 'flex';
@@ -1293,12 +1293,12 @@ class AdoptionController {
         const filteredCandidates = this.lastAdoptionInfo.Candidates.filter(c => {
             const bestMatch = (c.Matches && c.Matches.length > 0) ? c.Matches[0] : null;
             const confidence = bestMatch ? Math.round(bestMatch.Confidence) : 0;
-            
+
             if (confidence < min || confidence > max) return false;
             if (sourceFilter !== "All") {
                 if (!bestMatch || bestMatch.Source !== sourceFilter) return false;
             }
-            
+
             return true;
         });
 
@@ -1308,7 +1308,7 @@ class AdoptionController {
 
     saveAllFiltered() {
         if (!this.lastFilteredCandidates || !this.lastAboId) return;
-        
+
         const unconfirmed = this.lastFilteredCandidates.filter(c => c.Matches && c.Matches.length > 0 && !c.Matches[0].IsConfirmed);
         if (unconfirmed.length === 0) return;
 
@@ -1385,7 +1385,7 @@ class AdoptionController {
     createAdoptionRow(aboId, candidate, apiResults) {
         const matches = candidate.Matches || [];
         const bestMatch = matches.length > 0 ? matches[0] : null;
-        
+
         const actions = document.createElement('div');
         actions.className = 'listItemButtons flex-gap-10';
 
@@ -1466,7 +1466,7 @@ class AdoptionController {
             select.className = 'emby-select';
             select.style.width = '100%';
             select.style.maxWidth = '400px';
-            
+
             const defaultOpt = document.createElement('option');
             defaultOpt.value = "";
             defaultOpt.text = "Anderes API-Ergebnis wählen...";
@@ -1567,51 +1567,49 @@ class AdoptionController {
 
     saveMapping(aboId, candidateId, apiId, videoUrl) {
 
-                Dashboard.showLoadingMsg();
+        Dashboard.showLoadingMsg();
 
-                const url = ApiClient.getUrl('/' + this.config.pluginName + '/Adoption/Match'); 
+        const url = ApiClient.getUrl('/' + this.config.pluginName + '/Adoption/Match');
 
-                
 
-                const data = {
+        const data = {
 
-                    CandidateId: candidateId,
+            CandidateId: candidateId,
 
-                    ApiId: apiId,
+            ApiId: apiId,
 
-                    VideoUrl: videoUrl
+            VideoUrl: videoUrl
 
-                };
+        };
 
-        
 
-                ApiClient.ajax({
+        ApiClient.ajax({
 
-                    type: "POST",
+            type: "POST",
 
-                    url: url + '?subscriptionId=' + aboId,
+            url: url + '?subscriptionId=' + aboId,
 
-                    data: JSON.stringify(data),
+            data: JSON.stringify(data),
 
-                    contentType: 'application/json'
+            contentType: 'application/json'
 
-                }).then(() => {
+        }).then(() => {
 
-                    Dashboard.hideLoadingMsg();
+            Dashboard.hideLoadingMsg();
 
-                    Helper.showToast(Language.Adoption.MappingSaved);
+            Helper.showToast(Language.Adoption.MappingSaved);
 
-                    this.refreshData(aboId);
+            this.refreshData(aboId);
 
-                }).catch((err) => {
+        }).catch((err) => {
 
-                    Dashboard.hideLoadingMsg();
+            Dashboard.hideLoadingMsg();
 
-                    Helper.showError(err, Language.Adoption.ErrorSaving);
+            Helper.showError(err, Language.Adoption.ErrorSaving);
 
-                });
+        });
 
-            }
+    }
 
     populateAbos(subscriptions) {
         const select = document.getElementById(DomIds.Adoption.AboSelector);
@@ -2785,7 +2783,7 @@ class MediathekPluginConfig {
             return;
         }
 
-                    countContainer.textContent = Language.Search.TestResultsCount(results.length);
+        countContainer.textContent = Language.Search.TestResultsCount(results.length);
         const paperList = document.createElement('div');
         paperList.classList.add('paperList');
 

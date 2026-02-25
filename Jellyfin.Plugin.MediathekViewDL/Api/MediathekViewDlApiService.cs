@@ -472,28 +472,15 @@ public class MediathekViewDlApiService : ControllerBase
     [HttpPost("ResetProcessedItems")]
     public async Task<ActionResult> ResetProcessedItems([FromQuery] Guid subscriptionId)
     {
-        if (Plugin.Instance?.InitializationException is not null)
+        var validationResult = GetSubscriptionOrError(subscriptionId, out var subscription, out var config);
+        if (validationResult != null)
         {
-            return StatusCode(503, Plugin.Instance.InitializationException.Message);
-        }
-
-        var config = _configurationProvider.ConfigurationOrNull;
-        if (config == null)
-        {
-            _logger.LogError("Plugin configuration is not available. Cannot reset processed items.");
-            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin-Konfiguration ist nicht verfügbar."));
-        }
-
-        var subscription = config.Subscriptions.FirstOrDefault(s => s.Id == subscriptionId);
-        if (subscription == null)
-        {
-            _logger.LogWarning("Subscription with ID '{SubscriptionId}' not found. Cannot reset processed items.", subscriptionId);
-            return NotFound(new ApiErrorDto(ApiErrorId.NotFound, $"Abonnement mit der ID '{subscriptionId}' wurde nicht gefunden."));
+            return validationResult;
         }
 
         await _downloadHistoryRepository.RemoveBySubscriptionIdAsync(subscriptionId).ConfigureAwait(false);
-        subscription.LastDownloadedTimestamp = null; // Also reset the timestamp for consistency
-        _configurationProvider.TryUpdate(config);
+        subscription!.LastDownloadedTimestamp = null; // Also reset the timestamp for consistency
+        _configurationProvider.TryUpdate(config!);
 
         _logger.LogInformation("Processed items list reset for subscription '{SubscriptionName}' (ID: {SubscriptionId}).", subscription.Name, subscriptionId);
         return Ok($"Liste der verarbeiteten Elemente für Abonnement '{subscription.Name}' wurde zurückgesetzt.");
@@ -507,21 +494,10 @@ public class MediathekViewDlApiService : ControllerBase
     [HttpGet("Adoption/Candidates/{subscriptionId}")]
     public async Task<ActionResult<AdoptionInfo>> GetAdoptionCandidates([FromRoute] Guid subscriptionId)
     {
-        if (Plugin.Instance?.InitializationException is not null)
+        var validationResult = GetSubscriptionOrError(subscriptionId, out _, out _);
+        if (validationResult != null)
         {
-            return StatusCode(503, new ApiErrorDto(ApiErrorId.InitializationError, Plugin.Instance.InitializationException.Message));
-        }
-
-        var config = _configurationProvider.ConfigurationOrNull;
-        if (config == null)
-        {
-            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin-Konfiguration ist nicht verfügbar."));
-        }
-
-        var subscription = config.Subscriptions.FirstOrDefault(s => s.Id == subscriptionId);
-        if (subscription == null)
-        {
-            return NotFound(new ApiErrorDto(ApiErrorId.NotFound, $"Abonnement mit der ID '{subscriptionId}' wurde nicht gefunden."));
+            return validationResult;
         }
 
         var info = await _fileAdoptionService.GetAdoptionCandidatesAsync(subscriptionId, CancellationToken.None).ConfigureAwait(false);
@@ -537,21 +513,10 @@ public class MediathekViewDlApiService : ControllerBase
     [HttpPost("Adoption/Match")]
     public async Task<ActionResult> SetAdoptionMatch([FromQuery] Guid subscriptionId, [FromBody] FileAdoptionMapping mapping)
     {
-        if (Plugin.Instance?.InitializationException is not null)
+        var validationResult = GetSubscriptionOrError(subscriptionId, out _, out _);
+        if (validationResult != null)
         {
-            return StatusCode(503, new ApiErrorDto(ApiErrorId.InitializationError, Plugin.Instance.InitializationException.Message));
-        }
-
-        var config = _configurationProvider.ConfigurationOrNull;
-        if (config == null)
-        {
-            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin-Konfiguration ist nicht verfügbar."));
-        }
-
-        var subscription = config.Subscriptions.FirstOrDefault(s => s.Id == subscriptionId);
-        if (subscription == null)
-        {
-            return NotFound(new ApiErrorDto(ApiErrorId.NotFound, $"Abonnement mit der ID '{subscriptionId}' wurde nicht gefunden."));
+            return validationResult;
         }
 
         await _fileAdoptionService.SetApiIdAsync(subscriptionId, mapping.CandidateId, mapping.ApiId, mapping.VideoUrl, CancellationToken.None).ConfigureAwait(false);
@@ -567,24 +532,38 @@ public class MediathekViewDlApiService : ControllerBase
     [HttpPost("Adoption/Mappings")]
     public async Task<ActionResult> SetAdoptionMappings([FromQuery] Guid subscriptionId, [FromBody] IReadOnlyList<FileAdoptionMapping> mappings)
     {
+        var validationResult = GetSubscriptionOrError(subscriptionId, out _, out _);
+        if (validationResult != null)
+        {
+            return validationResult;
+        }
+
+        await _fileAdoptionService.SetMappingsAsync(subscriptionId, mappings, CancellationToken.None).ConfigureAwait(false);
+        return Ok();
+    }
+
+    private ActionResult? GetSubscriptionOrError(Guid subscriptionId, out Subscription? subscription, out PluginConfiguration? config)
+    {
+        subscription = null;
+        config = null;
+
         if (Plugin.Instance?.InitializationException is not null)
         {
             return StatusCode(503, new ApiErrorDto(ApiErrorId.InitializationError, Plugin.Instance.InitializationException.Message));
         }
 
-        var config = _configurationProvider.ConfigurationOrNull;
+        config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
         {
             return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin-Konfiguration ist nicht verfügbar."));
         }
 
-        var subscription = config.Subscriptions.FirstOrDefault(s => s.Id == subscriptionId);
+        subscription = config.Subscriptions.FirstOrDefault(s => s.Id == subscriptionId);
         if (subscription == null)
         {
             return NotFound(new ApiErrorDto(ApiErrorId.NotFound, $"Abonnement mit der ID '{subscriptionId}' wurde nicht gefunden."));
         }
 
-        await _fileAdoptionService.SetMappingsAsync(subscriptionId, mappings, CancellationToken.None).ConfigureAwait(false);
-        return Ok();
+        return null;
     }
 }

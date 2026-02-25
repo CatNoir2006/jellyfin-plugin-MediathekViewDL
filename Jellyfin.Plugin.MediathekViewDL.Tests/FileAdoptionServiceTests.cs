@@ -160,8 +160,51 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var result = InvokeCalculateMatchScoreWithSource(localInfo, apiResult, null);
 
             // Assert
-            // Multiplier is -1.4, resulting score should be negative
-            Assert.True(result.Score < 0);
+            // Base score for title and topic match is 1.0. With -1.4 penalty (division by 1.4), it should be 1.0 / 1.4 = ~0.71.
+            Assert.InRange(result.Score, 0.7, 0.72);
+        }
+
+        [Fact]
+        public void CalculateMatchScoreWithSource_MultipleMismatches_CorrectlyReducesScore()
+        {
+            // Arrange
+            var localInfo = new VideoInfo 
+            { 
+                Title = "Sendung mit der Maus", 
+                Topic = "Kindersendung",
+                IsShow = true,
+                SeasonNumber = 1,
+                EpisodeNumber = 5,
+                AbsoluteEpisodeNumber = 100
+            };
+            var apiInfo = new VideoInfo 
+            { 
+                Title = "Sendung mit der Maus", 
+                Topic = "Kindersendung",
+                IsShow = true,
+                SeasonNumber = 1,
+                EpisodeNumber = 6, // Mismatch
+                AbsoluteEpisodeNumber = 101 // Mismatch
+            };
+            var apiItem = new ResultItemDto 
+            { 
+                Id = "123", 
+                Title = "Sendung mit der Maus",
+                Topic = "Kindersendung",
+                Channel = "ARD",
+                Description = "Description",
+                VideoUrls = new List<VideoUrlDto>(),
+                SubtitleUrls = new List<SubtitleUrlDto>(),
+                ExternalIds = new List<ExternalId>()
+            };
+            var apiResult = new ApiResultWithInfo(apiItem, apiInfo);
+
+            // Act
+            var result = InvokeCalculateMatchScoreWithSource(localInfo, apiResult, null);
+
+            // Assert
+            // Base score 1.0. Divided by 1.4 AND 1.3. Should be 1.0 / (1.4 * 1.3) = ~0.55.
+            Assert.InRange(result.Score, 0.54, 0.56);
         }
 
         [Fact]

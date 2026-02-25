@@ -94,13 +94,14 @@ public class FileAdoptionService : IFileAdoptionService
         // 2. Get local files
         var baseDirectories = _fileNameBuilder.GetSubscriptionBaseDirectories(subscription, DownloadContext.Subscription).ToList();
         var allScannedFiles = new List<ScannedFile>();
+        var seenPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var dir in baseDirectories)
         {
             var scanResult = _localMediaScanner.ScanSubscriptionDirectory(dir, subscription.Name);
             foreach (var scannedFile in scanResult.Files)
             {
-                if (allScannedFiles.All(f => f.FilePath != scannedFile.FilePath))
+                if (seenPaths.Add(scannedFile.FilePath))
                 {
                     allScannedFiles.Add(scannedFile);
                 }
@@ -337,7 +338,16 @@ public class FileAdoptionService : IFileAdoptionService
             {
                 if (score.Value >= 1.0)
                 {
-                    multiplier *= score.Weight;
+                    if (score.Weight >= 0)
+                    {
+                        multiplier *= score.Weight;
+                    }
+                    else
+                    {
+                        // Penalties (negative weights) reduce the score.
+                        // We divide by the absolute value to ensure consistent reduction.
+                        multiplier /= Math.Abs(score.Weight);
+                    }
                 }
             }
         }
