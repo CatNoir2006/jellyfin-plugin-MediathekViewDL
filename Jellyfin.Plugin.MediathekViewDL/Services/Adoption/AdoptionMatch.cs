@@ -29,4 +29,9 @@ public record AdoptionMatch
     /// Gets a value indicating whether the match is confirmed (e.g., already exists in the download history).
     /// </summary>
     public bool IsConfirmed { get; init; }
+
+    /// <summary>
+    /// Gets the source/method used for this match.
+    /// </summary>
+    public AdoptionMatchSource Source { get; init; } = AdoptionMatchSource.Fuzzy;
 }

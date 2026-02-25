@@ -842,6 +842,32 @@
                         </select>
                     </div>
 
+                    <div id="adoptionFilterContainer" class="mvpl-search-form-row mvpl-margin-top-10" style="display: none;">
+                        <div class="inputContainer mvpl-input-short">
+                            <label class="inputLabel" for="numAdoptionMinConfidence">Min. Sicherheit (%)</label>
+                            <input is="emby-input" type="number" id="numAdoptionMinConfidence" min="0" max="100" placeholder="0"/>
+                        </div>
+                        <div class="inputContainer mvpl-input-short">
+                            <label class="inputLabel" for="numAdoptionMaxConfidence">Max. Sicherheit (%)</label>
+                            <input is="emby-input" type="number" id="numAdoptionMaxConfidence" min="0" max="100" placeholder="100"/>
+                        </div>
+                        <div class="inputContainer">
+                            <label class="inputLabel" for="selectAdoptionSource">Quelle</label>
+                            <select is="emby-select" id="selectAdoptionSource">
+                                <option value="All">Alles anzeigen</option>
+                                <option value="History">Bekannte (Datenbank)</option>
+                                <option value="Url">URL Treffer</option>
+                                <option value="SeriesNumbering">Serien-Nummerierung</option>
+                                <option value="Fuzzy">Namen-Suche (Fuzzy)</option>
+                            </select>
+                        </div>
+                        <div class="inputContainer">
+                            <button is="emby-button" type="button" class="raised button-submit block" id="mvpl-btn-adoption-save-all">
+                                <span>Alle gefilterten bestätigen</span>
+                            </button>
+                        </div>
+                    </div>
+
                     <div id="adoptionTableContainer" style="display: none;">
                         <div id="adoptionList" class="paperList mvpl-margin-top-20">
                             <!-- Adoption-Einträge werden hier gerendert -->

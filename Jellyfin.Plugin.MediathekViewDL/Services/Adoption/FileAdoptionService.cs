@@ -193,7 +193,8 @@ public class FileAdoptionService : IFileAdoptionService
                 ApiTitle = existingEntry.Title,
                 VideoUrl = existingEntry.VideoUrl,
                 Confidence = 100,
-                IsConfirmed = true
+                IsConfirmed = true,
+                Source = AdoptionMatchSource.History
             });
         }
 
@@ -225,7 +226,11 @@ public class FileAdoptionService : IFileAdoptionService
         if (video.VideoInfo != null)
         {
             var potentialMatches = apiItems
-                .Select(item => new { Item = item, Score = CalculateMatchScore(video.VideoInfo, item, urlFromInfo) })
+                .Select(item =>
+                {
+                    var (score, source) = CalculateMatchScoreWithSource(video.VideoInfo, item, urlFromInfo);
+                    return new { Item = item, Score = score, Source = source };
+                })
                 .Where(x => x.Score > 0.1) // Lower threshold to get more potential matches
                 .OrderByDescending(x => x.Score)
                 .Take(5)
@@ -245,7 +250,8 @@ public class FileAdoptionService : IFileAdoptionService
                     ApiTitle = match.Item.Item.Title,
                     VideoUrl = urlFromInfo ?? match.Item.Item.GetVideoByQuality()?.Url,
                     Confidence = Math.Min(100.0, match.Score * 100.0),
-                    IsConfirmed = false
+                    IsConfirmed = false,
+                    Source = match.Source
                 });
             }
         }
@@ -255,17 +261,23 @@ public class FileAdoptionService : IFileAdoptionService
 
     private double CalculateMatchScore(VideoInfo localInfo, ApiResultWithInfo apiResult, string? urlFromInfo)
     {
+        return CalculateMatchScoreWithSource(localInfo, apiResult, urlFromInfo).Score;
+    }
+
+    private (double Score, AdoptionMatchSource Source) CalculateMatchScoreWithSource(VideoInfo localInfo, ApiResultWithInfo apiResult, string? urlFromInfo)
+    {
         // If we have a URL from info file, and it matches one of the item's URLs, it's a perfect match
         if (!string.IsNullOrEmpty(urlFromInfo))
         {
             if (apiResult.Item.VideoUrls.Any(v => v.Url.Equals(urlFromInfo, StringComparison.OrdinalIgnoreCase)))
             {
-                return 10.0; // Extremely high score for exact URL match
+                return (10.0, AdoptionMatchSource.Url); // Extremely high score for exact URL match
             }
         }
 
         var apiInfo = apiResult.VideoInfo;
         var scores = new List<AdoptionScore>();
+        var source = AdoptionMatchSource.Fuzzy;
 
         // Fuzzy search for Title and Topic, we do both Ratio and PartialRatio to give some weight to partial matches which are common in file names
         scores.Add(new AdoptionScore(Fuzz.PartialRatio(localInfo.Title, apiInfo.Title) / 100.0, 0.7));
@@ -280,6 +292,7 @@ public class FileAdoptionService : IFileAdoptionService
             {
                 // Apply multiplier of 1.4 for exact S/E match
                 scores.Add(new AdoptionScore(1.0, 1.4, AdoptionScoreType.Multiply));
+                source = AdoptionMatchSource.SeriesNumbering;
             }
             else
             {
@@ -295,6 +308,7 @@ public class FileAdoptionService : IFileAdoptionService
             {
                 // Apply multiplier of 1.3 for absolute episode match
                 scores.Add(new AdoptionScore(1.0, 1.3, AdoptionScoreType.Multiply));
+                source = AdoptionMatchSource.SeriesNumbering;
             }
             else
             {
@@ -303,7 +317,7 @@ public class FileAdoptionService : IFileAdoptionService
             }
         }
 
-        return CalculateTotalScore(scores);
+        return (CalculateTotalScore(scores), source);
     }
 
     private double CalculateTotalScore(IEnumerable<AdoptionScore> scores)

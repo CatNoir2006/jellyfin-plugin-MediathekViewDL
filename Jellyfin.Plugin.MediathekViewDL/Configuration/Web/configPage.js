@@ -580,6 +580,11 @@ const DomIds = {
     },
     Adoption: {
         AboSelector: "selectAdoptionAbo",
+        FilterContainer: "adoptionFilterContainer",
+        MinConfidence: "numAdoptionMinConfidence",
+        MaxConfidence: "numAdoptionMaxConfidence",
+        SourceFilter: "selectAdoptionSource",
+        BtnSaveAll: "mvpl-btn-adoption-save-all",
         TableContainer: "adoptionTableContainer",
         List: "adoptionList",
     },
@@ -1228,49 +1233,107 @@ class AdoptionController {
     constructor(config) {
         this.config = config;
         this.dom = config.dom;
+        this.lastAboId = null;
+        this.lastAdoptionInfo = null;
     }
 
     init() {
         document.getElementById(DomIds.Adoption.AboSelector).addEventListener('change', (e) => {
             this.onAboSelected(e.target.value);
         });
+
+        document.getElementById(DomIds.Adoption.MinConfidence).addEventListener('input', () => this.applyFilters());
+        document.getElementById(DomIds.Adoption.MaxConfidence).addEventListener('input', () => this.applyFilters());
+        document.getElementById(DomIds.Adoption.SourceFilter).addEventListener('change', () => this.applyFilters());
+        document.getElementById(DomIds.Adoption.BtnSaveAll).addEventListener('click', () => this.saveAllFiltered());
     }
 
     onAboSelected(aboId) {
-        const container = document.getElementById(DomIds.Adoption.TableContainer);
+        const tableContainer = document.getElementById(DomIds.Adoption.TableContainer);
+        const filterContainer = document.getElementById(DomIds.Adoption.FilterContainer);
+        
         if (aboId) {
-            container.style.display = 'block';
+            tableContainer.style.display = 'block';
+            filterContainer.style.display = 'flex';
+            this.lastAboId = aboId;
             this.refreshData(aboId);
         } else {
-            container.style.display = 'none';
+            tableContainer.style.display = 'none';
+            filterContainer.style.display = 'none';
+            this.lastAboId = null;
+            this.lastAdoptionInfo = null;
         }
     }
 
-            refreshData(aboId) {
+    refreshData(aboId) {
+        Dashboard.showLoadingMsg();
+        const url = ApiClient.getUrl('/' + this.config.pluginName + '/Adoption/Candidates/' + aboId);
 
-                Dashboard.showLoadingMsg();
+        ApiClient.getJSON(url).then((info) => {
+            this.lastAdoptionInfo = info;
+            this.applyFilters();
+            Dashboard.hideLoadingMsg();
+        }).catch((err) => {
+            Dashboard.hideLoadingMsg();
+            Helper.showError(err, Language.Adoption.ErrorLoading);
+        });
+    }
 
-                const url = ApiClient.getUrl('/' + this.config.pluginName + '/Adoption/Candidates/' + aboId);
+    applyFilters() {
+        if (!this.lastAdoptionInfo || !this.lastAboId) return;
 
-                ApiClient.getJSON(url).then((info) => {
+        const min = parseInt(document.getElementById(DomIds.Adoption.MinConfidence).value, 10) || 0;
+        const max = parseInt(document.getElementById(DomIds.Adoption.MaxConfidence).value, 10) || 100;
+        const sourceFilter = document.getElementById(DomIds.Adoption.SourceFilter).value;
 
-                    this.renderCandidates(aboId, info.Candidates, info.ApiResults);
-
-                    Dashboard.hideLoadingMsg();
-
-                }).catch((err) => {
-
-                    Dashboard.hideLoadingMsg();
-
-                    Helper.showError(err, Language.Adoption.ErrorLoading);
-
-                });
-
+        const filteredCandidates = this.lastAdoptionInfo.Candidates.filter(c => {
+            const bestMatch = (c.Matches && c.Matches.length > 0) ? c.Matches[0] : null;
+            const confidence = bestMatch ? Math.round(bestMatch.Confidence) : 0;
+            
+            if (confidence < min || confidence > max) return false;
+            if (sourceFilter !== "All") {
+                if (!bestMatch || bestMatch.Source !== sourceFilter) return false;
             }
+            
+            return true;
+        });
 
+        this.lastFilteredCandidates = filteredCandidates;
+        this.renderCandidates(this.lastAboId, filteredCandidates, this.lastAdoptionInfo.ApiResults);
+    }
+
+    saveAllFiltered() {
+        if (!this.lastFilteredCandidates || !this.lastAboId) return;
         
+        const unconfirmed = this.lastFilteredCandidates.filter(c => c.Matches && c.Matches.length > 0 && !c.Matches[0].IsConfirmed);
+        if (unconfirmed.length === 0) return;
+
+        const mappings = unconfirmed.map(c => ({
+            CandidateId: c.Id,
+            ApiId: c.Matches[0].ApiId,
+            VideoUrl: c.Matches[0].VideoUrl
+        }));
+
+        Dashboard.showLoadingMsg();
+        const url = ApiClient.getUrl('/' + this.config.pluginName + '/Adoption/Mappings?subscriptionId=' + this.lastAboId);
+
+        ApiClient.ajax({
+            type: "POST",
+            url: url,
+            data: JSON.stringify(mappings),
+            contentType: 'application/json'
+        }).then(() => {
+            Dashboard.hideLoadingMsg();
+            Helper.showToast(Language.Adoption.MappingSaved);
+            this.refreshData(this.lastAboId);
+        }).catch((err) => {
+            Dashboard.hideLoadingMsg();
+            Helper.showError(err, Language.Adoption.ErrorSaving);
+        });
+    }
 
     renderCandidates(aboId, candidates, apiResults) {
+
         const list = document.getElementById(DomIds.Adoption.List);
         list.textContent = "";
 
@@ -1410,9 +1473,11 @@ class AdoptionController {
                 const group = document.createElement('optgroup');
                 group.label = "Top Treffer";
                 matches.forEach(m => {
+                    const res = apiResults.find(r => r.Item.Id === m.ApiId);
+                    const channelInfo = res ? ' - ' + res.Item.Channel : '';
                     const opt = document.createElement('option');
                     opt.value = m.ApiId;
-                    opt.text = (m.ApiTitle || m.ApiId) + ' (' + Math.round(m.Confidence) + '%)';
+                    opt.text = (m.ApiTitle || m.ApiId) + channelInfo + ' (' + Math.round(m.Confidence) + '%)';
                     if (bestMatch && m.ApiId === bestMatch.ApiId) opt.selected = true;
                     group.appendChild(opt);
                 });
@@ -1427,7 +1492,7 @@ class AdoptionController {
 
                 const opt = document.createElement('option');
                 opt.value = res.Item.Id;
-                opt.text = res.Item.Title + ' (ID: ' + res.Item.Id + ')';
+                opt.text = res.Item.Title + ' - ' + res.Item.Channel + ' (ID: ' + res.Item.Id + ')';
                 allGroup.appendChild(opt);
             });
             select.appendChild(allGroup);

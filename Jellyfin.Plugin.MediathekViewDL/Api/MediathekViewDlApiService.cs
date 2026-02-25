@@ -557,4 +557,34 @@ public class MediathekViewDlApiService : ControllerBase
         await _fileAdoptionService.SetApiIdAsync(subscriptionId, mapping.CandidateId, mapping.ApiId, mapping.VideoUrl, CancellationToken.None).ConfigureAwait(false);
         return Ok();
     }
+
+    /// <summary>
+    /// Sets multiple adoption mappings for a subscription.
+    /// </summary>
+    /// <param name="subscriptionId">The ID of the subscription.</param>
+    /// <param name="mappings">The adoption mappings.</param>
+    /// <returns>An OK result.</returns>
+    [HttpPost("Adoption/Mappings")]
+    public async Task<ActionResult> SetAdoptionMappings([FromQuery] Guid subscriptionId, [FromBody] IReadOnlyList<FileAdoptionMapping> mappings)
+    {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, new ApiErrorDto(ApiErrorId.InitializationError, Plugin.Instance.InitializationException.Message));
+        }
+
+        var config = _configurationProvider.ConfigurationOrNull;
+        if (config == null)
+        {
+            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin-Konfiguration ist nicht verfügbar."));
+        }
+
+        var subscription = config.Subscriptions.FirstOrDefault(s => s.Id == subscriptionId);
+        if (subscription == null)
+        {
+            return NotFound(new ApiErrorDto(ApiErrorId.NotFound, $"Abonnement mit der ID '{subscriptionId}' wurde nicht gefunden."));
+        }
+
+        await _fileAdoptionService.SetMappingsAsync(subscriptionId, mappings, CancellationToken.None).ConfigureAwait(false);
+        return Ok();
+    }
 }
