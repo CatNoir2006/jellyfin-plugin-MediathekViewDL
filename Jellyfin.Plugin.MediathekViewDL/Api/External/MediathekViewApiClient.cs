@@ -116,53 +116,43 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         return allResults;
     }
 
-    private void PopulateQueries(ApiQueryDto apiQuery, string? title, string? topic, string? channel, string? combinedSearch)
+    private static void PopulateQueries(ApiQueryDto apiQuery, string? title, string? topic, string? channel, string? combinedSearch)
     {
-        var titles = SplitAndClean(title);
-        foreach (var titleItem in titles)
-        {
-            var query = new QueryFieldsDto { Query = titleItem };
-            query.Fields.Add(QueryFieldType.Title);
-            apiQuery.Queries.Add(query);
-        }
+        AddQuery(title, [QueryFieldType.Title]);
+        AddQuery(topic, [QueryFieldType.Topic]);
+        AddQuery(channel, [QueryFieldType.Channel]);
+        AddQuery(combinedSearch, [QueryFieldType.Title, QueryFieldType.Topic]);
+        return;
 
-        var topics = SplitAndClean(topic);
-        foreach (var topicItem in topics)
+        void AddQuery(string? input, Collection<QueryFieldType> fields)
         {
-            var query = new QueryFieldsDto { Query = topicItem };
-            query.Fields.Add(QueryFieldType.Topic);
-            apiQuery.Queries.Add(query);
-        }
-
-        var channels = SplitAndClean(channel);
-        foreach (var channelItem in channels)
-        {
-            var query = new QueryFieldsDto { Query = channelItem };
-            query.Fields.Add(QueryFieldType.Channel);
-            apiQuery.Queries.Add(query);
-        }
-
-        if (!string.IsNullOrWhiteSpace(combinedSearch))
-        {
-            var combinedQueries = SplitAndClean(combinedSearch);
-            foreach (var combinedQueryItem in combinedQueries)
+            if (string.IsNullOrWhiteSpace(input))
             {
-                var query = new QueryFieldsDto { Query = combinedQueryItem };
-                query.Fields.Add(QueryFieldType.Title);
-                query.Fields.Add(QueryFieldType.Topic);
-                apiQuery.Queries.Add(query);
+                return;
+            }
+
+            var queries = GenerateQueryFromCsv(input, fields);
+            foreach (var item in queries)
+            {
+                apiQuery.Queries.Add(item);
             }
         }
     }
 
-    private static List<string> SplitAndClean(string? input)
+    private static List<QueryFieldsDto> GenerateQueryFromCsv(string? input, Collection<QueryFieldType> fields)
     {
         if (string.IsNullOrWhiteSpace(input))
         {
-            return new List<string>();
+            return [];
         }
 
-        return input.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
+        return input.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(q =>
+            new QueryFieldsDto()
+            {
+                Fields = fields,
+                Query = q.StartsWith('!') ? q[1..] : q,
+                IsExclude = q.StartsWith('!')
+            }).ToList();
     }
 
     /// <summary>
@@ -205,6 +195,9 @@ public class MediathekViewApiClient : IMediathekViewApiClient
 
             var upgradeToHttps = !(_configurationProvider.ConfigurationOrNull?.Network.AllowHttp ?? false);
             var dto = apiResult.Result.ToDto(apiQueryDto, upgradeToHttps);
+
+            // Filter results locally based on exclusion criteria
+            dto = FilterResults(dto, apiQueryDto);
 
             if (_configurationProvider.ConfigurationOrNull?.Search.FetchStreamSizes == true)
             {
@@ -249,6 +242,49 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             _logger.LogError(ex, "An unexpected error occurred while calling the MediathekViewWeb API");
             throw new MediathekApiException("An unexpected error occurred while calling the MediathekViewWeb API", ex);
         }
+    }
+
+    private static QueryResultDto FilterResults(QueryResultDto dto, ApiQueryDto apiQueryDto)
+    {
+        var excludes = apiQueryDto.Queries.Where(q => q.IsExclude).ToList();
+        if (excludes.Count == 0)
+        {
+            return dto;
+        }
+
+        var filteredResults = dto.Results.Where(item =>
+        {
+            return !excludes.Any(exclude => MatchesExclude(item, exclude));
+        }).ToList();
+
+        return dto with { Results = filteredResults };
+    }
+
+    private static bool MatchesExclude(ResultItemDto item, QueryFieldsDto exclude)
+    {
+        if (string.IsNullOrWhiteSpace(exclude.Query))
+        {
+            return false;
+        }
+
+        foreach (var field in exclude.Fields)
+        {
+            var valueToSearch = field switch
+            {
+                QueryFieldType.Title => item.Title,
+                QueryFieldType.Topic => item.Topic,
+                QueryFieldType.Description => item.Description,
+                QueryFieldType.Channel => item.Channel,
+                _ => string.Empty
+            };
+
+            if (valueToSearch.Contains(exclude.Query, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <inheritdoc />

@@ -450,6 +450,11 @@ const Language = {
         Topic: "Thema",
         Description: "Beschreibung",
         Channel: "Sender",
+        Not: {
+            Title: "Ausschluss-Filter (NICHT)",
+            On: "Alle Ergebnisse, die in einem der ausgewählten Felder diesen Text enthalten, werden ignoriert. Klicken Sie erneut, um zum Suchparameter zu wechseln.",
+            Off: "Nur Ergebnisse, die diesen Text enthalten, werden berücksichtigt. Klicken Sie, um diesen Begriff auszuschließen."
+        },
         RemoveQuery: "Anfrage entfernen",
         SelectAboPath: "Abo Pfad wählen",
         ErrorInitializationStatus: "Fehler beim Prüfen des Initialisierungsstatus"
@@ -1295,7 +1300,10 @@ class AdoptionController {
             const confidence = bestMatch ? Math.round(bestMatch.Confidence) : 0;
 
             if (confidence < min || confidence > max) return false;
-            if (sourceFilter !== "All") {
+            
+            if (sourceFilter === "Unconfirmed") {
+                if (bestMatch && bestMatch.IsConfirmed) return false;
+            } else if (sourceFilter !== "All") {
                 if (!bestMatch || bestMatch.Source !== sourceFilter) return false;
             }
 
@@ -2043,7 +2051,8 @@ class SubscriptionEditor {
                 row.querySelectorAll('.subQueryField:checked').forEach(function (fieldCheckbox) {
                     fields.push(fieldCheckbox.value);
                 });
-                criteria.push({Query: queryText, Fields: fields});
+                const isExclude = row.querySelector('.subQueryExcludeBtn').classList.contains('active');
+                criteria.push({Query: queryText, Fields: fields, IsExclude: isExclude});
             }
         });
 
@@ -2490,10 +2499,11 @@ class MediathekPluginConfig {
 
     addQueryRow(query) {
         if (query == null) {
-            query = {Query: '', Fields: ['Title', 'Topic']};
+            query = {Query: '', Fields: ['Title', 'Topic'], IsExclude: false};
         }
         const queryText = query ? query.Query : '';
         const fields = query ? query.Fields : ['Title', 'Topic'];
+        const isExclude = query ? query.IsExclude : false;
 
         const input = this.dom.create('input', {
             type: 'text',
@@ -2523,6 +2533,21 @@ class MediathekPluginConfig {
             className: 'subQueryField'
         });
 
+        const btnExclude = this.dom.create('button', {
+            type: 'button',
+            className: 'subQueryExcludeBtn' + (isExclude ? ' active' : ''),
+            text: 'NOT',
+            attributes: {
+                'is': 'emby-button',
+                'title': isExclude ? Language.Subscription.Not.On : Language.Subscription.Not.Off
+            },
+            onClick: (e) => {
+                const btn = e.currentTarget;
+                const active = btn.classList.toggle('active');
+                btn.title = active ? Language.Subscription.Not.On : Language.Subscription.Not.Off;
+            }
+        });
+
         const removeBtn = this.dom.createIconButton(Icons.Remove, Language.Subscription.RemoveQuery, (e) => {
             e.target.closest('.mvpl-query-row').remove();
         });
@@ -2531,6 +2556,7 @@ class MediathekPluginConfig {
         const newRow = this.dom.create('div', {
             className: 'mvpl-query-row',
             children: [
+                btnExclude,
                 this.dom.create('div', {className: 'flex-grow', children: [input]}),
                 this.dom.create('div', {
                     className: 'query-checkboxes',

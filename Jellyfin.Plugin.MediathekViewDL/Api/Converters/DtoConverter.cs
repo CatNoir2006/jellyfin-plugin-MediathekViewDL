@@ -34,7 +34,7 @@ public static class DtoConverter
             Size = dto.Size,
             SortBy = dto.SortBy.ToString().ToLowerInvariant(),
             SortOrder = dto.SortOrder.ToString().ToLowerInvariant(),
-            Queries = new Collection<QueryFields>(dto.Queries.Select(ToModel).ToList())
+            Queries = new Collection<QueryFields>(dto.Queries.Where(q => !q.IsExclude).Select(ToModel).ToList())
         };
     }
 
