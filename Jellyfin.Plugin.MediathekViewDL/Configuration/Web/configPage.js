@@ -373,6 +373,7 @@ const Language = {
         NoTestHits: "Keine Treffer für diese Konfiguration.",
         TestResultsCount: (count) => count + " Einträge gefunden, die heruntergeladen würden:",
         Video: "Video",
+        AboFromSearch: "Abonnement aus Suche",
         TotalItemsInfo: (total) => "Aktuelle Konfiguration: Bis zu " + total + " Medien können pro Suche/Abo-Lauf gefunden werden."
     },
     Download: {
@@ -503,7 +504,8 @@ const DomIds = {
         MinBroadcastDate: "dateMinBroadcast",
         MaxBroadcastDate: "dateMaxBroadcast",
         Results: "searchResults",
-        BtnHelp: "mvpl-btn-search-help"
+        BtnHelp: "mvpl-btn-search-help",
+        BtnCreateSubFromSearch: "btnCreateSubFromSearch"
     },
     Settings: {
         Form: "MediathekGeneralConfigForm",
@@ -705,6 +707,12 @@ class SearchController {
             this.performSearch();
             return false;
         });
+
+        const btnCreateSub = document.getElementById(DomIds.Search.BtnCreateSubFromSearch);
+        btnCreateSub.title = Language.Search.AboFromSearch;
+        btnCreateSub.addEventListener('click', () => {
+            this.createSubFromSearchCriteria();
+        });
     }
 
     performSearch() {
@@ -828,6 +836,92 @@ class SearchController {
         return this.config.createListItem(item.Title, body1, bodyText2, actions);
     }
 
+    createSubFromSearchCriteria() {
+        const title = document.getElementById(DomIds.Search.Title).value;
+        const topic = document.getElementById(DomIds.Search.Topic).value;
+        const channel = document.getElementById(DomIds.Search.Channel).value;
+        const combinedSearch = document.getElementById(DomIds.Search.Combined).value;
+        const minD = document.getElementById(DomIds.Search.MinDuration).value;
+        const maxD = document.getElementById(DomIds.Search.MaxDuration).value;
+
+        if (!title && !topic && !channel && !combinedSearch) {
+            Helper.showToast(Language.Search.SearchTearm);
+            return;
+        }
+
+        // noinspection JSUnresolvedReference
+        Dashboard.showLoadingMsg();
+        // noinspection JSUnresolvedReference
+        let url = ApiClient.getUrl('/' + this.config.pluginName + '/Search/Criteria');
+
+        const params = [];
+        if (title) params.push('title=' + encodeURIComponent(title));
+        if (topic) params.push('topic=' + encodeURIComponent(topic));
+        if (channel) params.push('channel=' + encodeURIComponent(channel));
+        if (combinedSearch) params.push('combinedSearch=' + encodeURIComponent(combinedSearch));
+
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+
+        // noinspection JSUnresolvedReference
+        ApiClient.getJSON(url).then((criteria) => {
+            this.config.switchTab(DomIds.Tabs.Subscriptions);
+            const def = this.config.currentConfig.SubscriptionDefaults || {};
+            const defDl = def.DownloadSettings || {};
+            const defSearch = def.SearchSettings || {};
+            const defSeries = def.SeriesSettings || {};
+            const defMeta = def.MetadataSettings || {};
+            const defAccess = def.AccessibilitySettings || {};
+
+            const newSub = {
+                Id: null,
+                Name: topic || title || combinedSearch || Language.Search.AboFromSearch,
+                Search: {
+                    Criteria: criteria,
+                    MinDurationMinutes: minD ? parseInt(minD, 10) : (defSearch.MinDurationMinutes || null),
+                    MaxDurationMinutes: maxD ? parseInt(maxD, 10) : (defSearch.MaxDurationMinutes || null),
+                },
+                Download: {
+                    DownloadPath: "",
+                    UseStreamingUrlFiles: defDl.UseStreamingUrlFiles || false,
+                    DownloadFullVideoForSecondaryAudio: defDl.DownloadFullVideoForSecondaryAudio || false,
+                    AlwaysCreateSubfolder: defDl.AlwaysCreateSubfolder || false,
+                    EnhancedDuplicateDetection: defDl.EnhancedDuplicateDetection || false,
+                    AutoUpgradeToHigherQuality: defDl.AutoUpgradeToHigherQuality || false,
+                    AllowFallbackToLowerQuality: defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true,
+                    QualityCheckWithUrl: defDl.QualityCheckWithUrl || false,
+                },
+                Series: {
+                    EnforceSeriesParsing: defSeries.EnforceSeriesParsing || false,
+                    AllowAbsoluteEpisodeNumbering: defSeries.AllowAbsoluteEpisodeNumbering || false,
+                    TreatNonEpisodesAsExtras: defSeries.TreatNonEpisodesAsExtras || false,
+                    SaveTrailers: defSeries.SaveTrailers !== undefined ? defSeries.SaveTrailers : true,
+                    SaveInterviews: defSeries.SaveInterviews !== undefined ? defSeries.SaveInterviews : true,
+                    SaveGenericExtras: defSeries.SaveGenericExtras !== undefined ? defSeries.SaveGenericExtras : true,
+                    SaveExtrasAsStrm: defSeries.SaveExtrasAsStrm || false,
+                },
+                Metadata: {
+                    OriginalLanguage: defMeta.OriginalLanguage || "",
+                    CreateNfo: defMeta.CreateNfo || false,
+                    AppendDateToTitle: defMeta.AppendDateToTitle || false,
+                    AppendTimeToTitle: defMeta.AppendTimeToTitle || false,
+                },
+                Accessibility: {
+                    AllowAudioDescription: defAccess.AllowAudioDescription || false,
+                    AllowSignLanguage: defAccess.AllowSignLanguage || false,
+                }
+            };
+            this.config.subscriptionEditor.show(newSub);
+            // noinspection JSUnresolvedReference
+            Dashboard.hideLoadingMsg();
+        }).catch((err) => {
+            // noinspection JSUnresolvedReference
+            Dashboard.hideLoadingMsg();
+            Helper.showError(err, Language.Search.Error);
+        });
+    }
+
     downloadItem(index) {
         const item = this.currentSearchResults[index];
         if (!item) return;
@@ -866,9 +960,9 @@ class SearchController {
             Name: topic,
             Search: {
                 Criteria: [
-                    {Fields: ["Title"], Query: title},
-                    {Fields: ["Channel"], Query: channel},
-                    {Fields: ["Topic"], Query: topic}
+                    {Fields: ["Title"], Query: title, IsExclude: false},
+                    {Fields: ["Channel"], Query: channel, IsExclude: false},
+                    {Fields: ["Topic"], Query: topic, IsExclude: false}
                 ],
                 MinDurationMinutes: defSearch.MinDurationMinutes || null,
                 MaxDurationMinutes: defSearch.MaxDurationMinutes || null,
@@ -2501,9 +2595,9 @@ class MediathekPluginConfig {
         if (query == null) {
             query = {Query: '', Fields: ['Title', 'Topic'], IsExclude: false};
         }
-        const queryText = query ? query.Query : '';
-        const fields = query ? query.Fields : ['Title', 'Topic'];
-        const isExclude = query ? query.IsExclude : false;
+        const queryText = query.Query || '';
+        const fields = query.Fields || ['Title', 'Topic'];
+        const isExclude = query.IsExclude !== undefined ? query.IsExclude : (query.isExclude || false);
 
         const input = this.dom.create('input', {
             type: 'text',

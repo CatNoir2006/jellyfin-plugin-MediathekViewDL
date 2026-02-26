@@ -62,99 +62,6 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         _jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, };
     }
 
-    /// <inheritdoc/>
-    /// <exception cref="MediathekException">Thrown when an error occurs while calling the API.</exception>
-    public async Task<IReadOnlyCollection<ResultItemDto>> SearchAsync(
-        string? title,
-        string? topic,
-        string? channel,
-        string? combinedSearch,
-        int? minDuration,
-        int? maxDuration,
-        DateTimeOffset? minBroadcastDate,
-        DateTimeOffset? maxBroadcastDate,
-        CancellationToken cancellationToken)
-    {
-        var allResults = new List<ResultItemDto>();
-        var pageSize = _configurationProvider.Configuration.Search.PageSize;
-        var maxPages = _configurationProvider.Configuration.Search.MaxPages;
-        var currentOffset = 0;
-        var page = 0;
-
-        while (allResults.Count < pageSize && page < maxPages)
-        {
-            var apiQuery = new ApiQueryDto
-            {
-                Size = pageSize,
-                Offset = currentOffset,
-                MinDuration = minDuration,
-                MaxDuration = maxDuration,
-                MinBroadcastDate = minBroadcastDate,
-                MaxBroadcastDate = maxBroadcastDate,
-                Future = _configurationProvider.Configuration.Search.SearchInFutureBroadcasts
-            };
-
-            PopulateQueries(apiQuery, title, topic, channel, combinedSearch);
-
-            if (apiQuery.Queries.Count == 0)
-            {
-                return Array.Empty<ResultItemDto>();
-            }
-
-            var res = await SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
-            allResults.AddRange(res.Results);
-
-            if (currentOffset + pageSize >= res.QueryInfo.TotalResults)
-            {
-                break;
-            }
-
-            currentOffset += pageSize;
-            page++;
-        }
-
-        return allResults;
-    }
-
-    private static void PopulateQueries(ApiQueryDto apiQuery, string? title, string? topic, string? channel, string? combinedSearch)
-    {
-        AddQuery(title, [QueryFieldType.Title]);
-        AddQuery(topic, [QueryFieldType.Topic]);
-        AddQuery(channel, [QueryFieldType.Channel]);
-        AddQuery(combinedSearch, [QueryFieldType.Title, QueryFieldType.Topic]);
-        return;
-
-        void AddQuery(string? input, Collection<QueryFieldType> fields)
-        {
-            if (string.IsNullOrWhiteSpace(input))
-            {
-                return;
-            }
-
-            var queries = GenerateQueryFromCsv(input, fields);
-            foreach (var item in queries)
-            {
-                apiQuery.Queries.Add(item);
-            }
-        }
-    }
-
-    private static List<QueryFieldsDto> GenerateQueryFromCsv(string? input, Collection<QueryFieldType> fields)
-    {
-        if (string.IsNullOrWhiteSpace(input))
-        {
-            return [];
-        }
-
-        return input.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(q =>
-            new QueryFieldsDto()
-            {
-                Fields = fields,
-                Query = q.StartsWith('!') ? q[1..] : q,
-                IsExclude = q.StartsWith('!')
-            }).ToList();
-    }
-
     /// <summary>
     /// Searches for media on the MediathekViewWeb API using a specified query.
     /// </summary>
@@ -163,6 +70,40 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     /// <returns>An API result.</returns>
     /// <exception cref="MediathekException">Thrown when an error occurs while calling the API.</exception>
     public async Task<QueryResultDto> SearchAsync(
+        ApiQueryDto apiQueryDto,
+        CancellationToken cancellationToken)
+    {
+        var pageSize = apiQueryDto.Size;
+        var maxPages = _configurationProvider.Configuration.Search.MaxPages;
+        var allResults = new List<ResultItemDto>();
+        QueryInfoDto? lastQueryInfo = null;
+        var currentOffset = apiQueryDto.Offset;
+        var page = 0;
+
+        while (allResults.Count < pageSize && page < maxPages)
+        {
+            var currentQuery = apiQueryDto with { Size = pageSize, Offset = currentOffset };
+            var res = await PerformSearchInternalAsync(currentQuery, cancellationToken).ConfigureAwait(false);
+            allResults.AddRange(res.Results);
+            lastQueryInfo = res.QueryInfo;
+
+            if (currentOffset + pageSize >= res.QueryInfo.TotalResults || allResults.Count >= pageSize)
+            {
+                break;
+            }
+
+            currentOffset += pageSize;
+            page++;
+        }
+
+        return new QueryResultDto
+        {
+            QueryInfo = lastQueryInfo ?? new QueryInfoDto(),
+            Results = allResults.Take(pageSize).ToList()
+        };
+    }
+
+    private async Task<QueryResultDto> PerformSearchInternalAsync(
         ApiQueryDto apiQueryDto,
         CancellationToken cancellationToken)
     {

@@ -12,31 +12,6 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api.External;
 public interface IMediathekViewApiClient
 {
     /// <summary>
-    /// Searches for media on the MediathekViewWeb API.
-    /// </summary>
-    /// <param name="title">The title query.</param>
-    /// <param name="topic">The topic filter.</param>
-    /// <param name="channel">The channel filter.</param>
-    /// <param name="combinedSearch">The combined search query (Title, Topic).</param>
-    /// <param name="minDuration">Optional minimum duration in seconds.</param>
-    /// <param name="maxDuration">Optional maximum duration in seconds.</param>
-    /// <param name="minBroadcastDate">Optional minimum broadcast date filter.</param>
-    /// <param name="maxBroadcastDate">Optional maximum broadcast date filter.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A collection of result items.</returns>
-    /// <exception cref="Exceptions.ExternalApi.MediathekException">Thrown when an error occurs while calling the API.</exception>
-    Task<IReadOnlyCollection<ResultItemDto>> SearchAsync(
-        string? title,
-        string? topic,
-        string? channel,
-        string? combinedSearch,
-        int? minDuration,
-        int? maxDuration,
-        DateTimeOffset? minBroadcastDate,
-        DateTimeOffset? maxBroadcastDate,
-        CancellationToken cancellationToken);
-
-    /// <summary>
     /// Searches for media on the MediathekViewWeb API using a specified query.
     /// </summary>
     /// <param name="apiQueryDto">The api query.</param>
