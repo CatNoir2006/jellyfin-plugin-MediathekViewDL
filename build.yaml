@@ -13,6 +13,7 @@ category: "General"
 owner: "CatNoir2006"
 artifacts:
 - "Jellyfin.Plugin.MediathekViewDL.dll"
+- "FuzzySharp.dll"
 changelog: >
   changelog
 
