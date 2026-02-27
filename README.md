@@ -82,6 +82,7 @@ Hier können Sie gezielt nach Sendungen suchen, Downloads sofort starten oder Su
 
 *   **Direkt-Download:** Startet den Download sofort.
 *   **In Abo übernehmen:** Erstellt aus der aktuellen Suche ein dauerhaftes Abonnement.
+*   **Ausschluss-Filter (NICHT):** Durch Voranstellen eines Ausrufezeichens (z. B. `!Wetter`) können Begriffe von der Suche ausgeschlossen werden.
 
 <details>
 <summary><strong>🔽 Erweiterter Download (Optionen)</strong></summary>
@@ -133,7 +134,7 @@ Das Herzstück des Plugins. Hier definieren Sie, was regelmäßig gesucht wird.
 | Option | Beschreibung |
 | :--- | :--- |
 | **Name** | Der Name des Abos. Bestimmt den Unterordner für die Serie im Zielverzeichnis. |
-| **Suchanfragen** | Eine oder mehrere Suchkriterien (Titel, Thema, Sender), die kombiniert werden. |
+| **Suchanfragen** | Eine oder mehrere Suchkriterien (Titel, Thema, Sender). <br>• **Ausschluss (NOT):** Klicken Sie auf die `NOT`-Schaltfläche im Abo-Editor, um einen Begriff auszuschließen (rot markiert). Ergebnisse mit diesem Begriff werden ignoriert. |
 | **Download-Pfad** | Überschreibt den globalen Standard-Download-Pfad nur für dieses Abo. |
 | **Min. / Max. Dauer** | Filtert Ergebnisse anhand der Dauer (in Minuten). |
 | **Min. / Max. Datum** | Filtert Ergebnisse anhand des Sendedatums. |
@@ -174,6 +175,13 @@ Behalten Sie den Überblick über laufende und vergangene Downloads.
 
 Dieses Feature ermöglicht es, bereits lokal vorhandene Dateien (z.B. manuelle Downloads oder alte Bestände) einem Abonnement und der internen Datenbank zuzuordnen. Dies verhindert, dass das Plugin dieselben Inhalte erneut herunterlädt.
 
+<details>
+<summary><strong>🔽 Datei-Adoption Ansicht (Screenshot)</strong></summary>
+<br>
+
+<img src="Images/LokalFileAdoption.png" width="800" alt="Datei Adoption">
+</details>
+
 *   **Intelligentes Matching:** Das Plugin scannt Ihre lokalen Ordner und vergleicht sie mit den API-Ergebnissen der Mediathek.
 *   **Confidence-Score:** Zeigt an, wie sicher sich das Plugin bei einer Zuordnung ist (basierend auf Titel, S/E-Nummerierung oder URLs aus `.txt`-Infodateien).
 *   **Filter & Batch-Aktion:** Filtern Sie nach Sicherheit (%) oder Match-Quelle (z.B. "Fuzzy-Suche" oder "URL-Treffer") und bestätigen Sie alle gefilterten Ergebnisse mit einem Klick.
@@ -197,4 +205,4 @@ Das Plugin arbeitet im Hintergrund mit einem **Scheduled Task** (Geplante Aufgab
 ---
 ## Letze Anpassung der Readme
 * Plugin: v0.7.2.0
-* Commit: cc5a847
+* Commit: df25d4a
