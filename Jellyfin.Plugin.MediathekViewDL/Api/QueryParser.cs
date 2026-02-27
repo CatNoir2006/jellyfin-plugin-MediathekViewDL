@@ -15,29 +15,12 @@ public class QueryParser : IQueryParser
     /// <inheritdoc />
     public Collection<QueryFieldsDto> Parse(string? title, string? topic, string? channel, string? combinedSearch)
     {
-        var queries = new Collection<QueryFieldsDto>();
+        var allQueries = GenerateQueryFromCsv(title, [QueryFieldType.Title])
+            .Concat(GenerateQueryFromCsv(topic, [QueryFieldType.Topic]))
+            .Concat(GenerateQueryFromCsv(channel, [QueryFieldType.Channel]))
+            .Concat(GenerateQueryFromCsv(combinedSearch, [QueryFieldType.Title, QueryFieldType.Topic]));
 
-        foreach (var query in GenerateQueryFromCsv(title, [QueryFieldType.Title]))
-        {
-            queries.Add(query);
-        }
-
-        foreach (var query in GenerateQueryFromCsv(topic, [QueryFieldType.Topic]))
-        {
-            queries.Add(query);
-        }
-
-        foreach (var query in GenerateQueryFromCsv(channel, [QueryFieldType.Channel]))
-        {
-            queries.Add(query);
-        }
-
-        foreach (var query in GenerateQueryFromCsv(combinedSearch, [QueryFieldType.Title, QueryFieldType.Topic]))
-        {
-            queries.Add(query);
-        }
-
-        return queries;
+        return new Collection<QueryFieldsDto>(allQueries.ToList());
     }
 
     private static List<QueryFieldsDto> GenerateQueryFromCsv(string? input, Collection<QueryFieldType> fields)

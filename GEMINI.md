@@ -38,6 +38,8 @@ dotnet build Jellyfin.Plugin.MediathekViewDL.sln
 ### Testing
 ```bash
 dotnet test Jellyfin.Plugin.MediathekViewDL.sln
+# Verify JS Syntax
+node --check Jellyfin.Plugin.MediathekViewDL/Configuration/Web/configPage.js
 ```
 
 ## 📜 Development Conventions
@@ -48,6 +50,7 @@ dotnet test Jellyfin.Plugin.MediathekViewDL.sln
 *   **Nullability:** Nullable reference types are enabled; handle `null` explicitly.
 *   **Documentation:** XML summary comments for all public members.
 *   **Logging:** Use `ILogger` provided by Jellyfin.
+*   **JavaScript:** Since `dotnet build` does not check JavaScript, always verify syntax using `node --check`.
 
 ### 📁 Structure & Scope
 *   **File per Class:** One class per file (except nested classes).
@@ -55,6 +58,7 @@ dotnet test Jellyfin.Plugin.MediathekViewDL.sln
 
 ### 🌐 UI & Web (configPage.html)
 *   **No String Templates:** Do **not** use `` `S${season}E${Episode}` ``. Use string concatenation (`'S'+s+'E'+e`).
+*   **JS Verification:** Always run `node --check <path_to_js>` to ensure no syntax errors were introduced.
 
 ## 📝 Documentation & Maintenance
 
@@ -65,5 +69,5 @@ dotnet test Jellyfin.Plugin.MediathekViewDL.sln
 ## 🔍 Workflow & Verification
 
 1.  **Understand:** Ask for clarification if a task is ambiguous.
-2.  **Verify:** Always run `dotnet build` before finishing. The project treats warnings as errors.
+2.  **Verify:** Always run `dotnet build` before finishing. The project treats warnings as errors. Additionally, check all modified JavaScript files using `node --check`.
 3.  **Research:** Use the web or other Jellyfin plugins for best practices.
