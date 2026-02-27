@@ -160,8 +160,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var result = InvokeCalculateMatchScoreWithSource(localInfo, apiResult, null);
 
             // Assert
-            // Base score for title and topic match is 1.0. With -1.4 penalty (division by 1.4), it should be 1.0 / 1.4 = ~0.71.
-            Assert.InRange(result.Score, 0.7, 0.72);
+            // Base score for title and topic match is 1.0. With 0.05 penalty, it should be 1.0 * 0.05 = 0.05.
+            Assert.InRange(result.Score, 0.049, 0.051);
         }
 
         [Fact]
@@ -203,8 +203,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var result = InvokeCalculateMatchScoreWithSource(localInfo, apiResult, null);
 
             // Assert
-            // Base score 1.0. Divided by 1.4 AND 1.3. Should be 1.0 / (1.4 * 1.3) = ~0.55.
-            Assert.InRange(result.Score, 0.54, 0.56);
+            // Base score 1.0. Multiplied by 0.05 AND 0.05. Should be 1.0 * 0.05 * 0.05 = 0.0025.
+            Assert.InRange(result.Score, 0.0024, 0.0026);
         }
 
         [Fact]

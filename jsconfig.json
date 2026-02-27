@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "checkJs": true,
+        "allowJs": true,
+        "lib": ["ESNext", "DOM"]
+    },
+    "exclude": ["node_modules", "bin", "obj", "jellyfin-config"]
+}

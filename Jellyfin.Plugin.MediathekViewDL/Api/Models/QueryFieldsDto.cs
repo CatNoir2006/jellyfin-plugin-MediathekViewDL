@@ -17,4 +17,9 @@ public record QueryFieldsDto
     /// Gets or sets the search query.
     /// </summary>
     public string Query { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether this is an exclusion filter (NOT).
+    /// </summary>
+    public bool IsExclude { get; set; }
 }

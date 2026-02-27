@@ -14,8 +14,8 @@ services:
       # DEIN DEBUG-BUILD: Mountet die gebauten DLLs direkt in Jellyfin
       - ./Jellyfin.Plugin.MediathekViewDL/bin/Debug/net9.0:/config/plugins/MediathekViewDL
 
-      # SMB-Share via Link außerhalb des Projektverzeichnisses
-      #- ../media:/media/Provider:ro
+      # SMB-Share via fstab mount (Host: /mnt/JellyfinMedia)
+      - /mnt/JellyfinMedia:/media/smb:ro
 
     environment:
       - DOTNET_DEBUGGER_CHROME=1

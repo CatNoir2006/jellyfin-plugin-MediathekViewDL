@@ -41,6 +41,7 @@ public class MediathekViewDlApiService : ControllerBase
     private readonly IConfigurationProvider _configurationProvider;
     private readonly IVideoParser _videoParser;
     private readonly IFileAdoptionService _fileAdoptionService;
+    private readonly IQueryParser _queryParser;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekViewDlApiService"/> class.
@@ -55,6 +56,7 @@ public class MediathekViewDlApiService : ControllerBase
     /// <param name="configurationProvider">The configuration provider.</param>
     /// <param name="videoParser">The video parser.</param>
     /// <param name="fileAdoptionService">The file adoption service.</param>
+    /// <param name="queryParser">The query parser.</param>
     public MediathekViewDlApiService(
         ILogger<MediathekViewDlApiService> logger,
         IMediathekViewApiClient apiClient,
@@ -65,7 +67,8 @@ public class MediathekViewDlApiService : ControllerBase
         IDownloadQueueManager downloadQueueManager,
         IConfigurationProvider configurationProvider,
         IVideoParser videoParser,
-        IFileAdoptionService fileAdoptionService)
+        IFileAdoptionService fileAdoptionService,
+        IQueryParser queryParser)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -77,6 +80,7 @@ public class MediathekViewDlApiService : ControllerBase
         _configurationProvider = configurationProvider;
         _videoParser = videoParser;
         _fileAdoptionService = fileAdoptionService;
+        _queryParser = queryParser;
     }
 
     /// <summary>
@@ -223,8 +227,20 @@ public class MediathekViewDlApiService : ControllerBase
 
         try
         {
-            var results = await _apiClient.SearchAsync(title, topic, channel, combinedSearch, minDuration, maxDuration, minBroadcastDate, maxBroadcastDate, CancellationToken.None).ConfigureAwait(false);
-            return Ok(results);
+            var queries = _queryParser.Parse(title, topic, channel, combinedSearch);
+            var apiQuery = new ApiQueryDto
+            {
+                Queries = queries,
+                MinDuration = minDuration,
+                MaxDuration = maxDuration,
+                MinBroadcastDate = minBroadcastDate,
+                MaxBroadcastDate = maxBroadcastDate,
+                Future = _configurationProvider.Configuration.Search.SearchInFutureBroadcasts,
+                Size = _configurationProvider.Configuration.Search.PageSize,
+            };
+
+            var results = await _apiClient.SearchAsync(apiQuery, CancellationToken.None).ConfigureAwait(false);
+            return Ok(results.Results);
         }
         catch (MediathekConnectionException ex)
         {
@@ -247,6 +263,24 @@ public class MediathekViewDlApiService : ControllerBase
             _logger.LogError(ex, "An error occurred while searching.");
             return StatusCode(500, new ApiErrorDto(ApiErrorId.MediathekError, "Ein unerwarteter Fehler ist beim Aufruf der MediathekView API aufgetreten."));
         }
+    }
+
+    /// <summary>
+    /// Converts search parameters into subscription criteria.
+    /// </summary>
+    /// <param name="title">The title query.</param>
+    /// <param name="topic">The topic filter.</param>
+    /// <param name="channel">The channel filter.</param>
+    /// <param name="combinedSearch">The combined search query (Title, Topic).</param>
+    /// <returns>A list of query fields.</returns>
+    [HttpGet("Search/Criteria")]
+    public ActionResult<IEnumerable<QueryFieldsDto>> GetCriteriaForSearch(
+        [FromQuery] string? title,
+        [FromQuery] string? topic,
+        [FromQuery] string? channel,
+        [FromQuery] string? combinedSearch)
+    {
+        return Ok(_queryParser.Parse(title, topic, channel, combinedSearch));
     }
 
     /// <summary>

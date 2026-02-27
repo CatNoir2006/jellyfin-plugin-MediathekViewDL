@@ -128,7 +128,11 @@ public class FileAdoptionService : IFileAdoptionService
             candidates.Add(new AdoptionCandidate { Id = video.FilePath, FilePaths = allFiles, Matches = matches });
         }
 
-        return new AdoptionInfo { Candidates = candidates, ApiResults = apiItems };
+        var sortedCandidates = candidates
+            .OrderByDescending(c => (c.Matches.Count > 0) ? c.Matches[0].Confidence : 0)
+            .ToList();
+
+        return new AdoptionInfo { Candidates = sortedCandidates, ApiResults = apiItems };
     }
 
     /// <inheritdoc />
@@ -285,7 +289,7 @@ public class FileAdoptionService : IFileAdoptionService
             else
             {
                 // Penalize if season/episode numbers are present but don't match, as this is a strong signal they might be different
-                scores.Add(new AdoptionScore(1.0 / 1.4, 0, AdoptionScoreType.Multiply));
+                scores.Add(new AdoptionScore(0.05, 0, AdoptionScoreType.Multiply));
             }
         }
 
@@ -301,7 +305,7 @@ public class FileAdoptionService : IFileAdoptionService
             else
             {
                 // Penalize if absolute numbers are present but don't match, as this is a strong signal they might be different
-                scores.Add(new AdoptionScore(1.0 / 1.3, 0, AdoptionScoreType.Multiply));
+                scores.Add(new AdoptionScore(0.05, 0, AdoptionScoreType.Multiply));
             }
         }
 

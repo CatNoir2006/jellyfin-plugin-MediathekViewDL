@@ -62,109 +62,6 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         _jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, };
     }
 
-    /// <inheritdoc/>
-    /// <exception cref="MediathekException">Thrown when an error occurs while calling the API.</exception>
-    public async Task<IReadOnlyCollection<ResultItemDto>> SearchAsync(
-        string? title,
-        string? topic,
-        string? channel,
-        string? combinedSearch,
-        int? minDuration,
-        int? maxDuration,
-        DateTimeOffset? minBroadcastDate,
-        DateTimeOffset? maxBroadcastDate,
-        CancellationToken cancellationToken)
-    {
-        var allResults = new List<ResultItemDto>();
-        var pageSize = _configurationProvider.Configuration.Search.PageSize;
-        var maxPages = _configurationProvider.Configuration.Search.MaxPages;
-        var currentOffset = 0;
-        var page = 0;
-
-        while (allResults.Count < pageSize && page < maxPages)
-        {
-            var apiQuery = new ApiQueryDto
-            {
-                Size = pageSize,
-                Offset = currentOffset,
-                MinDuration = minDuration,
-                MaxDuration = maxDuration,
-                MinBroadcastDate = minBroadcastDate,
-                MaxBroadcastDate = maxBroadcastDate,
-                Future = _configurationProvider.Configuration.Search.SearchInFutureBroadcasts
-            };
-
-            PopulateQueries(apiQuery, title, topic, channel, combinedSearch);
-
-            if (apiQuery.Queries.Count == 0)
-            {
-                return Array.Empty<ResultItemDto>();
-            }
-
-            var res = await SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
-            allResults.AddRange(res.Results);
-
-            if (currentOffset + pageSize >= res.QueryInfo.TotalResults)
-            {
-                break;
-            }
-
-            currentOffset += pageSize;
-            page++;
-        }
-
-        return allResults;
-    }
-
-    private void PopulateQueries(ApiQueryDto apiQuery, string? title, string? topic, string? channel, string? combinedSearch)
-    {
-        var titles = SplitAndClean(title);
-        foreach (var titleItem in titles)
-        {
-            var query = new QueryFieldsDto { Query = titleItem };
-            query.Fields.Add(QueryFieldType.Title);
-            apiQuery.Queries.Add(query);
-        }
-
-        var topics = SplitAndClean(topic);
-        foreach (var topicItem in topics)
-        {
-            var query = new QueryFieldsDto { Query = topicItem };
-            query.Fields.Add(QueryFieldType.Topic);
-            apiQuery.Queries.Add(query);
-        }
-
-        var channels = SplitAndClean(channel);
-        foreach (var channelItem in channels)
-        {
-            var query = new QueryFieldsDto { Query = channelItem };
-            query.Fields.Add(QueryFieldType.Channel);
-            apiQuery.Queries.Add(query);
-        }
-
-        if (!string.IsNullOrWhiteSpace(combinedSearch))
-        {
-            var combinedQueries = SplitAndClean(combinedSearch);
-            foreach (var combinedQueryItem in combinedQueries)
-            {
-                var query = new QueryFieldsDto { Query = combinedQueryItem };
-                query.Fields.Add(QueryFieldType.Title);
-                query.Fields.Add(QueryFieldType.Topic);
-                apiQuery.Queries.Add(query);
-            }
-        }
-    }
-
-    private static List<string> SplitAndClean(string? input)
-    {
-        if (string.IsNullOrWhiteSpace(input))
-        {
-            return new List<string>();
-        }
-
-        return input.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList();
-    }
-
     /// <summary>
     /// Searches for media on the MediathekViewWeb API using a specified query.
     /// </summary>
@@ -173,6 +70,40 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     /// <returns>An API result.</returns>
     /// <exception cref="MediathekException">Thrown when an error occurs while calling the API.</exception>
     public async Task<QueryResultDto> SearchAsync(
+        ApiQueryDto apiQueryDto,
+        CancellationToken cancellationToken)
+    {
+        var pageSize = apiQueryDto.Size;
+        var maxPages = _configurationProvider.Configuration.Search.MaxPages;
+        var allResults = new List<ResultItemDto>();
+        QueryInfoDto? lastQueryInfo = null;
+        var currentOffset = apiQueryDto.Offset;
+        var page = 0;
+
+        while (allResults.Count < pageSize && page < maxPages)
+        {
+            var currentQuery = apiQueryDto with { Size = pageSize, Offset = currentOffset };
+            var res = await PerformSearchInternalAsync(currentQuery, cancellationToken).ConfigureAwait(false);
+            allResults.AddRange(res.Results);
+            lastQueryInfo = res.QueryInfo;
+
+            if (currentOffset + pageSize >= res.QueryInfo.TotalResults || allResults.Count >= pageSize)
+            {
+                break;
+            }
+
+            currentOffset += pageSize;
+            page++;
+        }
+
+        return new QueryResultDto
+        {
+            QueryInfo = lastQueryInfo ?? new QueryInfoDto(),
+            Results = allResults.Take(pageSize).ToList()
+        };
+    }
+
+    private async Task<QueryResultDto> PerformSearchInternalAsync(
         ApiQueryDto apiQueryDto,
         CancellationToken cancellationToken)
     {
@@ -205,6 +136,9 @@ public class MediathekViewApiClient : IMediathekViewApiClient
 
             var upgradeToHttps = !(_configurationProvider.ConfigurationOrNull?.Network.AllowHttp ?? false);
             var dto = apiResult.Result.ToDto(apiQueryDto, upgradeToHttps);
+
+            // Filter results locally based on exclusion criteria
+            dto = FilterResults(dto, apiQueryDto);
 
             if (_configurationProvider.ConfigurationOrNull?.Search.FetchStreamSizes == true)
             {
@@ -249,6 +183,49 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             _logger.LogError(ex, "An unexpected error occurred while calling the MediathekViewWeb API");
             throw new MediathekApiException("An unexpected error occurred while calling the MediathekViewWeb API", ex);
         }
+    }
+
+    private static QueryResultDto FilterResults(QueryResultDto dto, ApiQueryDto apiQueryDto)
+    {
+        var excludes = apiQueryDto.Queries.Where(q => q.IsExclude).ToList();
+        if (excludes.Count == 0)
+        {
+            return dto;
+        }
+
+        var filteredResults = dto.Results.Where(item =>
+        {
+            return !excludes.Any(exclude => MatchesExclude(item, exclude));
+        }).ToList();
+
+        return dto with { Results = filteredResults };
+    }
+
+    private static bool MatchesExclude(ResultItemDto item, QueryFieldsDto exclude)
+    {
+        if (string.IsNullOrWhiteSpace(exclude.Query))
+        {
+            return false;
+        }
+
+        foreach (var field in exclude.Fields)
+        {
+            var valueToSearch = field switch
+            {
+                QueryFieldType.Title => item.Title,
+                QueryFieldType.Topic => item.Topic,
+                QueryFieldType.Description => item.Description,
+                QueryFieldType.Channel => item.Channel,
+                _ => string.Empty
+            };
+
+            if (valueToSearch.Contains(exclude.Query, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /// <inheritdoc />

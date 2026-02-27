@@ -53,8 +53,10 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
             var mockConfigProvider = new Mock<IConfigurationProvider>();
             
-            // Ensure ConfigurationOrNull returns something valid if accessed (though strictly not needed for this test logic, it's safer)
-            mockConfigProvider.Setup(x => x.ConfigurationOrNull).Returns(new PluginConfiguration());
+            // Ensure Configuration returns something valid
+            var config = new PluginConfiguration();
+            mockConfigProvider.Setup(x => x.Configuration).Returns(config);
+            mockConfigProvider.Setup(x => x.ConfigurationOrNull).Returns(config);
 
             var client = new MediathekViewApiClient(httpClient, mockLogger.Object, mockConfigProvider.Object);
 

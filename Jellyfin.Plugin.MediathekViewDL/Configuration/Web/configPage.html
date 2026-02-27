@@ -89,9 +89,12 @@
                                 <label class="inputLabel" for="dateMaxBroadcast">Max. Datum</label>
                                 <input is="emby-input" type="date" id="dateMaxBroadcast" />
                             </div>
-                            <div class="inputContainer">
+                            <div class="inputContainer flex-align-center" style="gap:10px;">
                                 <button is="emby-button" type="submit" class="raised button-submit block">
                                     <span>Suchen</span>
+                                </button>
+                                <button is="paper-icon-button-light" type="button" id="btnCreateSubFromSearch" class="mvpl-folder-button" style="margin-top:0;" title="Abo aus Suche erstellen">
+                                    <span class="material-icons add"></span>
                                 </button>
                             </div>
                         </div>
@@ -861,7 +864,7 @@
                     <div id="adoptionFilterContainer" class="mvpl-search-form-row mvpl-margin-top-10" style="display: none;">
                         <div class="inputContainer mvpl-input-short">
                             <label class="inputLabel" for="numAdoptionMinConfidence">Min. Sicherheit (%)</label>
-                            <input is="emby-input" type="number" id="numAdoptionMinConfidence" min="0" max="100" placeholder="0"/>
+                            <input is="emby-input" type="number" id="numAdoptionMinConfidence" min="0" max="100" value="95" placeholder="95"/>
                         </div>
                         <div class="inputContainer mvpl-input-short">
                             <label class="inputLabel" for="numAdoptionMaxConfidence">Max. Sicherheit (%)</label>
@@ -870,6 +873,7 @@
                         <div class="inputContainer">
                             <label class="inputLabel" for="selectAdoptionSource">Quelle</label>
                             <select is="emby-select" id="selectAdoptionSource">
+                                <option value="Unconfirmed" selected>Alle Unbestätigten</option>
                                 <option value="All">Alles anzeigen</option>
                                 <option value="History">Bekannte (Datenbank)</option>
                                 <option value="Url">URL Treffer</option>
@@ -1298,6 +1302,40 @@
             margin-left: 10px;
             margin-bottom: 20px;
         }
+
+        .subQueryExcludeBtn {
+            min-width: 55px !important;
+            margin-right: 10px;
+            background-color: rgba(120, 120, 120, 0.2) !important;
+            color: rgba(255, 255, 255, 0.3) !important;
+            border-radius: 4px;
+            font-weight: bold;
+            padding: 5px 10px !important;
+            height: auto !important;
+            line-height: normal !important;
+            transition: all 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            text-transform: uppercase;
+            font-size: 0.85em;
+        }
+
+        .subQueryExcludeBtn.active {
+            background-color: #f44336 !important;
+            color: white !important;
+            border-color: #f44336 !important;
+            box-shadow: 0 0 8px rgba(244, 67, 54, 0.4);
+        }
+
+        .mvpl-query-row input[is="emby-input"] {
+            margin: 0 !important;
+            padding-top: 0.5em !important;
+            padding-bottom: 0.5em !important;
+        }
+
+        .mvpl-query-row .inputLabel {
+            display: none !important;
+        }
+
         .mvpl-history-details {
             transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out, opacity 0.2s ease-in-out;
             max-height: 2000px;

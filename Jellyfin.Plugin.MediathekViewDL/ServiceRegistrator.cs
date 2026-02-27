@@ -56,6 +56,7 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddSingleton<IDownloadHistoryRepository, DbDownloadHistoryRepository>();
 
             serviceCollection.AddSingleton<IConfigurationProvider, PluginConfigurationProvider>();
+            serviceCollection.AddSingleton<IQueryParser, QueryParser>();
             serviceCollection.AddSingleton<ILanguageDetectionService, LanguageDetectionService>();
             serviceCollection.AddSingleton<IVideoParser, VideoParser>();
             serviceCollection.AddSingleton<IFileNameBuilderService, FileNameBuilderService>();

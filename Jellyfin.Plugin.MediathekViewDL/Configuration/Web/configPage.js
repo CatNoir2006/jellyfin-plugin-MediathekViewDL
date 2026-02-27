@@ -1,4 +1,9 @@
 /**
+ * Jellyfin Web Globals
+ */
+const { Dashboard, ApiClient } = window;
+
+/**
  * Helper Class that contains various utility methods.
  */
 class Helper {
@@ -13,9 +18,7 @@ class Helper {
      * @param resultCallback The callback to receive the result (true/false)
      */
     static confirmationPopup(message, title, resultCallback) {
-        // noinspection JSUnresolvedReference
         if (typeof Dashboard !== 'undefined' && typeof Dashboard.confirm === 'function') {
-            // noinspection JSUnresolvedReference,JSCheckFunctionSignatures
             Dashboard.confirm(message, title, resultCallback);
         } else {
             const result = confirm(title + "\n\n" + message);
@@ -28,9 +31,7 @@ class Helper {
      * @param message The message to display
      */
     static showToast(message) {
-        // noinspection JSUnresolvedReference
         if (typeof Dashboard !== 'undefined' && typeof Dashboard.alert === 'function') {
-            // noinspection JSUnresolvedReference
             Dashboard.alert(message);
         } else {
             alert(message);
@@ -44,9 +45,7 @@ class Helper {
      */
     static openFolderDialog(inputId, headerText) {
         try {
-            // noinspection JSUnresolvedReference
             if (typeof Dashboard !== 'undefined' && Dashboard.DirectoryBrowser) {
-                // noinspection JSUnresolvedReference
                 const picker = new Dashboard.DirectoryBrowser();
                 picker.show({
                     header: headerText,
@@ -373,6 +372,7 @@ const Language = {
         NoTestHits: "Keine Treffer für diese Konfiguration.",
         TestResultsCount: (count) => count + " Einträge gefunden, die heruntergeladen würden:",
         Video: "Video",
+        AboFromSearch: "Abonnement aus Suche",
         TotalItemsInfo: (total) => "Aktuelle Konfiguration: Bis zu " + total + " Medien können pro Suche/Abo-Lauf gefunden werden."
     },
     Download: {
@@ -450,6 +450,11 @@ const Language = {
         Topic: "Thema",
         Description: "Beschreibung",
         Channel: "Sender",
+        Not: {
+            Title: "Ausschluss-Filter (NICHT)",
+            On: "Alle Ergebnisse, die in einem der ausgewählten Felder diesen Text enthalten, werden ignoriert. Klicken Sie erneut, um zum Suchparameter zu wechseln.",
+            Off: "Nur Ergebnisse, die diesen Text enthalten, werden berücksichtigt. Klicken Sie, um diesen Begriff auszuschließen."
+        },
         RemoveQuery: "Anfrage entfernen",
         SelectAboPath: "Abo Pfad wählen",
         ErrorInitializationStatus: "Fehler beim Prüfen des Initialisierungsstatus"
@@ -498,7 +503,8 @@ const DomIds = {
         MinBroadcastDate: "dateMinBroadcast",
         MaxBroadcastDate: "dateMaxBroadcast",
         Results: "searchResults",
-        BtnHelp: "mvpl-btn-search-help"
+        BtnHelp: "mvpl-btn-search-help",
+        BtnCreateSubFromSearch: "btnCreateSubFromSearch"
     },
     Settings: {
         Form: "MediathekGeneralConfigForm",
@@ -685,6 +691,96 @@ const Icons = {
 }
 
 /**
+ * Represents the search settings for a subscription.
+ */
+class SearchSettings {
+    constructor(defaults = {}, data = {}) {
+        this.Criteria = data.Criteria || [];
+        this.MinDurationMinutes = data.MinDurationMinutes !== undefined ? data.MinDurationMinutes : (defaults.MinDurationMinutes || null);
+        this.MaxDurationMinutes = data.MaxDurationMinutes !== undefined ? data.MaxDurationMinutes : (defaults.MaxDurationMinutes || null);
+        this.MinBroadcastDate = data.MinBroadcastDate || null;
+        this.MaxBroadcastDate = data.MaxBroadcastDate || null;
+    }
+}
+
+/**
+ * Represents the download settings for a subscription.
+ */
+class DownloadSettings {
+    constructor(defaults = {}, data = {}) {
+        this.DownloadPath = data.DownloadPath || "";
+        this.UseStreamingUrlFiles = data.UseStreamingUrlFiles !== undefined ? data.UseStreamingUrlFiles : (defaults.UseStreamingUrlFiles || false);
+        this.DownloadFullVideoForSecondaryAudio = data.DownloadFullVideoForSecondaryAudio !== undefined ? data.DownloadFullVideoForSecondaryAudio : (defaults.DownloadFullVideoForSecondaryAudio || false);
+        this.AlwaysCreateSubfolder = data.AlwaysCreateSubfolder !== undefined ? data.AlwaysCreateSubfolder : (defaults.AlwaysCreateSubfolder || false);
+        this.EnhancedDuplicateDetection = data.EnhancedDuplicateDetection !== undefined ? data.EnhancedDuplicateDetection : (defaults.EnhancedDuplicateDetection || false);
+        this.AutoUpgradeToHigherQuality = data.AutoUpgradeToHigherQuality !== undefined ? data.AutoUpgradeToHigherQuality : (defaults.AutoUpgradeToHigherQuality || false);
+        this.AllowFallbackToLowerQuality = data.AllowFallbackToLowerQuality !== undefined ? data.AllowFallbackToLowerQuality : (defaults.AllowFallbackToLowerQuality !== undefined ? defaults.AllowFallbackToLowerQuality : true);
+        this.QualityCheckWithUrl = data.QualityCheckWithUrl !== undefined ? data.QualityCheckWithUrl : (defaults.QualityCheckWithUrl || false);
+    }
+}
+
+/**
+ * Represents the series settings for a subscription.
+ */
+class SeriesSettings {
+    constructor(defaults = {}, data = {}) {
+        this.EnforceSeriesParsing = data.EnforceSeriesParsing !== undefined ? data.EnforceSeriesParsing : (defaults.EnforceSeriesParsing || false);
+        this.AllowAbsoluteEpisodeNumbering = data.AllowAbsoluteEpisodeNumbering !== undefined ? data.AllowAbsoluteEpisodeNumbering : (defaults.AllowAbsoluteEpisodeNumbering || false);
+        this.TreatNonEpisodesAsExtras = data.TreatNonEpisodesAsExtras !== undefined ? data.TreatNonEpisodesAsExtras : (defaults.TreatNonEpisodesAsExtras || false);
+        this.SaveTrailers = data.SaveTrailers !== undefined ? data.SaveTrailers : (defaults.SaveTrailers !== undefined ? defaults.SaveTrailers : true);
+        this.SaveInterviews = data.SaveInterviews !== undefined ? data.SaveInterviews : (defaults.SaveInterviews !== undefined ? defaults.SaveInterviews : true);
+        this.SaveGenericExtras = data.SaveGenericExtras !== undefined ? data.SaveGenericExtras : (defaults.SaveGenericExtras !== undefined ? defaults.SaveGenericExtras : true);
+        this.SaveExtrasAsStrm = data.SaveExtrasAsStrm !== undefined ? data.SaveExtrasAsStrm : (defaults.SaveExtrasAsStrm || false);
+    }
+}
+
+/**
+ * Represents the metadata settings for a subscription.
+ */
+class MetadataSettings {
+    constructor(defaults = {}, data = {}) {
+        this.OriginalLanguage = data.OriginalLanguage || (defaults.OriginalLanguage || "");
+        this.CreateNfo = data.CreateNfo !== undefined ? data.CreateNfo : (defaults.CreateNfo || false);
+        this.AppendDateToTitle = data.AppendDateToTitle !== undefined ? data.AppendDateToTitle : (defaults.AppendDateToTitle || false);
+        this.AppendTimeToTitle = data.AppendTimeToTitle !== undefined ? data.AppendTimeToTitle : (defaults.AppendTimeToTitle || false);
+    }
+}
+
+/**
+ * Represents the accessibility settings for a subscription.
+ */
+class AccessibilitySettings {
+    constructor(defaults = {}, data = {}) {
+        this.AllowAudioDescription = data.AllowAudioDescription !== undefined ? data.AllowAudioDescription : (defaults.AllowAudioDescription || false);
+        this.AllowSignLanguage = data.AllowSignLanguage !== undefined ? data.AllowSignLanguage : (defaults.AllowSignLanguage || false);
+    }
+}
+
+/**
+ * Represents a subscription and provides methods to initialize with defaults.
+ */
+class Subscription {
+    /**
+     * @param {Object} config - The plugin configuration (for defaults).
+     * @param {Object} [data] - Existing subscription data.
+     */
+    constructor(config, data = {}) {
+        const def = config?.SubscriptionDefaults || {};
+
+        this.Id = data.Id || null;
+        this.IsEnabled = data.IsEnabled !== undefined ? data.IsEnabled : true;
+        this.Name = data.Name || "";
+        this.LastDownloadedTimestamp = data.LastDownloadedTimestamp || null;
+
+        this.Search = new SearchSettings(def.SearchSettings, data.Search);
+        this.Download = new DownloadSettings(def.DownloadSettings, data.Download);
+        this.Series = new SeriesSettings(def.SeriesSettings, data.Series);
+        this.Metadata = new MetadataSettings(def.MetadataSettings, data.Metadata);
+        this.Accessibility = new AccessibilitySettings(def.AccessibilitySettings, data.Accessibility);
+    }
+}
+
+/**
  * Handles search operations.
  */
 class SearchController {
@@ -699,6 +795,12 @@ class SearchController {
             e.preventDefault();
             this.performSearch();
             return false;
+        });
+
+        const btnCreateSub = document.getElementById(DomIds.Search.BtnCreateSubFromSearch);
+        btnCreateSub.title = Language.Search.AboFromSearch;
+        btnCreateSub.addEventListener('click', () => {
+            this.createSubFromSearchCriteria();
         });
     }
 
@@ -716,9 +818,7 @@ class SearchController {
             Helper.showToast(Language.Search.SearchTearm);
             return;
         }
-        // noinspection JSUnresolvedReference
         Dashboard.showLoadingMsg();
-        // noinspection JSUnresolvedReference
         let url = ApiClient.getUrl('/' + this.config.pluginName + '/Search');
 
         const params = [];
@@ -739,14 +839,11 @@ class SearchController {
             url += '?' + params.join('&');
         }
 
-        // noinspection JSUnresolvedReference
         ApiClient.getJSON(url).then((results) => {
             this.currentSearchResults = results;
             this.renderSearchResults();
-            // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
         }).catch((err) => {
-            // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
             Helper.showError(err, Language.Search.Error);
         });
@@ -823,25 +920,66 @@ class SearchController {
         return this.config.createListItem(item.Title, body1, bodyText2, actions);
     }
 
+    createSubFromSearchCriteria() {
+        const title = document.getElementById(DomIds.Search.Title).value;
+        const topic = document.getElementById(DomIds.Search.Topic).value;
+        const channel = document.getElementById(DomIds.Search.Channel).value;
+        const combinedSearch = document.getElementById(DomIds.Search.Combined).value;
+        const minD = document.getElementById(DomIds.Search.MinDuration).value;
+        const maxD = document.getElementById(DomIds.Search.MaxDuration).value;
+
+        if (!title && !topic && !channel && !combinedSearch) {
+            Helper.showToast(Language.Search.SearchTearm);
+            return;
+        }
+
+        Dashboard.showLoadingMsg();
+        let url = ApiClient.getUrl('/' + this.config.pluginName + '/Search/Criteria');
+
+        const params = [];
+        if (title) params.push('title=' + encodeURIComponent(title));
+        if (topic) params.push('topic=' + encodeURIComponent(topic));
+        if (channel) params.push('channel=' + encodeURIComponent(channel));
+        if (combinedSearch) params.push('combinedSearch=' + encodeURIComponent(combinedSearch));
+
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+
+        ApiClient.getJSON(url).then((criteria) => {
+            this.config.switchTab(DomIds.Tabs.Subscriptions);
+
+            const newSub = new Subscription(this.config.currentConfig, {
+                Name: topic || title || combinedSearch || Language.Search.AboFromSearch,
+                Search: {
+                    Criteria: criteria,
+                    MinDurationMinutes: minD ? parseInt(minD, 10) : undefined,
+                    MaxDurationMinutes: maxD ? parseInt(maxD, 10) : undefined,
+                }
+            });
+
+            this.config.subscriptionEditor.show(newSub);
+            Dashboard.hideLoadingMsg();
+        }).catch((err) => {
+            Dashboard.hideLoadingMsg();
+            Helper.showError(err, Language.Search.Error);
+        });
+    }
+
     downloadItem(index) {
         const item = this.currentSearchResults[index];
         if (!item) return;
-        // noinspection JSUnresolvedReference
         const url = ApiClient.getUrl('/' + this.config.pluginName + '/Download');
-        // noinspection JSUnresolvedReference
         Dashboard.showLoadingMsg();
-        // noinspection JSUnresolvedReference
         ApiClient.ajax({
             type: "POST",
             url: url,
             data: JSON.stringify(item),
             contentType: 'application/json'
         }).then(() => {
-            // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
             Helper.showToast(Language.Search.InQueue(item.Title));
         }).catch((err) => {
-            // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
             Helper.showError(err, Language.Search.ErrorDownloadStart);
         });
@@ -849,55 +987,18 @@ class SearchController {
 
     createSubFromSearch(btn, title, channel, topic) {
         this.config.switchTab(DomIds.Tabs.Subscriptions);
-        const def = this.config.currentConfig.SubscriptionDefaults || {};
-        const defDl = def.DownloadSettings || {};
-        const defSearch = def.SearchSettings || {};
-        const defSeries = def.SeriesSettings || {};
-        const defMeta = def.MetadataSettings || {};
-        const defAccess = def.AccessibilitySettings || {};
 
-        const newSub = {
-            Id: null,
+        const newSub = new Subscription(this.config.currentConfig, {
             Name: topic,
             Search: {
                 Criteria: [
-                    {Fields: ["Title"], Query: title},
-                    {Fields: ["Channel"], Query: channel},
-                    {Fields: ["Topic"], Query: topic}
-                ],
-                MinDurationMinutes: defSearch.MinDurationMinutes || null,
-                MaxDurationMinutes: defSearch.MaxDurationMinutes || null,
-            },
-            Download: {
-                DownloadPath: "",
-                UseStreamingUrlFiles: defDl.UseStreamingUrlFiles || false,
-                DownloadFullVideoForSecondaryAudio: defDl.DownloadFullVideoForSecondaryAudio || false,
-                AlwaysCreateSubfolder: defDl.AlwaysCreateSubfolder || false,
-                EnhancedDuplicateDetection: defDl.EnhancedDuplicateDetection || false,
-                AutoUpgradeToHigherQuality: defDl.AutoUpgradeToHigherQuality || false,
-                AllowFallbackToLowerQuality: defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true,
-                QualityCheckWithUrl: defDl.QualityCheckWithUrl || false,
-            },
-            Series: {
-                EnforceSeriesParsing: defSeries.EnforceSeriesParsing || false,
-                AllowAbsoluteEpisodeNumbering: defSeries.AllowAbsoluteEpisodeNumbering || false,
-                TreatNonEpisodesAsExtras: defSeries.TreatNonEpisodesAsExtras || false,
-                SaveTrailers: defSeries.SaveTrailers !== undefined ? defSeries.SaveTrailers : true,
-                SaveInterviews: defSeries.SaveInterviews !== undefined ? defSeries.SaveInterviews : true,
-                SaveGenericExtras: defSeries.SaveGenericExtras !== undefined ? defSeries.SaveGenericExtras : true,
-                SaveExtrasAsStrm: defSeries.SaveExtrasAsStrm || false,
-            },
-            Metadata: {
-                OriginalLanguage: defMeta.OriginalLanguage || "",
-                CreateNfo: defMeta.CreateNfo || false,
-                AppendDateToTitle: defMeta.AppendDateToTitle || false,
-                AppendTimeToTitle: defMeta.AppendTimeToTitle || false,
-            },
-            Accessibility: {
-                AllowAudioDescription: defAccess.AllowAudioDescription || false,
-                AllowSignLanguage: defAccess.AllowSignLanguage || false,
+                    {Fields: ["Title"], Query: title, IsExclude: false},
+                    {Fields: ["Channel"], Query: channel, IsExclude: false},
+                    {Fields: ["Topic"], Query: topic, IsExclude: false}
+                ]
             }
-        };
+        });
+
         this.config.subscriptionEditor.show(newSub);
     }
 }
@@ -1295,7 +1396,10 @@ class AdoptionController {
             const confidence = bestMatch ? Math.round(bestMatch.Confidence) : 0;
 
             if (confidence < min || confidence > max) return false;
-            if (sourceFilter !== "All") {
+            
+            if (sourceFilter === "Unconfirmed") {
+                if (bestMatch && bestMatch.IsConfirmed) return false;
+            } else if (sourceFilter !== "All") {
                 if (!bestMatch || bestMatch.Source !== sourceFilter) return false;
             }
 
@@ -1905,54 +2009,11 @@ class SubscriptionEditor {
      */
     setEditorValues(sub) {
         if (!sub) {
-            // Reset values using SubscriptionDefaults
-            const def = this.config.currentConfig.SubscriptionDefaults || {};
-            const defDl = def.DownloadSettings || {};
-            const defSearch = def.SearchSettings || {};
-            const defSeries = def.SeriesSettings || {};
-            const defMeta = def.MetadataSettings || {};
-            const defAccess = def.AccessibilitySettings || {};
-
-            document.getElementById(DomIds.Subscription.Editor.Id).value = "";
-            document.getElementById(DomIds.Subscription.Editor.Name).value = "";
-            document.getElementById(DomIds.Subscription.Editor.OriginalLanguage).value = defMeta.OriginalLanguage || "";
-            document.getElementById(DomIds.Subscription.Editor.MinDuration).value = defSearch.MinDurationMinutes || "";
-            document.getElementById(DomIds.Subscription.Editor.MaxDuration).value = defSearch.MaxDurationMinutes || "";
-            document.getElementById(DomIds.Subscription.Editor.MinBroadcastDate).value = "";
-            document.getElementById(DomIds.Subscription.Editor.MaxBroadcastDate).value = "";
-            document.getElementById(DomIds.Subscription.Editor.Path).value = "";
-            this.updateSubPathHoverText();
-
-            document.getElementById(DomIds.Subscription.Editor.EnforceSeries).checked = defSeries.EnforceSeriesParsing || false;
-            document.getElementById(DomIds.Subscription.Editor.CreateNfo).checked = defMeta.CreateNfo || false;
-            document.getElementById(DomIds.Subscription.Editor.AllowAudioDesc).checked = defAccess.AllowAudioDescription || false;
-            document.getElementById(DomIds.Subscription.Editor.AbsoluteEpisodeNumbering).checked = defSeries.AllowAbsoluteEpisodeNumbering || false;
-            document.getElementById(DomIds.Subscription.Editor.AppendDate).checked = defMeta.AppendDateToTitle || false;
-            document.getElementById(DomIds.Subscription.Editor.AppendTime).checked = defMeta.AppendTimeToTitle || false;
-            document.getElementById(DomIds.Subscription.Editor.AllowSignLanguage).checked = defAccess.AllowSignLanguage || false;
-            document.getElementById(DomIds.Subscription.Editor.TreatNonEpisodesAsExtras).checked = defSeries.TreatNonEpisodesAsExtras || false;
-            document.getElementById(DomIds.Subscription.Editor.SaveTrailers).checked = defSeries.SaveTrailers !== undefined ? defSeries.SaveTrailers : true;
-            document.getElementById(DomIds.Subscription.Editor.SaveInterviews).checked = defSeries.SaveInterviews !== undefined ? defSeries.SaveInterviews : true;
-            document.getElementById(DomIds.Subscription.Editor.SaveGenericExtras).checked = defSeries.SaveGenericExtras !== undefined ? defSeries.SaveGenericExtras : true;
-            document.getElementById(DomIds.Subscription.Editor.SaveExtrasAsStrm).checked = defSeries.SaveExtrasAsStrm || false;
-            document.getElementById(DomIds.Subscription.Editor.UseStreamingUrlFiles).checked = defDl.UseStreamingUrlFiles || false;
-            document.getElementById(DomIds.Subscription.Editor.DownloadFullVideoSecondaryAudio).checked = defDl.DownloadFullVideoForSecondaryAudio || false;
-            document.getElementById(DomIds.Subscription.Editor.AlwaysCreateSubfolder).checked = defDl.AlwaysCreateSubfolder || false;
-            document.getElementById(DomIds.Subscription.Editor.EnhancedDuplicateDetection).checked = defDl.EnhancedDuplicateDetection || false;
-            document.getElementById(DomIds.Subscription.Editor.AutoUpgradeHigherQuality).checked = defDl.AutoUpgradeToHigherQuality || false;
-            document.getElementById(DomIds.Subscription.Editor.AllowFallbackLowerQuality).checked = defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true;
-            document.getElementById(DomIds.Subscription.Editor.QualityCheckWithUrl).checked = defDl.QualityCheckWithUrl || false;
-
-            document.getElementById(DomIds.Subscription.Editor.QueriesContainer).textContent = '';
-            this.config.addQueryRow(null);
-
-            // Force update dependencies to hide unchecked dependent fields
-            this.config.dependencyManager.applyDependencies();
-            return;
+            sub = new Subscription(this.config.currentConfig);
         }
 
         document.getElementById(DomIds.Subscription.Editor.Id).value = sub.Id || "";
-        document.getElementById(DomIds.Subscription.Editor.Name).value = sub.Name;
+        document.getElementById(DomIds.Subscription.Editor.Name).value = sub.Name || "";
 
         // Ensure nested objects exist to avoid errors
         const search = sub.Search || {};
@@ -2004,37 +2065,9 @@ class SubscriptionEditor {
 
     /**
      * Collects values from the editor form to create a subscription object.
-     * @returns {Object} The subscription object.
+     * @returns {Subscription} The subscription object.
      */
     getEditorValues() {
-        const id = document.getElementById(DomIds.Subscription.Editor.Id).value;
-        const name = document.getElementById(DomIds.Subscription.Editor.Name).value;
-        const originalLanguage = document.getElementById(DomIds.Subscription.Editor.OriginalLanguage).value;
-        const minDuration = document.getElementById(DomIds.Subscription.Editor.MinDuration).value;
-        const maxDuration = document.getElementById(DomIds.Subscription.Editor.MaxDuration).value;
-        const minBroadcastDate = document.getElementById(DomIds.Subscription.Editor.MinBroadcastDate).value;
-        const maxBroadcastDate = document.getElementById(DomIds.Subscription.Editor.MaxBroadcastDate).value;
-        const path = document.getElementById(DomIds.Subscription.Editor.Path).value;
-        const enforce = document.getElementById(DomIds.Subscription.Editor.EnforceSeries).checked;
-        const createNfo = document.getElementById(DomIds.Subscription.Editor.CreateNfo).checked;
-        const allowAudio = document.getElementById(DomIds.Subscription.Editor.AllowAudioDesc).checked;
-        const allowAbsolute = document.getElementById(DomIds.Subscription.Editor.AbsoluteEpisodeNumbering).checked;
-        const appendDateToTitle = document.getElementById(DomIds.Subscription.Editor.AppendDate).checked;
-        const appendTimeToTitle = document.getElementById(DomIds.Subscription.Editor.AppendTime).checked;
-        const allowSignLanguage = document.getElementById(DomIds.Subscription.Editor.AllowSignLanguage).checked;
-        const alwaysCreateSubfolder = document.getElementById(DomIds.Subscription.Editor.AlwaysCreateSubfolder).checked;
-        const enhancedDuplicateDetection = document.getElementById(DomIds.Subscription.Editor.EnhancedDuplicateDetection).checked;
-        const autoUpgradeToHigherQuality = document.getElementById(DomIds.Subscription.Editor.AutoUpgradeHigherQuality).checked;
-        const treatNonEpisodesAsExtras = document.getElementById(DomIds.Subscription.Editor.TreatNonEpisodesAsExtras).checked;
-        const saveTrailers = document.getElementById(DomIds.Subscription.Editor.SaveTrailers).checked;
-        const saveInterviews = document.getElementById(DomIds.Subscription.Editor.SaveInterviews).checked;
-        const saveGenericExtras = document.getElementById(DomIds.Subscription.Editor.SaveGenericExtras).checked;
-        const saveExtrasAsStrm = document.getElementById(DomIds.Subscription.Editor.SaveExtrasAsStrm).checked;
-        const useStreamingUrlFiles = document.getElementById(DomIds.Subscription.Editor.UseStreamingUrlFiles).checked;
-        const downloadFullVideoForSecondaryAudio = document.getElementById(DomIds.Subscription.Editor.DownloadFullVideoSecondaryAudio).checked;
-        const allowFallbackToLowerQuality = document.getElementById(DomIds.Subscription.Editor.AllowFallbackLowerQuality).checked;
-        const qualityCheckWithUrl = document.getElementById(DomIds.Subscription.Editor.QualityCheckWithUrl).checked;
-
         const criteria = [];
         document.querySelectorAll('#' + DomIds.Subscription.Editor.QueriesContainer + ' .mvpl-query-row').forEach(function (row) {
             const queryText = row.querySelector('.subQueryText').value;
@@ -2043,54 +2076,58 @@ class SubscriptionEditor {
                 row.querySelectorAll('.subQueryField:checked').forEach(function (fieldCheckbox) {
                     fields.push(fieldCheckbox.value);
                 });
-                criteria.push({Query: queryText, Fields: fields});
+                const isExclude = row.querySelector('.subQueryExcludeBtn').classList.contains('active');
+                criteria.push({Query: queryText, Fields: fields, IsExclude: isExclude});
             }
         });
 
-        return {
-            Id: id,
-            Name: name,
+        const maxDateVal = document.getElementById(DomIds.Subscription.Editor.MaxBroadcastDate).value;
+        const maxDate = maxDateVal ? (() => {
+            const d = new Date(maxDateVal);
+            d.setHours(23, 59, 59, 999);
+            return d.toISOString();
+        })() : null;
+
+        return new Subscription(this.config.currentConfig, {
+            Id: document.getElementById(DomIds.Subscription.Editor.Id).value,
+            Name: document.getElementById(DomIds.Subscription.Editor.Name).value,
             Search: {
                 Criteria: criteria,
-                MinDurationMinutes: minDuration ? parseInt(minDuration, 10) : null,
-                MaxDurationMinutes: maxDuration ? parseInt(maxDuration, 10) : null,
-                MinBroadcastDate: minBroadcastDate ? new Date(minBroadcastDate).toISOString() : null,
-                MaxBroadcastDate: maxBroadcastDate ? (() => {
-                    const d = new Date(maxBroadcastDate);
-                    d.setHours(23, 59, 59, 999);
-                    return d.toISOString();
-                })() : null,
+                MinDurationMinutes: parseInt(document.getElementById(DomIds.Subscription.Editor.MinDuration).value, 10) || null,
+                MaxDurationMinutes: parseInt(document.getElementById(DomIds.Subscription.Editor.MaxDuration).value, 10) || null,
+                MinBroadcastDate: document.getElementById(DomIds.Subscription.Editor.MinBroadcastDate).value ? new Date(document.getElementById(DomIds.Subscription.Editor.MinBroadcastDate).value).toISOString() : null,
+                MaxBroadcastDate: maxDate
             },
             Download: {
-                DownloadPath: path,
-                UseStreamingUrlFiles: useStreamingUrlFiles,
-                DownloadFullVideoForSecondaryAudio: downloadFullVideoForSecondaryAudio,
-                AlwaysCreateSubfolder: alwaysCreateSubfolder,
-                AllowFallbackToLowerQuality: allowFallbackToLowerQuality,
-                QualityCheckWithUrl: qualityCheckWithUrl,
-                AutoUpgradeToHigherQuality: autoUpgradeToHigherQuality,
-                EnhancedDuplicateDetection: enhancedDuplicateDetection,
+                DownloadPath: document.getElementById(DomIds.Subscription.Editor.Path).value,
+                UseStreamingUrlFiles: document.getElementById(DomIds.Subscription.Editor.UseStreamingUrlFiles).checked,
+                DownloadFullVideoForSecondaryAudio: document.getElementById(DomIds.Subscription.Editor.DownloadFullVideoSecondaryAudio).checked,
+                AlwaysCreateSubfolder: document.getElementById(DomIds.Subscription.Editor.AlwaysCreateSubfolder).checked,
+                EnhancedDuplicateDetection: document.getElementById(DomIds.Subscription.Editor.EnhancedDuplicateDetection).checked,
+                AutoUpgradeToHigherQuality: document.getElementById(DomIds.Subscription.Editor.AutoUpgradeHigherQuality).checked,
+                AllowFallbackToLowerQuality: document.getElementById(DomIds.Subscription.Editor.AllowFallbackLowerQuality).checked,
+                QualityCheckWithUrl: document.getElementById(DomIds.Subscription.Editor.QualityCheckWithUrl).checked
             },
             Series: {
-                EnforceSeriesParsing: enforce,
-                AllowAbsoluteEpisodeNumbering: allowAbsolute,
-                TreatNonEpisodesAsExtras: treatNonEpisodesAsExtras,
-                SaveTrailers: saveTrailers,
-                SaveInterviews: saveInterviews,
-                SaveGenericExtras: saveGenericExtras,
-                SaveExtrasAsStrm: saveExtrasAsStrm,
+                EnforceSeriesParsing: document.getElementById(DomIds.Subscription.Editor.EnforceSeries).checked,
+                AllowAbsoluteEpisodeNumbering: document.getElementById(DomIds.Subscription.Editor.AbsoluteEpisodeNumbering).checked,
+                TreatNonEpisodesAsExtras: document.getElementById(DomIds.Subscription.Editor.TreatNonEpisodesAsExtras).checked,
+                SaveTrailers: document.getElementById(DomIds.Subscription.Editor.SaveTrailers).checked,
+                SaveInterviews: document.getElementById(DomIds.Subscription.Editor.SaveInterviews).checked,
+                SaveGenericExtras: document.getElementById(DomIds.Subscription.Editor.SaveGenericExtras).checked,
+                SaveExtrasAsStrm: document.getElementById(DomIds.Subscription.Editor.SaveExtrasAsStrm).checked
             },
             Metadata: {
-                CreateNfo: createNfo,
-                OriginalLanguage: originalLanguage,
-                AppendDateToTitle: appendDateToTitle,
-                AppendTimeToTitle: appendTimeToTitle,
+                CreateNfo: document.getElementById(DomIds.Subscription.Editor.CreateNfo).checked,
+                OriginalLanguage: document.getElementById(DomIds.Subscription.Editor.OriginalLanguage).value,
+                AppendDateToTitle: document.getElementById(DomIds.Subscription.Editor.AppendDate).checked,
+                AppendTimeToTitle: document.getElementById(DomIds.Subscription.Editor.AppendTime).checked
             },
             Accessibility: {
-                AllowAudioDescription: allowAudio,
-                AllowSignLanguage: allowSignLanguage,
+                AllowAudioDescription: document.getElementById(DomIds.Subscription.Editor.AllowAudioDesc).checked,
+                AllowSignLanguage: document.getElementById(DomIds.Subscription.Editor.AllowSignLanguage).checked
             }
-        };
+        });
     }
 
     /**
@@ -2227,9 +2264,7 @@ class MediathekPluginConfig {
             }
         }).catch(err => console.error(Language.Subscription.ErrorInitializationStatus, err));
 
-        // noinspection JSUnresolvedReference
         Dashboard.showLoadingMsg();
-        // noinspection JSUnresolvedReference
         ApiClient.getPluginConfiguration(this.pluginId).then((config) => {
             this.currentConfig = config;
 
@@ -2292,7 +2327,6 @@ class MediathekPluginConfig {
             this.renderSubscriptionsList();
             this.adoptionController.populateAbos(config.Subscriptions);
             this.updateSearchTotalItemsInfo();
-            // noinspection JSUnresolvedReference
             Dashboard.hideLoadingMsg();
         });
     }
@@ -2315,11 +2349,8 @@ class MediathekPluginConfig {
      * Saves the global configuration to the server.
      */
     saveGlobalConfig() {
-        // noinspection JSUnresolvedReference
         Dashboard.showLoadingMsg();
-        // noinspection JSUnresolvedReference
         ApiClient.updatePluginConfiguration(this.pluginId, this.currentConfig).then((result) => {
-            // noinspection JSUnresolvedReference
             Dashboard.processPluginConfigurationUpdateResult(result);
             Helper.showToast(Language.General.SettingsSaved);
             this.loadConfig();
@@ -2468,19 +2499,15 @@ class MediathekPluginConfig {
     resetProcessedItems(id) {
         Helper.confirmationPopup(Language.Subscription.ConfirmResetProcessedItemsMessage, Language.Subscription.ResetProcessedItems, (confirmed) => {
             if (confirmed) {
-                // noinspection JSUnresolvedReference
                 Dashboard.showLoadingMsg();
-                // noinspection JSUnresolvedReference
                 ApiClient.ajax({
                     type: "POST",
                     url: ApiClient.getUrl('/' + this.pluginName + '/ResetProcessedItems?subscriptionId=' + id),
                 }).then(() => {
-                    // noinspection JSUnresolvedReference
                     Dashboard.hideLoadingMsg();
                     Helper.showToast(Language.Subscription.ProcessedItemsReset);
                     this.loadConfig(); // Refresh the configuration to update the UI
                 }).catch((err) => {
-                    // noinspection JSUnresolvedReference
                     Dashboard.hideLoadingMsg();
                     Helper.showError(err, Language.Subscription.ErrorResettingProcessedItems);
                 });
@@ -2490,10 +2517,11 @@ class MediathekPluginConfig {
 
     addQueryRow(query) {
         if (query == null) {
-            query = {Query: '', Fields: ['Title', 'Topic']};
+            query = {Query: '', Fields: ['Title', 'Topic'], IsExclude: false};
         }
-        const queryText = query ? query.Query : '';
-        const fields = query ? query.Fields : ['Title', 'Topic'];
+        const queryText = query.Query || '';
+        const fields = query.Fields || ['Title', 'Topic'];
+        const isExclude = query.IsExclude !== undefined ? query.IsExclude : (query.isExclude || false);
 
         const input = this.dom.create('input', {
             type: 'text',
@@ -2523,6 +2551,21 @@ class MediathekPluginConfig {
             className: 'subQueryField'
         });
 
+        const btnExclude = this.dom.create('button', {
+            type: 'button',
+            className: 'subQueryExcludeBtn' + (isExclude ? ' active' : ''),
+            text: 'NOT',
+            attributes: {
+                'is': 'emby-button',
+                'title': isExclude ? Language.Subscription.Not.On : Language.Subscription.Not.Off
+            },
+            onClick: (e) => {
+                const btn = e.currentTarget;
+                const active = btn.classList.toggle('active');
+                btn.title = active ? Language.Subscription.Not.On : Language.Subscription.Not.Off;
+            }
+        });
+
         const removeBtn = this.dom.createIconButton(Icons.Remove, Language.Subscription.RemoveQuery, (e) => {
             e.target.closest('.mvpl-query-row').remove();
         });
@@ -2531,6 +2574,7 @@ class MediathekPluginConfig {
         const newRow = this.dom.create('div', {
             className: 'mvpl-query-row',
             children: [
+                btnExclude,
                 this.dom.create('div', {className: 'flex-grow', children: [input]}),
                 this.dom.create('div', {
                     className: 'query-checkboxes',
