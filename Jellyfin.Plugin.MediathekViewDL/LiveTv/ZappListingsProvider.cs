@@ -35,7 +35,8 @@ public class ZappListingsProvider : IListingsProvider
     /// <inheritdoc />
     public async Task<IEnumerable<ProgramInfo>> GetProgramsAsync(ListingsProviderInfo info, string channelId, DateTime startDateUtc, DateTime endDateUtc, CancellationToken cancellationToken)
     {
-        var shows = await _apiClient.GetCurrentZappShowAsync(channelId, cancellationToken).ConfigureAwait(false);
+        var internalId = IsExtChannelId(channelId) ? channelId[Constants.ChannelIdPrefix.Length..] : channelId;
+        var shows = await _apiClient.GetCurrentZappShowAsync(internalId, cancellationToken).ConfigureAwait(false);
 
         var programs = shows.Select(show =>
             new ProgramInfo
@@ -74,11 +75,16 @@ public class ZappListingsProvider : IListingsProvider
         return channels.Select(c => new ChannelInfo
         {
             Name = c.Name,
-            Id = c.Id,
+            Id = Constants.ChannelIdPrefix + c.Id,
             Path = c.StreamUrl,
             ChannelType = ChannelType.TV,
             TunerHostId = "zapp",
             ImageUrl = ZappChannelLogoProvider.GetLogoUrl(c.Id)
         }).ToList();
+    }
+
+    private static bool IsExtChannelId(string channelId)
+    {
+        return channelId.StartsWith(Constants.ChannelIdPrefix, StringComparison.OrdinalIgnoreCase);
     }
 }

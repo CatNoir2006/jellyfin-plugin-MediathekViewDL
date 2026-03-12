@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions;
 using Jellyfin.Plugin.MediathekViewDL.Api.External;
+using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
@@ -31,6 +32,7 @@ public class ZappTunerHost : ITunerHost, IConfigurableTunerHost
     private readonly ILogger<ZappTunerHost> _logger;
     private readonly IMediaSourceManager _mediaSourceManager;
     private readonly INetworkManager _networkManager;
+    private readonly IServerConfigurationManager _serverConfig;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ZappTunerHost"/> class.
@@ -39,16 +41,19 @@ public class ZappTunerHost : ITunerHost, IConfigurableTunerHost
     /// <param name="logger">The logger.</param>
     /// <param name="mediaSourceManager">The media source manager.</param>
     /// <param name="networkManager">The network manager.</param>
+    /// <param name="serverConfig">The server configuration manager.</param>
     public ZappTunerHost(
         IMediathekViewApiClient apiClient,
         ILogger<ZappTunerHost> logger,
         IMediaSourceManager mediaSourceManager,
-        INetworkManager networkManager)
+        INetworkManager networkManager,
+        IServerConfigurationManager serverConfig)
     {
         _apiClient = apiClient;
         _logger = logger;
         _mediaSourceManager = mediaSourceManager;
         _networkManager = networkManager;
+        _serverConfig = serverConfig;
     }
 
     /// <inheritdoc />
@@ -63,13 +68,20 @@ public class ZappTunerHost : ITunerHost, IConfigurableTunerHost
     /// <inheritdoc />
     public async Task<List<ChannelInfo>> GetChannels(bool enableCache, CancellationToken cancellationToken)
     {
+        var tunerHostInfo = GetTunerHostInfo();
+        if (tunerHostInfo is null)
+        {
+            _logger.LogWarning("Zapp tuner host is not configured. Please add a tuner host with type 'zapp' in the Live TV settings.");
+            return [];
+        }
+
         var channels = await _apiClient.GetZappChannelsAsync(cancellationToken).ConfigureAwait(false);
         return channels.Select(c => new ChannelInfo
         {
             Name = c.Name,
-            Id = c.Id,
+            Id = GetExtChannelId(c.Id),
             Path = c.StreamUrl,
-            TunerHostId = "zapp",
+            TunerHostId = tunerHostInfo.Id,
             ChannelType = ChannelType.TV,
             ImageUrl = ZappChannelLogoProvider.GetLogoUrl(c.Id)
         }).ToList();
@@ -78,12 +90,21 @@ public class ZappTunerHost : ITunerHost, IConfigurableTunerHost
     /// <inheritdoc />
     public async Task<ILiveStream> GetChannelStream(string channelId, string streamId, IList<ILiveStream> currentLiveStreams, CancellationToken cancellationToken)
     {
+        // We throw FileNotFoundException here because Jellyfin's DefaultLiveTvService.cs
+        // explicitly catches only FileNotFoundException (and OperationCanceledException)
+        // to determine if it should try the next available tuner host.
+        // Throwing ArgumentException or others would stop the search and lead to a playback error.
+        if (!IsExtChannelId(channelId))
+        {
+            throw new System.IO.FileNotFoundException("Channel not found");
+        }
+
         var channels = await GetChannels(true, cancellationToken).ConfigureAwait(false);
         var channel = channels.FirstOrDefault(c => string.Equals(c.Id, channelId, StringComparison.OrdinalIgnoreCase));
 
         if (channel == null)
         {
-            throw new ArgumentException("Channel not found", nameof(channelId));
+            throw new System.IO.FileNotFoundException("Channel not found");
         }
 
         var mediaSource = CreateMediaSourceInfo(channel);
@@ -148,6 +169,27 @@ public class ZappTunerHost : ITunerHost, IConfigurableTunerHost
         mediaSource.InferTotalBitrate();
 
         return mediaSource;
+    }
+
+    private TunerHostInfo? GetTunerHostInfo()
+    {
+        var liveTvConfig = _serverConfig.GetConfiguration<LiveTvOptions>("livetv");
+        return liveTvConfig.TunerHosts.FirstOrDefault(t => t.Type == "zapp");
+    }
+
+    private string GetExtChannelId(string channelId)
+    {
+        return Constants.ChannelIdPrefix + channelId;
+    }
+
+    private string GetInternalChannelId(string extChannelId)
+    {
+        return IsExtChannelId(extChannelId) ? extChannelId[Constants.ChannelIdPrefix.Length..] : extChannelId;
+    }
+
+    private static bool IsExtChannelId(string channelId)
+    {
+        return channelId.StartsWith(Constants.ChannelIdPrefix, StringComparison.OrdinalIgnoreCase);
     }
 
     private sealed class ZappLiveStream : ILiveStream
