@@ -9,4 +9,9 @@ public static class Constants
     /// The Category for the Scheduled Tasks of this Plugin.
     /// </summary>
     public const string SchedTaskCat = "Mediathek Downloader";
+
+    /// <summary>
+    /// The prefix for channel IDs of channels provided by this plugin.
+    /// </summary>
+    public const string ChannelIdPrefix = "MediathekViewDL-Zapp-";
 }
