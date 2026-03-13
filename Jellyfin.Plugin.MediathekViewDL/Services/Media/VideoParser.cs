@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Linq;
 using System.Text.RegularExpressions;
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Media;
@@ -17,6 +20,7 @@ public class VideoParser : IVideoParser
     // Regex for Audiodescription and Sign Language
     private readonly Regex _adRegex;
     private readonly Regex _gsRegex;
+    private readonly Regex _clearLangRegex;
     private readonly Regex _trailerRegex;
     private readonly Regex _interviewRegex;
 
@@ -37,76 +41,47 @@ public class VideoParser : IVideoParser
         _languageDetectionService = languageDetectionService;
 
         // Compile regex for Audiodescription
-        _adRegex = new Regex(
-            @"\b(AD|Audiodeskription|Hörfassung)\b",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled,
-            TimeSpan.FromSeconds(1));
+        _adRegex = BuildPattern(@"\b(AD|Audiodeskription|Hörfassung)\b");
 
         // Compile regex for Sign Language
-        _gsRegex = new Regex(
-            @"\b(GS|Gebärdensprache|Gebärdendolmetscher)\b",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled,
-            TimeSpan.FromSeconds(1));
+        _gsRegex = BuildPattern(@"\b(GS|Gebärdensprache|Gebärdendolmetscher)\b");
+
+        // Compile regex for ClearLanguage / Klare Sprache
+        _clearLangRegex = BuildPattern(@"\b(Video in )?klarer? Sprache\b");
 
         // Compile regex for Trailer
-        _trailerRegex = new Regex(
-            @"(?:\bTrailer\b)|^(?:Darum geht's)|(?:Darum geht's)$",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled,
-            TimeSpan.FromSeconds(1));
+        _trailerRegex = BuildPattern(@"(?:\bTrailer\b)|^(?:Darum geht's)|(?:Darum geht's)$");
 
         // Compile regex for Interview
-        _interviewRegex = new Regex(
-            @"\b(Interview)\b",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled,
-            TimeSpan.FromSeconds(1));
+        _interviewRegex = BuildPattern(@"\b(Interview)\b");
 
         // Compile regex for Date (DD.MM.YYYY or D.M.YY)
-        _dateRegex = new Regex(
-            @"\b\d{1,2}\.\d{1,2}\.\d{2,4}\b",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled,
-            TimeSpan.FromSeconds(1));
+        _dateRegex = BuildPattern(@"\b\d{1,2}\.\d{1,2}\.\d{2,4}\b");
 
         // Compile regex patterns for Normal Numbering (SXXEXX, SXX/EXX, Staffel X Episode Y, XxY, (SXX/EXX), (Staffel X, Folge Y))
-        _seasonEpisodePatterns = new List<Regex>
-        {
-            // Standard: s01e01, staffel 1 episode 1, s01/e01, s01_e01
-            new Regex(@"(?:s|staffel)[\s_]*(?<season>\d+)[\s_]*(?:e|episode|/)[\s_]*(?<episode>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
-
+        _seasonEpisodePatterns = BuildPatterns([
+            @"(Staffel|Season|S)[\s/,_]?(?<season>\d+)[\s/,_]{0,3}(Episode|Folge|E)[\s/,_]?(?<episode>\d+)",
             // X-Notation: 1x01, 1X01
-            new Regex(@"(?<season>\d+)\s*[xX]\s*(?<episode>\d+)", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
+            @"(?<season>\d+)\s*[xX]\s*(?<episode>\d+)",
+        ]);
 
-            // Brackets: (s01e01), [s01/e01]
-            new Regex(@"[\(\[]s?\s*(?<season>\d+)\s*(?:e|/)\s*(?<episode>\d+)[\)\]]", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
-
-            // German Verbose with comma: Staffel 1, Folge 1, (Staffel 1, Folge 1)
-            new Regex(@"\s*[\(\[]?Staffel\s*(?<season>\d+),\s*Folge\s*(?<episode>\d+)[\)\]]?", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
-
-            // Alternative S/E: (S1 Episode 1), S01 Episode 01
-            new Regex(@"\s*[\(\[]?S(?<season>\d+)(?:[\s\/]*E|Episode\s*)(?<episode>\d+)[\)\]]?", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1))
-        };
         // Compile regex patterns for Absolute Numbering (Folge ZZZ, (ZZZ), ZZZ.)
-        _absoluteNumberingPatterns = new List<Regex>
-        {
+        _absoluteNumberingPatterns = BuildPatterns([
             // "123. " - Number at start
-            new Regex(@"^\s*(?<absolute>\d+)\.\s*", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
-
+            @"^\s*(?<absolute>\d+)\.\s*",
             // "Folge 123"
-            new Regex(@"(?:Folge\s*(?<absolute>\d+)\b)", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
-
+            @"(?:Folge\s*(?<absolute>\d+)\b)",
             // "(123)" - Number inside brackets
-            new Regex(@"(?<=\()\s*(?<absolute>\d+)\s*(?=\))", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1))
-        };
+            @"(?<=\()\s*(?<absolute>\d+)\s*(?=\))",
+        ]);
 
         // Compile regex patterns for Season Only Numbering
-        _seasonOnlyPatterns = new List<Regex>
-        {
-            // "Staffel 1"
-            new Regex(@"(?:^|\s)Staffel\s*(?<season>\d+)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
-            // "Season 1"
-            new Regex(@"(?:^|\s)Season\s*(?<season>\d+)\b", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1)),
-             // "(S1)"
-            new Regex(@"[\(\[]S(?<season>\d+)[\)\]]", RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1))
-        };
+        _seasonOnlyPatterns = BuildPatterns(
+        [
+            @"(?:^|\s)(?:Staffel|Season)\s*(?<season>\d+)\b",
+            // "(S1)"
+            @"[\(\[]S(?<season>\d+)[\)\]]",
+        ]);
     }
 
     /// <summary>
@@ -117,143 +92,61 @@ public class VideoParser : IVideoParser
     /// <returns>An <see cref="VideoInfo"/> object if parsing is successful, otherwise null.</returns>
     public VideoInfo? ParseVideoInfo(string? topic, string mediaTitle)
     {
-        var videoInfo = new VideoInfo
-        {
-            Title = mediaTitle, // Initialize with original title as fallback
-            Topic = topic ?? string.Empty
-        };
-        string processedMediaTitle = mediaTitle;
+        var ctx = new ParsingContext(mediaTitle, topic ?? string.Empty);
 
-        // 1. Language Detection
-        var languageDetectionResult = _languageDetectionService.DetectLanguage(processedMediaTitle);
-        videoInfo.Language = languageDetectionResult.LanguageCode;
-        processedMediaTitle = languageDetectionResult.CleanedTitle;
+        // Language Detection
+        var languageDetectionResult = _languageDetectionService.DetectLanguage(mediaTitle);
+        ctx.Result.Language = languageDetectionResult.LanguageCode;
+        ctx.UpdateTitle(languageDetectionResult.CleanedTitle);
 
-        // 2. Audiodescription Detection
-        var adMatch = _adRegex.Match(processedMediaTitle);
-        if (adMatch.Success)
-        {
-            videoInfo.HasAudiodescription = true;
-            processedMediaTitle = CleanTagFromTitle(processedMediaTitle, adMatch.Value);
-        }
+        // Read Bool Flags
+        CheckFlag(ctx, _adRegex, v => v.HasAudiodescription = true);
+        CheckFlag(ctx, _gsRegex, v => v.HasSignLanguage = true);
+        CheckFlag(ctx, _clearLangRegex, v => v.HasClearLanguage = true);
+        CheckFlag(ctx, _trailerRegex, v => v.IsTrailer = true, updateTitle: false);
+        CheckFlag(ctx, _interviewRegex, v => v.IsInterview = true, updateTitle: false);
 
-        // 3. Sign Language Detection
-        var gsMatch = _gsRegex.Match(processedMediaTitle);
-        if (gsMatch.Success)
+        // Season Episode Parsing (Normal Season/Episode)
+        TryExtractPattern(ctx, _seasonEpisodePatterns, (collection, info) =>
         {
-            videoInfo.HasSignLanguage = true;
-            processedMediaTitle = CleanTagFromTitle(processedMediaTitle, gsMatch.Value);
-        }
-
-        // 4. Season Episode Parsing (Normal Season/Episode)
-        foreach (var pattern in _seasonEpisodePatterns)
-        {
-            var match = pattern.Match(processedMediaTitle);
-            if (match.Success)
+            if (int.TryParse(collection["season"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int season) &&
+                int.TryParse(collection["episode"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int episode))
             {
-                if (int.TryParse(match.Groups["season"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int season) &&
-                    int.TryParse(match.Groups["episode"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int episode))
+                info.SeasonNumber = season;
+                info.EpisodeNumber = episode;
+                info.IsShow = true;
+            }
+        });
+
+        TryExtractPattern(ctx, _absoluteNumberingPatterns, (collection, info) =>
+        {
+            if (int.TryParse(collection["absolute"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int absolute))
+            {
+                info.AbsoluteEpisodeNumber = absolute;
+                info.IsShow = true;
+            }
+        });
+
+        // Season Only Detection (if not already found)
+        if (!ctx.Result.SeasonNumber.HasValue)
+        {
+            TryExtractPattern(ctx, _seasonOnlyPatterns, (collection, info) =>
+            {
+                if (int.TryParse(collection["season"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int season))
                 {
-                    videoInfo.SeasonNumber = season;
-                    videoInfo.EpisodeNumber = episode;
-                    videoInfo.IsShow = true;
-                    processedMediaTitle = CleanTagFromTitle(processedMediaTitle, match.Value);
-                    break; // Stop after first match
+                    info.SeasonNumber = season;
+                    info.IsShow = true;
                 }
-            }
+            });
         }
 
-        // 5. Absolute Episode Numbering Parsing
-        foreach (var pattern in _absoluteNumberingPatterns)
+        if (!ctx.Result.IsShow)
         {
-            var match = pattern.Match(processedMediaTitle);
-            if (match.Success)
-            {
-                if (int.TryParse(match.Groups["absolute"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int absolute))
-                {
-                    videoInfo.AbsoluteEpisodeNumber = absolute;
-                    videoInfo.IsShow = true;
-                    processedMediaTitle = CleanTagFromTitle(processedMediaTitle, match.Value);
-                    break; // Stop after first match
-                }
-            }
+            CheckFlag(ctx, _dateRegex, v => v.IsShow = true, false);
         }
 
-        // 6. Trailer Detection
-        var trailerMatch = _trailerRegex.Match(processedMediaTitle);
-        if (trailerMatch.Success)
-        {
-            videoInfo.IsTrailer = true;
-        }
-
-        // 7. Interview Detection
-        var interviewMatch = _interviewRegex.Match(processedMediaTitle);
-        if (interviewMatch.Success)
-        {
-            videoInfo.IsInterview = true;
-        }
-
-        // 8. Season Only Detection (if not already found)
-        if (!videoInfo.SeasonNumber.HasValue)
-        {
-            foreach (var pattern in _seasonOnlyPatterns)
-            {
-                var match = pattern.Match(processedMediaTitle);
-                if (match.Success)
-                {
-                    if (int.TryParse(match.Groups["season"].Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int season))
-                    {
-                        videoInfo.SeasonNumber = season;
-                        videoInfo.IsShow = true; // Implies it belongs to a show structure
-                        processedMediaTitle = CleanTagFromTitle(processedMediaTitle, match.Value);
-                        break; // Stop after first match
-                    }
-                }
-            }
-        }
-
-        // 9. Date Detection
-        if (!videoInfo.IsShow)
-        {
-            if (_dateRegex.IsMatch(processedMediaTitle))
-            {
-                videoInfo.IsShow = true;
-            }
-        }
-
-        // Final title cleanup (topic removal, general cleanup)
-        // Try to remove common series names/prefixes that might still be in the title
-        if (!string.IsNullOrWhiteSpace(topic))
-        {
-            if (processedMediaTitle.StartsWith(topic, StringComparison.OrdinalIgnoreCase))
-            {
-                var remaining = processedMediaTitle.Substring(topic.Length);
-                // Manually trim start chars that match [\s:_-]
-                processedMediaTitle = remaining.TrimStart(' ', '\t', ':', '_', '-');
-            }
-        }
-
-        // General cleanup for episode title
-        // Remove "u.a. " prefix
-        processedMediaTitle = Regex.Replace(processedMediaTitle, @"^u\.a\.\s*", string.Empty, RegexOptions.IgnoreCase).Trim();
-        // Remove date patterns like "· 13.06.13 |" only if we have other numbering
-        if (videoInfo.HasSeasonEpisodeNumbering || videoInfo.HasAbsoluteNumbering)
-        {
-            processedMediaTitle = Regex.Replace(processedMediaTitle, @"\s*[\·\|\-]\s*\d{2}\.\d{2}\.\d{2,4}\s*[\·\|\-]?\s*", " ", RegexOptions.IgnoreCase).Trim();
-        }
-
-        // Remove "Folge NNN: " prefix for normal numbering and similar prefixes
-        processedMediaTitle = Regex.Replace(processedMediaTitle, @"^(?:Folge\s*\d+:\s*)", string.Empty, RegexOptions.IgnoreCase).Trim();
-        // Less aggressive period/underscore replacement
-        processedMediaTitle = Regex.Replace(processedMediaTitle, @"(?<!\d)\.(?!\d)|_", " ").Trim();
-        // Remove trailing dashes and colons, and leading/trailing spaces
-        processedMediaTitle = Regex.Replace(processedMediaTitle, @"^[\s\-:–]+|[\s\-:–]+$", string.Empty).Trim();
-        // Collapse multiple spaces
-        processedMediaTitle = Regex.Replace(processedMediaTitle, @"\s{2,}", " ").Trim();
-
-        videoInfo.Title = string.IsNullOrWhiteSpace(processedMediaTitle) ? mediaTitle : processedMediaTitle;
-
-        return videoInfo;
+        ctx.FinalizeTitle();
+        return ctx.Result;
     }
 
     /// <summary>
@@ -262,12 +155,112 @@ public class VideoParser : IVideoParser
     /// <param name="title">The original title string.</param>
     /// <param name="tagToRemove">The exact string value of the tag that was matched.</param>
     /// <returns>The title with the tag and its delimiters removed.</returns>
-    private string CleanTagFromTitle(string title, string tagToRemove)
+    private static string CleanTagFromTitle(string title, string tagToRemove)
     {
         // This regex looks for the exact tag and removes it along with surrounding delimiters (paren, brackets, spaces).
-        // It's important to make sure the tagToRemove is escaped for regex.
         string pattern = @$"\s*([\(\[])?\s*{Regex.Escape(tagToRemove)}\s*([\)\]])?\s*";
         string cleaned = Regex.Replace(title, pattern, " ", RegexOptions.IgnoreCase);
-        return Regex.Replace(cleaned, @"\s{2,}", " ").Trim(); // Collapse multiple spaces
+
+        // Collapse multiple spaces and trim
+        return Regex.Replace(cleaned, @"\s{2,}", " ")
+            .Trim();
+    }
+
+    private List<Regex> BuildPatterns([StringSyntax(StringSyntaxAttribute.Regex)] IEnumerable<string> patternStrings)
+    {
+        return patternStrings.Select(BuildPattern).ToList();
+    }
+
+    private Regex BuildPattern([StringSyntax(StringSyntaxAttribute.Regex)] string pattern)
+    {
+        return new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled, TimeSpan.FromSeconds(1));
+    }
+
+    private void CheckFlag(ParsingContext ctx, Regex regex, Action<VideoInfo> setter, bool updateTitle = true)
+    {
+        var match = regex.Match(ctx.CurrentTitle);
+        if (match.Success)
+        {
+            setter(ctx.Result);
+            if (updateTitle)
+            {
+                ctx.UpdateTitle(CleanTagFromTitle(ctx.CurrentTitle, match.Value));
+            }
+        }
+    }
+
+    private bool TryExtractPattern(
+        ParsingContext ctx,
+        IEnumerable<Regex> patterns,
+        Action<GroupCollection, VideoInfo> applyResult)
+    {
+        foreach (var pattern in patterns)
+        {
+            var match = pattern.Match(ctx.CurrentTitle);
+            if (match.Success)
+            {
+                // Apply Changes defined in action.
+                applyResult(match.Groups, ctx.Result);
+
+                // Alwas update the title
+                ctx.UpdateTitle(CleanTagFromTitle(ctx.CurrentTitle, match.Value));
+                return true; // Erfolg: Suche für diese Kategorie beenden
+            }
+        }
+
+        return false;
+    }
+
+    private sealed class ParsingContext
+    {
+        public ParsingContext(string originalTitle, string topic)
+        {
+            Result = new VideoInfo { Title = originalTitle, Topic = topic };
+            CurrentTitle = originalTitle;
+            Topic = topic;
+        }
+
+        public VideoInfo Result { get; }
+
+        public string CurrentTitle { get; private set; }
+
+        public string Topic { get; }
+
+        public void UpdateTitle(string newTitle) => CurrentTitle = newTitle;
+
+        public void FinalizeTitle()
+        {
+            string cleaned = CurrentTitle;
+
+            // Final title cleanup (topic removal, general cleanup)
+            // Try to remove common series names/prefixes that might still be in the title
+            if (!string.IsNullOrWhiteSpace(Topic))
+            {
+                if (cleaned.StartsWith(Topic, StringComparison.OrdinalIgnoreCase))
+                {
+                    var remaining = cleaned.Substring(Topic.Length);
+                    // Manually trim start chars that match [\s:_-]
+                    cleaned = remaining.TrimStart(' ', '\t', ':', '_', '-');
+                }
+            }
+
+            // General cleanup for episode title
+            // Remove date patterns like "· 13.06.13 |" only if we have other numbering
+            if (Result.HasSeasonEpisodeNumbering || Result.HasAbsoluteNumbering)
+            {
+                cleaned = Regex.Replace(cleaned, @"\s*[\·\|\-]\s*\d{2}\.\d{2}\.\d{2,4}\s*[\·\|\-]?\s*", " ", RegexOptions.IgnoreCase);
+            }
+
+            // Remove "Folge NNN: " prefix for normal numbering and similar prefixes
+            cleaned = Regex.Replace(cleaned, @"^(?:Folge\s*\d+:\s*)", string.Empty, RegexOptions.IgnoreCase);
+            // Less aggressive period/underscore replacement
+            cleaned = Regex.Replace(cleaned, @"(_+|\.{2,})", " ");
+            // Remove trailing dashes and colons, and leading/trailing spaces
+            cleaned = Regex.Replace(cleaned, @"^[\s\-:–\|·]+|[\s\-:–\|·]+$", string.Empty);
+            // Collapse multiple spaces
+            cleaned = Regex.Replace(cleaned, @"\s{2,}", " ").Trim();
+
+            Result.Title = string.IsNullOrWhiteSpace(cleaned) ? Result.Title : cleaned;
+        }
     }
 }
