@@ -61,6 +61,11 @@ public record VideoInfo
     public bool HasSignLanguage { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether the video has clear language (klare Sprache).
+    /// </summary>
+    public bool HasClearLanguage { get; set; }
+
+    /// <summary>
     /// Gets or sets a value indicating whether the video is a trailer.
     /// </summary>
     public bool IsTrailer { get; set; }

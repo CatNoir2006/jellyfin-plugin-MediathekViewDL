@@ -1,3 +1,4 @@
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Xunit;
 using Moq;
 using Microsoft.Extensions.Logging;
@@ -52,6 +53,7 @@ public class VideoParserTests
     [InlineData("My Episode Staffel 1, Folge 5", "My Episode", 1, 5, null)]
     [InlineData("My Episode (Staffel 1, Folge 5)", "My Episode", 1, 5, null)]
     [InlineData("S03_E01 - Abwärts", "Abwärts", 3, 1, null)]
+    [InlineData("Meine unbekannte Familie (6/6) (S04/E06)", "Meine unbekannte Familie (6/6)", 4, 6, null)]
     public void ParseVideoInfo_ShouldParseNormalNumbering(string title, string expectedEpisodeTitle, int expectedSeason, int expectedEpisode, string? subscriptionName)
     {
         // Act
@@ -110,7 +112,7 @@ public class VideoParserTests
     [InlineData("Das Märchen vom Frosch und der goldenen Kugel (Hörfassung)", null, true, false, "Das Märchen vom Frosch und der goldenen Kugel")]
     // Titles without numbers or features but need cleaning/subscription removal
     [InlineData("Arrietty und die wundersame Welt der Borger", null, false, false, "Arrietty und die wundersame Welt der Borger")]
-    [InlineData("u.a. Deutschlandtag der Jungen Union (JU) mit Friedrich Merz (CDU, Bundeskanzler)", null, false, false, "Deutschlandtag der Jungen Union (JU) mit Friedrich Merz (CDU, Bundeskanzler)")]
+    [InlineData("u.a. Deutschlandtag der Jungen Union (JU) mit Friedrich Merz (CDU, Bundeskanzler)", null, false, false, "u.a. Deutschlandtag der Jungen Union (JU) mit Friedrich Merz (CDU, Bundeskanzler)")]
     [InlineData("Gartenreise: Vielfältige Gartenkunst in Dänemark", null, false, false, "Gartenreise: Vielfältige Gartenkunst in Dänemark")]
     [InlineData("Knochenjob Neuschwanstein: 24 Stunden hinter den Kulissen des Märchenschlosses", null, false, false, "Knochenjob Neuschwanstein: 24 Stunden hinter den Kulissen des Märchenschlosses")]
     [InlineData("Hladun/Lazarenko vollenden Märchen – Mol/Sörum mit 5. EM-Titel", null, false, false, "Hladun/Lazarenko vollenden Märchen – Mol/Sörum mit 5. EM-Titel")]
