@@ -17,6 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Downloader" Version="5.1.0" GeneratePathProperty="true" />
     <PackageReference Include="FuzzySharp" Version="2.0.2" GeneratePathProperty="true" />
     <PackageReference Include="Jellyfin.Controller" Version="10.11.0">
       <ExcludeAssets>$(PluginDependencyExcludeAssets)</ExcludeAssets>

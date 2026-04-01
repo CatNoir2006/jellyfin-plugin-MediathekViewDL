@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Handlers;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
+using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using Microsoft.Extensions.Logging;
 
@@ -19,6 +20,7 @@ public class DownloadManager : IDownloadManager
     private readonly ILogger<DownloadManager> _logger;
     private readonly INfoService _nfoService;
     private readonly IEnumerable<IDownloadHandler> _downloadHandlers;
+    private readonly IStrmValidationService _urlValidationService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DownloadManager"/> class.
@@ -26,14 +28,17 @@ public class DownloadManager : IDownloadManager
     /// <param name="logger">The logger.</param>
     /// <param name="nfoService">The NFO service.</param>
     /// <param name="downloadHandlers">The download handlers.</param>
+    /// <param name="urlValidationService">The URL validation service.</param>
     public DownloadManager(
         ILogger<DownloadManager> logger,
         INfoService nfoService,
-        IEnumerable<IDownloadHandler> downloadHandlers)
+        IEnumerable<IDownloadHandler> downloadHandlers,
+        IStrmValidationService urlValidationService)
     {
         _logger = logger;
         _nfoService = nfoService;
         _downloadHandlers = downloadHandlers;
+        _urlValidationService = urlValidationService;
     }
 
     /// <summary>
@@ -56,6 +61,21 @@ public class DownloadManager : IDownloadManager
                 _logger.LogDebug("File '{Path}' already exists. Skipping download.", item.DestinationPath);
                 // Still continue execution so NFO and other files continue downloading.
                 continue;
+            }
+
+            try
+            {
+                bool isValidUrl = await _urlValidationService.ValidateUrlAsync(item.SourceUrl, cancellationToken).ConfigureAwait(false);
+                if (!isValidUrl)
+                {
+                    _logger.LogError("Invalid URL: {Url}", item.DestinationPath);
+                    success = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "URL validation failed for {Url}", item.SourceUrl);
+                success = false;
             }
 
             var directory = Path.GetDirectoryName(item.DestinationPath);
