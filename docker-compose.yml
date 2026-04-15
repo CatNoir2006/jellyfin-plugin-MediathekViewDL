@@ -1,18 +1,22 @@
 services:
-  jellyfin:
+  plugin_build:
     build:
       context: .
-      dockerfile: Dockerfile.debug
+      dockerfile: Tools/TestBuild/Dockerfile.Testbuild
+    volumes:
+      - ./jellyfin-config:/config
+
+  jellyfin:
+    image: jellyfin/jellyfin:latest
     container_name: jellyfin_debug
+    depends_on:
+      plugin_build:
+        condition: service_completed_successfully
     ports:
       - "8096:8096"
-      - "54691:22"
     volumes:
       # Jellyfin Konfiguration
       - ./jellyfin-config:/config
-
-      # DEIN DEBUG-BUILD: Mountet die gebauten DLLs direkt in Jellyfin
-      - ./Jellyfin.Plugin.MediathekViewDL/bin/Debug/net9.0:/config/plugins/MediathekViewDL
 
       # SMB-Share via fstab mount (Host: /mnt/JellyfinMedia)
       - /mnt/JellyfinMedia:/media/smb:ro
