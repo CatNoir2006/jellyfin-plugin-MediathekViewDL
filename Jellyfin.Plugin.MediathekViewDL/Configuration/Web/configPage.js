@@ -206,7 +206,7 @@ class Helper {
         const clipText = typeof text === 'string' ? text : JSON.stringify(text, null, 2);
 
         try {
-            if (window.isSecureContext && !window.MediathekViewDL.config.debug){
+            if (window.isSecureContext){
                 await navigator.clipboard.writeText(clipText);
                 Helper.showToast(copyMsg);
             }
