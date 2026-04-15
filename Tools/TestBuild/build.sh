@@ -66,7 +66,7 @@ fi
 
 # Build the plugin using jprm, passing the configuration
 # Use --dotnet-configuration to specify Debug
-zipfile=$($JPRM --verbosity=debug plugin build "${PLUGIN}" --output="${ARTIFACT_DIR}" --version="${VERSION}" --dotnet-configuration="${CONFIGURATION}") && {
-    $JPRM --verbosity=debug repo add --url=${JELLYFIN_REPO_URL} "${JELLYFIN_REPO}" "${zipfile}"
+zipfile=$($JPRM plugin build "${PLUGIN}" --output="${ARTIFACT_DIR}" --version="${VERSION}" --dotnet-configuration="${CONFIGURATION}") && {
+    $JPRM repo add --url=${JELLYFIN_REPO_URL} "${JELLYFIN_REPO}" "${zipfile}"
 }
 exit $?
