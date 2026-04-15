@@ -43,7 +43,6 @@ public class DirectDownloadAdvancedHandler : BaseDownloadHandler
         var dlConfig = new DownloadConfiguration()
         {
             MaximumBytesPerSecond = _configProvider.Configuration.Download.MaxBandwidthMBits * mbitToBytesFactor,
-            FileExistPolicy = FileExistPolicy.Exception,
         };
         var downloader = new DownloadService(dlConfig);
         try

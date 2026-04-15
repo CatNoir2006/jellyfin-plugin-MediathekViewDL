@@ -337,7 +337,7 @@ const Language = {
         Cancel: "Abbrechen",
         Ok: "OK",
         Save: "Speichern",
-        EmptyId: '00000000-0000-0000-0000-000000000000',
+        EmptyId: '00000000000000000000000000000000',
         CurrentPath: "Aktueller Pfad",
         NotConfigured: "Nicht konfiguriert",
         SettingsSaved: "Einstellungen gespeichert.",
@@ -1396,7 +1396,7 @@ class AdoptionController {
             const confidence = bestMatch ? Math.round(bestMatch.Confidence) : 0;
 
             if (confidence < min || confidence > max) return false;
-            
+
             if (sourceFilter === "Unconfirmed") {
                 if (bestMatch && bestMatch.IsConfirmed) return false;
             } else if (sourceFilter !== "All") {
