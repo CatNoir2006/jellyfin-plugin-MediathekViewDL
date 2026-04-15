@@ -17,7 +17,8 @@ class Helper {
      * @param title The title of the popup
      * @param resultCallback The callback to receive the result (true/false)
      */
-    static confirmationPopup(message, title, resultCallback = () => {}) {
+    static confirmationPopup(message, title, resultCallback = () => {
+    }) {
         if (typeof Dashboard !== 'undefined' && typeof Dashboard.confirm === 'function') {
             Dashboard.confirm(message, title, resultCallback);
         } else {
@@ -206,11 +207,10 @@ class Helper {
         const clipText = typeof text === 'string' ? text : JSON.stringify(text, null, 2);
 
         try {
-            if (window.isSecureContext){
+            if (window.isSecureContext) {
                 await navigator.clipboard.writeText(clipText);
                 Helper.showToast(copyMsg);
-            }
-            else{
+            } else {
                 Helper.confirmationPopup(clipText, Language.General.Clip.Manual);
                 Helper.showError(Language.General.Clip.HttpsMissing);
             }
@@ -725,9 +725,10 @@ const Icons = {
     Cancel: "cancel",
     Expand: "expand_more",
     Collapse: "expand_less",
-    ToggleOn: 'pause_circle_outline',
-    ToggleOff: 'play_circle_outline',
+    ToggleOn: 'toggle_on',
+    ToggleOff: 'toggle_off',
     Refresh: 'refresh',
+    ResetHistory: 'history',
     Edit: 'edit',
     Delete: 'delete',
     Remove: 'remove_circle_outline',
@@ -2488,9 +2489,10 @@ class MediathekPluginConfig {
             if (sub.IsEnabled === undefined) sub.IsEnabled = true;
 
             const search = sub.Search || {};
-            const queriesSummary = (search.Criteria || []).map(function (q) {
-                return q.Query;
-            }).join(', ');
+            const queriesSummary = (search.Criteria || [])
+                .filter(q => q && typeof q.Query === 'string' && q.Query.trim().length > 0)
+                .map(q => (q.IsExclude ? "!" : "") + q.Query.trim())
+                .join(', ');
             const lastDownloadText = sub.LastDownloadedTimestamp ? new Date(sub.LastDownloadedTimestamp).toLocaleString() : Language.Subscription.Never;
 
             const actions = document.createElement('div');
@@ -2499,10 +2501,11 @@ class MediathekPluginConfig {
             // Toggle Button
             const toggleIcon = sub.IsEnabled ? Icons.ToggleOn : Icons.ToggleOff;
             const toggleTitle = sub.IsEnabled ? Language.Subscription.Disable : Language.Subscription.Enable;
-            actions.appendChild(this.dom.createIconButton(Icons.Copy, Language.Subscription.CopyConfig, () => Helper.toClipboard(sub)));
-            actions.appendChild(this.dom.createIconButton(toggleIcon, toggleTitle, () => this.toggleSubscription(sub.Id)));
+            const toggleBtn = this.dom.createIconButton(toggleIcon, toggleTitle, () => this.toggleSubscription(sub.Id));
+            actions.appendChild(toggleBtn);
 
-            actions.appendChild(this.dom.createIconButton(Icons.Refresh, Language.Subscription.ResetProcessedItems, () => this.resetProcessedItems(sub.Id)));
+            actions.appendChild(this.dom.createIconButton(Icons.Copy, Language.Subscription.CopyConfig, () => Helper.toClipboard(sub)));
+            actions.appendChild(this.dom.createIconButton(Icons.ResetHistory, Language.Subscription.ResetProcessedItems, () => this.resetProcessedItems(sub.Id)));
             actions.appendChild(this.dom.createIconButton(Icons.Edit, Language.Subscription.Edit, () => this.subscriptionEditor.show(sub)));
             actions.appendChild(this.dom.createIconButton(Icons.Delete, Language.Subscription.Delete, () => this.deleteSubscription(sub.Id)));
 
@@ -2513,6 +2516,15 @@ class MediathekPluginConfig {
             const bodyText2 = Language.Subscription.LastDownload + lastDownloadText;
 
             const listItem = this.createListItem(title, bodyText1, bodyText2, actions);
+
+            // We want also the main body click to open editor.
+            listItem.onclick = (event) => {
+                if (event.target.closest('button') || event.target.closest('.flex-gap-5') || event.target.closest('.listItemBodyText')) {
+                    return; // Do nothing if a button or button container was clicked, as they have their own handlers
+                }
+
+                this.subscriptionEditor.show(sub);
+            };
 
             // Visual cue for disabled state
             if (!sub.IsEnabled) {
@@ -2975,7 +2987,8 @@ class MediathekPluginConfig {
         });
         document.getElementById(DomIds.Settings.CopyConfig).addEventListener('click', () => {
 
-            Helper.toClipboard(this.currentConfig).then(r => {});
+            Helper.toClipboard(this.currentConfig).then(r => {
+            });
         });
 
         // Path selector in main config
