@@ -212,7 +212,7 @@ class Helper {
             }
             else{
                 Helper.confirmationPopup(clipText, Language.General.Clip.Manual);
-                Helper.showError(copyMsg, Language.General.Clip.HttpsMissing);
+                Helper.showError(Language.General.Clip.HttpsMissing);
             }
         } catch (e) {
             Helper.showError(e, Language.General.Clip.Error);
