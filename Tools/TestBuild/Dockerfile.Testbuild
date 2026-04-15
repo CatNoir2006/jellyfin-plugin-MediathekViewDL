@@ -19,6 +19,9 @@ WORKDIR /app
 # Copy the project files
 COPY . .
 
+# Restore dependencies
+RUN dotnet restore Jellyfin.Plugin.MediathekViewDL.sln
+
 # Ensure the build script is executable
 RUN chmod +x Tools/TestBuild/build.sh
 
@@ -27,12 +30,10 @@ RUN chmod +x Tools/TestBuild/build.sh
 # The script will perform dotnet build and create a zip artifact.
 RUN ./Tools/TestBuild/build.sh .
 
-# The user requested "no zip" and for results to be placed "appropriately".
-# We extract the created zip into an output directory for the Jellyfin server.
+# Extract the created zip into an output directory for the Jellyfin server.
 # The zip is created in Tools/TestBuild/artifacts/
 RUN mkdir -p /output/MediathekViewDL && \
-RUN mkdir -p /output/MediathekViewDL && \
-    unzip "$(ls Tools/TestBuild/artifacts/*.zip | head -n 1)" -d /output/MediathekViewDL/
+    unzip "Tools/TestBuild/artifacts/*.zip" -d /output/MediathekViewDL/
 
 # Final stage: a lightweight image to hold the artifacts
 # This is designed to be used as an init container in docker-compose

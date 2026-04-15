@@ -56,17 +56,7 @@ VERSION=${VERSION:-$(echo $meta_version | sed 's/\.[0-9]*\.[0-9]*\.[0-9]*$/.'"$V
 # Ensure we use Debug configuration for testing
 CONFIGURATION=${CONFIGURATION:-Debug}
 
-find "${PLUGIN}" -name project.assets.json -exec rm -v '{}' ';'
-
-# Initialize repo if it doesn't exist
-if [ ! -f "${JELLYFIN_REPO}/manifest.json" ]; then
-    mkdir -p "${JELLYFIN_REPO}"
-    $JPRM repo init "${JELLYFIN_REPO}"
-fi
-
 # Build the plugin using jprm, passing the configuration
-# Use --dotnet-configuration to specify Debug
-zipfile=$($JPRM plugin build "${PLUGIN}" --output="${ARTIFACT_DIR}" --version="${VERSION}" --dotnet-configuration="${CONFIGURATION}") && {
-    $JPRM repo add --url=${JELLYFIN_REPO_URL} "${JELLYFIN_REPO}" "${zipfile}"
-}
+# We don't need to init a repo or add to it for the Docker test build
+$JPRM plugin build "${PLUGIN}" --output="${ARTIFACT_DIR}" --version="${VERSION}" --dotnet-configuration="${CONFIGURATION}"
 exit $?
