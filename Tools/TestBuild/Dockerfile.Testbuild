@@ -1,0 +1,53 @@
+# Use the official .NET 9 SDK image as the build environment
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS builder
+
+# Install dependencies: python3 for jprm, git, zip and unzip for jprm functionality and extraction
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    git \
+    zip \
+    unzip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install jprm (Jellyfin Plugin Repository Manager)
+# Using --break-system-packages to allow global install in the container
+RUN pip3 install --break-system-packages git+https://github.com/oddstr13/jellyfin-plugin-repository-manager
+
+WORKDIR /app
+
+# Copy the project files
+COPY . .
+
+# Restore dependencies
+RUN dotnet restore Jellyfin.Plugin.MediathekViewDL.sln
+
+# Ensure the build script is executable
+RUN chmod +x Tools/TestBuild/build.sh
+
+# Run the build script. It will use jprm to build the plugin.
+# We pass the root directory as the plugin path because build.yaml is there.
+# The script will perform dotnet build and create a zip artifact.
+RUN ./Tools/TestBuild/build.sh .
+
+# Extract the created zip into an output directory for the Jellyfin server.
+# The zip is created in Tools/TestBuild/artifacts/
+RUN mkdir -p /output/MediathekViewDL && \
+    unzip "Tools/TestBuild/artifacts/*.zip" -d /output/MediathekViewDL/
+
+# Final stage: a lightweight image to hold the artifacts
+# This is designed to be used as an init container in docker-compose
+FROM alpine:latest
+
+# Install rsync for efficient and clean file copying
+RUN apk add --no-cache rsync
+
+WORKDIR /app
+
+# Copy the extracted plugin files from the builder stage
+COPY --from=builder /output/MediathekViewDL /app/MediathekViewDL
+
+# When this container runs, it copies the plugin files to the target directory.
+# The target directory should be mounted to the Jellyfin config's plugins folder.
+# This ensures the plugin is updated before the Jellyfin server starts.
+CMD ["sh", "-c", "mkdir -p /config/plugins/MediathekViewDL && rsync -av --delete /app/MediathekViewDL/ /config/plugins/MediathekViewDL/"]
