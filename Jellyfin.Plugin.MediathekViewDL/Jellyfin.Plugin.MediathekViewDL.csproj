@@ -17,6 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Downloader" Version="4.0.2" GeneratePathProperty="true" />
     <PackageReference Include="FuzzySharp" Version="2.0.2" GeneratePathProperty="true" />
     <PackageReference Include="Jellyfin.Controller" Version="10.11.0">
       <ExcludeAssets>$(PluginDependencyExcludeAssets)</ExcludeAssets>
@@ -56,7 +57,11 @@
   </Target>
 
   <Target Name="CopyFuzzySharp" AfterTargets="Build">
-    <Copy SourceFiles="$(PkgFuzzySharp)/lib/netstandard2.0/FuzzySharp.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(PkgFuzzySharp)/lib/netstandard2.1/FuzzySharp.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CopyDownloader" AfterTargets="Build">
+    <Copy SourceFiles="$(PkgDownloader)/lib/net9.0/Downloader.dll" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

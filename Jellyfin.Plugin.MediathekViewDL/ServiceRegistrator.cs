@@ -75,6 +75,7 @@ namespace Jellyfin.Plugin.MediathekViewDL
 
             // Register Download Handlers
             serviceCollection.AddTransient<IDownloadHandler, DirectDownloadHandler>();
+            serviceCollection.AddTransient<IDownloadHandler, DirectDownloadAdvancedHandler>();
             serviceCollection.AddTransient<IDownloadHandler, StreamingUrlHandler>();
             serviceCollection.AddTransient<IDownloadHandler, M3U8DownloadHandler>();
             serviceCollection.AddTransient<IDownloadHandler, AudioExtractionHandler>();
