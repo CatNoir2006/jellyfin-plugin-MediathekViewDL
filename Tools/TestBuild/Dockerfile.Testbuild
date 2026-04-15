@@ -31,7 +31,8 @@ RUN ./Tools/TestBuild/build.sh .
 # We extract the created zip into an output directory for the Jellyfin server.
 # The zip is created in Tools/TestBuild/artifacts/
 RUN mkdir -p /output/MediathekViewDL && \
-    unzip Tools/TestBuild/artifacts/*.zip -d /output/MediathekViewDL/
+RUN mkdir -p /output/MediathekViewDL && \
+    unzip "$(ls Tools/TestBuild/artifacts/*.zip | head -n 1)" -d /output/MediathekViewDL/
 
 # Final stage: a lightweight image to hold the artifacts
 # This is designed to be used as an init container in docker-compose
