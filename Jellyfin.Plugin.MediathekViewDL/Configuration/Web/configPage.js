@@ -1,7 +1,7 @@
 /**
  * Jellyfin Web Globals
  */
-const { Dashboard, ApiClient } = window;
+const {Dashboard, ApiClient} = window;
 
 /**
  * Helper Class that contains various utility methods.
@@ -17,7 +17,7 @@ class Helper {
      * @param title The title of the popup
      * @param resultCallback The callback to receive the result (true/false)
      */
-    static confirmationPopup(message, title, resultCallback) {
+    static confirmationPopup(message, title, resultCallback = () => {}) {
         if (typeof Dashboard !== 'undefined' && typeof Dashboard.confirm === 'function') {
             Dashboard.confirm(message, title, resultCallback);
         } else {
@@ -182,10 +182,43 @@ class Helper {
      * @param defaultMessage A fallback message if no specific error is found
      */
     static showError(err, msgPrefix = '', defaultMessage = Language.General.UnknownError) {
+        if (typeof err === 'string') {
+            Helper.showToast(msgPrefix + err);
+            return;
+        }
         this.getErrorMessage(err, defaultMessage).then(message => {
             Helper.showToast(msgPrefix + message);
         });
     }
+
+    /**
+     * Kopiert den bereitgestellten Text in die Zwischenablage.
+     * Objekte werden automatisch in einen JSON-String umgewandelt.
+     * @param {any} text - Der zu kopierende Text oder das Objekt.
+     * @param {string} [copyMsg="Inhalt in die Zwischenablage kopiert."] - Optionale Erfolgsmeldung.
+     */
+    static async toClipboard(text, copyMsg = Language.General.Clip.Success) {
+        if (text === null || text === undefined) {
+            Helper.showError(Language.General.Clip.NoContent);
+            return;
+        }
+
+        const clipText = typeof text === 'string' ? text : JSON.stringify(text, null, 2);
+
+        try {
+            if (window.isSecureContext){
+                await navigator.clipboard.writeText(clipText);
+                Helper.showToast(copyMsg);
+            }
+            else{
+                Helper.confirmationPopup(clipText, Language.General.Clip.Manual);
+                Helper.showError(Language.General.Clip.HttpsMissing);
+            }
+        } catch (e) {
+            Helper.showError(e, Language.General.Clip.Error);
+        }
+    }
+
 }
 
 /**
@@ -350,7 +383,15 @@ const Language = {
         SelectTempDownloadPath: "Temporären Download Pfad wählen",
         MinutesShort: " min",
         UnknownError: "Unbekannter Fehler",
-        AboNamePlaceholder: "[AboName]"
+        AboNamePlaceholder: "[AboName]",
+        CopyConfig: "Konfiguration kopieren",
+        Clip: {
+            Success: "Inhalt in die Zwischenablage kopiert.",
+            Error: "Fehler beim Kopieren in die Zwischenablage: ",
+            NoContent: "Kein Inhalt zum Kopieren vorhanden.",
+            Manual: "Bitte manuell kopieren.",
+            HttpsMissing: "Zwischenablage kann nur mit 'https' verwendet werden: "
+        }
     },
     Search: {
         SearchTearm: "Bitte Suchbegriff eingeben",
@@ -433,6 +474,7 @@ const Language = {
         Disable: "Deaktivieren",
         Enable: "Aktivieren",
         ResetProcessedItems: "Verarbeitete Items zurücksetzen",
+        CopyConfig: "Abo Konfiguration kopieren",
         Edit: "Bearbeiten",
         Delete: "Löschen",
         ProcessedItemsReset: "Verarbeitete Items für Abonnement zurückgesetzt.",
@@ -509,6 +551,7 @@ const DomIds = {
     Settings: {
         Form: "MediathekGeneralConfigForm",
         LastRun: "lblLastRun",
+        CopyConfig: "mvpl-btn-copyConfig",
         Paths: {
             DefaultDownload: "txtDefaultDownloadPath",
             SubscriptionShow: "txtDefaultSubscriptionShowPath",
@@ -687,7 +730,8 @@ const Icons = {
     Refresh: 'refresh',
     Edit: 'edit',
     Delete: 'delete',
-    Remove: 'remove_circle_outline'
+    Remove: 'remove_circle_outline',
+    Copy: 'content_copy',
 }
 
 /**
@@ -2455,6 +2499,7 @@ class MediathekPluginConfig {
             // Toggle Button
             const toggleIcon = sub.IsEnabled ? Icons.ToggleOn : Icons.ToggleOff;
             const toggleTitle = sub.IsEnabled ? Language.Subscription.Disable : Language.Subscription.Enable;
+            actions.appendChild(this.dom.createIconButton(Icons.Copy, Language.Subscription.CopyConfig, () => Helper.toClipboard(sub)));
             actions.appendChild(this.dom.createIconButton(toggleIcon, toggleTitle, () => this.toggleSubscription(sub.Id)));
 
             actions.appendChild(this.dom.createIconButton(Icons.Refresh, Language.Subscription.ResetProcessedItems, () => this.resetProcessedItems(sub.Id)));
@@ -2927,6 +2972,10 @@ class MediathekPluginConfig {
             this.subscriptionEditor.updateSubPathHoverText();
             this.saveGlobalConfig();
             return false;
+        });
+        document.getElementById(DomIds.Settings.CopyConfig).addEventListener('click', () => {
+
+            Helper.toClipboard(this.currentConfig).then(r => {});
         });
 
         // Path selector in main config

@@ -324,7 +324,7 @@
                             <summary class="inputLabel mvpl-collapsible-summary">Abo-Standardwerte</summary>
                             <div class="mvpl-details-content">
                                 <p class="fieldDescription">Diese Werte werden als Standard für neue Abonnements verwendet.</p>
-                                
+
                                 <div class="sectionTitleLabel" style="font-size: 1.1em; margin-top: 15px;">Suche</div>
                                 <div class="mvpl-duration-inputs-row">
                                     <div class="inputContainer flex-grow">
@@ -511,9 +511,12 @@
                             <div id="lblLastRun" class="mvpl-last-run-label">Noch nie</div>
                         </div>
 
-                        <div>
+                        <div style="display: flex">
                             <button is="emby-button" type="submit" class="raised button-submit block">
                                 <span>Speichern</span>
+                            </button>
+                            <button class="paper-icon-button-light emby-button" type="button" id="mvpl-btn-copyConfig" is="emby-button" title="Konfiguration kopieren" aria-label="Konfiguration kopieren">
+                                <span class="material-icons content_copy"></span>
                             </button>
                         </div>
                     </form>
