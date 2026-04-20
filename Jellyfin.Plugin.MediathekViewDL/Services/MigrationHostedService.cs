@@ -237,7 +237,7 @@ public class MigrationHostedService : IHostedService
         }
 
         // Version 2 -> 3: Removed support for Quality upgrade.
-        // No manuelle Changes Required, but we update config Version for doc.
+        // No manual Changes Required, but we update config Version for doc.
 
         // The migration is complete, update the config version if the Migration Versions is still outdated
         if (config.ConfigVersion < TargetVersion)

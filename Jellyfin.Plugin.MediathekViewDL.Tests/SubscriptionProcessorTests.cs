@@ -31,7 +31,6 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         private readonly Mock<IFileNameBuilderService> _fileNameBuilderServiceMock;
         private readonly Mock<IStrmValidationService> _strmValidationServiceMock;
         private readonly Mock<IFFmpegService> _ffmpegServiceMock;
-        private readonly Mock<IQualityCacheRepository> _qualityCacheRepositoryMock;
         private readonly Mock<IDownloadHistoryRepository> _downloadHistoryRepositoryMock;
         private readonly Mock<IConfigurationProvider> _configurationProviderMock;
         private readonly SubscriptionProcessor _processor;
@@ -45,7 +44,6 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _fileNameBuilderServiceMock = new Mock<IFileNameBuilderService>();
             _strmValidationServiceMock = new Mock<IStrmValidationService>();
             _ffmpegServiceMock = new Mock<IFFmpegService>();
-            _qualityCacheRepositoryMock = new Mock<IQualityCacheRepository>();
             _downloadHistoryRepositoryMock = new Mock<IDownloadHistoryRepository>();
             _configurationProviderMock = new Mock<IConfigurationProvider>();
 
@@ -66,7 +64,6 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 _fileNameBuilderServiceMock.Object,
                 _strmValidationServiceMock.Object,
                 _ffmpegServiceMock.Object,
-                _qualityCacheRepositoryMock.Object,
                 _downloadHistoryRepositoryMock.Object,
                 _configurationProviderMock.Object
             );
@@ -119,8 +116,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetJobsForSubscriptionAsync_ShouldSkip_IfFoundLocally_AndEnhancedDetectionEnabled()
         {
             // Arrange
-            var subscription = new Subscription 
-            { 
+            var subscription = new Subscription
+            {
                 Name = "TestSub",
                 Download = new DownloadSettings { EnhancedDuplicateDetection = true }
             };
@@ -163,8 +160,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetJobsForSubscriptionAsync_ShouldSkip_AudioDescription_IfDisabled()
         {
             // Arrange
-            var subscription = new Subscription 
-            { 
+            var subscription = new Subscription
+            {
                 Name = "TestSub",
                 Accessibility = new AccessibilitySettings { AllowAudioDescription = false }
             };
@@ -231,8 +228,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetJobsForSubscriptionAsync_ShouldFallback_ToNextQuality_WhenPrimaryFails()
         {
             // Arrange
-            var subscription = new Subscription 
-            { 
+            var subscription = new Subscription
+            {
                 Name = "TestSub",
                 Download = new DownloadSettings { QualityCheckWithUrl = true }
             };
@@ -286,8 +283,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetJobsForSubscriptionAsync_ShouldSkip_WhenAllQualitiesFail()
         {
             // Arrange
-            var subscription = new Subscription 
-            { 
+            var subscription = new Subscription
+            {
                 Name = "TestSub",
                 Download = new DownloadSettings { QualityCheckWithUrl = true }
             };

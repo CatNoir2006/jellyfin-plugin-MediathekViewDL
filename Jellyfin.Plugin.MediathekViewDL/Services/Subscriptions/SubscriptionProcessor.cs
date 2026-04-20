@@ -33,7 +33,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private readonly IFileNameBuilderService _fileNameBuilderService;
     private readonly IStrmValidationService _strmValidationService;
     private readonly IFFmpegService _ffmpegService;
-    private readonly IQualityCacheRepository _qualityCacheRepository;
     private readonly IDownloadHistoryRepository _downloadHistoryRepository;
     private readonly IConfigurationProvider _configurationProvider;
 
@@ -47,7 +46,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="fileNameBuilderService">The file name builder service.</param>
     /// <param name="strmValidationService">The STRM validation service.</param>
     /// <param name="ffmpegService">The ffmpeg Service.</param>
-    /// <param name="qualityCacheRepository">The QualityCacheRepository.</param>
     /// <param name="downloadHistoryRepository">The Download History Repo.</param>
     /// <param name="configurationProvider">The Configuration Provider.</param>
     public SubscriptionProcessor(
@@ -58,7 +56,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         IFileNameBuilderService fileNameBuilderService,
         IStrmValidationService strmValidationService,
         IFFmpegService ffmpegService,
-        IQualityCacheRepository qualityCacheRepository,
         IDownloadHistoryRepository downloadHistoryRepository,
         IConfigurationProvider configurationProvider)
     {
@@ -69,7 +66,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         _fileNameBuilderService = fileNameBuilderService;
         _strmValidationService = strmValidationService;
         _ffmpegService = ffmpegService;
-        _qualityCacheRepository = qualityCacheRepository;
         _downloadHistoryRepository = downloadHistoryRepository;
         _configurationProvider = configurationProvider;
     }
@@ -349,60 +345,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         {
             videoInfo.Language = subscription.Metadata.OriginalLanguage;
         }
-    }
-
-    private async Task<LocalMediaInfo?> GetOnlineQualityInfoAsync(string url, CancellationToken cancellationToken)
-    {
-        // First, try to get from cache
-        var cachedInfo = await GetOnlineQualityInfoFromCacheAsync(url, cancellationToken).ConfigureAwait(false);
-        if (cachedInfo != null)
-        {
-            return cachedInfo;
-        }
-
-        // If not in cache, get from ffmpeg
-        var mediaInfo = await _ffmpegService.GetMediaInfoAsync(url, cancellationToken).ConfigureAwait(false);
-        if (mediaInfo is null || !mediaInfo.IsValid())
-        {
-            return null;
-        }
-
-        // Store in cache for future use
-        await _qualityCacheRepository.AddOrUpdateAsync(
-            url,
-            mediaInfo.Width.Value,
-            mediaInfo.Height.Value,
-            mediaInfo.Duration.Value,
-            mediaInfo.FileSize.Value).ConfigureAwait(false);
-
-        return mediaInfo;
-    }
-
-    private async Task<LocalMediaInfo?> GetOnlineQualityInfoFromCacheAsync(string url, CancellationToken cancellationToken)
-    {
-        var cacheEntry = await _qualityCacheRepository.GetByUrlAsync(url).ConfigureAwait(false);
-        if (cacheEntry is null)
-        {
-            return null;
-        }
-
-        // ReSharper disable once InvertIf
-        if (cacheEntry.Duration == TimeSpan.Zero)
-        {
-            _logger.LogInformation("Cached entry for URL '{Url}' has zero duration, ignoring cache.", url);
-            cancellationToken.ThrowIfCancellationRequested();
-            await _qualityCacheRepository.RemoveByUrlAsync(url).ConfigureAwait(false);
-            return null;
-        }
-
-        return new LocalMediaInfo
-        {
-            Width = cacheEntry.Width,
-            Height = cacheEntry.Height,
-            FileSize = cacheEntry.Size,
-            Duration = cacheEntry.Duration,
-            FilePath = url
-        };
     }
 
     /// <summary>

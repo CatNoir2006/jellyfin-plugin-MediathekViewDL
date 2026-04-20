@@ -17,11 +17,6 @@ public class MediathekViewDlDbContext : DbContext
     }
 
     /// <summary>
-    /// Gets or sets the quality cache entries.
-    /// </summary>
-    public DbSet<QualityCacheEntry> QualityCacheEntries { get; set; } = null!;
-
-    /// <summary>
     /// Gets or sets the download history entries.
     /// </summary>
     public DbSet<DownloadHistoryEntry> DownloadHistory { get; set; } = null!;
