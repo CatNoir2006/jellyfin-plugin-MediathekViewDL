@@ -24,9 +24,4 @@ public enum DownloadType
     /// Download an M3U8 stream.
     /// </summary>
     M3U8Download,
-
-    /// <summary>
-    /// Upgrade the quality of an existing file.
-    /// </summary>
-    QualityUpgrade
 }

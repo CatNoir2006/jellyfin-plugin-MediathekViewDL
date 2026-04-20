@@ -48,7 +48,6 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         [InlineData(DownloadType.DirectDownload)]
         [InlineData(DownloadType.StreamingUrl)]
         [InlineData(DownloadType.AudioExtraction)]
-        [InlineData(DownloadType.QualityUpgrade)]
         public void CanHandle_ShouldReturnFalse_ForOtherTypes(DownloadType type)
         {
             Assert.False(_handler.CanHandle(type));
