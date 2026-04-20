@@ -30,11 +30,6 @@ public record BaseDownloadSettings
     public bool QualityCheckWithUrl { get; init; }
 
     /// <summary>
-    /// Gets a value indicating whether to automatically upgrade to a higher quality version if available.
-    /// </summary>
-    public bool AutoUpgradeToHigherQuality { get; init; }
-
-    /// <summary>
     /// Gets a value indicating whether to always create a subfolder for the subscription (using the subscription name),
     /// even if the content is a movie and the global setting 'UseTopicForMoviePath' is disabled.
     /// </summary>

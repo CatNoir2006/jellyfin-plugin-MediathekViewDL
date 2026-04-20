@@ -63,7 +63,7 @@ public class MigrationHostedService : IHostedService
     private void MigrateConfiguration()
     {
         var config = _configProvider.Configuration;
-        const int TargetVersion = 2;
+        const int TargetVersion = 3;
         const int MinimumSupportetUpgradeVersion = 0;
 
         // Skip migration if Downgrading and log an error. Downgrading is not supported to prevent data loss and inconsistencies. The plugin should be updated to the latest version to ensure compatibility with the existing configuration.
@@ -201,7 +201,6 @@ public class MigrationHostedService : IHostedService
                 sub.Download = new DownloadSettings()
                 {
                     AllowFallbackToLowerQuality = sub.DeprecatedAllowFallbackToLowerQuality,
-                    AutoUpgradeToHigherQuality = sub.DeprecatedAutoUpgradeToHigherQuality,
                     DownloadFullVideoForSecondaryAudio = sub.DeprecatedDownloadFullVideoForSecondaryAudio,
                     DownloadPath = sub.DeprecatedDownloadPath,
                     EnhancedDuplicateDetection = sub.DeprecatedEnhancedDuplicateDetection,
@@ -236,6 +235,9 @@ public class MigrationHostedService : IHostedService
             config.ConfigVersion = 2;
             _configProvider.Save();
         }
+
+        // Version 2 -> 3: Removed support for Quality upgrade.
+        // No manuelle Changes Required, but we update config Version for doc.
 
         // The migration is complete, update the config version if the Migration Versions is still outdated
         if (config.ConfigVersion < TargetVersion)
