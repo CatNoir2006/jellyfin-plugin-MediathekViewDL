@@ -47,7 +47,7 @@ public class DownloadScheduledTask : IScheduledTask
     public string Name => "Mediathek Abo-Downloader";
 
     /// <inheritdoc />
-    public string Key => "MediathekAboDownloader";
+    public string Key => Constants.GetSchedTaskKey("MediathekAboDownloader");
 
     /// <inheritdoc />
     public string Category => "Mediathek Downloader";
