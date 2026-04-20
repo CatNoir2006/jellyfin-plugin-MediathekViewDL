@@ -56,7 +56,7 @@ public class DownloadManager : IDownloadManager
         foreach (var item in job.DownloadItems)
         {
             _logger.LogInformation("Processing download item: {Type} -> {Path}", item.JobType, item.DestinationPath);
-            if (File.Exists(item.DestinationPath) && item.JobType != DownloadType.QualityUpgrade)
+            if (File.Exists(item.DestinationPath))
             {
                 _logger.LogDebug("File '{Path}' already exists. Skipping download.", item.DestinationPath);
                 // Still continue execution so NFO and other files continue downloading.

@@ -598,7 +598,6 @@ const DomIds = {
             DownloadFullVideoSecondaryAudio: "defSubDownloadFullVideoForSecondaryAudio",
             AlwaysCreateSubfolder: "defSubAlwaysCreateSubfolder",
             EnhancedDuplicateDetection: "defSubEnhancedDuplicateDetection",
-            AutoUpgradeHigherQuality: "defSubAutoUpgradeToHigherQuality",
             AllowFallbackLowerQuality: "defSubAllowFallbackToLowerQuality",
             QualityCheckWithUrl: "defSubQualityCheckWithUrl",
             EnforceSeries: "defSubEnforceSeries",
@@ -665,7 +664,6 @@ const DomIds = {
             AllowSignLanguage: "subAllowSignLanguage",
             AlwaysCreateSubfolder: "subAlwaysCreateSubfolder",
             EnhancedDuplicateDetection: "subEnhancedDuplicateDetection",
-            AutoUpgradeHigherQuality: "subAutoUpgradeToHigherQuality",
             TreatNonEpisodesAsExtras: "subTreatNonEpisodesAsExtras",
             SaveTrailers: "subSaveTrailers",
             SaveInterviews: "subSaveInterviews",
@@ -758,7 +756,6 @@ class DownloadSettings {
         this.DownloadFullVideoForSecondaryAudio = data.DownloadFullVideoForSecondaryAudio !== undefined ? data.DownloadFullVideoForSecondaryAudio : (defaults.DownloadFullVideoForSecondaryAudio || false);
         this.AlwaysCreateSubfolder = data.AlwaysCreateSubfolder !== undefined ? data.AlwaysCreateSubfolder : (defaults.AlwaysCreateSubfolder || false);
         this.EnhancedDuplicateDetection = data.EnhancedDuplicateDetection !== undefined ? data.EnhancedDuplicateDetection : (defaults.EnhancedDuplicateDetection || false);
-        this.AutoUpgradeToHigherQuality = data.AutoUpgradeToHigherQuality !== undefined ? data.AutoUpgradeToHigherQuality : (defaults.AutoUpgradeToHigherQuality || false);
         this.AllowFallbackToLowerQuality = data.AllowFallbackToLowerQuality !== undefined ? data.AllowFallbackToLowerQuality : (defaults.AllowFallbackToLowerQuality !== undefined ? defaults.AllowFallbackToLowerQuality : true);
         this.QualityCheckWithUrl = data.QualityCheckWithUrl !== undefined ? data.QualityCheckWithUrl : (defaults.QualityCheckWithUrl || false);
     }
@@ -2084,7 +2081,6 @@ class SubscriptionEditor {
         document.getElementById(DomIds.Subscription.Editor.AllowSignLanguage).checked = accessibility.AllowSignLanguage;
         document.getElementById(DomIds.Subscription.Editor.AlwaysCreateSubfolder).checked = download.AlwaysCreateSubfolder || false;
         document.getElementById(DomIds.Subscription.Editor.EnhancedDuplicateDetection).checked = download.EnhancedDuplicateDetection;
-        document.getElementById(DomIds.Subscription.Editor.AutoUpgradeHigherQuality).checked = download.AutoUpgradeToHigherQuality !== undefined ? download.AutoUpgradeToHigherQuality : false;
         document.getElementById(DomIds.Subscription.Editor.TreatNonEpisodesAsExtras).checked = series.TreatNonEpisodesAsExtras;
         document.getElementById(DomIds.Subscription.Editor.SaveTrailers).checked = series.SaveTrailers !== undefined ? series.SaveTrailers : true;
         document.getElementById(DomIds.Subscription.Editor.SaveInterviews).checked = series.SaveInterviews !== undefined ? series.SaveInterviews : true;
@@ -2149,7 +2145,6 @@ class SubscriptionEditor {
                 DownloadFullVideoForSecondaryAudio: document.getElementById(DomIds.Subscription.Editor.DownloadFullVideoSecondaryAudio).checked,
                 AlwaysCreateSubfolder: document.getElementById(DomIds.Subscription.Editor.AlwaysCreateSubfolder).checked,
                 EnhancedDuplicateDetection: document.getElementById(DomIds.Subscription.Editor.EnhancedDuplicateDetection).checked,
-                AutoUpgradeToHigherQuality: document.getElementById(DomIds.Subscription.Editor.AutoUpgradeHigherQuality).checked,
                 AllowFallbackToLowerQuality: document.getElementById(DomIds.Subscription.Editor.AllowFallbackLowerQuality).checked,
                 QualityCheckWithUrl: document.getElementById(DomIds.Subscription.Editor.QualityCheckWithUrl).checked
             },
@@ -2349,7 +2344,6 @@ class MediathekPluginConfig {
             document.getElementById(DomIds.Settings.Defaults.DownloadFullVideoSecondaryAudio).checked = defDl.DownloadFullVideoForSecondaryAudio || false;
             document.getElementById(DomIds.Settings.Defaults.AlwaysCreateSubfolder).checked = defDl.AlwaysCreateSubfolder || false;
             document.getElementById(DomIds.Settings.Defaults.EnhancedDuplicateDetection).checked = defDl.EnhancedDuplicateDetection || false;
-            document.getElementById(DomIds.Settings.Defaults.AutoUpgradeHigherQuality).checked = defDl.AutoUpgradeToHigherQuality || false;
             document.getElementById(DomIds.Settings.Defaults.AllowFallbackLowerQuality).checked = defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true;
             document.getElementById(DomIds.Settings.Defaults.QualityCheckWithUrl).checked = defDl.QualityCheckWithUrl || false;
 
@@ -2952,7 +2946,6 @@ class MediathekPluginConfig {
                     DownloadFullVideoForSecondaryAudio: document.getElementById(DomIds.Settings.Defaults.DownloadFullVideoSecondaryAudio).checked,
                     AlwaysCreateSubfolder: document.getElementById(DomIds.Settings.Defaults.AlwaysCreateSubfolder).checked,
                     EnhancedDuplicateDetection: document.getElementById(DomIds.Settings.Defaults.EnhancedDuplicateDetection).checked,
-                    AutoUpgradeToHigherQuality: document.getElementById(DomIds.Settings.Defaults.AutoUpgradeHigherQuality).checked,
                     AllowFallbackToLowerQuality: document.getElementById(DomIds.Settings.Defaults.AllowFallbackLowerQuality).checked,
                     QualityCheckWithUrl: document.getElementById(DomIds.Settings.Defaults.QualityCheckWithUrl).checked
                 },

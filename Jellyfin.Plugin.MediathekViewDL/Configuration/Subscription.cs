@@ -238,16 +238,6 @@ public record Subscription
     public bool DeprecatedEnhancedDuplicateDetection { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether to automatically upgrade to a higher quality version.
-    /// DO NOT USE. Use Download.AutoUpgradeToHigherQuality instead.
-    /// </summary>
-    [Browsable(false)]
-    [EditorBrowsable(EditorBrowsableState.Never)]
-    [XmlElement("AutoUpgradeToHigherQuality")]
-    [JsonIgnore]
-    public bool DeprecatedAutoUpgradeToHigherQuality { get; set; }
-
-    /// <summary>
     /// Gets or sets the minimum duration in minutes for search results.
     /// DO NOT USE. Use Search.MinDurationMinutes instead.
     /// </summary>

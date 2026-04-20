@@ -33,7 +33,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private readonly IFileNameBuilderService _fileNameBuilderService;
     private readonly IStrmValidationService _strmValidationService;
     private readonly IFFmpegService _ffmpegService;
-    private readonly IQualityCacheRepository _qualityCacheRepository;
     private readonly IDownloadHistoryRepository _downloadHistoryRepository;
     private readonly IConfigurationProvider _configurationProvider;
 
@@ -47,7 +46,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="fileNameBuilderService">The file name builder service.</param>
     /// <param name="strmValidationService">The STRM validation service.</param>
     /// <param name="ffmpegService">The ffmpeg Service.</param>
-    /// <param name="qualityCacheRepository">The QualityCacheRepository.</param>
     /// <param name="downloadHistoryRepository">The Download History Repo.</param>
     /// <param name="configurationProvider">The Configuration Provider.</param>
     public SubscriptionProcessor(
@@ -58,7 +56,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         IFileNameBuilderService fileNameBuilderService,
         IStrmValidationService strmValidationService,
         IFFmpegService ffmpegService,
-        IQualityCacheRepository qualityCacheRepository,
         IDownloadHistoryRepository downloadHistoryRepository,
         IConfigurationProvider configurationProvider)
     {
@@ -69,7 +66,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         _fileNameBuilderService = fileNameBuilderService;
         _strmValidationService = strmValidationService;
         _ffmpegService = ffmpegService;
-        _qualityCacheRepository = qualityCacheRepository;
         _downloadHistoryRepository = downloadHistoryRepository;
         _configurationProvider = configurationProvider;
     }
@@ -91,7 +87,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
         await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            if (!subscription.IgnoreHistory && await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false) && !subscription.Download.AutoUpgradeToHigherQuality)
+            if (!subscription.IgnoreHistory && await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false))
             {
                 _logger.LogDebug("Skipping item '{Title}' (ID: {Id}) as it was already processed for subscription '{SubscriptionName}'.", item.Title, item.Id, subscription.Name);
                 continue;
@@ -148,16 +144,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     {
         var jobs = new List<DownloadJob>();
 
-        LocalEpisodeCache? localEpisodeCache = null;
-        if (subscription.Download.EnhancedDuplicateDetection && !subscription.IgnoreLocalFiles)
-        {
-            var subscriptionBaseDir = _fileNameBuilderService.GetSubscriptionBaseDirectory(subscription, DownloadContext.Subscription);
-            if (!string.IsNullOrWhiteSpace(subscriptionBaseDir))
-            {
-                localEpisodeCache = _localMediaScanner.ScanDirectory(subscriptionBaseDir, subscription.Name);
-            }
-        }
-
         await foreach (var (item, tempVideoInfo) in GetEligibleItemsAsync(subscription, cancellationToken).ConfigureAwait(false))
         {
             var paths = _fileNameBuilderService.GenerateDownloadPaths(tempVideoInfo, subscription, DownloadContext.Subscription);
@@ -179,52 +165,16 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             switch (paths.MainType)
             {
                 case FileType.Strm:
-                    // Quality Upgrade is only available for Video
-                    if ((localEpisodeCache?.Contains(tempVideoInfo) == true || await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false)) && !subscription.Download.AutoUpgradeToHigherQuality)
-                    {
-                        continue;
-                    }
-
                     downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.StreamingUrl });
                     break;
                 case FileType.Video:
-                    // Resolve the file path to check for existence/quality.
-                    string? existingFilePath = localEpisodeCache?.GetExistingFilePath(tempVideoInfo);
-
-                    // If not in cache, check the standard path
-                    if (string.IsNullOrEmpty(existingFilePath) && File.Exists(paths.MainFilePath))
-                    {
-                        existingFilePath = paths.MainFilePath;
-                    }
-
-                    if (!string.IsNullOrEmpty(existingFilePath) && File.Exists(existingFilePath))
-                    {
-                        var upgradeItem = await CreateQualityUpgradeItemIfAvailable(subscription, existingFilePath, videoUrl, paths.MainFilePath, cancellationToken).ConfigureAwait(false);
-                        if (upgradeItem != null)
-                        {
-                            downloadJob.DownloadItems.Add(upgradeItem);
-                        }
-                        else
-                        {
-                            continue;
-                        }
-                    }
-                    else
-                    {
-                        var jobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase)
-                            ? DownloadType.M3U8Download
-                            : DownloadType.DirectDownload;
-                        downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = jobType });
-                    }
+                    var jobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase)
+                        ? DownloadType.M3U8Download
+                        : DownloadType.DirectDownload;
+                    downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = jobType });
 
                     break;
                 case FileType.Audio:
-                    // Quality Upgrade is only available for Video
-                    if ((localEpisodeCache?.Contains(tempVideoInfo) == true || await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false)) && !subscription.Download.AutoUpgradeToHigherQuality)
-                    {
-                        continue;
-                    }
-
                     downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.AudioExtraction });
                     break;
                 // Subtitles are downloaded separately.
@@ -321,7 +271,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             return false;
         }
 
-        if (localEpisodeCache != null && localEpisodeCache.Contains(tempVideoInfo) && !subscription.Download.AutoUpgradeToHigherQuality)
+        if (localEpisodeCache != null && localEpisodeCache.Contains(tempVideoInfo))
         {
             _logger.LogInformation(
                 "Skipping item '{Title}' (S{Season}E{Episode} / Abs: {Abs}) as it was found locally via enhanced duplicate detection.",
@@ -383,96 +333,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         return true;
     }
 
-    /// <summary>
-    /// Creates a quality upgrade download item if an upgrade is available.
-    /// </summary>
-    /// <param name="subscription">The subscription.</param>
-    /// <param name="existingFilePath">The path to the existing file.</param>
-    /// <param name="videoUrl">The new video URL.</param>
-    /// <param name="targetPath">The target path for the new file.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A DownloadItem if an upgrade is available, otherwise null.</returns>
-    private async Task<DownloadItem?> CreateQualityUpgradeItemIfAvailable(
-        Subscription subscription,
-        string existingFilePath,
-        string videoUrl,
-        string targetPath,
-        CancellationToken cancellationToken)
-    {
-        if (!subscription.Download.AutoUpgradeToHigherQuality)
-        {
-            return null;
-        }
-
-        if (await IsQualityUpgradeAvailable(existingFilePath, videoUrl, cancellationToken).ConfigureAwait(false))
-        {
-            return new DownloadItem()
-            {
-                SourceUrl = videoUrl,
-                DestinationPath = targetPath,
-                ReplaceFilePath = existingFilePath,
-                JobType = DownloadType.QualityUpgrade
-            };
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Tests if a quality upgrade is available by comparing current file and online URL.
-    /// </summary>
-    /// <param name="currentFilePath">The path of the current file.</param>
-    /// <param name="newUrl">The new URL.</param>
-    /// <param name="cancellationToken">The CancellationToken.</param>
-    /// <returns>True if a quality upgrade is available, false otherwise.</returns>
-    private async Task<bool> IsQualityUpgradeAvailable(string currentFilePath, string newUrl, CancellationToken cancellationToken)
-    {
-        var currentQuality = await _ffmpegService.GetMediaInfoAsync(currentFilePath, cancellationToken).ConfigureAwait(false);
-        var onlineQuality = await GetOnlineQualityInfoAsync(newUrl, cancellationToken).ConfigureAwait(false);
-
-        if (currentQuality?.IsValid() != true || onlineQuality?.IsValid() != true)
-        {
-            _logger.LogWarning("Could not determine media info for quality comparison.");
-            return false;
-        }
-
-        if (onlineQuality.Height <= currentQuality.Height)
-        {
-            _logger.LogInformation("No quality upgrade available. Current height: {CurrentHeight}, Online height: {OnlineHeight}.", currentQuality.Height, onlineQuality.Height);
-            return false;
-        }
-
-        if (onlineQuality.Width <= currentQuality.Width)
-        {
-            _logger.LogInformation("No quality upgrade available. Current width: {CurrentWidth}, Online width: {OnlineWidth}.", currentQuality.Width, onlineQuality.Width);
-            return false;
-        }
-
-        if (!onlineQuality.Duration.HasValue || !currentQuality.Duration.HasValue)
-        {
-            _logger.LogWarning("Could not determine duration for quality comparison.");
-            return false;
-        }
-
-        var onlineDuration = onlineQuality.Duration.Value;
-        var currentDuration = currentQuality.Duration.Value;
-        var durationDifference = Math.Abs((onlineDuration - currentDuration).TotalSeconds);
-
-        if (durationDifference > 2) // Max 2 seconds difference allowed, may add a configuration option later
-        {
-            _logger.LogInformation("No quality upgrade available due to duration mismatch. Current duration: {CurrentDuration}s, Online duration: {OnlineDuration}s.", currentDuration.TotalSeconds, onlineDuration.TotalSeconds);
-            return false;
-        }
-
-        _logger.LogInformation(
-            "Quality upgrade available! Current: {CurrentWidth}x{CurrentHeight}, Online: {OnlineWidth}x{OnlineHeight}.",
-            currentQuality.Width,
-            currentQuality.Height,
-            onlineQuality.Width,
-            onlineQuality.Height);
-        return true;
-    }
-
     private async Task<bool> IsInDownloadCache(string itemId, Guid subscriptionId)
     {
         var item = await _downloadHistoryRepository.GetByItemIdAndSubscriptionIdAsync(itemId, subscriptionId).ConfigureAwait(false);
@@ -485,60 +345,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         {
             videoInfo.Language = subscription.Metadata.OriginalLanguage;
         }
-    }
-
-    private async Task<LocalMediaInfo?> GetOnlineQualityInfoAsync(string url, CancellationToken cancellationToken)
-    {
-        // First, try to get from cache
-        var cachedInfo = await GetOnlineQualityInfoFromCacheAsync(url, cancellationToken).ConfigureAwait(false);
-        if (cachedInfo != null)
-        {
-            return cachedInfo;
-        }
-
-        // If not in cache, get from ffmpeg
-        var mediaInfo = await _ffmpegService.GetMediaInfoAsync(url, cancellationToken).ConfigureAwait(false);
-        if (mediaInfo is null || !mediaInfo.IsValid())
-        {
-            return null;
-        }
-
-        // Store in cache for future use
-        await _qualityCacheRepository.AddOrUpdateAsync(
-            url,
-            mediaInfo.Width.Value,
-            mediaInfo.Height.Value,
-            mediaInfo.Duration.Value,
-            mediaInfo.FileSize.Value).ConfigureAwait(false);
-
-        return mediaInfo;
-    }
-
-    private async Task<LocalMediaInfo?> GetOnlineQualityInfoFromCacheAsync(string url, CancellationToken cancellationToken)
-    {
-        var cacheEntry = await _qualityCacheRepository.GetByUrlAsync(url).ConfigureAwait(false);
-        if (cacheEntry is null)
-        {
-            return null;
-        }
-
-        // ReSharper disable once InvertIf
-        if (cacheEntry.Duration == TimeSpan.Zero)
-        {
-            _logger.LogInformation("Cached entry for URL '{Url}' has zero duration, ignoring cache.", url);
-            cancellationToken.ThrowIfCancellationRequested();
-            await _qualityCacheRepository.RemoveByUrlAsync(url).ConfigureAwait(false);
-            return null;
-        }
-
-        return new LocalMediaInfo
-        {
-            Width = cacheEntry.Width,
-            Height = cacheEntry.Height,
-            FileSize = cacheEntry.Size,
-            Duration = cacheEntry.Duration,
-            FilePath = url
-        };
     }
 
     /// <summary>

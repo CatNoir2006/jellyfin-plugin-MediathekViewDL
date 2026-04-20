@@ -27,9 +27,7 @@ Dieses Plugin integriert die [MediathekViewWeb-API](https://mediathekviewweb.de/
 | :--- | :--- |
 | **🔎 Suche & Abos** | • **Automatische Downloads:** Neue Episoden Ihrer Lieblingssendungen werden sofort geladen.<br>• **Manuelle Suche:** Durchsuchen Sie die gesamte Mediathek direkt in Jellyfin.<br>• **Smart Filters:** Filtern nach Thema, Sender oder Titel. |
 | **💾 Download-Manager** | • **Zentrale Übersicht:** Neuer Tab für aktive Downloads, Historie und Warteschlange.<br>• **Kontrolle:** Downloads pausieren, abbrechen oder priorisieren.<br>• **Duplikat-Schutz:** Eine lokale Datenbank verhindert doppelte Downloads. |
-| **💎 Qualität** | • **Auto-Upgrade:** Ersetzt Dateien automatisch durch bessere Versionen (z.B. SD -> HD).<br>• **Smart Fallback:** Weicht auf niedrigere Qualitäten aus, wenn HD nicht verfügbar ist.<br>• **Untertitel:** Lädt Untertitel automatisch mit herunter. |
 | **📂 Organisation** | • **Metadaten (NFO):** Generiert NFO-Dateien für perfekte Integration in Jellyfin/Kodi.<br>• **Streaming (.strm):** Optional nur verknüpfen statt herunterladen (spart Speicher).<br>• **Extras:** Separate Steuerung für Trailer, Interviews und Bonusmaterial. |
-| **🛡️ Sicherheit & Netz** | • **Bandbreiten-Limit:** Begrenzen Sie die Download-Geschwindigkeit.<br>• **Speicher-Schutz:** Stoppt Downloads, wenn der Speicherplatz knapp wird.<br>• **Whitelist:** Downloads nur von vertrauenswürdigen Sender-CDNs. |
 
 ---
 
@@ -152,7 +150,6 @@ Das Herzstück des Plugins. Hier definieren Sie, was regelmäßig gesucht wird.
 | **Audiodeskription erlauben** | Lädt auch Versionen mit Bildbeschreibung herunter. |
 | **Gebärdensprache erlauben** | Lädt auch Versionen mit Gebärdensprache herunter. |
 | **Erweiterte Duplikaterkennung** | Scannt das Zielverzeichnis physisch nach vorhandenen Dateien (SxxExx), um Doppelte zu vermeiden. |
-| **Auto-Upgrade Qualität** | Ersetzt existierende Dateien, wenn eine bessere Auflösung verfügbar wird. |
 | **Fallback auf niedrigere Qualität** | Erlaubt den Download schlechterer Qualität, wenn HD nicht verfügbar ist. |
 | **URL-Check vor Download** | Prüft vorab, ob der Videolink erreichbar ist (vermeidet defekte Downloads, kostet Zeit). (Nur bei Fallback aktiv). |
 | **Datum/Uhrzeit im Titel** | Hängt das Datum oder die Uhrzeit an den Titel an (ideal für News/Daily). |
@@ -188,15 +185,6 @@ Dieses Feature ermöglicht es, bereits lokal vorhandene Dateien (z.B. manuelle D
 
 ---
 
-## 🧠 Funktionsweise
-
-Das Plugin arbeitet im Hintergrund mit einem **Scheduled Task** (Geplante Aufgabe) in Jellyfin.
-1.  **Suche:** Der Task fragt regelmäßig die MediathekViewWeb-API nach neuen Inhalten für Ihre Abos ab.
-2.  **Abgleich:** Gefundene Sendungen werden mit der lokalen Datenbank (`mediathek-dl.db`) abgeglichen, um Duplikate zu vermeiden.
-3.  **Warteschlange:** Neue Downloads landen im `DownloadQueueManager` und werden sequenziell abgearbeitet, um Ihr Netzwerk nicht zu überlasten.
-
----
-
 ## ❤️ Danksagung & Disclaimer
 
 *   **Danke:** Ein großer Dank geht an das Team von [MediathekViewWeb.de](https://mediathekviewweb.de/) für die Bereitstellung der API, ohne die dieses Plugin nicht möglich wäre.
@@ -204,5 +192,5 @@ Das Plugin arbeitet im Hintergrund mit einem **Scheduled Task** (Geplante Aufgab
 
 ---
 ## Letze Anpassung der Readme
-* Plugin: v0.7.2.0
-* Commit: df25d4a
+* Plugin: v0.8.0.2
+* Commit: ed5e38e5ca20855789e4d3a869e3ba36a0273aa5
