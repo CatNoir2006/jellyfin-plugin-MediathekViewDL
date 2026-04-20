@@ -521,6 +521,27 @@ public class MediathekViewDlApiService : ControllerBase
     }
 
     /// <summary>
+    /// Manually triggers the processing of a specific subscription.
+    /// </summary>
+    /// <param name="id">The ID of the subscription to process.</param>
+    /// <returns>The number of new items found and queued.</returns>
+    [HttpPost("Subscriptions/{id}/Process")]
+    public async Task<ActionResult<int>> ProcessSubscription([FromRoute] Guid id)
+    {
+        var validationResult = GetSubscriptionOrError(id, out var subscription, out _);
+        if (validationResult != null)
+        {
+            return validationResult;
+        }
+
+        _logger.LogInformation("Manual processing requested for subscription '{SubscriptionName}' (ID: {SubscriptionId}).", subscription!.Name, id);
+
+        var count = await _subscriptionProcessor.ProcessSubscriptionAsync(subscription, CancellationToken.None).ConfigureAwait(false);
+
+        return Ok(count);
+    }
+
+    /// <summary>
     /// Gets the adoption candidates for a specific subscription.
     /// </summary>
     /// <param name="subscriptionId">The ID of the subscription.</param>
