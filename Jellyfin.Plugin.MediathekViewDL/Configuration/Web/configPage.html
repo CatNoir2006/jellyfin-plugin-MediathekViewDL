@@ -520,11 +520,15 @@
             <!-- TAB 3: Subscription Management -->
             <div id="tab-subscriptions" class="mvpl-tab-content" role="tabpanel" aria-labelledby="mvpl-btn-tab-subscriptions" style="display:none;">
                 <div class="verticalSection">
-                    <div class="flex-space-between">
+                    <div>
                         <div class="sectionTitleLabel">Aktive Abonnements</div>
                         <button is="emby-button" type="button" class="raised" id="mvpl-btn-new-sub">
                             <span class="material-icons add"></span>
                             <span>Neues Abo</span>
+                        </button>
+                        <button is="emby-button" type="button" class="raised" id="mvpl-btn-start-sub-task">
+                            <span class="material-icons play_arrow"></span>
+                            <span>Downloads manuell starten</span>
                         </button>
                     </div>
                     <div id="subscriptionList" class="paperList mvpl-margin-top-20">
@@ -1007,12 +1011,6 @@
 
         .flex-align-center {
             display: flex;
-            align-items: center;
-        }
-
-        .flex-space-between {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
         }
 
