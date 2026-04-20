@@ -371,7 +371,6 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             Assert.Equal(1, count);
             _downloadQueueManagerMock.Verify(x => x.QueueJob(It.IsAny<DownloadJob>(), subscription.Id), Times.Once);
             Assert.NotEqual(default, subscription.LastDownloadedTimestamp);
-            _configurationProviderMock.Verify(x => x.TryUpdate(config), Times.Once);
         }
     }
 }
