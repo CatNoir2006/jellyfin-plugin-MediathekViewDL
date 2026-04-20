@@ -475,6 +475,10 @@ const Language = {
         Enable: "Aktivieren",
         ResetProcessedItems: "Verarbeitete Items zurücksetzen",
         CopyConfig: "Abo Konfiguration kopieren",
+        ExecuteSub: "Downloads für dieses Abo starten",
+        DownloadStart: "Die Downloads für dieses Abo werden angelegt, dies kann je nach Abo eine weile Dauern.",
+        DownloadStarted: "Die Downloads für dieses Abo wurden angelegt.",
+        DownloadFailed: "Fehler beim Starten der Downloads für dieses Abo: ",
         Edit: "Bearbeiten",
         Delete: "Löschen",
         ProcessedItemsReset: "Verarbeitete Items für Abonnement zurückgesetzt.",
@@ -504,7 +508,13 @@ const Language = {
     AdvancedDownload: {
         SelectDownloadPath: "Download Pfad wählen",
         TitlePrefix: "Erweiterter Download: "
-    }
+    },
+    ScheduledTasks: {
+        TaskNotFound: "Fehler: Geplante Aufgabe nicht gefunden: ",
+        TaskNotIdle: "Fehler: Geplante Aufgabe läuft bereits.",
+        Started: "Geplante Aufgabe gestartet: ",
+        StartFailed: "Fehler: Geplante Aufgabe konnte nicht gestartet werden: "
+    },
 }
 
 const DomIds = {
@@ -643,6 +653,7 @@ const DomIds = {
     Subscription: {
         List: "subscriptionList",
         BtnNew: "mvpl-btn-new-sub",
+        ExecTask: "mvpl-btn-start-sub-task",
         Editor: {
             Container: "subscriptionEditor",
             Form: "mvpl-form-subscription",
@@ -731,6 +742,7 @@ const Icons = {
     Delete: 'delete',
     Remove: 'remove_circle_outline',
     Copy: 'content_copy',
+    ListAdd: 'playlist_add'
 }
 
 /**
@@ -821,6 +833,22 @@ class Subscription {
         this.Accessibility = new AccessibilitySettings(def.AccessibilitySettings, data.Accessibility);
     }
 }
+
+/**
+ * Represents a Scheduled Task in Jellyfin.
+ */
+class ScheduledTask {
+    constructor(data) {
+        this.Category = data.Category;
+        this.Id = data.Id;
+        this.Key = data.Key;
+        this.Name = data.Name;
+        this.IsIdle = data.State === 'Idle';
+        this.Progress = data.CurrentProgressPercentage;
+    }
+}
+
+// Controller
 
 /**
  * Handles search operations.
@@ -1834,6 +1862,73 @@ class SetupLiveTvController {
     }
 }
 
+class ScheduledTaskController {
+    constructor(config) {
+        this.config = config;
+        this.tasks = [];
+        this.downloadKey = "MediathekViewDL-MediathekAboDownloader";
+    }
+
+
+    init() {
+        document.getElementById(DomIds.Subscription.ExecTask).addEventListener('click', () => {
+            this.runTask(this.downloadKey);
+        });
+        this.refreshTasks().then(() => {
+        });
+    }
+
+    refreshTasks() {
+        const url = ApiClient.getUrl('/ScheduledTasks?isHidden=false');
+        return ApiClient.getJSON(url).then((task) => {
+            this.tasks = task.map(t => new ScheduledTask(t));
+        }).catch((err) => {
+            console.error(Language.ScheduledTasks.ErrorLoading, err);
+        });
+    }
+
+    /**
+     *
+     * @param key
+     * @param refresh
+     * @returns {Promise<ScheduledTask>}
+     */
+    async getTask(key, refresh = false) {
+        if (refresh) {
+            await this.refreshTasks();
+        }
+
+        return this.tasks.find((task) => task.Key === key);
+    }
+
+    runTask(key) {
+        this.getTask(key).then((task) => {
+            if (!task) {
+                Helper.showError(key, Language.ScheduledTasks.TaskNotFound);
+                return;
+            }
+
+            if (!task.IsIdle) {
+                Helper.showError(Language.ScheduledTasks.TaskNotIdle);
+                return;
+            }
+            const url = ApiClient.getUrl('/ScheduledTasks/Running/' + task.Id + '/');
+
+            ApiClient.ajax({
+                type: "POST",
+                url: url,
+            }).then(() => {
+                Helper.showToast(Language.ScheduledTasks.Started + task.Name);
+                this.refreshTasks().then(r => {
+                });
+            }).catch((err) => {
+                Helper.showError(err, Language.ScheduledTasks.StartFailed);
+            });
+        });
+    }
+}
+
+
 /**
  * Manages UI dependencies (showing/hiding fields based on others).
  */
@@ -2198,6 +2293,22 @@ class SubscriptionEditor {
     close() {
         document.getElementById(DomIds.Subscription.Editor.Container).style.display = 'none';
     }
+
+    executeSub(subId) {
+        Dashboard.showLoadingMsg();
+        const url = ApiClient.getUrl('/' + this.config.pluginName + '/Subscriptions/' + subId + '/Process');
+        Helper.showToast(Language.Subscription.DownloadStart);
+        ApiClient.ajax({
+            type: "POST",
+            url: url,
+        }).then(() => {
+            Helper.showToast(Language.Subscription.DownloadStarted);
+            Dashboard.hideLoadingMsg();
+        }).catch((err) => {
+            Helper.showError(err, Language.Subscription.DownloadFailed);
+            Dashboard.hideLoadingMsg();
+        });
+    }
 }
 
 /**
@@ -2213,6 +2324,7 @@ class MediathekPluginConfig {
         this.downloadsController = new DownloadsController(this);
         this.liveTvController = new SetupLiveTvController(this);
         this.adoptionController = new AdoptionController(this);
+        this.scheduledTaskController = new ScheduledTaskController(this);
         this.dependencyManager = new DependencyManager();
         this.currentConfig = null;
         this.currentItemForAdvancedDl = null;
@@ -2498,6 +2610,13 @@ class MediathekPluginConfig {
             const toggleBtn = this.dom.createIconButton(toggleIcon, toggleTitle, () => this.toggleSubscription(sub.Id));
             actions.appendChild(toggleBtn);
 
+            actions.appendChild(this.dom.createIconButton(Icons.ListAdd, Language.Subscription.ExecuteSub, () => {
+                Helper.confirmationPopup(sub.Name, Language.Subscription.ExecuteSub + '?', (confirmed) => {
+                    if (confirmed) {
+                        this.subscriptionEditor.executeSub(sub.Id);
+                    }
+                })
+            }));
             actions.appendChild(this.dom.createIconButton(Icons.Copy, Language.Subscription.CopyConfig, () => Helper.toClipboard(sub)));
             actions.appendChild(this.dom.createIconButton(Icons.ResetHistory, Language.Subscription.ResetProcessedItems, () => this.resetProcessedItems(sub.Id)));
             actions.appendChild(this.dom.createIconButton(Icons.Edit, Language.Subscription.Edit, () => this.subscriptionEditor.show(sub)));
@@ -3091,6 +3210,7 @@ class MediathekPluginConfig {
         this.liveTvController.init();
         this.adoptionController.init();
         this.dependencyManager.init();
+        this.scheduledTaskController.init();
         this.setupAutoGrowInputs();
     }
 }

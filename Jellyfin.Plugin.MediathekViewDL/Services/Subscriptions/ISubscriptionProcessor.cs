@@ -26,6 +26,16 @@ public interface ISubscriptionProcessor
         CancellationToken cancellationToken);
 
     /// <summary>
+    /// Processes a single subscription completely, finding new items, queuing them and updating the subscription status.
+    /// </summary>
+    /// <param name="subscription">The subscription to process.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The number of new items found and queued.</returns>
+    Task<int> ProcessSubscriptionAsync(
+        Subscription subscription,
+        CancellationToken cancellationToken);
+
+    /// <summary>
     /// Gets all eligible items for a subscription from the API, applying filters based on subscription settings.
     /// </summary>
     /// <param name="subscription">The subscription to process.</param>

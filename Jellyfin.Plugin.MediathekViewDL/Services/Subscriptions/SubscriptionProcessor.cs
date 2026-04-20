@@ -14,6 +14,7 @@ using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Queue;
 using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
@@ -35,6 +36,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private readonly IFFmpegService _ffmpegService;
     private readonly IDownloadHistoryRepository _downloadHistoryRepository;
     private readonly IConfigurationProvider _configurationProvider;
+    private readonly IDownloadQueueManager _downloadQueueManager;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscriptionProcessor"/> class.
@@ -48,6 +50,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="ffmpegService">The ffmpeg Service.</param>
     /// <param name="downloadHistoryRepository">The Download History Repo.</param>
     /// <param name="configurationProvider">The Configuration Provider.</param>
+    /// <param name="downloadQueueManager">The download queue manager.</param>
     public SubscriptionProcessor(
         ILogger<SubscriptionProcessor> logger,
         IMediathekViewApiClient apiClient,
@@ -57,7 +60,8 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         IStrmValidationService strmValidationService,
         IFFmpegService ffmpegService,
         IDownloadHistoryRepository downloadHistoryRepository,
-        IConfigurationProvider configurationProvider)
+        IConfigurationProvider configurationProvider,
+        IDownloadQueueManager downloadQueueManager)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -68,6 +72,36 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         _ffmpegService = ffmpegService;
         _downloadHistoryRepository = downloadHistoryRepository;
         _configurationProvider = configurationProvider;
+        _downloadQueueManager = downloadQueueManager;
+    }
+
+    /// <inheritdoc/>
+    public async Task<int> ProcessSubscriptionAsync(Subscription subscription, CancellationToken cancellationToken)
+    {
+        var config = _configurationProvider.ConfigurationOrNull;
+        if (config == null)
+        {
+            return 0;
+        }
+
+        var jobs = await GetJobsForSubscriptionAsync(
+            subscription,
+            config.Download.DownloadSubtitles,
+            cancellationToken).ConfigureAwait(false);
+
+        _logger.LogInformation("Found {Count} new items for '{SubscriptionName}'.", jobs.Count, subscription.Name);
+
+        foreach (var job in jobs)
+        {
+            _downloadQueueManager.QueueJob(job, subscription.Id);
+        }
+
+        if (jobs.Count > 0)
+        {
+            subscription.LastDownloadedTimestamp = DateTime.UtcNow;
+        }
+
+        return jobs.Count;
     }
 
     /// <inheritdoc/>

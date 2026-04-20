@@ -21,7 +21,6 @@ public class DownloadScheduledTask : IScheduledTask
 {
     private readonly ILogger<DownloadScheduledTask> _logger;
     private readonly ISubscriptionProcessor _subscriptionProcessor;
-    private readonly IDownloadQueueManager _downloadQueueManager;
     private readonly IConfigurationProvider _configurationProvider;
 
     /// <summary>
@@ -29,17 +28,14 @@ public class DownloadScheduledTask : IScheduledTask
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="subscriptionProcessor">The subscription processor.</param>
-    /// <param name="downloadQueueManager">The download queue manager.</param>
     /// <param name="configurationProvider">The configuration provider.</param>
     public DownloadScheduledTask(
         ILogger<DownloadScheduledTask> logger,
         ISubscriptionProcessor subscriptionProcessor,
-        IDownloadQueueManager downloadQueueManager,
         IConfigurationProvider configurationProvider)
     {
         _logger = logger;
         _subscriptionProcessor = subscriptionProcessor;
-        _downloadQueueManager = downloadQueueManager;
         _configurationProvider = configurationProvider;
     }
 
@@ -47,7 +43,7 @@ public class DownloadScheduledTask : IScheduledTask
     public string Name => "Mediathek Abo-Downloader";
 
     /// <inheritdoc />
-    public string Key => "MediathekAboDownloader";
+    public string Key => Constants.GetSchedTaskKey("MediathekAboDownloader");
 
     /// <inheritdoc />
     public string Category => "Mediathek Downloader";
@@ -101,28 +97,7 @@ public class DownloadScheduledTask : IScheduledTask
 
             _logger.LogInformation("Processing subscription: {SubscriptionName}", subscription.Name);
 
-            // Step 1: Find jobs
-            var jobs = await _subscriptionProcessor.GetJobsForSubscriptionAsync(
-                subscription,
-                config.Download.DownloadSubtitles,
-                cancellationToken).ConfigureAwait(false);
-
-            _logger.LogInformation("Found {Count} new items for '{SubscriptionName}'.", jobs.Count, subscription.Name);
-
-            var numJobs = jobs.Count;
-            if (numJobs == 0)
-            {
-                progress.Report(baseProgressForSubscription + subscriptionProgressShare);
-                continue;
-            }
-
-            // Step 2: Queue jobs
-            foreach (var job in jobs)
-            {
-                _downloadQueueManager.QueueJob(job, subscription.Id);
-            }
-
-            subscription.LastDownloadedTimestamp = DateTime.UtcNow;
+            await _subscriptionProcessor.ProcessSubscriptionAsync(subscription, cancellationToken).ConfigureAwait(false);
 
             progress.Report(baseProgressForSubscription + subscriptionProgressShare);
         }
