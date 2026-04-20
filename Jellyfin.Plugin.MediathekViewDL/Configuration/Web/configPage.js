@@ -475,6 +475,10 @@ const Language = {
         Enable: "Aktivieren",
         ResetProcessedItems: "Verarbeitete Items zurücksetzen",
         CopyConfig: "Abo Konfiguration kopieren",
+        ExecuteSub: "Downloads für dieses Abo starten",
+        DownloadStart: "Die Downloads für dieses Abo werden angelegt, dies kann je nach Abo eine weile Dauern.",
+        DownloadStarted: "Die Downloads für dieses Abo wurden angelegt.",
+        DownloadFailed: "Fehler beim Starten der Downloads für dieses Abo: ",
         Edit: "Bearbeiten",
         Delete: "Löschen",
         ProcessedItemsReset: "Verarbeitete Items für Abonnement zurückgesetzt.",
@@ -1923,6 +1927,7 @@ class ScheduledTaskController {
     }
 }
 
+
 /**
  * Manages UI dependencies (showing/hiding fields based on others).
  */
@@ -2287,6 +2292,22 @@ class SubscriptionEditor {
     close() {
         document.getElementById(DomIds.Subscription.Editor.Container).style.display = 'none';
     }
+
+    executeSub(subId){
+        Dashboard.showLoadingMsg();
+        const url = ApiClient.getUrl('/' + this.config.pluginName + '/Subscriptions/'+subId+'/Process');
+        Helper.showToast(Language.Subscription.DownloadStart);
+        ApiClient.ajax({
+            type: "POST",
+            url: url,
+        }).then(() => {
+            Helper.showToast(Language.Subscription.DownloadStarted);
+            Dashboard.hideLoadingMsg();
+        }).catch((err) => {
+            Helper.showError(err, Language.Subscription.DownloadFailed);
+            Dashboard.hideLoadingMsg();
+        });
+    }
 }
 
 /**
@@ -2588,6 +2609,13 @@ class MediathekPluginConfig {
             const toggleBtn = this.dom.createIconButton(toggleIcon, toggleTitle, () => this.toggleSubscription(sub.Id));
             actions.appendChild(toggleBtn);
 
+            actions.appendChild(this.dom.createIconButton(Icons.ListAdd, Language.Subscription.ExecuteSub, () => {
+                Helper.confirmationPopup(sub.Name, Language.Subscription.ExecuteSub + '?', (confirmed) => {
+                    if (confirmed) {
+                        this.subscriptionEditor.executeSub(sub.Id);
+                    }
+                })
+            }));
             actions.appendChild(this.dom.createIconButton(Icons.Copy, Language.Subscription.CopyConfig, () => Helper.toClipboard(sub)));
             actions.appendChild(this.dom.createIconButton(Icons.ResetHistory, Language.Subscription.ResetProcessedItems, () => this.resetProcessedItems(sub.Id)));
             actions.appendChild(this.dom.createIconButton(Icons.Edit, Language.Subscription.Edit, () => this.subscriptionEditor.show(sub)));
