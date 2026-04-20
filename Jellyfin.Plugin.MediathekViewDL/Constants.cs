@@ -24,6 +24,6 @@ public static class Constants
     /// <returns>Key with prefix.</returns>
     public static string GetSchedTaskKey(string key)
     {
-        return "MediathekViewDL-" + key;
+        return $"MediathekViewDL-{key}";
     }
 }

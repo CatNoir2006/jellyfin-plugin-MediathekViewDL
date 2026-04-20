@@ -99,7 +99,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         if (jobs.Count > 0)
         {
             subscription.LastDownloadedTimestamp = DateTime.UtcNow;
-            _configurationProvider.TryUpdate(config);
         }
 
         return jobs.Count;

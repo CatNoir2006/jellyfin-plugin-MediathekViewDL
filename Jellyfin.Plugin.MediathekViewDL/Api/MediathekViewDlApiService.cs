@@ -524,11 +524,12 @@ public class MediathekViewDlApiService : ControllerBase
     /// Manually triggers the processing of a specific subscription.
     /// </summary>
     /// <param name="id">The ID of the subscription to process.</param>
+    /// <param name="ct">The CancellationToken.</param>
     /// <returns>The number of new items found and queued.</returns>
     [HttpPost("Subscriptions/{id}/Process")]
-    public async Task<ActionResult<int>> ProcessSubscription([FromRoute] Guid id)
+    public async Task<ActionResult<int>> ProcessSubscription([FromRoute] Guid id, CancellationToken ct)
     {
-        var validationResult = GetSubscriptionOrError(id, out var subscription, out _);
+        var validationResult = GetSubscriptionOrError(id, out var subscription, out var config);
         if (validationResult != null)
         {
             return validationResult;
@@ -536,7 +537,11 @@ public class MediathekViewDlApiService : ControllerBase
 
         _logger.LogInformation("Manual processing requested for subscription '{SubscriptionName}' (ID: {SubscriptionId}).", subscription!.Name, id);
 
-        var count = await _subscriptionProcessor.ProcessSubscriptionAsync(subscription, CancellationToken.None).ConfigureAwait(false);
+        var count = await _subscriptionProcessor.ProcessSubscriptionAsync(subscription, ct).ConfigureAwait(false);
+        if (config != null)
+        {
+            _configurationProvider.TryUpdate(config);
+        }
 
         return Ok(count);
     }

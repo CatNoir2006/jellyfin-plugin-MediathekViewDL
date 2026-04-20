@@ -837,7 +837,7 @@ class Subscription {
 /**
  * Represents a Scheduled Task in Jellyfin.
  */
-class ScheduledTask{
+class ScheduledTask {
     constructor(data) {
         this.Category = data.Category;
         this.Id = data.Id;
@@ -1870,19 +1870,18 @@ class ScheduledTaskController {
     }
 
 
-
     init() {
         document.getElementById(DomIds.Subscription.ExecTask).addEventListener('click', () => {
             this.runTask(this.downloadKey);
         });
-        this.refreshTasks().then(() => {});
+        this.refreshTasks().then(() => {
+        });
     }
 
-    refreshTasks(){
+    refreshTasks() {
         const url = ApiClient.getUrl('/ScheduledTasks?isHidden=false');
         return ApiClient.getJSON(url).then((task) => {
             this.tasks = task.map(t => new ScheduledTask(t));
-            console.log(task, this.tasks);
         }).catch((err) => {
             console.error(Language.ScheduledTasks.ErrorLoading, err);
         });
@@ -1902,7 +1901,7 @@ class ScheduledTaskController {
         return this.tasks.find((task) => task.Key === key);
     }
 
-    runTask(key){
+    runTask(key) {
         this.getTask(key).then((task) => {
             if (!task) {
                 Helper.showError(key, Language.ScheduledTasks.TaskNotFound);
@@ -1911,6 +1910,7 @@ class ScheduledTaskController {
 
             if (!task.IsIdle) {
                 Helper.showError(Language.ScheduledTasks.TaskNotIdle);
+                return;
             }
             const url = ApiClient.getUrl('/ScheduledTasks/Running/' + task.Id + '/');
 
@@ -1919,7 +1919,8 @@ class ScheduledTaskController {
                 url: url,
             }).then(() => {
                 Helper.showToast(Language.ScheduledTasks.Started + task.Name);
-                this.refreshTasks().then(r => {});
+                this.refreshTasks().then(r => {
+                });
             }).catch((err) => {
                 Helper.showError(err, Language.ScheduledTasks.StartFailed);
             });
@@ -2293,9 +2294,9 @@ class SubscriptionEditor {
         document.getElementById(DomIds.Subscription.Editor.Container).style.display = 'none';
     }
 
-    executeSub(subId){
+    executeSub(subId) {
         Dashboard.showLoadingMsg();
-        const url = ApiClient.getUrl('/' + this.config.pluginName + '/Subscriptions/'+subId+'/Process');
+        const url = ApiClient.getUrl('/' + this.config.pluginName + '/Subscriptions/' + subId + '/Process');
         Helper.showToast(Language.Subscription.DownloadStart);
         ApiClient.ajax({
             type: "POST",
