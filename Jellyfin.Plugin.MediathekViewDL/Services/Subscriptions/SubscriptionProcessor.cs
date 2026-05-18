@@ -128,6 +128,11 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
 
             var tempVideoInfo = _videoParser.ParseVideoInfo(subscription.Name, item.Title);
+            if (tempVideoInfo != null && subscription.Metadata.KeepOriginalTitle)
+            {
+                tempVideoInfo.Title = item.Title;
+            }
+
             SetOvLanguageIfSet(subscription, tempVideoInfo);
 
             if (tempVideoInfo != null && (subscription.Metadata.AppendDateToTitle || subscription.Metadata.AppendTimeToTitle))

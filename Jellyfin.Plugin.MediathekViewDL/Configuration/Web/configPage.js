@@ -620,6 +620,7 @@ const DomIds = {
             OriginalLanguage: "defSubOriginalLanguage",
             CreateNfo: "defSubCreateNfo",
             AppendDate: "defSubAppendDateToTitle",
+            KeepOriginalTitle: "defSubKeepOriginalTitle",
             AppendTime: "defSubAppendTimeToTitle",
             AllowAudioDesc: "defSubAllowAudioDesc",
             AllowSignLanguage: "defSubAllowSignLanguage",
@@ -671,6 +672,7 @@ const DomIds = {
             AllowAudioDesc: "subAllowAudioDesc",
             AbsoluteEpisodeNumbering: "subAllowAbsoluteEpisodeNumbering",
             AppendDate: "subAppendDateToTitle",
+            KeepOriginalTitle: "subKeepOriginalTitle",
             AppendTime: "subAppendTimeToTitle",
             AllowSignLanguage: "subAllowSignLanguage",
             AlwaysCreateSubfolder: "subAlwaysCreateSubfolder",
@@ -796,6 +798,7 @@ class MetadataSettings {
         this.OriginalLanguage = data.OriginalLanguage || (defaults.OriginalLanguage || "");
         this.CreateNfo = data.CreateNfo !== undefined ? data.CreateNfo : (defaults.CreateNfo || false);
         this.AppendDateToTitle = data.AppendDateToTitle !== undefined ? data.AppendDateToTitle : (defaults.AppendDateToTitle || false);
+        this.KeepOriginalTitle = data.KeepOriginalTitle !== undefined ? data.KeepOriginalTitle : (defaults.KeepOriginalTitle || false);
         this.AppendTimeToTitle = data.AppendTimeToTitle !== undefined ? data.AppendTimeToTitle : (defaults.AppendTimeToTitle || false);
     }
 }
@@ -2172,6 +2175,7 @@ class SubscriptionEditor {
         document.getElementById(DomIds.Subscription.Editor.AllowAudioDesc).checked = accessibility.AllowAudioDescription;
         document.getElementById(DomIds.Subscription.Editor.AbsoluteEpisodeNumbering).checked = series.AllowAbsoluteEpisodeNumbering;
         document.getElementById(DomIds.Subscription.Editor.AppendDate).checked = metadata.AppendDateToTitle !== undefined ? metadata.AppendDateToTitle : false;
+        document.getElementById(DomIds.Subscription.Editor.KeepOriginalTitle).checked = metadata.KeepOriginalTitle !== undefined ? metadata.KeepOriginalTitle : false;
         document.getElementById(DomIds.Subscription.Editor.AppendTime).checked = metadata.AppendTimeToTitle !== undefined ? metadata.AppendTimeToTitle : false;
         document.getElementById(DomIds.Subscription.Editor.AllowSignLanguage).checked = accessibility.AllowSignLanguage;
         document.getElementById(DomIds.Subscription.Editor.AlwaysCreateSubfolder).checked = download.AlwaysCreateSubfolder || false;
@@ -2256,6 +2260,7 @@ class SubscriptionEditor {
                 CreateNfo: document.getElementById(DomIds.Subscription.Editor.CreateNfo).checked,
                 OriginalLanguage: document.getElementById(DomIds.Subscription.Editor.OriginalLanguage).value,
                 AppendDateToTitle: document.getElementById(DomIds.Subscription.Editor.AppendDate).checked,
+                KeepOriginalTitle: document.getElementById(DomIds.Subscription.Editor.KeepOriginalTitle).checked,
                 AppendTimeToTitle: document.getElementById(DomIds.Subscription.Editor.AppendTime).checked
             },
             Accessibility: {
@@ -2470,6 +2475,7 @@ class MediathekPluginConfig {
             document.getElementById(DomIds.Settings.Defaults.OriginalLanguage).value = defMeta.OriginalLanguage || "";
             document.getElementById(DomIds.Settings.Defaults.CreateNfo).checked = defMeta.CreateNfo || false;
             document.getElementById(DomIds.Settings.Defaults.AppendDate).checked = defMeta.AppendDateToTitle || false;
+            document.getElementById(DomIds.Settings.Defaults.KeepOriginalTitle).checked = defMeta.KeepOriginalTitle || false;
             document.getElementById(DomIds.Settings.Defaults.AppendTime).checked = defMeta.AppendTimeToTitle || false;
 
             document.getElementById(DomIds.Settings.Defaults.AllowAudioDesc).checked = defAccess.AllowAudioDescription || false;
@@ -3085,6 +3091,7 @@ class MediathekPluginConfig {
                     OriginalLanguage: document.getElementById(DomIds.Settings.Defaults.OriginalLanguage).value,
                     CreateNfo: document.getElementById(DomIds.Settings.Defaults.CreateNfo).checked,
                     AppendDateToTitle: document.getElementById(DomIds.Settings.Defaults.AppendDate).checked,
+                    KeepOriginalTitle: document.getElementById(DomIds.Settings.Defaults.KeepOriginalTitle).checked,
                     AppendTimeToTitle: document.getElementById(DomIds.Settings.Defaults.AppendTime).checked
                 },
                 AccessibilitySettings: {

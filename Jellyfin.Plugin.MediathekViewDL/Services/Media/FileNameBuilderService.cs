@@ -134,6 +134,7 @@ public class FileNameBuilderService : IFileNameBuilderService
     {
         string fileNamePart = videoInfo switch
         {
+            _ when subscription.Metadata.KeepOriginalTitle => string.Empty,
             { IsShow: true, HasSeasonEpisodeNumbering: true } => $"S{videoInfo.SeasonNumber!.Value:D2}E{videoInfo.EpisodeNumber!.Value:D2}",
             { IsShow: true, HasAbsoluteNumbering: true } => $"{videoInfo.AbsoluteEpisodeNumber!.Value:D3}",
             _ => string.Empty
@@ -231,7 +232,7 @@ public class FileNameBuilderService : IFileNameBuilderService
             return string.Empty;
         }
 
-        if ((videoInfo.IsShow && videoInfo.HasSeasonEpisodeNumbering) || (subscription.Series.TreatNonEpisodesAsExtras && videoInfo.SeasonNumber.HasValue))
+        if (!subscription.Metadata.KeepOriginalTitle && ((videoInfo.IsShow && videoInfo.HasSeasonEpisodeNumbering) || (subscription.Series.TreatNonEpisodesAsExtras && videoInfo.SeasonNumber.HasValue)))
         {
             targetPath = Path.Combine(targetPath, $"Staffel {videoInfo.SeasonNumber!.Value}");
         }

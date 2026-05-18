@@ -26,4 +26,9 @@ public record MetadataSettings
     /// Useful for shows that air multiple times a day (e.g. news).
     /// </summary>
     public bool AppendTimeToTitle { get; init; }
+
+    /// <summary>
+    /// Gets a value indicating whether to keep the original title without any automatic cleanup (e.g. removing features, date/time or language info).
+    /// </summary>
+    public bool KeepOriginalTitle { get; init; }
 }
