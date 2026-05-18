@@ -716,7 +716,7 @@ const DomIds = {
         Filename: "advDlFilename",
         Subtitles: "advDlSubtitles",
         SubtitlesDesc: "advDlSubtitlesDesc",
-        BtnSelectPath: "btnSelectPath",
+        BtnSelectPath: "btnSelectAdvPath",
         BtnClose: "mvpl-btn-close-adv-download",
         BtnDuckDuckGoTmdb: "mvpl-btn-duckduckgo-tmdb",
         BtnDuckDuckGo: "mvpl-btn-duckduckgo",
