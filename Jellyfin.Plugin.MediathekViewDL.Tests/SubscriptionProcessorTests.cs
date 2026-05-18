@@ -13,6 +13,7 @@ using Jellyfin.Plugin.MediathekViewDL.Configuration.SubscriptionSettings;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Queue;
 using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
@@ -33,6 +34,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         private readonly Mock<IFFmpegService> _ffmpegServiceMock;
         private readonly Mock<IDownloadHistoryRepository> _downloadHistoryRepositoryMock;
         private readonly Mock<IConfigurationProvider> _configurationProviderMock;
+        private readonly Mock<IDownloadQueueManager> _downloadQueueManagerMock;
         private readonly SubscriptionProcessor _processor;
 
         public SubscriptionProcessorTests()
@@ -46,6 +48,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _ffmpegServiceMock = new Mock<IFFmpegService>();
             _downloadHistoryRepositoryMock = new Mock<IDownloadHistoryRepository>();
             _configurationProviderMock = new Mock<IConfigurationProvider>();
+            _downloadQueueManagerMock = new Mock<IDownloadQueueManager>();
 
             // Default setup: Validation always succeeds
             _strmValidationServiceMock
@@ -65,7 +68,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 _strmValidationServiceMock.Object,
                 _ffmpegServiceMock.Object,
                 _downloadHistoryRepositoryMock.Object,
-                _configurationProviderMock.Object
+                _configurationProviderMock.Object,
+                _downloadQueueManagerMock.Object
             );
         }
 
@@ -322,6 +326,51 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             // Assert
             Assert.Empty(jobs); // Should not create a job
+        }
+
+        [Fact]
+        public async Task ProcessSubscriptionAsync_ShouldQueueJobsAndUpdateTimestamp()
+        {
+            // Arrange
+            var subscription = new Subscription { Id = Guid.NewGuid(), Name = "TestSub" };
+            var item = new ResultItem
+            {
+                Id = "123",
+                Title = "TestTitle",
+                UrlVideo = "http://test.com/video.mp4"
+            };
+
+            var resultChannels = new ResultChannels
+            {
+                Results = new Collection<ResultItem> { item },
+                QueryInfo = new QueryInfo { TotalResults = 1 }
+            };
+
+            _apiClientMock
+                .Setup(x => x.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultChannels.ToDto(new ApiQueryDto(), false));
+
+            var videoInfo = new VideoInfo { Title = "TestTitle", Language = "deu" };
+            _videoParserMock
+                .Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(videoInfo);
+
+            _fileNameBuilderServiceMock
+                .Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<DownloadContext>(), It.IsAny<FileType?>()))
+                .Returns(new DownloadPaths { DirectoryPath = "/tmp", MainFilePath = "/tmp/video.mp4" });
+
+            var config = new PluginConfiguration();
+            config.Subscriptions.Add(subscription);
+            _configurationProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+            _configurationProviderMock.Setup(x => x.Configuration).Returns(config);
+
+            // Act
+            var count = await _processor.ProcessSubscriptionAsync(subscription, CancellationToken.None);
+
+            // Assert
+            Assert.Equal(1, count);
+            _downloadQueueManagerMock.Verify(x => x.QueueJob(It.IsAny<DownloadJob>(), subscription.Id), Times.Once);
+            Assert.NotEqual(default, subscription.LastDownloadedTimestamp);
         }
     }
 }

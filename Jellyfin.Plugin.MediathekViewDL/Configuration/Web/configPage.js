@@ -475,6 +475,10 @@ const Language = {
         Enable: "Aktivieren",
         ResetProcessedItems: "Verarbeitete Items zurücksetzen",
         CopyConfig: "Abo Konfiguration kopieren",
+        ExecuteSub: "Downloads für dieses Abo starten",
+        DownloadStart: "Die Downloads für dieses Abo werden angelegt, dies kann je nach Abo eine weile Dauern.",
+        DownloadStarted: "Die Downloads für dieses Abo wurden angelegt.",
+        DownloadFailed: "Fehler beim Starten der Downloads für dieses Abo: ",
         Edit: "Bearbeiten",
         Delete: "Löschen",
         ProcessedItemsReset: "Verarbeitete Items für Abonnement zurückgesetzt.",
@@ -833,7 +837,7 @@ class Subscription {
 /**
  * Represents a Scheduled Task in Jellyfin.
  */
-class ScheduledTask{
+class ScheduledTask {
     constructor(data) {
         this.Category = data.Category;
         this.Id = data.Id;
@@ -1866,19 +1870,18 @@ class ScheduledTaskController {
     }
 
 
-
     init() {
         document.getElementById(DomIds.Subscription.ExecTask).addEventListener('click', () => {
             this.runTask(this.downloadKey);
         });
-        this.refreshTasks().then(() => {});
+        this.refreshTasks().then(() => {
+        });
     }
 
-    refreshTasks(){
+    refreshTasks() {
         const url = ApiClient.getUrl('/ScheduledTasks?isHidden=false');
         return ApiClient.getJSON(url).then((task) => {
             this.tasks = task.map(t => new ScheduledTask(t));
-            console.log(task, this.tasks);
         }).catch((err) => {
             console.error(Language.ScheduledTasks.ErrorLoading, err);
         });
@@ -1898,7 +1901,7 @@ class ScheduledTaskController {
         return this.tasks.find((task) => task.Key === key);
     }
 
-    runTask(key){
+    runTask(key) {
         this.getTask(key).then((task) => {
             if (!task) {
                 Helper.showError(key, Language.ScheduledTasks.TaskNotFound);
@@ -1907,6 +1910,7 @@ class ScheduledTaskController {
 
             if (!task.IsIdle) {
                 Helper.showError(Language.ScheduledTasks.TaskNotIdle);
+                return;
             }
             const url = ApiClient.getUrl('/ScheduledTasks/Running/' + task.Id + '/');
 
@@ -1915,13 +1919,15 @@ class ScheduledTaskController {
                 url: url,
             }).then(() => {
                 Helper.showToast(Language.ScheduledTasks.Started + task.Name);
-                this.refreshTasks().then(r => {});
+                this.refreshTasks().then(r => {
+                });
             }).catch((err) => {
                 Helper.showError(err, Language.ScheduledTasks.StartFailed);
             });
         });
     }
 }
+
 
 /**
  * Manages UI dependencies (showing/hiding fields based on others).
@@ -2287,6 +2293,22 @@ class SubscriptionEditor {
     close() {
         document.getElementById(DomIds.Subscription.Editor.Container).style.display = 'none';
     }
+
+    executeSub(subId) {
+        Dashboard.showLoadingMsg();
+        const url = ApiClient.getUrl('/' + this.config.pluginName + '/Subscriptions/' + subId + '/Process');
+        Helper.showToast(Language.Subscription.DownloadStart);
+        ApiClient.ajax({
+            type: "POST",
+            url: url,
+        }).then(() => {
+            Helper.showToast(Language.Subscription.DownloadStarted);
+            Dashboard.hideLoadingMsg();
+        }).catch((err) => {
+            Helper.showError(err, Language.Subscription.DownloadFailed);
+            Dashboard.hideLoadingMsg();
+        });
+    }
 }
 
 /**
@@ -2588,6 +2610,13 @@ class MediathekPluginConfig {
             const toggleBtn = this.dom.createIconButton(toggleIcon, toggleTitle, () => this.toggleSubscription(sub.Id));
             actions.appendChild(toggleBtn);
 
+            actions.appendChild(this.dom.createIconButton(Icons.ListAdd, Language.Subscription.ExecuteSub, () => {
+                Helper.confirmationPopup(sub.Name, Language.Subscription.ExecuteSub + '?', (confirmed) => {
+                    if (confirmed) {
+                        this.subscriptionEditor.executeSub(sub.Id);
+                    }
+                })
+            }));
             actions.appendChild(this.dom.createIconButton(Icons.Copy, Language.Subscription.CopyConfig, () => Helper.toClipboard(sub)));
             actions.appendChild(this.dom.createIconButton(Icons.ResetHistory, Language.Subscription.ResetProcessedItems, () => this.resetProcessedItems(sub.Id)));
             actions.appendChild(this.dom.createIconButton(Icons.Edit, Language.Subscription.Edit, () => this.subscriptionEditor.show(sub)));
