@@ -1,27 +1,48 @@
 services:
-  plugin_build:
-    build:
-      context: .
-      dockerfile: Tools/TestBuild/Dockerfile.Testbuild
-    volumes:
-      - ./jellyfin-config:/config
-
   jellyfin:
     image: jellyfin/jellyfin:latest
-    container_name: jellyfin_debug
-    depends_on:
-      plugin_build:
-        condition: service_completed_successfully
+    container_name: jellyfin-dev
     ports:
       - "8096:8096"
     volumes:
-      # Jellyfin Konfiguration
-      - ./jellyfin-config:/config
+      - jellyfin-config:/config
+      - jellyfin-cache:/cache
+    restart: unless-stopped
+    depends_on:
+      builder:
+        condition: service_completed_successfully
+    networks:
+      - plugin-dev
 
-      # SMB-Share via fstab mount (Host: /mnt/JellyfinMedia)
-      - /mnt/JellyfinMedia:/media/smb:ro
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: jellyfin-ui-proxy
+    ports:
+      - "8097:8097"
+    volumes:
+      - ./Debug/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./Jellyfin.Plugin.MediathekViewDL/Configuration/Web:/app:ro
+    networks:
+      - plugin-dev
 
-    environment:
-      - DOTNET_DEBUGGER_CHROME=1
-      - COMPlus_EnableDiagnostics=1
-      - ASPNETCORE_ENVIRONMENT=Development
+  builder:
+    build:
+      context: .
+      dockerfile: Debug/Dockerfile.builder
+    container_name: jellyfin-builder
+    volumes:
+      - .:/src:rw
+      - jellyfin-config:/jellyfin-config:rw
+    command: >
+      bash -c "
+        /bin/bash ./Debug/build-jprm.sh &&
+        mkdir -p /jellyfin-config/plugins/TemplatePlugin &&
+        unzip -o ./Debug/artifacts/*.zip -d /jellyfin-config/plugins/TemplatePlugin/
+      "
+
+networks:
+  plugin-dev:
+
+volumes:
+  jellyfin-config:
+  jellyfin-cache:

@@ -5,3 +5,6 @@ obj/
 artifacts
 Jellyfin.Plugin.MediathekViewDL.sln.DotSettings.user
 jellyfin-config/
+artifacts
+node_modules/
+configPageVueJS.js
