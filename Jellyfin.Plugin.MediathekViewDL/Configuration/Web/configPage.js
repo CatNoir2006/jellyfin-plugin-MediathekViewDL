@@ -2446,6 +2446,7 @@ class MediathekPluginConfig {
             document.getElementById(DomIds.Settings.Download.MaxBandwidth).value = config.Download.MaxBandwidthMBits || 0;
             document.getElementById(DomIds.Settings.LastRun).innerText = config.LastRun ? new Date(config.LastRun).toLocaleString() : Language.Subscription.Never;
             document.getElementById(DomIds.Settings.Paths.UseTopicForMoviePath).checked = config.Paths.UseTopicForMoviePath;
+            document.getElementById('selectActiveWebUi').value = config.ActiveWebUi || 'VueJS';
 
             // Load Subscription Defaults
             const def = config.SubscriptionDefaults || {};
@@ -3063,6 +3064,7 @@ class MediathekPluginConfig {
 
             const maxBandwidth = parseInt(document.getElementById(DomIds.Settings.Download.MaxBandwidth).value, 10);
             this.currentConfig.Download.MaxBandwidthMBits = isNaN(maxBandwidth) ? 0 : maxBandwidth;
+            this.currentConfig.ActiveWebUi = document.getElementById('selectActiveWebUi').value;
 
             // Save Subscription Defaults
             this.currentConfig.SubscriptionDefaults = {

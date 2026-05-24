@@ -52,8 +52,15 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     {
         var prefix = GetType().Namespace;
         yield return
-            new PluginPageInfo { Name = Name, EmbeddedResourcePath = prefix + ".Configuration.Web.configPage.html", EnableInMainMenu = true, };
+            new PluginPageInfo { Name = Name, EmbeddedResourcePath = prefix + ".Configuration.Web.configPage.html", EnableInMainMenu = Configuration.ActiveWebUi != WebUi.VueJS, };
         yield return
             new PluginPageInfo { Name = "MediathekViewDL.js", EmbeddedResourcePath = prefix + ".Configuration.Web.configPage.js" };
+
+        // VUE.JS PluginPage
+        yield return
+            new PluginPageInfo() { Name = Name + "VueJS", EnableInMainMenu = Configuration.ActiveWebUi != WebUi.Html, EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.Web.configPageVueJS.html", GetType().Namespace) };
+
+        yield return
+            new PluginPageInfo { Name = "MediathekViewDLVueJS.js", EmbeddedResourcePath = string.Format(CultureInfo.InvariantCulture, "{0}.Configuration.Web.MediathekViewDLVueJS.js", GetType().Namespace) };
     }
 }

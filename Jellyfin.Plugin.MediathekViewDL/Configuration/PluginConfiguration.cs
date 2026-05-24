@@ -10,6 +10,28 @@ using MediaBrowser.Model.Plugins;
 namespace Jellyfin.Plugin.MediathekViewDL.Configuration;
 
 /// <summary>
+/// The WebUI to show in the sidebar of the plugin configuration.
+/// </summary>
+public enum WebUi
+{
+    /// <summary>
+    /// Shows the VueJS WebUI in Sidebar.
+    /// </summary>
+    VueJS,
+
+    /// <summary>
+    /// Shows both WebUIs in Sidebar.
+    /// </summary>
+    ShowBoth,
+
+    /// <summary>
+    /// Shows the HTML WebUI in Sidebar.
+    /// The Legacy UI.
+    /// </summary>
+    Html,
+}
+
+/// <summary>
 /// Plugin configuration.
 /// </summary>
 public class PluginConfiguration : BasePluginConfiguration
@@ -27,6 +49,11 @@ public class PluginConfiguration : BasePluginConfiguration
     /// Used for migrations.
     /// </summary>
     public int ConfigVersion { get; set; }
+
+    /// <summary>
+    /// Gets or sets the WebUI to show on the Sidebar.
+    /// </summary>
+    public WebUi ActiveWebUi { get; set; } = WebUi.VueJS;
 
     #pragma warning disable SA1124
     // ToDo: Remove obsolete properties on 1.0.0.0 release

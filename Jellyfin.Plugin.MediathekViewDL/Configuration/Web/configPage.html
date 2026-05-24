@@ -112,6 +112,20 @@
                     <div class="sectionTitleLabel">Allgemeine Einstellungen</div>
                     <form id="MediathekGeneralConfigForm">
 
+                        <details open>
+                            <summary class="inputLabel mvpl-collapsible-summary">Allgemeine Einstellungen</summary>
+                            <div class="mvpl-details-content">
+                                <div class="inputContainer">
+                                    <label class="inputLabel" for="selectActiveWebUi">Aktive WebUI</label>
+                                    <select is="emby-select" id="selectActiveWebUi">
+                                        <option value="VueJS">VueJS</option>
+                                        <option value="ShowBoth">Beide anzeigen</option>
+                                        <option value="Html">HTML Legacy</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </details>
+
                         <details>
                             <summary class="inputLabel mvpl-collapsible-summary">Pfade-Einstellugen</summary>
                             <div class="mvpl-details-content">
