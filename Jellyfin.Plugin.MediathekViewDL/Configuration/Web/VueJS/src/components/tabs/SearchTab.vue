@@ -1,6 +1,10 @@
 <script setup>
 import {ref, watch} from 'vue'
 
+const props = defineProps({
+    onCreateSub: { type: Function, required: true }
+})
+
 const ApiClient = window.ApiClient ?? null
 const PLUGIN_ID = 'a31b415a-5264-419d-b152-8c8192a54994'
 
@@ -21,6 +25,7 @@ let debounceTimer = null;
 async function performSearch() {
     if (!ApiClient) return
     if (!searchTitle.value && !searchTopic.value && !searchChannel.value && !searchCombined.value) {
+        results.value = [];
         return
     }
 
@@ -75,6 +80,62 @@ function openVideo(item) {
         window.open(bestVideo.Url, '_blank')
     }
 }
+
+async function createSubFromSearch() {
+    if (!ApiClient) return
+    
+    try {
+        const params = new URLSearchParams()
+        if (searchTitle.value) params.append('title', searchTitle.value)
+        if (searchTopic.value) params.append('topic', searchTopic.value)
+        if (searchChannel.value) params.append('channel', searchChannel.value)
+        if (searchCombined.value) params.append('combinedSearch', searchCombined.value)
+        
+        // Get structured criteria from API to handle comma separation correctly
+        const url = ApiClient.getUrl('MediathekViewDL/Search/Criteria?' + params.toString())
+        const criteria = await ApiClient.getJSON(url)
+        
+        props.onCreateSub({
+            Name: searchTitle.value || searchTopic.value || searchCombined.value || 'Suche',
+            IsEnabled: true,
+            Search: {
+                Criteria: criteria,
+                MinDurationMinutes: minDuration.value,
+                MaxDurationMinutes: maxDuration.value,
+                MinBroadcastDate: minBroadcastDate.value ? new Date(minBroadcastDate.value).toISOString() : null,
+                MaxBroadcastDate: maxBroadcastDate.value ? new Date(maxBroadcastDate.value).toISOString() : null
+            }
+        });
+    } catch (e) {
+        console.error('Failed to convert criteria', e)
+    }
+}
+
+async function createSubFromItem(item) {
+    if (!ApiClient) return
+    
+    try {
+        // Use the API to get clean criteria for this item
+        // This is important because Title/Topic/Channel might contain commas
+        const params = new URLSearchParams()
+        if (item.Title) params.append('title', item.Title)
+        if (item.Topic) params.append('topic', item.Topic)
+        if (item.Channel) params.append('channel', item.Channel)
+        
+        const url = ApiClient.getUrl('MediathekViewDL/Search/Criteria?' + params.toString())
+        const criteria = await ApiClient.getJSON(url)
+        
+        props.onCreateSub({
+            Name: item.Topic || item.Title,
+            IsEnabled: true,
+            Search: {
+                Criteria: criteria
+            }
+        });
+    } catch (e) {
+        console.error('Failed to convert item criteria', e)
+    }
+}
 </script>
 
 <template>
@@ -104,8 +165,7 @@ function openVideo(item) {
                     <input v-model="minDuration" type="number" class="field-input" placeholder="0">
                 </div>
                 <div class="field">
-                    <label>Max. Dauer (Minuten)</label>
-                    <input v-model="maxDuration" type="number" class="field-input" placeholder="unbegrenzt">
+                    <label>Max. Dauer (Minuten)</label>                    <input v-model="maxDuration" type="number" class="field-input" placeholder="unbegrenzt">
                 </div>
 
                 <div class="field">
@@ -122,6 +182,9 @@ function openVideo(item) {
                 <button type="submit" class="btn btn-primary" :disabled="loading">
                     {{ loading ? 'Suche läuft...' : 'Suche starten' }}
                 </button>
+                <button type="button" @click="createSubFromSearch" class="btn btn-secondary btn-icon-only" title="Abo aus Suche erstellen">
+                    ➕
+                </button>
             </div>
         </form>
 
@@ -132,12 +195,13 @@ function openVideo(item) {
                     <div class="result-title">{{ item.Title }}</div>
                     <div class="result-meta">
                         {{ item.Channel }} | {{ item.Topic }} | {{ item.Duration }} |
-                        <span v-if="item.SubtitleUrls.length > 0" class="material-icons closed_caption" title="Untertitel verfügbar"></span>
+                        <span v-if="item.SubtitleUrls && item.SubtitleUrls.length > 0" class="material-icons closed_caption" title="Untertitel verfügbar"></span>
                     </div>
                     <div class="result-meta">{{ item.Description }}</div>
                 </div>
                 <div class="result-actions">
                     <button @click="openVideo(item)" class="btn-icon" title="Im Browser abspielen">▶</button>
+                    <button @click="createSubFromItem(item)" class="btn-icon" title="Abo für diese Sendung erstellen">➕</button>
                 </div>
             </div>
         </div>
@@ -163,8 +227,7 @@ function openVideo(item) {
 
 .field {
     display: flex;
-    flex-direction: column;
-    gap: 5px;
+    flex-direction: column; gap: 5px;
 }
 
 .field label {
@@ -191,6 +254,8 @@ function openVideo(item) {
     margin-top: 20px;
     display: flex;
     justify-content: flex-start;
+    gap: 15px;
+    align-items: center;
 }
 
 .results-list {
@@ -259,6 +324,22 @@ function openVideo(item) {
 .btn-primary:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: #3f3f46;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    height: 42px;
+}
+
+.btn-icon-only {
+    padding: 10px;
+    font-size: 1.2rem;
 }
 
 .no-results {
