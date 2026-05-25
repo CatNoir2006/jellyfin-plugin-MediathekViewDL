@@ -344,6 +344,7 @@ function updateDate(target, field, value) {
                 </footer>
             </div>
         </div>
+    </div>
 </template>
 
 <style scoped>

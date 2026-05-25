@@ -44,6 +44,23 @@ async function deleteSubscription(id) {
   })
 }
 
+async function resetProcessedItems(id) {
+  if (!ApiClient || !Dashboard) return
+  Dashboard.confirm('Soll der Verlauf der bereits verarbeiteten Elemente für dieses Abonnement wirklich zurückgesetzt werden?', 'Zurücksetzen bestätigen', async (result) => {
+    if (result) {
+      try {
+        const url = ApiClient.getUrl('MediathekViewDL/Subscriptions/' + id + '/ResetHistory')
+        await ApiClient.ajax({ type: 'POST', url })
+        Dashboard.alert('Verlauf wurde zurückgesetzt.')
+        await fetchSubscriptions()
+      } catch (e) {
+        console.error('Reset failed', e)
+        Dashboard.alert('Fehler beim Zurücksetzen.')
+      }
+    }
+  })
+}
+
 async function processSubscription(id) {
   if (!ApiClient || !Dashboard) return
   try {
@@ -93,6 +110,7 @@ defineExpose({ refresh: fetchSubscriptions })
           </div>
         </div>
         <div class="sub-actions">
+          <button @click="resetProcessedItems(sub.Id)" class="btn-icon" title="Verlauf zurücksetzen">↩️</button>
           <button @click="processSubscription(sub.Id)" class="btn-icon" title="Jetzt verarbeiten">🔄</button>
           <button @click="onEdit(sub)" class="btn-icon" title="Bearbeiten">✏️</button>
           <button @click="deleteSubscription(sub.Id)" class="btn-icon btn-delete" title="Löschen">🗑️</button>
