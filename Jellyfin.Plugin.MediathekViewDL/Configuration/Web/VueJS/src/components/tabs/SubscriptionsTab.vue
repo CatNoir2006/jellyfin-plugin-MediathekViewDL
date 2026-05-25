@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import SubscriptionEditor from '../SubscriptionEditor.vue'
 
 const ApiClient = window.ApiClient ?? null
 const Dashboard = window.Dashboard ?? null
@@ -7,6 +8,9 @@ const Dashboard = window.Dashboard ?? null
 const subscriptions = ref([])
 const loading = ref(false)
 const error = ref(null)
+
+const editingSub = ref(null)
+const pluginConfig = ref(null)
 
 async function fetchSubscriptions() {
   if (!ApiClient) return
@@ -16,10 +20,77 @@ async function fetchSubscriptions() {
     const url = ApiClient.getUrl('MediathekViewDL/Subscriptions')
     subscriptions.value = await ApiClient.getJSON(url)
   } catch (e) {
-    error.value = 'Fehler beim Laden der Abonnements. Bitte stelle sicher, dass das Plugin korrekt initialisiert wurde.'
+    error.value = 'Fehler beim Laden der Abonnements.'
     console.error('Failed to fetch subscriptions', e)
   } finally {
     loading.value = false
+  }
+}
+
+async function fetchConfig() {
+  if (!ApiClient) return
+  const PLUGIN_ID = 'a31b415a-5264-419d-b152-8c8192a54994'
+  pluginConfig.value = await ApiClient.getPluginConfiguration(PLUGIN_ID)
+}
+
+function createNewSubscription() {
+  if (!pluginConfig.value) return
+  
+  // Create a new sub with defaults
+  editingSub.value = {
+    Name: '',
+    IsEnabled: true,
+    Search: {
+      Criteria: [{ Fields: ['Title', 'Topic'], Query: '', IsExclude: false }],
+      MinDurationMinutes: pluginConfig.value.SubscriptionDefaults.SearchSettings.MinDurationMinutes,
+      MaxDurationMinutes: pluginConfig.value.SubscriptionDefaults.SearchSettings.MaxDurationMinutes
+    },
+    Download: {
+      DownloadPath: '',
+      UseStreamingUrlFiles: pluginConfig.value.SubscriptionDefaults.DownloadSettings.UseStreamingUrlFiles,
+      AlwaysCreateSubfolder: pluginConfig.value.SubscriptionDefaults.DownloadSettings.AlwaysCreateSubfolder,
+      AllowFallbackToLowerQuality: pluginConfig.value.SubscriptionDefaults.DownloadSettings.AllowFallbackToLowerQuality
+    },
+    Series: {
+      EnforceSeriesParsing: pluginConfig.value.SubscriptionDefaults.SeriesSettings.EnforceSeriesParsing,
+      AllowAbsoluteEpisodeNumbering: pluginConfig.value.SubscriptionDefaults.SeriesSettings.AllowAbsoluteEpisodeNumbering,
+      TreatNonEpisodesAsExtras: pluginConfig.value.SubscriptionDefaults.SeriesSettings.TreatNonEpisodesAsExtras
+    },
+    Metadata: {
+      OriginalLanguage: pluginConfig.value.SubscriptionDefaults.MetadataSettings.OriginalLanguage,
+      CreateNfo: pluginConfig.value.SubscriptionDefaults.MetadataSettings.CreateNfo,
+      AppendDateToTitle: pluginConfig.value.SubscriptionDefaults.MetadataSettings.AppendDateToTitle,
+      KeepOriginalTitle: pluginConfig.value.SubscriptionDefaults.MetadataSettings.KeepOriginalTitle
+    }
+  }
+}
+
+function editSubscription(sub) {
+  editingSub.value = sub
+}
+
+async function saveSubscription(sub) {
+  if (!ApiClient) return
+  
+  try {
+    const isNew = !sub.Id
+    const url = isNew 
+      ? ApiClient.getUrl('MediathekViewDL/Subscriptions')
+      : ApiClient.getUrl('MediathekViewDL/Subscriptions/' + sub.Id)
+    
+    await ApiClient.ajax({
+      type: isNew ? 'POST' : 'PUT',
+      url: url,
+      data: JSON.stringify(sub),
+      contentType: 'application/json'
+    })
+    
+    editingSub.value = null
+    await fetchSubscriptions()
+    if (Dashboard) Dashboard.alert('Abonnement gespeichert.')
+  } catch (e) {
+    console.error('Save failed', e)
+    if (Dashboard) Dashboard.alert('Fehler beim Speichern des Abonnements.')
   }
 }
 
@@ -52,15 +123,16 @@ async function processSubscription(id) {
       type: 'POST',
       url: url
     })
-    Dashboard.alert(count + ' neue Elemente gefunden und zur Warteschlange hinzugefügt.')
+    Dashboard.alert(count + ' neue Elemente gefunden.')
   } catch (e) {
     console.error('Processing failed', e)
-    Dashboard.alert('Fehler beim Verarbeiten des Abonnements.')
+    Dashboard.alert('Fehler beim Verarbeiten.')
   }
 }
 
 onMounted(() => {
   fetchSubscriptions()
+  fetchConfig()
 })
 </script>
 
@@ -68,7 +140,7 @@ onMounted(() => {
   <div class="card">
     <div class="header-row">
       <h2>Abo Verwaltung</h2>
-      <button class="btn btn-primary" @click="Dashboard.alert('Abo hinzufügen kommt bald!')" :disabled="loading">Neues Abo</button>
+      <button class="btn btn-primary" @click="createNewSubscription" :disabled="loading">Neues Abo</button>
     </div>
 
     <div v-if="loading" class="state-msg">
@@ -94,6 +166,7 @@ onMounted(() => {
         </div>
         <div class="sub-actions">
           <button @click="processSubscription(sub.Id)" class="btn-icon" title="Jetzt verarbeiten">🔄</button>
+          <button @click="editSubscription(sub)" class="btn-icon" title="Bearbeiten">✏️</button>
           <button @click="deleteSubscription(sub.Id)" class="btn-icon btn-delete" title="Löschen">🗑️</button>
         </div>
       </div>
@@ -102,6 +175,15 @@ onMounted(() => {
     <div v-else class="no-data">
       Keine Abonnements konfiguriert.
     </div>
+
+    <!-- Modal Editor -->
+    <Teleport to="body">
+      <SubscriptionEditor 
+        :subscription="editingSub" 
+        @save="saveSubscription" 
+        @cancel="editingSub = null"
+      />
+    </Teleport>
   </div>
 </template>
 
@@ -122,7 +204,7 @@ onMounted(() => {
 .sub-meta { font-size: 0.85rem; color: #a1a1aa; margin-top: 4px; }
 .badge { background: #3f3f46; color: #e4e4e7; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: normal; }
 .sub-actions { display: flex; gap: 15px; }
-.btn-icon { background: none; border: none; cursor: pointer; font-size: 1.4rem; padding: 5px; border-radius: 4px; filter: grayscale(1); }
+.btn-icon { background: none; border: none; cursor: pointer; font-size: 1.4rem; padding: 5px; border-radius: 4px; filter: grayscale(1); color: white; }
 .btn-icon:hover { background: #3f3f46; filter: none; }
 .btn-delete:hover { color: #ef4444; }
 .btn-primary { background: #7c3aed; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 600; }
