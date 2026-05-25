@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { SubscriptionFactory } from '../utils/SubscriptionFactory'
 import SearchTab from './tabs/SearchTab.vue'
 import SettingsTab from './tabs/SettingsTab.vue'
 import SubscriptionsTab from './tabs/SubscriptionsTab.vue'
@@ -30,46 +31,7 @@ function openEditor(subData = null) {
   } else {
     // New subscription with defaults
     const def = pluginConfig.value?.SubscriptionDefaults || {}
-    editingSub.value = {
-      Name: '',
-      IsEnabled: true,
-      Search: {
-        Criteria: [{ Fields: ['Title', 'Topic'], Query: '', IsExclude: false }],
-        MinDurationMinutes: def.SearchSettings?.MinDurationMinutes || null,
-        MaxDurationMinutes: def.SearchSettings?.MaxDurationMinutes || null,
-        MinBroadcastDate: null,
-        MaxBroadcastDate: null
-      },
-      Download: {
-        DownloadPath: '',
-        UseStreamingUrlFiles: def.DownloadSettings?.UseStreamingUrlFiles || false,
-        AlwaysCreateSubfolder: def.DownloadSettings?.AlwaysCreateSubfolder || false,
-        AllowFallbackToLowerQuality: def.DownloadSettings?.AllowFallbackToLowerQuality ?? true,
-        EnhancedDuplicateDetection: def.DownloadSettings?.EnhancedDuplicateDetection || false,
-        QualityCheckWithUrl: def.DownloadSettings?.QualityCheckWithUrl || false,
-        DownloadFullVideoForSecondaryAudio: def.DownloadSettings?.DownloadFullVideoForSecondaryAudio || false
-      },
-      Series: {
-        EnforceSeriesParsing: def.SeriesSettings?.EnforceSeriesParsing || false,
-        AllowAbsoluteEpisodeNumbering: def.SeriesSettings?.AllowAbsoluteEpisodeNumbering || false,
-        TreatNonEpisodesAsExtras: def.SeriesSettings?.TreatNonEpisodesAsExtras || false,
-        SaveTrailers: def.SeriesSettings?.SaveTrailers ?? true,
-        SaveInterviews: def.SeriesSettings?.SaveInterviews ?? true,
-        SaveGenericExtras: def.SeriesSettings?.SaveGenericExtras ?? true,
-        SaveExtrasAsStrm: def.SeriesSettings?.SaveExtrasAsStrm || false
-      },
-      Metadata: {
-        OriginalLanguage: def.MetadataSettings?.OriginalLanguage || '',
-        CreateNfo: def.MetadataSettings?.CreateNfo || false,
-        AppendDateToTitle: def.MetadataSettings?.AppendDateToTitle || false,
-        KeepOriginalTitle: def.MetadataSettings?.KeepOriginalTitle || false,
-        AppendTimeToTitle: def.MetadataSettings?.AppendTimeToTitle || false
-      },
-      Accessibility: {
-        AllowAudioDescription: def.AccessibilitySettings?.AllowAudioDescription || false,
-        AllowSignLanguage: def.AccessibilitySettings?.AllowSignLanguage || false
-      }
-    }
+    editingSub.value = SubscriptionFactory.createDefault(def)
   }
 }
 
@@ -77,17 +39,17 @@ async function saveSubscription(sub) {
   if (!ApiClient) return
   try {
     const isNew = !sub.Id
-    const url = isNew 
+    const url = isNew
       ? ApiClient.getUrl('MediathekViewDL/Subscriptions')
       : ApiClient.getUrl('MediathekViewDL/Subscriptions/' + sub.Id)
-    
+
     await ApiClient.ajax({
       type: isNew ? 'POST' : 'PUT',
       url: url,
       data: JSON.stringify(sub),
       contentType: 'application/json'
     })
-    
+
     editingSub.value = null
     if (Dashboard) Dashboard.alert('Abonnement gespeichert.')
     // Notify child components to refresh (could use a key or ref)
@@ -111,12 +73,12 @@ async function testSubscription(sub) {
       contentType: 'application/json',
       dataType: 'json'
     })
-    
+
     let finalArray = [];
     if (Array.isArray(results)) finalArray = results;
     else if (results && Array.isArray(results.Items)) finalArray = results.Items;
     else if (results && Array.isArray(results.data)) finalArray = results.data;
-    
+
     testResults.value = finalArray;
   } catch (e) {
     console.error('Test failed', e)
@@ -136,7 +98,6 @@ onMounted(() => {
   <div class="plugin-config">
     <header class="config-header">
       <h1 class="config-title">MediathekViewDL</h1>
-      <p class="config-subtitle">Plugin Konfiguration</p>
     </header>
 
     <div class="tab-row">
@@ -155,9 +116,9 @@ onMounted(() => {
 
     <!-- Shared Subscription Editor -->
     <Teleport to="body">
-      <SubscriptionEditor 
-        :subscription="editingSub" 
-        @save="saveSubscription" 
+      <SubscriptionEditor
+        :subscription="editingSub"
+        @save="saveSubscription"
         @test="testSubscription"
         @cancel="editingSub = null"
       />
@@ -182,8 +143,9 @@ onMounted(() => {
             <div v-else class="test-results-list">
               <p>Folgende {{ testResults.length }} Sendungen würden heruntergeladen werden:</p>
               <div v-for="(item, idx) in testResults" :key="idx" class="test-item">
-                <div class="test-item-title">{{ item.Title || item.title }}</div>
-                <div class="test-item-meta">{{ item.Channel || item.channel }} | {{ item.Topic || item.topic }} | {{ item.Duration || item.duration }}</div>
+                <div class="test-item-title">{{ item.Title }}</div>
+                  <div class="test-item-meta">{{ item.Channel }} | {{ item.Topic }} | {{ item.Duration }}</div>
+                  <div class="test-item-meta">{{ item.Description }}</div>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 (function(){
           const style = document.createElement('style');
-          style.textContent = ".search-form[data-v-422f8120]{width:100%;max-width:none;margin-bottom:20px}.search-grid[data-v-422f8120]{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px;width:100%;display:grid}.field[data-v-422f8120]{flex-direction:column;gap:5px;display:flex}.field label[data-v-422f8120]{color:#a1a1aa;font-size:.9rem}.field-input[data-v-422f8120]{color:#fff;box-sizing:border-box;background:#27272a;border:1px solid #3f3f46;border-radius:4px;width:100%;padding:10px}.field-input[data-v-422f8120]:focus{border-color:#7c3aed;outline:none}.form-actions[data-v-422f8120]{justify-content:flex-start;align-items:center;gap:15px;margin-top:20px;display:flex}.results-list[data-v-422f8120]{margin-top:20px}.result-item[data-v-422f8120]{border-bottom:1px solid #333;justify-content:space-between;align-items:center;padding:12px;display:flex}.result-item[data-v-422f8120]:last-child{border-bottom:none}.result-title[data-v-422f8120]{margin-bottom:2px;font-weight:700}.result-meta[data-v-422f8120]{color:#a1a1aa;align-items:center;gap:8px;font-size:.8rem;display:flex}.closed_caption[data-v-422f8120]{font-size:1.1rem}.result-actions[data-v-422f8120]{gap:10px;display:flex}.btn-icon[data-v-422f8120]{color:#fff;cursor:pointer;background:0 0;border:none;border-radius:4px;padding:5px;font-size:1.4rem}.btn-icon[data-v-422f8120]:hover{background:#3f3f46}.btn-primary[data-v-422f8120]{color:#fff;cursor:pointer;background:#7c3aed;border:none;border-radius:4px;height:42px;padding:10px 30px;font-weight:600}.btn-primary[data-v-422f8120]:disabled{opacity:.5;cursor:not-allowed}.btn-secondary[data-v-422f8120]{color:#fff;cursor:pointer;background:#3f3f46;border:none;border-radius:4px;height:42px;padding:10px 20px;font-weight:600}.btn-icon-only[data-v-422f8120]{padding:10px;font-size:1.2rem}.no-results[data-v-422f8120]{text-align:center;color:#a1a1aa;width:100%;padding:20px}.header-row[data-v-733f9dde]{justify-content:space-between;align-items:center;margin-bottom:20px;display:flex}.subscriptions-list[data-v-733f9dde]{gap:10px;display:grid}.subscription-item[data-v-733f9dde]{background:#27272a;border:1px solid #3f3f46;border-radius:8px;justify-content:space-between;align-items:center;padding:15px;display:flex}.subscription-item.disabled[data-v-733f9dde]{opacity:.6;border-style:dashed}.sub-name[data-v-733f9dde]{align-items:center;gap:10px;font-size:1.1rem;font-weight:700;display:flex}.sub-meta[data-v-733f9dde]{color:#a1a1aa;margin-top:4px;font-size:.85rem}.badge[data-v-733f9dde]{color:#e4e4e7;background:#3f3f46;border-radius:4px;padding:2px 8px;font-size:.7rem;font-weight:400}.sub-actions[data-v-733f9dde]{gap:15px;display:flex}.btn-icon[data-v-733f9dde]{cursor:pointer;filter:grayscale();color:#fff;background:0 0;border:none;border-radius:4px;padding:5px;font-size:1.4rem}.btn-icon[data-v-733f9dde]:hover{filter:none;background:#3f3f46}.btn-delete[data-v-733f9dde]:hover{color:#ef4444}.btn-primary[data-v-733f9dde]{color:#fff;cursor:pointer;background:#7c3aed;border:none;border-radius:4px;padding:10px 20px;font-weight:600}.btn-secondary[data-v-733f9dde]{color:#fff;cursor:pointer;background:#3f3f46;border:none;border-radius:4px;margin-top:10px;padding:8px 16px}.state-msg[data-v-733f9dde]{text-align:center;color:#a1a1aa;padding:40px}.error-container[data-v-733f9dde]{text-align:center;color:#ef4444;background:#ef44441a;border:1px solid #ef4444;border-radius:8px;padding:30px}.error-msg[data-v-733f9dde]{margin-bottom:10px;font-weight:700}.no-data[data-v-733f9dde]{text-align:center;color:#a1a1aa;background:#27272a;border:1px dashed #3f3f46;border-radius:8px;padding:40px}.spinner[data-v-733f9dde]{border:3px solid #ffffff1a;border-top-color:#7c3aed;border-radius:50%;width:24px;height:24px;margin:0 auto 10px;animation:1s linear infinite spin-733f9dde}@keyframes spin-733f9dde{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.editor-overlay[data-v-91b0064b]{z-index:9999;background:#000c;justify-content:center;align-items:center;width:100%;height:100%;padding:20px;display:flex;position:fixed;top:0;left:0}.editor-modal[data-v-91b0064b]{background:#18181b;border:1px solid #3f3f46;border-radius:8px;flex-direction:column;width:100%;max-width:800px;height:80vh;min-height:500px;display:flex;overflow:hidden;box-shadow:0 20px 25px -5px #00000080}.editor-header[data-v-91b0064b]{border-bottom:1px solid #3f3f46;justify-content:space-between;align-items:center;padding:20px;display:flex}.editor-tabs[data-v-91b0064b]{background:#27272a;border-bottom:1px solid #3f3f46;display:flex;overflow-x:auto}.editor-content[data-v-91b0064b]{flex:1;padding:20px;overflow-y:auto}.editor-footer[data-v-91b0064b]{border-top:1px solid #3f3f46;justify-content:flex-end;gap:15px;padding:20px;display:flex}.tab-btn[data-v-91b0064b]{color:#a1a1aa;cursor:pointer;white-space:nowrap;background:0 0;border:none;padding:12px 20px}.tab-btn.active[data-v-91b0064b]{color:#7c3aed;background:#18181b;border-bottom:2px solid #7c3aed}.field[data-v-91b0064b]{margin-bottom:15px}.field label[data-v-91b0064b]{color:#a1a1aa;margin-bottom:5px;font-size:.9rem;display:block}.field-input[data-v-91b0064b]{color:#fff;box-sizing:border-box;background:#27272a;border:1px solid #3f3f46;border-radius:4px;width:100%;padding:10px}.field-desc[data-v-91b0064b]{color:#71717a;margin-top:4px;font-size:.75rem;line-height:1.4}.checkbox-field[data-v-91b0064b]{margin-bottom:15px}.checkbox-field label[data-v-91b0064b]{cursor:pointer;align-items:center;gap:10px;font-weight:600;display:flex}.grid-2[data-v-91b0064b]{grid-template-columns:1fr 1fr;gap:20px;display:grid}.query-row[data-v-91b0064b]{background:#27272a;border:1px solid #3f3f46;border-radius:8px;margin-bottom:15px;padding:15px}.query-fields[data-v-91b0064b]{gap:8px;margin-bottom:10px;display:flex}.field-tag[data-v-91b0064b]{color:#a1a1aa;cursor:pointer;background:#3f3f46;border:none;border-radius:12px;padding:4px 10px;font-size:.75rem}.field-tag.active[data-v-91b0064b]{color:#fff;background:#7c3aed}.query-input-row[data-v-91b0064b]{align-items:center;gap:10px;display:flex}.input-with-btn[data-v-91b0064b]{gap:10px;display:flex}.sub-options[data-v-91b0064b]{border-left:2px solid #3f3f46;margin-top:10px;margin-bottom:10px;margin-left:25px;padding-left:15px}.btn-small[data-v-91b0064b]{color:#fff;cursor:pointer;background:#27272a;border:1px solid #3f3f46;border-radius:4px;padding:5px 10px;font-size:.75rem}.btn-danger[data-v-91b0064b]{background:#ef4444;border-color:#ef4444}.plugin-config[data-v-35d1584e]{color:#e4e4e7;box-sizing:border-box;width:100%;margin:0 auto;padding:1rem}.config-header[data-v-35d1584e]{margin-bottom:2rem}.tab-row[data-v-35d1584e]{border-bottom:1px solid #333;gap:10px;margin-bottom:20px;padding-bottom:10px;display:flex}.tab-btn[data-v-35d1584e]{color:#a1a1aa;cursor:pointer;background:0 0;border:none;padding:10px;font-weight:600}.tab-btn.active[data-v-35d1584e]{color:#7c3aed;border-bottom:2px solid #7c3aed}.modal-overlay[data-v-35d1584e]{z-index:10000;background:#000000f2;justify-content:center;align-items:center;width:100%;height:100%;padding:20px;display:flex;position:fixed;top:0;left:0}.modal-card[data-v-35d1584e]{background:#18181b;border:1px solid #3f3f46;border-radius:8px;flex-direction:column;width:100%;max-width:800px;max-height:80vh;display:flex;overflow:hidden}.modal-header[data-v-35d1584e]{border-bottom:1px solid #3f3f46;justify-content:space-between;align-items:center;padding:20px;display:flex}.modal-content[data-v-35d1584e]{flex:1;padding:20px;overflow-y:auto}.modal-footer[data-v-35d1584e]{border-top:1px solid #3f3f46;justify-content:flex-end;padding:20px;display:flex}.test-item[data-v-35d1584e]{border-bottom:1px solid #333;padding:12px}.test-item-title[data-v-35d1584e]{margin-bottom:2px;font-weight:700}.test-item-meta[data-v-35d1584e]{color:#a1a1aa;font-size:.8rem}.state-msg[data-v-35d1584e],.no-data[data-v-35d1584e]{text-align:center;color:#a1a1aa;padding:40px}.spinner[data-v-35d1584e]{border:3px solid #ffffff1a;border-top-color:#7c3aed;border-radius:50%;width:24px;height:24px;margin:0 auto 10px;animation:1s linear infinite spin-35d1584e}@keyframes spin-35d1584e{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.btn-icon[data-v-35d1584e]{color:#fff;cursor:pointer;background:0 0;border:none;font-size:1.2rem}.btn-primary[data-v-35d1584e]{color:#fff;cursor:pointer;background:#7c3aed;border:none;border-radius:4px;padding:10px 20px;font-weight:600}\n/*$vite$:1*/";
+          style.textContent = ".search-form[data-v-0f1b9dfa]{width:100%;max-width:none;margin-bottom:20px}.search-grid[data-v-0f1b9dfa]{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px;width:100%;display:grid}.field[data-v-0f1b9dfa]{flex-direction:column;gap:5px;display:flex}.field label[data-v-0f1b9dfa]{color:#a1a1aa;font-size:.9rem}.field-input[data-v-0f1b9dfa]{color:#fff;box-sizing:border-box;background:#27272a;border:1px solid #3f3f46;border-radius:4px;width:100%;padding:10px}.field-input[data-v-0f1b9dfa]:focus{border-color:#7c3aed;outline:none}.form-actions[data-v-0f1b9dfa]{justify-content:flex-start;align-items:center;gap:15px;margin-top:20px;display:flex}.results-list[data-v-0f1b9dfa]{margin-top:20px}.result-item[data-v-0f1b9dfa]{border-bottom:1px solid #333;justify-content:space-between;align-items:center;padding:12px;display:flex}.result-item[data-v-0f1b9dfa]:last-child{border-bottom:none}.result-title[data-v-0f1b9dfa]{margin-bottom:2px;font-weight:700}.result-meta[data-v-0f1b9dfa]{color:#a1a1aa;align-items:center;gap:8px;font-size:.8rem;display:flex}.closed_caption[data-v-0f1b9dfa]{font-size:1.1rem}.result-actions[data-v-0f1b9dfa]{gap:10px;display:flex}.btn-icon[data-v-0f1b9dfa]{color:#fff;cursor:pointer;background:0 0;border:none;border-radius:4px;padding:5px;font-size:1.4rem}.btn-icon[data-v-0f1b9dfa]:hover{background:#3f3f46}.btn-primary[data-v-0f1b9dfa]{color:#fff;cursor:pointer;background:#7c3aed;border:none;border-radius:4px;height:42px;padding:10px 30px;font-weight:600}.btn-primary[data-v-0f1b9dfa]:disabled{opacity:.5;cursor:not-allowed}.btn-secondary[data-v-0f1b9dfa]{color:#fff;cursor:pointer;background:#3f3f46;border:none;border-radius:4px;height:42px;padding:10px 20px;font-weight:600}.btn-icon-only[data-v-0f1b9dfa]{padding:10px;font-size:1.2rem}.no-results[data-v-0f1b9dfa]{text-align:center;color:#a1a1aa;width:100%;padding:20px}.header-row[data-v-733f9dde]{justify-content:space-between;align-items:center;margin-bottom:20px;display:flex}.subscriptions-list[data-v-733f9dde]{gap:10px;display:grid}.subscription-item[data-v-733f9dde]{background:#27272a;border:1px solid #3f3f46;border-radius:8px;justify-content:space-between;align-items:center;padding:15px;display:flex}.subscription-item.disabled[data-v-733f9dde]{opacity:.6;border-style:dashed}.sub-name[data-v-733f9dde]{align-items:center;gap:10px;font-size:1.1rem;font-weight:700;display:flex}.sub-meta[data-v-733f9dde]{color:#a1a1aa;margin-top:4px;font-size:.85rem}.badge[data-v-733f9dde]{color:#e4e4e7;background:#3f3f46;border-radius:4px;padding:2px 8px;font-size:.7rem;font-weight:400}.sub-actions[data-v-733f9dde]{gap:15px;display:flex}.btn-icon[data-v-733f9dde]{cursor:pointer;filter:grayscale();color:#fff;background:0 0;border:none;border-radius:4px;padding:5px;font-size:1.4rem}.btn-icon[data-v-733f9dde]:hover{filter:none;background:#3f3f46}.btn-delete[data-v-733f9dde]:hover{color:#ef4444}.btn-primary[data-v-733f9dde]{color:#fff;cursor:pointer;background:#7c3aed;border:none;border-radius:4px;padding:10px 20px;font-weight:600}.btn-secondary[data-v-733f9dde]{color:#fff;cursor:pointer;background:#3f3f46;border:none;border-radius:4px;margin-top:10px;padding:8px 16px}.state-msg[data-v-733f9dde]{text-align:center;color:#a1a1aa;padding:40px}.error-container[data-v-733f9dde]{text-align:center;color:#ef4444;background:#ef44441a;border:1px solid #ef4444;border-radius:8px;padding:30px}.error-msg[data-v-733f9dde]{margin-bottom:10px;font-weight:700}.no-data[data-v-733f9dde]{text-align:center;color:#a1a1aa;background:#27272a;border:1px dashed #3f3f46;border-radius:8px;padding:40px}.spinner[data-v-733f9dde]{border:3px solid #ffffff1a;border-top-color:#7c3aed;border-radius:50%;width:24px;height:24px;margin:0 auto 10px;animation:1s linear infinite spin-733f9dde}@keyframes spin-733f9dde{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.editor-overlay[data-v-a6c8dd1b]{z-index:9999;background:#000c;justify-content:center;align-items:center;width:100%;height:100%;padding:20px;display:flex;position:fixed;top:0;left:0}.editor-modal[data-v-a6c8dd1b]{background:#18181b;border:1px solid #3f3f46;border-radius:8px;flex-direction:column;width:100%;max-width:800px;height:80vh;min-height:500px;display:flex;overflow:hidden;box-shadow:0 20px 25px -5px #00000080}.editor-header[data-v-a6c8dd1b]{border-bottom:1px solid #3f3f46;justify-content:space-between;align-items:center;padding:20px;display:flex}.editor-tabs[data-v-a6c8dd1b]{background:#27272a;border-bottom:1px solid #3f3f46;display:flex;overflow-x:auto}.editor-content[data-v-a6c8dd1b]{flex:1;padding:20px;overflow-y:auto}.editor-footer[data-v-a6c8dd1b]{border-top:1px solid #3f3f46;justify-content:flex-end;gap:15px;padding:20px;display:flex}.tab-btn[data-v-a6c8dd1b]{color:#a1a1aa;cursor:pointer;white-space:nowrap;background:0 0;border:none;padding:12px 20px}.tab-btn.active[data-v-a6c8dd1b]{color:#7c3aed;background:#18181b;border-bottom:2px solid #7c3aed}.field[data-v-a6c8dd1b]{margin-bottom:15px}.field label[data-v-a6c8dd1b]{color:#a1a1aa;margin-bottom:5px;font-size:.9rem;display:block}.field-input[data-v-a6c8dd1b]{color:#fff;box-sizing:border-box;background:#27272a;border:1px solid #3f3f46;border-radius:4px;width:100%;padding:10px}.field-desc[data-v-a6c8dd1b]{color:#71717a;margin-top:4px;font-size:.75rem;line-height:1.4}.checkbox-field[data-v-a6c8dd1b]{margin-bottom:15px}.checkbox-field label[data-v-a6c8dd1b]{cursor:pointer;align-items:center;gap:10px;font-weight:600;display:flex}.grid-2[data-v-a6c8dd1b]{grid-template-columns:1fr 1fr;gap:20px;display:grid}.query-row[data-v-a6c8dd1b]{background:#27272a;border:1px solid #3f3f46;border-radius:8px;margin-bottom:15px;padding:15px}.query-fields[data-v-a6c8dd1b]{gap:8px;margin-bottom:10px;display:flex}.field-tag[data-v-a6c8dd1b]{color:#a1a1aa;cursor:pointer;background:#3f3f46;border:none;border-radius:12px;padding:4px 10px;font-size:.75rem}.field-tag.active[data-v-a6c8dd1b]{color:#fff;background:#7c3aed}.query-input-row[data-v-a6c8dd1b]{align-items:center;gap:10px;display:flex}.input-with-btn[data-v-a6c8dd1b]{gap:10px;display:flex}.sub-options[data-v-a6c8dd1b]{border-left:2px solid #3f3f46;margin-top:10px;margin-bottom:10px;margin-left:25px;padding-left:15px}.btn-small[data-v-a6c8dd1b]{color:#fff;cursor:pointer;background:#27272a;border:1px solid #3f3f46;border-radius:4px;padding:5px 10px;font-size:.75rem}.btn-danger[data-v-a6c8dd1b]{background:#ef4444;border-color:#ef4444}.plugin-config[data-v-b10468a8]{color:#e4e4e7;box-sizing:border-box;width:100%;margin:0 auto;padding:1rem}.config-header[data-v-b10468a8]{margin-bottom:2rem}.tab-row[data-v-b10468a8]{border-bottom:1px solid #333;gap:10px;margin-bottom:20px;padding-bottom:10px;display:flex}.tab-btn[data-v-b10468a8]{color:#a1a1aa;cursor:pointer;background:0 0;border:none;padding:10px;font-weight:600}.tab-btn.active[data-v-b10468a8]{color:#7c3aed;border-bottom:2px solid #7c3aed}.modal-overlay[data-v-b10468a8]{z-index:10000;background:#000000f2;justify-content:center;align-items:center;width:100%;height:100%;padding:20px;display:flex;position:fixed;top:0;left:0}.modal-card[data-v-b10468a8]{background:#18181b;border:1px solid #3f3f46;border-radius:8px;flex-direction:column;width:100%;max-width:800px;max-height:80vh;display:flex;overflow:hidden}.modal-header[data-v-b10468a8]{border-bottom:1px solid #3f3f46;justify-content:space-between;align-items:center;padding:20px;display:flex}.modal-content[data-v-b10468a8]{flex:1;padding:20px;overflow-y:auto}.modal-footer[data-v-b10468a8]{border-top:1px solid #3f3f46;justify-content:flex-end;padding:20px;display:flex}.test-item[data-v-b10468a8]{border-bottom:1px solid #333;padding:12px}.test-item-title[data-v-b10468a8]{margin-bottom:2px;font-weight:700}.test-item-meta[data-v-b10468a8]{color:#a1a1aa;font-size:.8rem}.state-msg[data-v-b10468a8],.no-data[data-v-b10468a8]{text-align:center;color:#a1a1aa;padding:40px}.spinner[data-v-b10468a8]{border:3px solid #ffffff1a;border-top-color:#7c3aed;border-radius:50%;width:24px;height:24px;margin:0 auto 10px;animation:1s linear infinite spin-b10468a8}@keyframes spin-b10468a8{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.btn-icon[data-v-b10468a8]{color:#fff;cursor:pointer;background:0 0;border:none;font-size:1.2rem}.btn-primary[data-v-b10468a8]{color:#fff;cursor:pointer;background:#7c3aed;border:none;border-radius:4px;padding:10px 20px;font-weight:600}\n/*$vite$:1*/";
           document.head.appendChild(style);
         })();
 //#region node_modules/@vue/shared/dist/shared.esm-bundler.js
@@ -2916,22 +2916,65 @@ function Eo(e) {
 	return g(e) ? document.querySelector(e) : e;
 }
 //#endregion
-//#region \0plugin-vue:export-helper
-var Do = (e, t) => {
+//#region src/utils/SubscriptionFactory.js
+var Do = { createDefault: (e = {}) => ({
+	Name: "",
+	IsEnabled: !0,
+	Search: {
+		Criteria: [{
+			Fields: ["Title", "Topic"],
+			Query: "",
+			IsExclude: !1
+		}],
+		MinDurationMinutes: e.SearchSettings?.MinDurationMinutes || null,
+		MaxDurationMinutes: e.SearchSettings?.MaxDurationMinutes || null,
+		MinBroadcastDate: null,
+		MaxBroadcastDate: null
+	},
+	Download: {
+		DownloadPath: "",
+		UseStreamingUrlFiles: e.DownloadSettings?.UseStreamingUrlFiles || !1,
+		AlwaysCreateSubfolder: e.DownloadSettings?.AlwaysCreateSubfolder || !1,
+		AllowFallbackToLowerQuality: e.DownloadSettings?.AllowFallbackToLowerQuality ?? !0,
+		EnhancedDuplicateDetection: e.DownloadSettings?.EnhancedDuplicateDetection || !1,
+		QualityCheckWithUrl: e.DownloadSettings?.QualityCheckWithUrl || !1,
+		DownloadFullVideoForSecondaryAudio: e.DownloadSettings?.DownloadFullVideoForSecondaryAudio || !1
+	},
+	Series: {
+		EnforceSeriesParsing: e.SeriesSettings?.EnforceSeriesParsing || !1,
+		AllowAbsoluteEpisodeNumbering: e.SeriesSettings?.AllowAbsoluteEpisodeNumbering || !1,
+		TreatNonEpisodesAsExtras: e.SeriesSettings?.TreatNonEpisodesAsExtras || !1,
+		SaveTrailers: e.SeriesSettings?.SaveTrailers ?? !0,
+		SaveInterviews: e.SeriesSettings?.SaveInterviews ?? !0,
+		SaveGenericExtras: e.SeriesSettings?.SaveGenericExtras ?? !0,
+		SaveExtrasAsStrm: e.SeriesSettings?.SaveExtrasAsStrm || !1
+	},
+	Metadata: {
+		OriginalLanguage: e.MetadataSettings?.OriginalLanguage || "",
+		CreateNfo: e.MetadataSettings?.CreateNfo || !1,
+		AppendDateToTitle: e.MetadataSettings?.AppendDateToTitle || !1,
+		KeepOriginalTitle: e.MetadataSettings?.KeepOriginalTitle || !1,
+		AppendTimeToTitle: e.MetadataSettings?.AppendTimeToTitle || !1
+	},
+	Accessibility: {
+		AllowAudioDescription: e.AccessibilitySettings?.AllowAudioDescription || !1,
+		AllowSignLanguage: e.AccessibilitySettings?.AllowSignLanguage || !1
+	}
+}) }, Oo = (e, t) => {
 	let n = e.__vccOpts || e;
 	for (let [e, r] of t) n[e] = r;
 	return n;
-}, Oo = { class: "card" }, ko = { class: "search-grid" }, Ao = { class: "field" }, jo = { class: "field" }, Mo = { class: "field" }, No = { class: "field" }, Po = { class: "field" }, Fo = { class: "field" }, Io = { class: "field" }, Lo = { class: "field" }, Ro = { class: "form-actions" }, zo = ["disabled"], Bo = {
+}, ko = { class: "card" }, Ao = { class: "search-grid" }, jo = { class: "field" }, Mo = { class: "field" }, No = { class: "field" }, Po = { class: "field" }, Fo = { class: "field" }, Io = { class: "field" }, Lo = { class: "field" }, Ro = { class: "field" }, zo = { class: "form-actions" }, Bo = ["disabled"], Vo = {
 	key: 0,
 	class: "results-list"
-}, Vo = { class: "result-info" }, Ho = { class: "result-title" }, Uo = { class: "result-meta" }, Wo = {
+}, Ho = { class: "result-info" }, Uo = { class: "result-title" }, Wo = { class: "result-meta" }, Go = {
 	key: 0,
 	class: "material-icons closed_caption",
 	title: "Untertitel verfügbar"
-}, Go = { class: "result-meta" }, Ko = { class: "result-actions" }, qo = ["onClick"], Jo = ["onClick"], Yo = {
+}, Ko = { class: "result-meta" }, qo = { class: "result-actions" }, Jo = ["onClick"], Yo = ["onClick"], Xo = {
 	key: 1,
 	class: "no-results"
-}, Xo = /* @__PURE__ */ Do({
+}, Zo = /* @__PURE__ */ Oo({
 	__name: "SearchTab",
 	props: { onCreateSub: {
 		type: Function,
@@ -2990,18 +3033,8 @@ var Do = (e, t) => {
 			if (n) try {
 				let e = new URLSearchParams();
 				r.value && e.append("title", r.value), i.value && e.append("topic", i.value), a.value && e.append("channel", a.value), o.value && e.append("combinedSearch", o.value);
-				let d = n.getUrl("MediathekViewDL/Search/Criteria?" + e.toString()), f = await n.getJSON(d);
-				t.onCreateSub({
-					Name: r.value || i.value || o.value || "Suche",
-					IsEnabled: !0,
-					Search: {
-						Criteria: f,
-						MinDurationMinutes: s.value,
-						MaxDurationMinutes: c.value,
-						MinBroadcastDate: l.value ? new Date(l.value).toISOString() : null,
-						MaxBroadcastDate: u.value ? new Date(u.value).toISOString() : null
-					}
-				});
+				let d = n.getUrl("MediathekViewDL/Search/Criteria?" + e.toString()), f = await n.getJSON(d), p = Do.createDefault();
+				p.Name = r.value || i.value || o.value || "Suche", p.Search.Criteria = f, p.Search.MinDurationMinutes = s.value, p.Search.MaxDurationMinutes = c.value, p.Search.MinBroadcastDate = l.value ? new Date(l.value).toISOString() : null, p.Search.MaxBroadcastDate = u.value ? new Date(u.value).toISOString() : null, t.onCreateSub(p);
 			} catch (e) {
 				console.error("Failed to convert criteria", e);
 			}
@@ -3010,53 +3043,49 @@ var Do = (e, t) => {
 			if (n) try {
 				let r = new URLSearchParams();
 				e.Title && r.append("title", e.Title), e.Topic && r.append("topic", e.Topic), e.Channel && r.append("channel", e.Channel);
-				let i = n.getUrl("MediathekViewDL/Search/Criteria?" + r.toString()), a = await n.getJSON(i);
-				t.onCreateSub({
-					Name: e.Topic || e.Title,
-					IsEnabled: !0,
-					Search: { Criteria: a }
-				});
+				let i = n.getUrl("MediathekViewDL/Search/Criteria?" + r.toString()), a = await n.getJSON(i), o = Do.createDefault();
+				o.Name = e.Topic || e.Title, o.Search.Criteria = a, t.onCreateSub(o);
 			} catch (e) {
 				console.error("Failed to convert item criteria", e);
 			}
 		}
-		return (e, t) => (K(), q("div", Oo, [
+		return (e, t) => (K(), q("div", ko, [
 			t[17] ||= J("h2", null, "Suche", -1),
 			J("form", {
 				onSubmit: bo(m, ["prevent"]),
 				class: "search-form"
-			}, [J("div", ko, [
-				J("div", Ao, [t[8] ||= J("label", null, "Titel", -1), V(J("input", {
+			}, [J("div", Ao, [
+				J("div", jo, [t[8] ||= J("label", null, "Titel", -1), V(J("input", {
 					"onUpdate:modelValue": t[0] ||= (e) => r.value = e,
 					type: "text",
 					class: "field-input",
 					placeholder: "Titel der Sendung"
 				}, null, 512), [[Q, r.value]])]),
-				J("div", jo, [t[9] ||= J("label", null, "Thema", -1), V(J("input", {
+				J("div", Mo, [t[9] ||= J("label", null, "Thema", -1), V(J("input", {
 					"onUpdate:modelValue": t[1] ||= (e) => i.value = e,
 					type: "text",
 					class: "field-input",
 					placeholder: "Thema / Sendereihe"
 				}, null, 512), [[Q, i.value]])]),
-				J("div", Mo, [t[10] ||= J("label", null, "Sender", -1), V(J("input", {
+				J("div", No, [t[10] ||= J("label", null, "Sender", -1), V(J("input", {
 					"onUpdate:modelValue": t[2] ||= (e) => a.value = e,
 					type: "text",
 					class: "field-input",
 					placeholder: "z.B. ARD, ZDF"
 				}, null, 512), [[Q, a.value]])]),
-				J("div", No, [t[11] ||= J("label", null, "Kombinierte Suche", -1), V(J("input", {
+				J("div", Po, [t[11] ||= J("label", null, "Kombinierte Suche", -1), V(J("input", {
 					"onUpdate:modelValue": t[3] ||= (e) => o.value = e,
 					type: "text",
 					class: "field-input",
 					placeholder: "Sucht in Titel und Thema"
 				}, null, 512), [[Q, o.value]])]),
-				J("div", Po, [t[12] ||= J("label", null, "Min. Dauer (Minuten)", -1), V(J("input", {
+				J("div", Fo, [t[12] ||= J("label", null, "Min. Dauer (Minuten)", -1), V(J("input", {
 					"onUpdate:modelValue": t[4] ||= (e) => s.value = e,
 					type: "number",
 					class: "field-input",
 					placeholder: "0"
 				}, null, 512), [[Q, s.value]])]),
-				J("div", Fo, [
+				J("div", Io, [
 					t[13] ||= J("label", null, "Max. Dauer (Minuten)", -1),
 					t[14] ||= Y(),
 					V(J("input", {
@@ -3066,61 +3095,61 @@ var Do = (e, t) => {
 						placeholder: "unbegrenzt"
 					}, null, 512), [[Q, c.value]])
 				]),
-				J("div", Io, [t[15] ||= J("label", null, "Von Datum", -1), V(J("input", {
+				J("div", Lo, [t[15] ||= J("label", null, "Von Datum", -1), V(J("input", {
 					"onUpdate:modelValue": t[6] ||= (e) => l.value = e,
 					type: "date",
 					class: "field-input"
 				}, null, 512), [[Q, l.value]])]),
-				J("div", Lo, [t[16] ||= J("label", null, "Bis Datum", -1), V(J("input", {
+				J("div", Ro, [t[16] ||= J("label", null, "Bis Datum", -1), V(J("input", {
 					"onUpdate:modelValue": t[7] ||= (e) => u.value = e,
 					type: "date",
 					class: "field-input"
 				}, null, 512), [[Q, u.value]])])
-			]), J("div", Ro, [J("button", {
+			]), J("div", zo, [J("button", {
 				type: "submit",
 				class: "btn btn-primary",
 				disabled: f.value
-			}, A(f.value ? "Suche läuft..." : "Suche starten"), 9, zo), J("button", {
+			}, A(f.value ? "Suche läuft..." : "Suche starten"), 9, Bo), J("button", {
 				type: "button",
 				onClick: _,
 				class: "btn btn-secondary btn-icon-only",
 				title: "Abo aus Suche erstellen"
 			}, " ➕ ")])], 32),
-			d.value.length > 0 ? (K(), q("div", Bo, [J("h3", null, "Ergebnisse (" + A(d.value.length < 50 ? d.value.length : "50+") + ")", 1), (K(!0), q(W, null, br(d.value, (e) => (K(), q("div", {
+			d.value.length > 0 ? (K(), q("div", Vo, [J("h3", null, "Ergebnisse (" + A(d.value.length < 50 ? d.value.length : "50+") + ")", 1), (K(!0), q(W, null, br(d.value, (e) => (K(), q("div", {
 				key: e.Id,
 				class: "result-item"
-			}, [J("div", Vo, [
-				J("div", Ho, A(e.Title), 1),
-				J("div", Uo, [Y(A(e.Channel) + " | " + A(e.Topic) + " | " + A(e.Duration) + " | ", 1), e.SubtitleUrls && e.SubtitleUrls.length > 0 ? (K(), q("span", Wo)) : X("", !0)]),
-				J("div", Go, A(e.Description), 1)
-			]), J("div", Ko, [J("button", {
+			}, [J("div", Ho, [
+				J("div", Uo, A(e.Title), 1),
+				J("div", Wo, [Y(A(e.Channel) + " | " + A(e.Topic) + " | " + A(e.Duration) + " | ", 1), e.SubtitleUrls && e.SubtitleUrls.length > 0 ? (K(), q("span", Go)) : X("", !0)]),
+				J("div", Ko, A(e.Description), 1)
+			]), J("div", qo, [J("button", {
 				onClick: (t) => g(e),
 				class: "btn-icon",
 				title: "Im Browser abspielen"
-			}, "▶", 8, qo), J("button", {
+			}, "▶", 8, Jo), J("button", {
 				onClick: (t) => v(e),
 				class: "btn-icon",
 				title: "Abo für diese Sendung erstellen"
-			}, "➕", 8, Jo)])]))), 128))])) : !f.value && (r.value || i.value || a.value || o.value) ? (K(), q("div", Yo, " Keine Ergebnisse gefunden. ")) : X("", !0)
+			}, "➕", 8, Yo)])]))), 128))])) : !f.value && (r.value || i.value || a.value || o.value) ? (K(), q("div", Xo, " Keine Ergebnisse gefunden. ")) : X("", !0)
 		]));
 	}
-}, [["__scopeId", "data-v-422f8120"]]), Zo = { class: "card" }, Qo = { class: "field" }, $o = ["disabled"], es = "a31b415a-5264-419d-b152-8c8192a54994", ts = {
+}, [["__scopeId", "data-v-0f1b9dfa"]]), Qo = { class: "card" }, $o = { class: "field" }, es = ["disabled"], ts = "a31b415a-5264-419d-b152-8c8192a54994", ns = {
 	__name: "SettingsTab",
 	setup(e) {
 		let t = window.ApiClient ?? null, n = /* @__PURE__ */ R("VueJS"), r = /* @__PURE__ */ R(!1);
 		ur(async () => {
-			t && (n.value = (await t.getPluginConfiguration(es)).ActiveWebUi ?? "VueJS");
+			t && (n.value = (await t.getPluginConfiguration(ts)).ActiveWebUi ?? "VueJS");
 		});
 		async function i() {
 			r.value = !0;
 			try {
-				let e = await t.getPluginConfiguration(es);
-				e.ActiveWebUi = n.value, await t.updatePluginConfiguration(es, e);
+				let e = await t.getPluginConfiguration(ts);
+				e.ActiveWebUi = n.value, await t.updatePluginConfiguration(ts, e);
 			} finally {
 				r.value = !1;
 			}
 		}
-		return (e, t) => (K(), q("div", Zo, [t[3] ||= J("h2", null, "Einstellungen", -1), J("form", { onSubmit: bo(i, ["prevent"]) }, [J("div", Qo, [t[2] ||= J("label", {
+		return (e, t) => (K(), q("div", Qo, [t[3] ||= J("h2", null, "Einstellungen", -1), J("form", { onSubmit: bo(i, ["prevent"]) }, [J("div", $o, [t[2] ||= J("label", {
 			class: "field-label",
 			for: "optActiveWebUi"
 		}, "Aktive WebUI", -1), V(J("select", {
@@ -3135,24 +3164,24 @@ var Do = (e, t) => {
 			type: "submit",
 			class: "btn btn-save",
 			disabled: r.value
-		}, "Speichern", 8, $o)], 32)]));
+		}, "Speichern", 8, es)], 32)]));
 	}
-}, ns = { class: "card" }, rs = { class: "header-row" }, is = ["disabled"], as = {
+}, rs = { class: "card" }, is = { class: "header-row" }, as = ["disabled"], os = {
 	key: 0,
 	class: "state-msg"
-}, os = {
+}, ss = {
 	key: 1,
 	class: "error-container"
-}, ss = { class: "error-msg" }, cs = {
+}, cs = { class: "error-msg" }, ls = {
 	key: 2,
 	class: "subscriptions-list"
-}, ls = { class: "sub-info" }, us = { class: "sub-name" }, ds = {
+}, us = { class: "sub-info" }, ds = { class: "sub-name" }, fs = {
 	key: 0,
 	class: "badge"
-}, fs = { class: "sub-meta" }, ps = { class: "sub-actions" }, ms = ["onClick"], hs = ["onClick"], gs = ["onClick"], _s = {
+}, ps = { class: "sub-meta" }, ms = { class: "sub-actions" }, hs = ["onClick"], gs = ["onClick"], _s = ["onClick"], vs = {
 	key: 3,
 	class: "no-data"
-}, vs = /* @__PURE__ */ Do({
+}, ys = /* @__PURE__ */ Oo({
 	__name: "SubscriptionsTab",
 	props: { onEdit: {
 		type: Function,
@@ -3199,78 +3228,78 @@ var Do = (e, t) => {
 		}
 		return ur(() => {
 			s();
-		}), t({ refresh: s }), (t, n) => (K(), q("div", ns, [J("div", rs, [n[1] ||= J("h2", null, "Abo Verwaltung", -1), J("button", {
+		}), t({ refresh: s }), (t, n) => (K(), q("div", rs, [J("div", is, [n[1] ||= J("h2", null, "Abo Verwaltung", -1), J("button", {
 			class: "btn btn-primary",
 			onClick: n[0] ||= (t) => e.onEdit(),
 			disabled: a.value
-		}, "Neues Abo", 8, is)]), a.value ? (K(), q("div", as, [...n[2] ||= [J("div", { class: "spinner" }, null, -1), Y(" Lade Abonnements... ", -1)]])) : o.value ? (K(), q("div", os, [J("div", ss, A(o.value), 1), J("button", {
+		}, "Neues Abo", 8, as)]), a.value ? (K(), q("div", os, [...n[2] ||= [J("div", { class: "spinner" }, null, -1), Y(" Lade Abonnements... ", -1)]])) : o.value ? (K(), q("div", ss, [J("div", cs, A(o.value), 1), J("button", {
 			onClick: s,
 			class: "btn btn-secondary"
-		}, "Erneut versuchen")])) : i.value.length > 0 ? (K(), q("div", cs, [(K(!0), q(W, null, br(i.value, (t) => (K(), q("div", {
+		}, "Erneut versuchen")])) : i.value.length > 0 ? (K(), q("div", ls, [(K(!0), q(W, null, br(i.value, (t) => (K(), q("div", {
 			key: t.Id,
 			class: k(["subscription-item", { disabled: !t.IsEnabled }])
-		}, [J("div", ls, [J("div", us, [Y(A(t.Name) + " ", 1), t.IsEnabled ? X("", !0) : (K(), q("span", ds, "Deaktiviert"))]), J("div", fs, " Letzter Download: " + A(t.LastDownloadedTimestamp ? new Date(t.LastDownloadedTimestamp).toLocaleString() : "Nie"), 1)]), J("div", ps, [
+		}, [J("div", us, [J("div", ds, [Y(A(t.Name) + " ", 1), t.IsEnabled ? X("", !0) : (K(), q("span", fs, "Deaktiviert"))]), J("div", ps, " Letzter Download: " + A(t.LastDownloadedTimestamp ? new Date(t.LastDownloadedTimestamp).toLocaleString() : "Nie"), 1)]), J("div", ms, [
 			J("button", {
 				onClick: (e) => l(t.Id),
 				class: "btn-icon",
 				title: "Jetzt verarbeiten"
-			}, "🔄", 8, ms),
+			}, "🔄", 8, hs),
 			J("button", {
 				onClick: (n) => e.onEdit(t),
 				class: "btn-icon",
 				title: "Bearbeiten"
-			}, "✏️", 8, hs),
+			}, "✏️", 8, gs),
 			J("button", {
 				onClick: (e) => c(t.Id),
 				class: "btn-icon btn-delete",
 				title: "Löschen"
-			}, "🗑️", 8, gs)
-		])], 2))), 128))])) : (K(), q("div", _s, " Keine Abonnements konfiguriert. "))]));
+			}, "🗑️", 8, _s)
+		])], 2))), 128))])) : (K(), q("div", vs, " Keine Abonnements konfiguriert. "))]));
 	}
-}, [["__scopeId", "data-v-733f9dde"]]), ys = {}, bs = { class: "card" };
-function xs(e, t) {
-	return K(), q("div", bs, [...t[0] ||= [J("h2", null, "Downloads", -1), J("p", null, "Download-Verlauf kommt hierhin.", -1)]]);
+}, [["__scopeId", "data-v-733f9dde"]]), bs = {}, xs = { class: "card" };
+function Ss(e, t) {
+	return K(), q("div", xs, [...t[0] ||= [J("h2", null, "Downloads", -1), J("p", null, "Download-Verlauf kommt hierhin.", -1)]]);
 }
-var Ss = /* @__PURE__ */ Do(ys, [["render", xs]]), Cs = {
+var Cs = /* @__PURE__ */ Oo(bs, [["render", Ss]]), ws = {
 	key: 0,
 	class: "editor-overlay"
-}, ws = { class: "editor-modal card" }, Ts = { class: "editor-header" }, Es = { class: "editor-tabs" }, Ds = { class: "editor-content" }, Os = {
+}, Ts = { class: "editor-modal card" }, Es = { class: "editor-header" }, Ds = { class: "editor-tabs" }, Os = { class: "editor-content" }, ks = {
 	key: 0,
 	class: "tab-pane"
-}, ks = { class: "field" }, As = { class: "checkbox-field" }, js = { class: "checkbox-field" }, Ms = { class: "checkbox-field" }, Ns = {
+}, As = { class: "field" }, js = { class: "checkbox-field" }, Ms = { class: "checkbox-field" }, Ns = { class: "checkbox-field" }, Ps = {
 	key: 1,
 	class: "tab-pane"
-}, Ps = { class: "query-fields" }, Fs = ["onClick"], Is = { class: "query-input-row" }, Ls = ["onUpdate:modelValue", "placeholder"], Rs = ["onClick"], zs = ["onClick"], Bs = { class: "grid-2" }, Vs = { class: "field" }, Hs = { class: "field" }, Us = { class: "grid-2" }, Ws = { class: "field" }, Gs = ["value"], Ks = { class: "field" }, qs = ["value"], Js = {
+}, Fs = { class: "query-fields" }, Is = ["onClick"], Ls = { class: "query-input-row" }, Rs = ["onUpdate:modelValue", "placeholder"], zs = ["onClick"], Bs = ["onClick"], Vs = { class: "grid-2" }, Hs = { class: "field" }, Us = { class: "field" }, Ws = { class: "grid-2" }, Gs = { class: "field" }, Ks = ["value"], qs = { class: "field" }, Js = ["value"], Ys = {
 	key: 2,
 	class: "tab-pane"
-}, Ys = { class: "field" }, Xs = { class: "input-with-btn" }, Zs = { class: "checkbox-field" }, Qs = {
+}, Xs = { class: "field" }, Zs = { class: "input-with-btn" }, Qs = { class: "checkbox-field" }, $s = {
 	key: 0,
 	class: "sub-options"
-}, $s = { class: "checkbox-field" }, ec = { class: "checkbox-field" }, tc = { class: "checkbox-field" }, nc = { class: "checkbox-field" }, rc = {
+}, ec = { class: "checkbox-field" }, tc = { class: "checkbox-field" }, nc = { class: "checkbox-field" }, rc = { class: "checkbox-field" }, ic = {
 	key: 1,
 	class: "sub-options"
-}, ic = { class: "checkbox-field" }, ac = {
+}, ac = { class: "checkbox-field" }, oc = {
 	key: 3,
 	class: "tab-pane"
-}, oc = { class: "checkbox-field" }, sc = {
+}, sc = { class: "checkbox-field" }, cc = {
 	key: 0,
 	class: "sub-options"
-}, cc = { class: "checkbox-field" }, lc = {
+}, lc = { class: "checkbox-field" }, uc = {
 	key: 1,
 	class: "sub-options"
-}, uc = { class: "checkbox-field" }, dc = {
+}, dc = { class: "checkbox-field" }, fc = {
 	key: 0,
 	class: "sub-options"
-}, fc = { class: "checkbox-field" }, pc = { class: "checkbox-field" }, mc = { class: "checkbox-field" }, hc = { class: "checkbox-field" }, gc = {
+}, pc = { class: "checkbox-field" }, mc = { class: "checkbox-field" }, hc = { class: "checkbox-field" }, gc = { class: "checkbox-field" }, _c = {
 	key: 4,
 	class: "tab-pane"
-}, _c = { class: "field" }, vc = { class: "checkbox-field" }, yc = { class: "checkbox-field" }, bc = {
+}, vc = { class: "field" }, yc = { class: "checkbox-field" }, bc = { class: "checkbox-field" }, xc = {
 	key: 0,
 	class: "sub-options"
-}, xc = { class: "checkbox-field" }, Sc = { class: "checkbox-field" }, Cc = {
+}, Sc = { class: "checkbox-field" }, Cc = { class: "checkbox-field" }, wc = {
 	key: 5,
 	class: "tab-pane"
-}, wc = { class: "checkbox-field" }, Tc = { class: "checkbox-field" }, Ec = { class: "editor-footer" }, Dc = /* @__PURE__ */ Do({
+}, Tc = { class: "checkbox-field" }, Ec = { class: "checkbox-field" }, Dc = { class: "editor-footer" }, Oc = /* @__PURE__ */ Oo({
 	__name: "SubscriptionEditor",
 	props: { subscription: {
 		type: Object,
@@ -3312,7 +3341,7 @@ var Ss = /* @__PURE__ */ Do(ys, [["render", xs]]), Cs = {
 				includeDirectories: !0,
 				includeFiles: !1,
 				callback: (t) => {
-					t && (i.value.Download.DownloadPath = t), e.close();
+					t && (i.value.Download || (i.value.Download = { DownloadPath: "" }), i.value.Download.DownloadPath = t), e.close();
 				}
 			});
 		}
@@ -3327,12 +3356,12 @@ var Ss = /* @__PURE__ */ Do(ys, [["render", xs]]), Cs = {
 			let r = new Date(n);
 			t === "MaxBroadcastDate" && r.setHours(23, 59, 59, 999), e[t] = r.toISOString();
 		}
-		return (e, t) => i.value ? (K(), q("div", Cs, [J("div", ws, [
-			J("header", Ts, [J("h2", null, A(i.value.Id ? "Abonnement bearbeiten" : "Neues Abonnement"), 1), J("div", { class: "header-actions" }, [J("button", {
+		return (e, t) => i.value ? (K(), q("div", ws, [J("div", Ts, [
+			J("header", Es, [J("h2", null, A(i.value.Id ? "Abonnement bearbeiten" : "Neues Abonnement"), 1), J("div", { class: "header-actions" }, [J("button", {
 				onClick: d,
 				class: "btn-icon"
 			}, "✕")])]),
-			J("div", Es, [
+			J("div", Ds, [
 				J("button", {
 					class: k(["tab-btn", { active: a.value === "basic" }]),
 					onClick: t[0] ||= (e) => a.value = "basic"
@@ -3358,34 +3387,34 @@ var Ss = /* @__PURE__ */ Do(ys, [["render", xs]]), Cs = {
 					onClick: t[5] ||= (e) => a.value = "accessibility"
 				}, "Barrierefreiheit", 2)
 			]),
-			J("div", Ds, [
-				a.value === "basic" ? (K(), q("div", Os, [
-					J("div", ks, [t[36] ||= J("label", null, "Name (Serienname)", -1), V(J("input", {
+			J("div", Os, [
+				a.value === "basic" ? (K(), q("div", ks, [
+					J("div", As, [t[36] ||= J("label", null, "Name (Serienname)", -1), V(J("input", {
 						"onUpdate:modelValue": t[6] ||= (e) => i.value.Name = e,
 						type: "text",
 						class: "field-input",
 						placeholder: "z.B. Tatort",
 						required: ""
 					}, null, 512), [[Q, i.value.Name]])]),
-					J("div", As, [J("label", null, [V(J("input", {
+					J("div", js, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[7] ||= (e) => i.value.IsEnabled = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.IsEnabled]]), t[37] ||= Y(" Aktiviert ", -1)])]),
-					J("div", js, [J("label", null, [V(J("input", {
+					J("div", Ms, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[8] ||= (e) => i.value.IgnoreLocalFiles = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.IgnoreLocalFiles]]), t[38] ||= Y(" Lokale Dateien ignorieren ", -1)]), t[39] ||= J("p", { class: "field-desc" }, "Erzwingt den Download, auch wenn die Datei bereits lokal existiert.", -1)]),
-					J("div", Ms, [J("label", null, [V(J("input", {
+					J("div", Ns, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[9] ||= (e) => i.value.IgnoreHistory = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.IgnoreHistory]]), t[40] ||= Y(" Download-Verlauf ignorieren ", -1)]), t[41] ||= J("p", { class: "field-desc" }, "Erzwingt den Download, auch wenn die Sendung bereits früher geladen wurde.", -1)])
 				])) : X("", !0),
-				a.value === "search" ? (K(), q("div", Ns, [
+				a.value === "search" ? (K(), q("div", Ps, [
 					t[46] ||= J("h3", null, "Suchanfragen", -1),
 					(K(!0), q(W, null, br(i.value.Search.Criteria, (e, t) => (K(), q("div", {
 						key: t,
 						class: "query-row"
-					}, [J("div", Ps, [(K(), q(W, null, br([
+					}, [J("div", Fs, [(K(), q(W, null, br([
 						"Title",
 						"Topic",
 						"Description",
@@ -3394,52 +3423,52 @@ var Ss = /* @__PURE__ */ Do(ys, [["render", xs]]), Cs = {
 						key: t,
 						onClick: (n) => l(e, t),
 						class: k(["field-tag", { active: e.Fields.includes(t) }])
-					}, A(t === "Title" ? "Titel" : t === "Topic" ? "Thema" : t === "Description" ? "Beschreibung" : "Sender"), 11, Fs)), 64))]), J("div", Is, [
+					}, A(t === "Title" ? "Titel" : t === "Topic" ? "Thema" : t === "Description" ? "Beschreibung" : "Sender"), 11, Is)), 64))]), J("div", Ls, [
 						V(J("input", {
 							"onUpdate:modelValue": (t) => e.Query = t,
 							type: "text",
 							class: "field-input",
 							placeholder: e.IsExclude ? "Ausschließen..." : "Suchen..."
-						}, null, 8, Ls), [[Q, e.Query]]),
+						}, null, 8, Rs), [[Q, e.Query]]),
 						J("button", {
 							onClick: (t) => e.IsExclude = !e.IsExclude,
 							class: k(["btn-small", { "btn-danger": e.IsExclude }])
-						}, A(e.IsExclude ? "NICHT" : "SUCHE"), 11, Rs),
+						}, A(e.IsExclude ? "NICHT" : "SUCHE"), 11, zs),
 						J("button", {
 							onClick: (e) => c(t),
 							class: "btn-icon"
-						}, "🗑️", 8, zs)
+						}, "🗑️", 8, Bs)
 					])]))), 128)),
 					J("button", {
 						onClick: s,
 						class: "btn btn-secondary"
 					}, "Anfrage hinzufügen"),
 					t[47] ||= J("hr", null, null, -1),
-					J("div", Bs, [J("div", Vs, [t[42] ||= J("label", null, "Min. Dauer (Minuten)", -1), V(J("input", {
+					J("div", Vs, [J("div", Hs, [t[42] ||= J("label", null, "Min. Dauer (Minuten)", -1), V(J("input", {
 						"onUpdate:modelValue": t[10] ||= (e) => i.value.Search.MinDurationMinutes = e,
 						type: "number",
 						class: "field-input"
-					}, null, 512), [[Q, i.value.Search.MinDurationMinutes]])]), J("div", Hs, [t[43] ||= J("label", null, "Max. Dauer (Minuten)", -1), V(J("input", {
+					}, null, 512), [[Q, i.value.Search.MinDurationMinutes]])]), J("div", Us, [t[43] ||= J("label", null, "Max. Dauer (Minuten)", -1), V(J("input", {
 						"onUpdate:modelValue": t[11] ||= (e) => i.value.Search.MaxDurationMinutes = e,
 						type: "number",
 						class: "field-input"
 					}, null, 512), [[Q, i.value.Search.MaxDurationMinutes]])])]),
-					J("div", Us, [J("div", Ws, [t[44] ||= J("label", null, "Min. Sendedatum", -1), J("input", {
+					J("div", Ws, [J("div", Gs, [t[44] ||= J("label", null, "Min. Sendedatum", -1), J("input", {
 						value: p(i.value.Search.MinBroadcastDate),
 						onInput: t[12] ||= (e) => m(i.value.Search, "MinBroadcastDate", e.target.value),
 						type: "date",
 						class: "field-input"
-					}, null, 40, Gs)]), J("div", Ks, [t[45] ||= J("label", null, "Max. Sendedatum", -1), J("input", {
+					}, null, 40, Ks)]), J("div", qs, [t[45] ||= J("label", null, "Max. Sendedatum", -1), J("input", {
 						value: p(i.value.Search.MaxBroadcastDate),
 						onInput: t[13] ||= (e) => m(i.value.Search, "MaxBroadcastDate", e.target.value),
 						type: "date",
 						class: "field-input"
-					}, null, 40, qs)])])
+					}, null, 40, Js)])])
 				])) : X("", !0),
-				a.value === "download" ? (K(), q("div", Js, [
-					J("div", Ys, [
+				a.value === "download" ? (K(), q("div", Ys, [
+					J("div", Xs, [
 						t[48] ||= J("label", null, "Download Pfad (Optional)", -1),
-						J("div", Xs, [V(J("input", {
+						J("div", Zs, [V(J("input", {
 							"onUpdate:modelValue": t[14] ||= (e) => i.value.Download.DownloadPath = e,
 							type: "text",
 							class: "field-input",
@@ -3450,60 +3479,60 @@ var Ss = /* @__PURE__ */ Do(ys, [["render", xs]]), Cs = {
 						}, "Wählen")]),
 						t[49] ||= J("p", { class: "field-desc" }, "Leer lassen, um den Standardpfad zu nutzen. Bei Serien wird automatisch ein Unterordner mit dem Abo-Namen erstellt. Bei Filmen wird ein Unterordner mit dem Abo-Namen nur erstellt, wenn die Option \"Ordner für das Thema erstellen\" in den Einstellungen aktiviert ist.", -1)
 					]),
-					J("div", Zs, [J("label", null, [V(J("input", {
+					J("div", Qs, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[15] ||= (e) => i.value.Download.UseStreamingUrlFiles = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Download.UseStreamingUrlFiles]]), t[50] ||= Y(" Streaming-URL-Dateien (.strm) verwenden ", -1)]), t[51] ||= J("p", { class: "field-desc" }, "Verwendet Streaming-URL-Dateien (.strm) anstelle des Herunterladens der tatsächlichen Videodateien. Es werden keine Videodateien gespeichert, die Videos werden von ARD/ZDF direkt gestreamt. Untertitel sind hiervon nicht betroffen.", -1)]),
-					i.value.Download.UseStreamingUrlFiles ? X("", !0) : (K(), q("div", Qs, [J("div", $s, [J("label", null, [V(J("input", {
+					i.value.Download.UseStreamingUrlFiles ? X("", !0) : (K(), q("div", $s, [J("div", ec, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[16] ||= (e) => i.value.Download.DownloadFullVideoForSecondaryAudio = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Download.DownloadFullVideoForSecondaryAudio]]), t[52] ||= Y(" Vollständiges Video für sekundäre Audiosprachen herunterladen ", -1)]), t[53] ||= J("p", { class: "field-desc" }, "Wenn aktiviert, wird das vollständige Video heruntergeladen, auch wenn es eine andere Audiosprache als Deutsch enthält. Andernfalls wird nur die Audiospur dieser Sprache extrahiert.", -1)])])),
-					J("div", ec, [J("label", null, [V(J("input", {
+					J("div", tc, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[17] ||= (e) => i.value.Download.AlwaysCreateSubfolder = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Download.AlwaysCreateSubfolder]]), t[54] ||= Y(" Unterordner für dieses Abo erstellen ", -1)]), t[55] ||= J("p", { class: "field-desc" }, "Erstellt immer einen Unterordner mit dem Namen des Abonnements, auch wenn es sich um Filme handelt und die globale Einstellung \"Beim Film Downloads Ordner für das Thema erstellen\" deaktiviert ist.", -1)]),
-					J("div", tc, [J("label", null, [V(J("input", {
+					J("div", nc, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[18] ||= (e) => i.value.Download.EnhancedDuplicateDetection = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Download.EnhancedDuplicateDetection]]), t[56] ||= Y(" Erweiterte Duplikaterkennung ", -1)]), t[57] ||= J("p", { class: "field-desc" }, "Scannt das Zielverzeichnis nach vorhandenen Dateien mit passenden SxxExx-Mustern (oder absoluter Nummerierung), um doppelte Downloads zu vermeiden (auch bei abweichenden Dateinamen).", -1)]),
-					J("div", nc, [J("label", null, [V(J("input", {
+					J("div", rc, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[19] ||= (e) => i.value.Download.AllowFallbackToLowerQuality = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Download.AllowFallbackToLowerQuality]]), t[58] ||= Y(" Fallback auf niedrigere Qualität erlauben ", -1)]), t[59] ||= J("p", { class: "field-desc" }, "Wenn aktiviert, wird beim Herunterladen einer Episode geprüft, ob eine niedrigere Qualität verfügbar ist falls die HD-URL nicht gesetzt ist.", -1)]),
-					i.value.Download.AllowFallbackToLowerQuality ? (K(), q("div", rc, [J("div", ic, [J("label", null, [V(J("input", {
+					i.value.Download.AllowFallbackToLowerQuality ? (K(), q("div", ic, [J("div", ac, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[20] ||= (e) => i.value.Download.QualityCheckWithUrl = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Download.QualityCheckWithUrl]]), t[60] ||= Y(" Prüft ob die URLs gültig ist. ", -1)]), t[61] ||= J("p", { class: "field-desc" }, "Wenn aktiviert wird auch geprüft, ob die URLs von MediathekView noch verfügbar sind und ggf. die nächst niedrigere versucht. HD → Default → SD", -1)])])) : X("", !0)
 				])) : X("", !0),
-				a.value === "series" ? (K(), q("div", ac, [J("div", oc, [J("label", null, [V(J("input", {
+				a.value === "series" ? (K(), q("div", oc, [J("div", sc, [J("label", null, [V(J("input", {
 					"onUpdate:modelValue": t[21] ||= (e) => i.value.Series.EnforceSeriesParsing = e,
 					type: "checkbox"
-				}, null, 512), [[$, i.value.Series.EnforceSeriesParsing]]), t[62] ||= Y(" Nur Serien herunterladen ", -1)]), t[63] ||= J("p", { class: "field-desc" }, "Nur Videos herunterladen, die als Serie erkannt werden", -1)]), i.value.Series.EnforceSeriesParsing ? (K(), q("div", sc, [J("div", cc, [J("label", null, [V(J("input", {
+				}, null, 512), [[$, i.value.Series.EnforceSeriesParsing]]), t[62] ||= Y(" Nur Serien herunterladen ", -1)]), t[63] ||= J("p", { class: "field-desc" }, "Nur Videos herunterladen, die als Serie erkannt werden", -1)]), i.value.Series.EnforceSeriesParsing ? (K(), q("div", cc, [J("div", lc, [J("label", null, [V(J("input", {
 					"onUpdate:modelValue": t[22] ||= (e) => i.value.Series.AllowAbsoluteEpisodeNumbering = e,
 					type: "checkbox"
-				}, null, 512), [[$, i.value.Series.AllowAbsoluteEpisodeNumbering]]), t[64] ||= Y(" Absolute Episodennummerierung erlauben ", -1)]), t[65] ||= J("p", { class: "field-desc" }, "Episoden auch herunterladen, wenn nur Absolute Episodennummerierung vorliegt (z.B. \"Episode 5\" statt \"Staffel 1, Episode 5\").", -1)])])) : (K(), q("div", lc, [J("div", uc, [J("label", null, [V(J("input", {
+				}, null, 512), [[$, i.value.Series.AllowAbsoluteEpisodeNumbering]]), t[64] ||= Y(" Absolute Episodennummerierung erlauben ", -1)]), t[65] ||= J("p", { class: "field-desc" }, "Episoden auch herunterladen, wenn nur Absolute Episodennummerierung vorliegt (z.B. \"Episode 5\" statt \"Staffel 1, Episode 5\").", -1)])])) : (K(), q("div", uc, [J("div", dc, [J("label", null, [V(J("input", {
 					"onUpdate:modelValue": t[23] ||= (e) => i.value.Series.TreatNonEpisodesAsExtras = e,
 					type: "checkbox"
-				}, null, 512), [[$, i.value.Series.TreatNonEpisodesAsExtras]]), t[66] ||= Y(" Nicht Episoden als Extras behandeln ", -1)]), t[67] ||= J("p", { class: "field-desc" }, "Nicht als Episoden erkannte Videos als Extras behandeln.", -1)]), i.value.Series.TreatNonEpisodesAsExtras ? (K(), q("div", dc, [
-					J("div", fc, [J("label", null, [V(J("input", {
+				}, null, 512), [[$, i.value.Series.TreatNonEpisodesAsExtras]]), t[66] ||= Y(" Nicht Episoden als Extras behandeln ", -1)]), t[67] ||= J("p", { class: "field-desc" }, "Nicht als Episoden erkannte Videos als Extras behandeln.", -1)]), i.value.Series.TreatNonEpisodesAsExtras ? (K(), q("div", fc, [
+					J("div", pc, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[24] ||= (e) => i.value.Series.SaveTrailers = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Series.SaveTrailers]]), t[68] ||= Y(" Trailer speichern", -1)]), t[69] ||= J("p", { class: "field-desc" }, "Trailer werden gespeichert.", -1)]),
-					J("div", pc, [J("label", null, [V(J("input", {
+					J("div", mc, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[25] ||= (e) => i.value.Series.SaveInterviews = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Series.SaveInterviews]]), t[70] ||= Y(" Interviews speichern", -1)]), t[71] ||= J("p", { class: "field-desc" }, "Interviews werden gespeichert.", -1)]),
-					J("div", mc, [J("label", null, [V(J("input", {
+					J("div", hc, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[26] ||= (e) => i.value.Series.SaveGenericExtras = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Series.SaveGenericExtras]]), t[72] ||= Y(" Generische Extras speichern", -1)]), t[73] ||= J("p", { class: "field-desc" }, "Alle anderen Extras (nicht Trailer/Interviews) werden gespeichert.", -1)]),
-					J("div", hc, [J("label", null, [V(J("input", {
+					J("div", gc, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[27] ||= (e) => i.value.Series.SaveExtrasAsStrm = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Series.SaveExtrasAsStrm]]), t[74] ||= Y(" Extras als Stream (.strm) speichern", -1)]), t[75] ||= J("p", { class: "field-desc" }, "Extras werden als .strm Dateien gespeichert (spart Speicherplatz).", -1)])
 				])) : X("", !0)]))])) : X("", !0),
-				a.value === "metadata" ? (K(), q("div", gc, [
-					J("div", _c, [
+				a.value === "metadata" ? (K(), q("div", _c, [
+					J("div", vc, [
 						t[76] ||= J("label", null, "Originalsprache (ISO Code, z.B. 'eng')", -1),
 						V(J("input", {
 							"onUpdate:modelValue": t[28] ||= (e) => i.value.Metadata.OriginalLanguage = e,
@@ -3513,32 +3542,32 @@ var Ss = /* @__PURE__ */ Do(ys, [["render", xs]]), Cs = {
 						}, null, 512), [[Q, i.value.Metadata.OriginalLanguage]]),
 						t[77] ||= J("p", { class: "field-desc" }, "Falls gesetzt, wird dieser Sprachcode verwendet, wenn der Inhalt als Originalversion (OV/OmU) erkannt wird (statt 'und').", -1)
 					]),
-					J("div", vc, [J("label", null, [V(J("input", {
+					J("div", yc, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[29] ||= (e) => i.value.Metadata.CreateNfo = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Metadata.CreateNfo]]), t[78] ||= Y(" NFO Dateien erstellen ", -1)]), t[79] ||= J("p", { class: "field-desc" }, "Erstellt eine .nfo Datei mit Metadaten (Beschreibung, Episodennummer) neben der Videodatei.", -1)]),
-					J("div", yc, [J("label", null, [V(J("input", {
+					J("div", bc, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[30] ||= (e) => i.value.Metadata.AppendDateToTitle = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Metadata.AppendDateToTitle]]), t[80] ||= Y(" Datum an Titel anhängen ", -1)]), t[81] ||= J("p", { class: "field-desc" }, "Hängt das Sendedatum an den Titel an (z.B. \"Titel - 2026-01-01\") und erzwingt die Erkennung als Serie. Nützlich für Sendungen wie \"Tagesschau in 100 Sekunden\", die kein Release-Datum im Titel haben.", -1)]),
-					i.value.Metadata.AppendDateToTitle ? (K(), q("div", bc, [J("div", xc, [J("label", null, [V(J("input", {
+					i.value.Metadata.AppendDateToTitle ? (K(), q("div", xc, [J("div", Sc, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[31] ||= (e) => i.value.Metadata.AppendTimeToTitle = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Metadata.AppendTimeToTitle]]), t[82] ||= Y(" Uhrzeit an Titel anhängen ", -1)]), t[83] ||= J("p", { class: "field-desc" }, "Hängt die Uhrzeit an den Titel an (z.B. \"Titel - 2026-01-01 20-00\").", -1)])])) : X("", !0),
-					J("div", Sc, [J("label", null, [V(J("input", {
+					J("div", Cc, [J("label", null, [V(J("input", {
 						"onUpdate:modelValue": t[32] ||= (e) => i.value.Metadata.KeepOriginalTitle = e,
 						type: "checkbox"
 					}, null, 512), [[$, i.value.Metadata.KeepOriginalTitle]]), t[84] ||= Y(" Originaltitel beibehalten ", -1)]), t[85] ||= J("p", { class: "field-desc" }, "Behält den Originaltitel bei und entfernt keine Informationen wie (AD), Gebärdensprache oder Episodennummern aus dem Titel.", -1)])
 				])) : X("", !0),
-				a.value === "accessibility" ? (K(), q("div", Cc, [J("div", wc, [J("label", null, [V(J("input", {
+				a.value === "accessibility" ? (K(), q("div", wc, [J("div", Tc, [J("label", null, [V(J("input", {
 					"onUpdate:modelValue": t[33] ||= (e) => i.value.Accessibility.AllowAudioDescription = e,
 					type: "checkbox"
-				}, null, 512), [[$, i.value.Accessibility.AllowAudioDescription]]), t[86] ||= Y(" Versionen mit Audiodeskription herunterladen ", -1)]), t[87] ||= J("p", { class: "field-desc" }, "Lädt auch Inhalte mit Audiodeskription herunter (sofern verfügbar).", -1)]), J("div", Tc, [J("label", null, [V(J("input", {
+				}, null, 512), [[$, i.value.Accessibility.AllowAudioDescription]]), t[86] ||= Y(" Versionen mit Audiodeskription herunterladen ", -1)]), t[87] ||= J("p", { class: "field-desc" }, "Lädt auch Inhalte mit Audiodeskription herunter (sofern verfügbar).", -1)]), J("div", Ec, [J("label", null, [V(J("input", {
 					"onUpdate:modelValue": t[34] ||= (e) => i.value.Accessibility.AllowSignLanguage = e,
 					type: "checkbox"
 				}, null, 512), [[$, i.value.Accessibility.AllowSignLanguage]]), t[88] ||= Y(" Versionen mit Gebärdensprache herunterladen ", -1)]), t[89] ||= J("p", { class: "field-desc" }, "Lädt auch Inhalte mit Gebärdensprache herunter. (sofern verfügbar).", -1)])])) : X("", !0)
 			]),
-			J("footer", Ec, [
+			J("footer", Dc, [
 				J("button", {
 					onClick: d,
 					class: "btn btn-secondary"
@@ -3554,73 +3583,30 @@ var Ss = /* @__PURE__ */ Do(ys, [["render", xs]]), Cs = {
 			])
 		])])) : X("", !0);
 	}
-}, [["__scopeId", "data-v-91b0064b"]]), Oc = { class: "plugin-config" }, kc = { class: "tab-row" }, Ac = { class: "tab-content" }, jc = {
+}, [["__scopeId", "data-v-a6c8dd1b"]]), kc = { class: "plugin-config" }, Ac = { class: "tab-row" }, jc = { class: "tab-content" }, Mc = {
 	key: 0,
 	class: "modal-overlay"
-}, Mc = { class: "modal-card test-modal card" }, Nc = { class: "modal-header" }, Pc = { class: "modal-content" }, Fc = {
+}, Nc = { class: "modal-card test-modal card" }, Pc = { class: "modal-header" }, Fc = { class: "modal-content" }, Ic = {
 	key: 0,
 	class: "state-msg"
-}, Ic = {
+}, Lc = {
 	key: 1,
 	class: "no-data"
-}, Lc = {
+}, Rc = {
 	key: 2,
 	class: "test-results-list"
-}, Rc = { class: "test-item-title" }, zc = { class: "test-item-meta" }, Bc = { class: "modal-footer" }, Vc = "a31b415a-5264-419d-b152-8c8192a54994", Hc = /* @__PURE__ */ Do({
+}, zc = { class: "test-item-title" }, Bc = { class: "test-item-meta" }, Vc = { class: "test-item-meta" }, Hc = { class: "modal-footer" }, Uc = "a31b415a-5264-419d-b152-8c8192a54994", Wc = /* @__PURE__ */ Oo({
 	__name: "PluginConfig",
 	setup(e) {
 		let t = window.ApiClient ?? null, n = window.Dashboard ?? null, r = /* @__PURE__ */ R("search"), i = /* @__PURE__ */ R(null), a = /* @__PURE__ */ R(null), o = /* @__PURE__ */ R(!1), s = /* @__PURE__ */ R([]), c = /* @__PURE__ */ R(!1);
 		async function l() {
-			t && (i.value = await t.getPluginConfiguration(Vc));
+			t && (i.value = await t.getPluginConfiguration(Uc));
 		}
 		function u(e = null) {
 			if (e) a.value = e;
 			else {
 				let e = i.value?.SubscriptionDefaults || {};
-				a.value = {
-					Name: "",
-					IsEnabled: !0,
-					Search: {
-						Criteria: [{
-							Fields: ["Title", "Topic"],
-							Query: "",
-							IsExclude: !1
-						}],
-						MinDurationMinutes: e.SearchSettings?.MinDurationMinutes || null,
-						MaxDurationMinutes: e.SearchSettings?.MaxDurationMinutes || null,
-						MinBroadcastDate: null,
-						MaxBroadcastDate: null
-					},
-					Download: {
-						DownloadPath: "",
-						UseStreamingUrlFiles: e.DownloadSettings?.UseStreamingUrlFiles || !1,
-						AlwaysCreateSubfolder: e.DownloadSettings?.AlwaysCreateSubfolder || !1,
-						AllowFallbackToLowerQuality: e.DownloadSettings?.AllowFallbackToLowerQuality ?? !0,
-						EnhancedDuplicateDetection: e.DownloadSettings?.EnhancedDuplicateDetection || !1,
-						QualityCheckWithUrl: e.DownloadSettings?.QualityCheckWithUrl || !1,
-						DownloadFullVideoForSecondaryAudio: e.DownloadSettings?.DownloadFullVideoForSecondaryAudio || !1
-					},
-					Series: {
-						EnforceSeriesParsing: e.SeriesSettings?.EnforceSeriesParsing || !1,
-						AllowAbsoluteEpisodeNumbering: e.SeriesSettings?.AllowAbsoluteEpisodeNumbering || !1,
-						TreatNonEpisodesAsExtras: e.SeriesSettings?.TreatNonEpisodesAsExtras || !1,
-						SaveTrailers: e.SeriesSettings?.SaveTrailers ?? !0,
-						SaveInterviews: e.SeriesSettings?.SaveInterviews ?? !0,
-						SaveGenericExtras: e.SeriesSettings?.SaveGenericExtras ?? !0,
-						SaveExtrasAsStrm: e.SeriesSettings?.SaveExtrasAsStrm || !1
-					},
-					Metadata: {
-						OriginalLanguage: e.MetadataSettings?.OriginalLanguage || "",
-						CreateNfo: e.MetadataSettings?.CreateNfo || !1,
-						AppendDateToTitle: e.MetadataSettings?.AppendDateToTitle || !1,
-						KeepOriginalTitle: e.MetadataSettings?.KeepOriginalTitle || !1,
-						AppendTimeToTitle: e.MetadataSettings?.AppendTimeToTitle || !1
-					},
-					Accessibility: {
-						AllowAudioDescription: e.AccessibilitySettings?.AllowAudioDescription || !1,
-						AllowSignLanguage: e.AccessibilitySettings?.AllowSignLanguage || !1
-					}
-				};
+				a.value = Do.createDefault(e);
 			}
 		}
 		async function d(e) {
@@ -3657,9 +3643,9 @@ var Ss = /* @__PURE__ */ Do(ys, [["render", xs]]), Cs = {
 		}
 		return ur(() => {
 			l();
-		}), (e, t) => (K(), q("div", Oc, [
+		}), (e, t) => (K(), q("div", kc, [
 			t[9] ||= J("header", { class: "config-header" }, [J("h1", { class: "config-title" }, "MediathekViewDL"), J("p", { class: "config-subtitle" }, "Plugin Konfiguration")], -1),
-			J("div", kc, [
+			J("div", Ac, [
 				J("button", {
 					class: k(["tab-btn", { active: r.value === "search" }]),
 					onClick: t[0] ||= (e) => r.value = "search"
@@ -3677,60 +3663,64 @@ var Ss = /* @__PURE__ */ Do(ys, [["render", xs]]), Cs = {
 					onClick: t[3] ||= (e) => r.value = "downloads"
 				}, "Downloads", 2)
 			]),
-			J("div", Ac, [
-				r.value === "search" ? (K(), Bi(Xo, {
+			J("div", jc, [
+				r.value === "search" ? (K(), Bi(Zo, {
 					key: 0,
 					onCreateSub: u
 				})) : X("", !0),
-				r.value === "settings" ? (K(), Bi(ts, { key: 1 })) : X("", !0),
-				r.value === "subscriptions" ? (K(), Bi(vs, {
+				r.value === "settings" ? (K(), Bi(ns, { key: 1 })) : X("", !0),
+				r.value === "subscriptions" ? (K(), Bi(ys, {
 					key: 2,
 					"on-edit": u
 				})) : X("", !0),
-				r.value === "downloads" ? (K(), Bi(Ss, { key: 3 })) : X("", !0)
+				r.value === "downloads" ? (K(), Bi(Cs, { key: 3 })) : X("", !0)
 			]),
-			(K(), Bi(Gn, { to: "body" }, [Gi(Dc, {
+			(K(), Bi(Gn, { to: "body" }, [Gi(Oc, {
 				subscription: a.value,
 				onSave: d,
 				onTest: f,
 				onCancel: t[4] ||= (e) => a.value = null
 			}, null, 8, ["subscription"])])),
-			(K(), Bi(Gn, { to: "body" }, [o.value ? (K(), q("div", jc, [J("div", Mc, [
-				J("header", Nc, [t[7] ||= J("h2", null, "Abo-Test Ergebnisse", -1), J("button", {
+			(K(), Bi(Gn, { to: "body" }, [o.value ? (K(), q("div", Mc, [J("div", Nc, [
+				J("header", Pc, [t[7] ||= J("h2", null, "Abo-Test Ergebnisse", -1), J("button", {
 					onClick: t[5] ||= (e) => o.value = !1,
 					class: "btn-icon"
 				}, "✕")]),
-				J("div", Pc, [c.value ? (K(), q("div", Fc, [...t[8] ||= [J("div", { class: "spinner" }, null, -1), Y(" Suche nach Treffern... ", -1)]])) : s.value.length === 0 ? (K(), q("div", Ic, " Keine Sendungen gefunden. ")) : (K(), q("div", Lc, [J("p", null, "Folgende " + A(s.value.length) + " Sendungen würden heruntergeladen werden:", 1), (K(!0), q(W, null, br(s.value, (e, t) => (K(), q("div", {
+				J("div", Fc, [c.value ? (K(), q("div", Ic, [...t[8] ||= [J("div", { class: "spinner" }, null, -1), Y(" Suche nach Treffern... ", -1)]])) : s.value.length === 0 ? (K(), q("div", Lc, " Keine Sendungen gefunden. ")) : (K(), q("div", Rc, [J("p", null, "Folgende " + A(s.value.length) + " Sendungen würden heruntergeladen werden:", 1), (K(!0), q(W, null, br(s.value, (e, t) => (K(), q("div", {
 					key: t,
 					class: "test-item"
-				}, [J("div", Rc, A(e.Title || e.title), 1), J("div", zc, A(e.Channel || e.channel) + " | " + A(e.Topic || e.topic) + " | " + A(e.Duration || e.duration), 1)]))), 128))]))]),
-				J("footer", Bc, [J("button", {
+				}, [
+					J("div", zc, A(e.Title), 1),
+					J("div", Bc, A(e.Channel) + " | " + A(e.Topic) + " | " + A(e.Duration), 1),
+					J("div", Vc, A(e.Description), 1)
+				]))), 128))]))]),
+				J("footer", Hc, [J("button", {
 					onClick: t[6] ||= (e) => o.value = !1,
 					class: "btn btn-primary"
 				}, "Schließen")])
 			])])) : X("", !0)]))
 		]));
 	}
-}, [["__scopeId", "data-v-35d1584e"]]), Uc = {
+}, [["__scopeId", "data-v-b10468a8"]]), Gc = {
 	__name: "App",
 	setup(e) {
-		return (e, t) => (K(), Bi(Hc));
+		return (e, t) => (K(), Bi(Wc));
 	}
-}, Wc = null;
-function Gc(e) {
-	Wc || (Wc = wo(Uc), Wc.mount(e));
+}, Kc = null;
+function qc(e) {
+	Kc || (Kc = wo(Gc), Kc.mount(e));
 }
-function Kc() {
-	Wc &&= (Wc.unmount(), null);
+function Jc() {
+	Kc &&= (Kc.unmount(), null);
 }
-var qc = document.getElementById("configPageVueJSPage"), Jc = !window.Dashboard;
-if (qc) if (Jc) {
-	let e = qc.querySelector("#app");
-	e && Gc(e);
-} else qc.addEventListener("pageshow", (e) => {
-	let t = qc.querySelector("#app");
-	t && (Kc(), Gc(t));
-}), qc.addEventListener("pagehide", () => {
-	Kc();
+var Yc = document.getElementById("configPageVueJSPage"), Xc = !window.Dashboard;
+if (Yc) if (Xc) {
+	let e = Yc.querySelector("#app");
+	e && qc(e);
+} else Yc.addEventListener("pageshow", (e) => {
+	let t = Yc.querySelector("#app");
+	t && (Jc(), qc(t));
+}), Yc.addEventListener("pagehide", () => {
+	Jc();
 });
 //#endregion

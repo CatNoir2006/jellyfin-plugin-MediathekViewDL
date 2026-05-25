@@ -1,5 +1,6 @@
 <script setup>
 import {ref, watch} from 'vue'
+import { SubscriptionFactory } from '../../utils/SubscriptionFactory'
 
 const props = defineProps({
     onCreateSub: { type: Function, required: true }
@@ -95,17 +96,15 @@ async function createSubFromSearch() {
         const url = ApiClient.getUrl('MediathekViewDL/Search/Criteria?' + params.toString())
         const criteria = await ApiClient.getJSON(url)
         
-        props.onCreateSub({
-            Name: searchTitle.value || searchTopic.value || searchCombined.value || 'Suche',
-            IsEnabled: true,
-            Search: {
-                Criteria: criteria,
-                MinDurationMinutes: minDuration.value,
-                MaxDurationMinutes: maxDuration.value,
-                MinBroadcastDate: minBroadcastDate.value ? new Date(minBroadcastDate.value).toISOString() : null,
-                MaxBroadcastDate: maxBroadcastDate.value ? new Date(maxBroadcastDate.value).toISOString() : null
-            }
-        });
+        const sub = SubscriptionFactory.createDefault()
+        sub.Name = searchTitle.value || searchTopic.value || searchCombined.value || 'Suche'
+        sub.Search.Criteria = criteria
+        sub.Search.MinDurationMinutes = minDuration.value
+        sub.Search.MaxDurationMinutes = maxDuration.value
+        sub.Search.MinBroadcastDate = minBroadcastDate.value ? new Date(minBroadcastDate.value).toISOString() : null
+        sub.Search.MaxBroadcastDate = maxBroadcastDate.value ? new Date(maxBroadcastDate.value).toISOString() : null
+        
+        props.onCreateSub(sub);
     } catch (e) {
         console.error('Failed to convert criteria', e)
     }
@@ -125,13 +124,11 @@ async function createSubFromItem(item) {
         const url = ApiClient.getUrl('MediathekViewDL/Search/Criteria?' + params.toString())
         const criteria = await ApiClient.getJSON(url)
         
-        props.onCreateSub({
-            Name: item.Topic || item.Title,
-            IsEnabled: true,
-            Search: {
-                Criteria: criteria
-            }
-        });
+        const sub = SubscriptionFactory.createDefault()
+        sub.Name = item.Topic || item.Title
+        sub.Search.Criteria = criteria
+        
+        props.onCreateSub(sub);
     } catch (e) {
         console.error('Failed to convert item criteria', e)
     }
