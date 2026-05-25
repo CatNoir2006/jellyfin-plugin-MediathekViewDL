@@ -65,8 +65,10 @@ async function processSubscription(id) {
   if (!ApiClient || !Dashboard) return
   try {
     const url = ApiClient.getUrl('MediathekViewDL/Subscriptions/' + id + '/Process')
-    const count = await ApiClient.ajax({ type: 'POST', url })
-    Dashboard.alert(count + ' neue Elemente gefunden.')
+    const response = await ApiClient.ajax({ type: 'POST', url })
+    const reader = (response.body || response).getReader()
+    const { value } = await reader.read()
+    Dashboard.alert(new TextDecoder().decode(value) + ' neue Elemente gefunden.')
   } catch (e) {
     console.error('Processing failed', e)
     Dashboard.alert('Fehler beim Verarbeiten.')
