@@ -12,6 +12,10 @@ const error = ref(null)
 const editingSub = ref(null)
 const pluginConfig = ref(null)
 
+const showTestModal = ref(false)
+const testResults = ref([])
+const testLoading = ref(false)
+
 async function fetchSubscriptions() {
   if (!ApiClient) return
   loading.value = true
@@ -35,32 +39,47 @@ async function fetchConfig() {
 
 function createNewSubscription() {
   if (!pluginConfig.value) return
-  
-  // Create a new sub with defaults
+
+  const def = pluginConfig.value.SubscriptionDefaults || {}
+
   editingSub.value = {
     Name: '',
     IsEnabled: true,
     Search: {
       Criteria: [{ Fields: ['Title', 'Topic'], Query: '', IsExclude: false }],
-      MinDurationMinutes: pluginConfig.value.SubscriptionDefaults.SearchSettings.MinDurationMinutes,
-      MaxDurationMinutes: pluginConfig.value.SubscriptionDefaults.SearchSettings.MaxDurationMinutes
+      MinDurationMinutes: def.SearchSettings?.MinDurationMinutes || null,
+      MaxDurationMinutes: def.SearchSettings?.MaxDurationMinutes || null,
+      MinBroadcastDate: null,
+      MaxBroadcastDate: null
     },
     Download: {
       DownloadPath: '',
-      UseStreamingUrlFiles: pluginConfig.value.SubscriptionDefaults.DownloadSettings.UseStreamingUrlFiles,
-      AlwaysCreateSubfolder: pluginConfig.value.SubscriptionDefaults.DownloadSettings.AlwaysCreateSubfolder,
-      AllowFallbackToLowerQuality: pluginConfig.value.SubscriptionDefaults.DownloadSettings.AllowFallbackToLowerQuality
+      UseStreamingUrlFiles: def.DownloadSettings?.UseStreamingUrlFiles || false,
+      AlwaysCreateSubfolder: def.DownloadSettings?.AlwaysCreateSubfolder || false,
+      AllowFallbackToLowerQuality: def.DownloadSettings?.AllowFallbackToLowerQuality ?? true,
+      EnhancedDuplicateDetection: def.DownloadSettings?.EnhancedDuplicateDetection || false,
+      QualityCheckWithUrl: def.DownloadSettings?.QualityCheckWithUrl || false,
+      DownloadFullVideoForSecondaryAudio: def.DownloadSettings?.DownloadFullVideoForSecondaryAudio || false
     },
     Series: {
-      EnforceSeriesParsing: pluginConfig.value.SubscriptionDefaults.SeriesSettings.EnforceSeriesParsing,
-      AllowAbsoluteEpisodeNumbering: pluginConfig.value.SubscriptionDefaults.SeriesSettings.AllowAbsoluteEpisodeNumbering,
-      TreatNonEpisodesAsExtras: pluginConfig.value.SubscriptionDefaults.SeriesSettings.TreatNonEpisodesAsExtras
+      EnforceSeriesParsing: def.SeriesSettings?.EnforceSeriesParsing || false,
+      AllowAbsoluteEpisodeNumbering: def.SeriesSettings?.AllowAbsoluteEpisodeNumbering || false,
+      TreatNonEpisodesAsExtras: def.SeriesSettings?.TreatNonEpisodesAsExtras || false,
+      SaveTrailers: def.SeriesSettings?.SaveTrailers ?? true,
+      SaveInterviews: def.SeriesSettings?.SaveInterviews ?? true,
+      SaveGenericExtras: def.SeriesSettings?.SaveGenericExtras ?? true,
+      SaveExtrasAsStrm: def.SeriesSettings?.SaveExtrasAsStrm || false
     },
     Metadata: {
-      OriginalLanguage: pluginConfig.value.SubscriptionDefaults.MetadataSettings.OriginalLanguage,
-      CreateNfo: pluginConfig.value.SubscriptionDefaults.MetadataSettings.CreateNfo,
-      AppendDateToTitle: pluginConfig.value.SubscriptionDefaults.MetadataSettings.AppendDateToTitle,
-      KeepOriginalTitle: pluginConfig.value.SubscriptionDefaults.MetadataSettings.KeepOriginalTitle
+      OriginalLanguage: def.MetadataSettings?.OriginalLanguage || '',
+      CreateNfo: def.MetadataSettings?.CreateNfo || false,
+      AppendDateToTitle: def.MetadataSettings?.AppendDateToTitle || false,
+      KeepOriginalTitle: def.MetadataSettings?.KeepOriginalTitle || false,
+      AppendTimeToTitle: def.MetadataSettings?.AppendTimeToTitle || false
+    },
+    Accessibility: {
+      AllowAudioDescription: def.AccessibilitySettings?.AllowAudioDescription || false,
+      AllowSignLanguage: def.AccessibilitySettings?.AllowSignLanguage || false
     }
   }
 }
@@ -71,20 +90,20 @@ function editSubscription(sub) {
 
 async function saveSubscription(sub) {
   if (!ApiClient) return
-  
+
   try {
     const isNew = !sub.Id
-    const url = isNew 
+    const url = isNew
       ? ApiClient.getUrl('MediathekViewDL/Subscriptions')
       : ApiClient.getUrl('MediathekViewDL/Subscriptions/' + sub.Id)
-    
+
     await ApiClient.ajax({
       type: isNew ? 'POST' : 'PUT',
       url: url,
       data: JSON.stringify(sub),
       contentType: 'application/json'
     })
-    
+
     editingSub.value = null
     await fetchSubscriptions()
     if (Dashboard) Dashboard.alert('Abonnement gespeichert.')
@@ -94,9 +113,36 @@ async function saveSubscription(sub) {
   }
 }
 
+async function testSubscription(sub) {
+  if (!ApiClient) return
+  testResults.value = []
+  testLoading.value = true
+  showTestModal.value = true
+
+  try {
+    const url = ApiClient.getUrl('MediathekViewDL/Subscriptions/Test')
+    const results = await ApiClient.ajax({
+      type: 'POST',
+      url: url,
+      data: JSON.stringify(sub),
+      contentType: 'application/json',
+      dataType: 'json'
+    })
+
+    testResults.value = results;
+    console.log('Final test results count:', testResults.value.length);
+  } catch (e) {
+    console.error('Test failed', e)
+    if (Dashboard) Dashboard.alert('Fehler beim Testen des Abonnements.')
+    showTestModal.value = false
+  } finally {
+    testLoading.value = false
+  }
+}
+
 async function deleteSubscription(id) {
   if (!ApiClient || !Dashboard) return
-  
+
   Dashboard.confirm('Soll dieses Abonnement wirklich gelöscht werden?', 'Löschen bestätigen', async (result) => {
     if (result) {
       try {
@@ -171,18 +217,55 @@ onMounted(() => {
         </div>
       </div>
     </div>
-    
+
     <div v-else class="no-data">
       Keine Abonnements konfiguriert.
     </div>
 
     <!-- Modal Editor -->
     <Teleport to="body">
-      <SubscriptionEditor 
-        :subscription="editingSub" 
-        @save="saveSubscription" 
+      <SubscriptionEditor
+        :subscription="editingSub"
+        @save="saveSubscription"
+        @test="testSubscription"
         @cancel="editingSub = null"
       />
+    </Teleport>
+
+    <!-- Modal Test Results -->
+    <Teleport to="body">
+      <div v-if="showTestModal" class="modal-overlay test-overlay">
+        <div class="modal-card test-modal card">
+          <header class="modal-header">
+            <h2>Abo-Test Ergebnisse</h2>
+            <button @click="showTestModal = false" class="btn-icon">✕</button>
+          </header>
+          <div class="modal-content">
+            <div v-if="testLoading" class="loading-results">
+              <div class="spinner"></div>
+              Suche nach Treffern...
+            </div>
+            <div v-else-if="testResults.length === 0" class="no-hits">
+              Keine Sendungen gefunden, die den Kriterien entsprechen und noch nicht geladen wurden.
+            </div>
+            <div v-else class="test-results-list">
+              <p>Folgende {{ testResults.length }} Sendungen würden heruntergeladen werden:</p>
+              <div v-for="item in testResults" :key="item.Id || item.id" class="test-item">
+                <div class="test-item-title">{{ item.Title || item.title }}</div>
+                <div class="test-item-meta">
+                  {{ item.Channel || item.channel }} | {{ item.Topic || item.topic }} | {{ item.Duration || item.duration }}
+                </div>
+                <div v-if="item.Description || item.description" class="test-item-desc">
+                  {{ item.Description || item.description }}
+                </div>
+              </div>
+            </div>
+          </div>
+          <footer class="modal-footer">
+            <button @click="showTestModal = false" class="btn btn-primary">Schließen</button>
+          </footer>
+        </div>
+      </div>
     </Teleport>
   </div>
 </template>
@@ -190,14 +273,14 @@ onMounted(() => {
 <style scoped>
 .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .subscriptions-list { display: grid; gap: 10px; }
-.subscription-item { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  padding: 15px; 
-  background: #27272a; 
-  border: 1px solid #3f3f46; 
-  border-radius: 8px; 
+.subscription-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  border-radius: 8px;
 }
 .subscription-item.disabled { opacity: 0.6; border-style: dashed; }
 .sub-name { font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
@@ -213,6 +296,41 @@ onMounted(() => {
 .error-container { text-align: center; padding: 30px; background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 8px; color: #ef4444; }
 .error-msg { margin-bottom: 10px; font-weight: bold; }
 .no-data { text-align: center; color: #a1a1aa; padding: 40px; background: #27272a; border-radius: 8px; border: 1px dashed #3f3f46; }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 20px;
+}
+.modal-card {
+  width: 100%;
+  max-width: 700px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: #18181b;
+  border: 1px solid #3f3f46;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.modal-header { padding: 20px; border-bottom: 1px solid #3f3f46; display: flex; justify-content: space-between; align-items: center; }
+.modal-content { padding: 20px; overflow-y: auto; flex: 1; }
+.modal-footer { padding: 20px; border-top: 1px solid #3f3f46; display: flex; justify-content: flex-end; }
+
+.test-item { padding: 12px; border-bottom: 1px solid #333; }
+.test-item-title { font-weight: bold; margin-bottom: 2px; }
+.test-item-meta { font-size: 0.8rem; color: #a1a1aa; }
+.test-item-desc { font-size: 0.75rem; color: #71717a; margin-top: 4px; }
+.loading-results, .no-hits { text-align: center; padding: 40px; color: #a1a1aa; }
 
 .spinner {
   border: 3px solid rgba(255, 255, 255, 0.1);

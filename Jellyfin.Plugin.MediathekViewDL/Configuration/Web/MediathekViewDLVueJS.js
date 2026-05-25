@@ -1,6 +1,6 @@
 (function(){
           const style = document.createElement('style');
-          style.textContent = ".search-form[data-v-0cc70436]{width:100%;max-width:none;margin-bottom:20px}.search-grid[data-v-0cc70436]{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px;width:100%;display:grid}.field[data-v-0cc70436]{flex-direction:column;gap:5px;display:flex}.field label[data-v-0cc70436]{color:#a1a1aa;font-size:.9rem}.field-input[data-v-0cc70436]{color:#fff;box-sizing:border-box;background:#27272a;border:1px solid #3f3f46;border-radius:4px;width:100%;padding:10px}.field-input[data-v-0cc70436]:focus{border-color:#7c3aed;outline:none}.form-actions[data-v-0cc70436]{justify-content:flex-start;margin-top:20px;display:flex}.results-list[data-v-0cc70436]{margin-top:20px}.result-item[data-v-0cc70436]{border-bottom:1px solid #333;justify-content:space-between;align-items:center;padding:12px;display:flex}.result-item[data-v-0cc70436]:last-child{border-bottom:none}.result-title[data-v-0cc70436]{margin-bottom:2px;font-weight:700}.result-meta[data-v-0cc70436]{color:#a1a1aa;align-items:center;gap:8px;font-size:.8rem;display:flex}.closed_caption[data-v-0cc70436]{font-size:1.1rem}.result-actions[data-v-0cc70436]{gap:10px;display:flex}.btn-icon[data-v-0cc70436]{color:#fff;cursor:pointer;background:0 0;border:none;border-radius:4px;padding:5px;font-size:1.4rem}.btn-icon[data-v-0cc70436]:hover{background:#3f3f46}.btn-primary[data-v-0cc70436]{color:#fff;cursor:pointer;background:#7c3aed;border:none;border-radius:4px;height:42px;padding:10px 30px;font-weight:600}.btn-primary[data-v-0cc70436]:disabled{opacity:.5;cursor:not-allowed}.no-results[data-v-0cc70436]{text-align:center;color:#a1a1aa;width:100%;padding:20px}.editor-overlay[data-v-09216a1d]{z-index:9999;background:#000c;justify-content:center;align-items:center;width:100%;height:100%;padding:20px;display:flex;position:fixed;top:0;left:0}.editor-modal[data-v-09216a1d]{background:#18181b;border:1px solid #3f3f46;border-radius:8px;flex-direction:column;width:100%;max-width:800px;height:80vh;min-height:500px;display:flex;overflow:hidden;box-shadow:0 20px 25px -5px #00000080}.editor-header[data-v-09216a1d]{border-bottom:1px solid #3f3f46;justify-content:space-between;align-items:center;padding:20px;display:flex}.editor-tabs[data-v-09216a1d]{background:#27272a;border-bottom:1px solid #3f3f46;display:flex;overflow-x:auto}.editor-content[data-v-09216a1d]{flex:1;padding:20px;overflow-y:auto}.editor-footer[data-v-09216a1d]{border-top:1px solid #3f3f46;justify-content:flex-end;gap:15px;padding:20px;display:flex}.tab-btn[data-v-09216a1d]{color:#a1a1aa;cursor:pointer;white-space:nowrap;background:0 0;border:none;padding:12px 20px}.tab-btn.active[data-v-09216a1d]{color:#7c3aed;background:#18181b;border-bottom:2px solid #7c3aed}.field[data-v-09216a1d]{margin-bottom:15px}.field label[data-v-09216a1d]{color:#a1a1aa;margin-bottom:5px;font-size:.9rem;display:block}.field-input[data-v-09216a1d]{color:#fff;box-sizing:border-box;background:#27272a;border:1px solid #3f3f46;border-radius:4px;width:100%;padding:10px}.checkbox-field[data-v-09216a1d]{margin-bottom:10px}.checkbox-field label[data-v-09216a1d]{cursor:pointer;align-items:center;gap:10px;display:flex}.grid-2[data-v-09216a1d]{grid-template-columns:1fr 1fr;gap:20px;display:grid}.query-row[data-v-09216a1d]{background:#27272a;border:1px solid #3f3f46;border-radius:8px;margin-bottom:15px;padding:15px}.query-fields[data-v-09216a1d]{gap:8px;margin-bottom:10px;display:flex}.field-tag[data-v-09216a1d]{color:#a1a1aa;cursor:pointer;background:#3f3f46;border:none;border-radius:12px;padding:4px 10px;font-size:.75rem}.field-tag.active[data-v-09216a1d]{color:#fff;background:#7c3aed}.query-input-row[data-v-09216a1d]{align-items:center;gap:10px;display:flex}.input-with-btn[data-v-09216a1d]{gap:10px;display:flex}.sub-options[data-v-09216a1d]{border-left:2px solid #3f3f46;margin-top:10px;margin-left:25px;padding-left:15px}.btn-small[data-v-09216a1d]{color:#fff;cursor:pointer;background:#27272a;border:1px solid #3f3f46;border-radius:4px;padding:5px 10px;font-size:.75rem}.btn-danger[data-v-09216a1d]{background:#ef4444;border-color:#ef4444}.header-row[data-v-0eb81f25]{justify-content:space-between;align-items:center;margin-bottom:20px;display:flex}.subscriptions-list[data-v-0eb81f25]{gap:10px;display:grid}.subscription-item[data-v-0eb81f25]{background:#27272a;border:1px solid #3f3f46;border-radius:8px;justify-content:space-between;align-items:center;padding:15px;display:flex}.subscription-item.disabled[data-v-0eb81f25]{opacity:.6;border-style:dashed}.sub-name[data-v-0eb81f25]{align-items:center;gap:10px;font-size:1.1rem;font-weight:700;display:flex}.sub-meta[data-v-0eb81f25]{color:#a1a1aa;margin-top:4px;font-size:.85rem}.badge[data-v-0eb81f25]{color:#e4e4e7;background:#3f3f46;border-radius:4px;padding:2px 8px;font-size:.7rem;font-weight:400}.sub-actions[data-v-0eb81f25]{gap:15px;display:flex}.btn-icon[data-v-0eb81f25]{cursor:pointer;filter:grayscale();color:#fff;background:0 0;border:none;border-radius:4px;padding:5px;font-size:1.4rem}.btn-icon[data-v-0eb81f25]:hover{filter:none;background:#3f3f46}.btn-delete[data-v-0eb81f25]:hover{color:#ef4444}.btn-primary[data-v-0eb81f25]{color:#fff;cursor:pointer;background:#7c3aed;border:none;border-radius:4px;padding:10px 20px;font-weight:600}.btn-secondary[data-v-0eb81f25]{color:#fff;cursor:pointer;background:#3f3f46;border:none;border-radius:4px;margin-top:10px;padding:8px 16px}.state-msg[data-v-0eb81f25]{text-align:center;color:#a1a1aa;padding:40px}.error-container[data-v-0eb81f25]{text-align:center;color:#ef4444;background:#ef44441a;border:1px solid #ef4444;border-radius:8px;padding:30px}.error-msg[data-v-0eb81f25]{margin-bottom:10px;font-weight:700}.no-data[data-v-0eb81f25]{text-align:center;color:#a1a1aa;background:#27272a;border:1px dashed #3f3f46;border-radius:8px;padding:40px}.spinner[data-v-0eb81f25]{border:3px solid #ffffff1a;border-top-color:#7c3aed;border-radius:50%;width:24px;height:24px;margin:0 auto 10px;animation:1s linear infinite spin-0eb81f25}@keyframes spin-0eb81f25{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.plugin-config[data-v-a62a1791]{color:#e4e4e7;box-sizing:border-box;width:100%;margin:0 auto;padding:1rem}.config-header[data-v-a62a1791]{margin-bottom:2rem}.tab-row[data-v-a62a1791]{border-bottom:1px solid #333;gap:10px;margin-bottom:20px;padding-bottom:10px;display:flex}.tab-btn[data-v-a62a1791]{color:#a1a1aa;cursor:pointer;background:0 0;border:none;padding:10px;font-weight:600}.tab-btn.active[data-v-a62a1791]{color:#7c3aed;border-bottom:2px solid #7c3aed}\n/*$vite$:1*/";
+          style.textContent = ".search-form[data-v-0cc70436]{width:100%;max-width:none;margin-bottom:20px}.search-grid[data-v-0cc70436]{grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:15px;width:100%;display:grid}.field[data-v-0cc70436]{flex-direction:column;gap:5px;display:flex}.field label[data-v-0cc70436]{color:#a1a1aa;font-size:.9rem}.field-input[data-v-0cc70436]{color:#fff;box-sizing:border-box;background:#27272a;border:1px solid #3f3f46;border-radius:4px;width:100%;padding:10px}.field-input[data-v-0cc70436]:focus{border-color:#7c3aed;outline:none}.form-actions[data-v-0cc70436]{justify-content:flex-start;margin-top:20px;display:flex}.results-list[data-v-0cc70436]{margin-top:20px}.result-item[data-v-0cc70436]{border-bottom:1px solid #333;justify-content:space-between;align-items:center;padding:12px;display:flex}.result-item[data-v-0cc70436]:last-child{border-bottom:none}.result-title[data-v-0cc70436]{margin-bottom:2px;font-weight:700}.result-meta[data-v-0cc70436]{color:#a1a1aa;align-items:center;gap:8px;font-size:.8rem;display:flex}.closed_caption[data-v-0cc70436]{font-size:1.1rem}.result-actions[data-v-0cc70436]{gap:10px;display:flex}.btn-icon[data-v-0cc70436]{color:#fff;cursor:pointer;background:0 0;border:none;border-radius:4px;padding:5px;font-size:1.4rem}.btn-icon[data-v-0cc70436]:hover{background:#3f3f46}.btn-primary[data-v-0cc70436]{color:#fff;cursor:pointer;background:#7c3aed;border:none;border-radius:4px;height:42px;padding:10px 30px;font-weight:600}.btn-primary[data-v-0cc70436]:disabled{opacity:.5;cursor:not-allowed}.no-results[data-v-0cc70436]{text-align:center;color:#a1a1aa;width:100%;padding:20px}.editor-overlay[data-v-91b0064b]{z-index:9999;background:#000c;justify-content:center;align-items:center;width:100%;height:100%;padding:20px;display:flex;position:fixed;top:0;left:0}.editor-modal[data-v-91b0064b]{background:#18181b;border:1px solid #3f3f46;border-radius:8px;flex-direction:column;width:100%;max-width:800px;height:80vh;min-height:500px;display:flex;overflow:hidden;box-shadow:0 20px 25px -5px #00000080}.editor-header[data-v-91b0064b]{border-bottom:1px solid #3f3f46;justify-content:space-between;align-items:center;padding:20px;display:flex}.editor-tabs[data-v-91b0064b]{background:#27272a;border-bottom:1px solid #3f3f46;display:flex;overflow-x:auto}.editor-content[data-v-91b0064b]{flex:1;padding:20px;overflow-y:auto}.editor-footer[data-v-91b0064b]{border-top:1px solid #3f3f46;justify-content:flex-end;gap:15px;padding:20px;display:flex}.tab-btn[data-v-91b0064b]{color:#a1a1aa;cursor:pointer;white-space:nowrap;background:0 0;border:none;padding:12px 20px}.tab-btn.active[data-v-91b0064b]{color:#7c3aed;background:#18181b;border-bottom:2px solid #7c3aed}.field[data-v-91b0064b]{margin-bottom:15px}.field label[data-v-91b0064b]{color:#a1a1aa;margin-bottom:5px;font-size:.9rem;display:block}.field-input[data-v-91b0064b]{color:#fff;box-sizing:border-box;background:#27272a;border:1px solid #3f3f46;border-radius:4px;width:100%;padding:10px}.field-desc[data-v-91b0064b]{color:#71717a;margin-top:4px;font-size:.75rem;line-height:1.4}.checkbox-field[data-v-91b0064b]{margin-bottom:15px}.checkbox-field label[data-v-91b0064b]{cursor:pointer;align-items:center;gap:10px;font-weight:600;display:flex}.grid-2[data-v-91b0064b]{grid-template-columns:1fr 1fr;gap:20px;display:grid}.query-row[data-v-91b0064b]{background:#27272a;border:1px solid #3f3f46;border-radius:8px;margin-bottom:15px;padding:15px}.query-fields[data-v-91b0064b]{gap:8px;margin-bottom:10px;display:flex}.field-tag[data-v-91b0064b]{color:#a1a1aa;cursor:pointer;background:#3f3f46;border:none;border-radius:12px;padding:4px 10px;font-size:.75rem}.field-tag.active[data-v-91b0064b]{color:#fff;background:#7c3aed}.query-input-row[data-v-91b0064b]{align-items:center;gap:10px;display:flex}.input-with-btn[data-v-91b0064b]{gap:10px;display:flex}.sub-options[data-v-91b0064b]{border-left:2px solid #3f3f46;margin-top:10px;margin-bottom:10px;margin-left:25px;padding-left:15px}.btn-small[data-v-91b0064b]{color:#fff;cursor:pointer;background:#27272a;border:1px solid #3f3f46;border-radius:4px;padding:5px 10px;font-size:.75rem}.btn-danger[data-v-91b0064b]{background:#ef4444;border-color:#ef4444}.header-row[data-v-3d506b2d]{justify-content:space-between;align-items:center;margin-bottom:20px;display:flex}.subscriptions-list[data-v-3d506b2d]{gap:10px;display:grid}.subscription-item[data-v-3d506b2d]{background:#27272a;border:1px solid #3f3f46;border-radius:8px;justify-content:space-between;align-items:center;padding:15px;display:flex}.subscription-item.disabled[data-v-3d506b2d]{opacity:.6;border-style:dashed}.sub-name[data-v-3d506b2d]{align-items:center;gap:10px;font-size:1.1rem;font-weight:700;display:flex}.sub-meta[data-v-3d506b2d]{color:#a1a1aa;margin-top:4px;font-size:.85rem}.badge[data-v-3d506b2d]{color:#e4e4e7;background:#3f3f46;border-radius:4px;padding:2px 8px;font-size:.7rem;font-weight:400}.sub-actions[data-v-3d506b2d]{gap:15px;display:flex}.btn-icon[data-v-3d506b2d]{cursor:pointer;filter:grayscale();color:#fff;background:0 0;border:none;border-radius:4px;padding:5px;font-size:1.4rem}.btn-icon[data-v-3d506b2d]:hover{filter:none;background:#3f3f46}.btn-delete[data-v-3d506b2d]:hover{color:#ef4444}.btn-primary[data-v-3d506b2d]{color:#fff;cursor:pointer;background:#7c3aed;border:none;border-radius:4px;padding:10px 20px;font-weight:600}.btn-secondary[data-v-3d506b2d]{color:#fff;cursor:pointer;background:#3f3f46;border:none;border-radius:4px;margin-top:10px;padding:8px 16px}.state-msg[data-v-3d506b2d]{text-align:center;color:#a1a1aa;padding:40px}.error-container[data-v-3d506b2d]{text-align:center;color:#ef4444;background:#ef44441a;border:1px solid #ef4444;border-radius:8px;padding:30px}.error-msg[data-v-3d506b2d]{margin-bottom:10px;font-weight:700}.no-data[data-v-3d506b2d]{text-align:center;color:#a1a1aa;background:#27272a;border:1px dashed #3f3f46;border-radius:8px;padding:40px}.modal-overlay[data-v-3d506b2d]{z-index:10000;background:#000000f2;justify-content:center;align-items:center;width:100%;height:100%;padding:20px;display:flex;position:fixed;top:0;left:0}.modal-card[data-v-3d506b2d]{background:#18181b;border:1px solid #3f3f46;border-radius:8px;flex-direction:column;width:100%;max-width:700px;max-height:80vh;display:flex;overflow:hidden}.modal-header[data-v-3d506b2d]{border-bottom:1px solid #3f3f46;justify-content:space-between;align-items:center;padding:20px;display:flex}.modal-content[data-v-3d506b2d]{flex:1;padding:20px;overflow-y:auto}.modal-footer[data-v-3d506b2d]{border-top:1px solid #3f3f46;justify-content:flex-end;padding:20px;display:flex}.test-item[data-v-3d506b2d]{border-bottom:1px solid #333;padding:12px}.test-item-title[data-v-3d506b2d]{margin-bottom:2px;font-weight:700}.test-item-meta[data-v-3d506b2d]{color:#a1a1aa;font-size:.8rem}.test-item-desc[data-v-3d506b2d]{color:#71717a;margin-top:4px;font-size:.75rem}.loading-results[data-v-3d506b2d],.no-hits[data-v-3d506b2d]{text-align:center;color:#a1a1aa;padding:40px}.spinner[data-v-3d506b2d]{border:3px solid #ffffff1a;border-top-color:#7c3aed;border-radius:50%;width:24px;height:24px;margin:0 auto 10px;animation:1s linear infinite spin-3d506b2d}@keyframes spin-3d506b2d{0%{transform:rotate(0)}to{transform:rotate(360deg)}}.plugin-config[data-v-a62a1791]{color:#e4e4e7;box-sizing:border-box;width:100%;margin:0 auto;padding:1rem}.config-header[data-v-a62a1791]{margin-bottom:2rem}.tab-row[data-v-a62a1791]{border-bottom:1px solid #333;gap:10px;margin-bottom:20px;padding-bottom:10px;display:flex}.tab-btn[data-v-a62a1791]{color:#a1a1aa;cursor:pointer;background:0 0;border:none;padding:10px;font-weight:600}.tab-btn.active[data-v-a62a1791]{color:#7c3aed;border-bottom:2px solid #7c3aed}\n/*$vite$:1*/";
           document.head.appendChild(style);
         })();
 //#region node_modules/@vue/shared/dist/shared.esm-bundler.js
@@ -176,19 +176,19 @@ var M, Ee = /* @__PURE__ */ new WeakSet(), De = class {
 	}
 	run() {
 		if (!(this.flags & 1)) return this.fn();
-		this.flags |= 2, We(this), Pe(this);
-		let e = M, t = Be;
-		M = this, Be = !0;
+		this.flags |= 2, Ue(this), Pe(this);
+		let e = M, t = N;
+		M = this, N = !0;
 		try {
 			return this.fn();
 		} finally {
-			Fe(this), M = e, Be = t, this.flags &= -3;
+			Fe(this), M = e, N = t, this.flags &= -3;
 		}
 	}
 	stop() {
 		if (this.flags & 1) {
 			for (let e = this.deps; e; e = e.nextDep) Re(e);
-			this.deps = this.depsTail = void 0, We(this), this.onStop && this.onStop(), this.flags &= -2;
+			this.deps = this.depsTail = void 0, Ue(this), this.onStop && this.onStop(), this.flags &= -2;
 		}
 	}
 	trigger() {
@@ -251,10 +251,10 @@ function Ie(e) {
 	return !!e._dirty;
 }
 function Le(e) {
-	if (e.flags & 4 && !(e.flags & 16) || (e.flags &= -17, e.globalVersion === Ge) || (e.globalVersion = Ge, !e.isSSR && e.flags & 128 && (!e.deps && !e._dirty || !Ie(e)))) return;
+	if (e.flags & 4 && !(e.flags & 16) || (e.flags &= -17, e.globalVersion === We) || (e.globalVersion = We, !e.isSSR && e.flags & 128 && (!e.deps && !e._dirty || !Ie(e)))) return;
 	e.flags |= 2;
-	let t = e.dep, n = M, r = Be;
-	M = e, Be = !0;
+	let t = e.dep, n = M, r = N;
+	M = e, N = !0;
 	try {
 		Pe(e);
 		let n = e.fn(e._value);
@@ -262,7 +262,7 @@ function Le(e) {
 	} catch (e) {
 		throw t.version++, e;
 	} finally {
-		M = n, Be = r, Fe(e), e.flags &= -3;
+		M = n, N = r, Fe(e), e.flags &= -3;
 	}
 }
 function Re(e, t = !1) {
@@ -277,15 +277,15 @@ function ze(e) {
 	let { prevDep: t, nextDep: n } = e;
 	t && (t.nextDep = n, e.prevDep = void 0), n && (n.prevDep = t, e.nextDep = void 0);
 }
-var Be = !0, Ve = [];
+var N = !0, Be = [];
+function Ve() {
+	Be.push(N), N = !1;
+}
 function He() {
-	Ve.push(Be), Be = !1;
+	let e = Be.pop();
+	N = e === void 0 ? !0 : e;
 }
-function Ue() {
-	let e = Ve.pop();
-	Be = e === void 0 ? !0 : e;
-}
-function We(e) {
+function Ue(e) {
 	let { cleanup: t } = e;
 	if (e.cleanup = void 0, t) {
 		let e = M;
@@ -297,18 +297,18 @@ function We(e) {
 		}
 	}
 }
-var Ge = 0, Ke = class {
+var We = 0, Ge = class {
 	constructor(e, t) {
 		this.sub = e, this.dep = t, this.version = t.version, this.nextDep = this.prevDep = this.nextSub = this.prevSub = this.prevActiveLink = void 0;
 	}
-}, qe = class {
+}, Ke = class {
 	constructor(e) {
 		this.computed = e, this.version = 0, this.activeLink = void 0, this.subs = void 0, this.map = void 0, this.key = void 0, this.sc = 0, this.__v_skip = !0;
 	}
 	track(e) {
-		if (!M || !Be || M === this.computed) return;
+		if (!M || !N || M === this.computed) return;
 		let t = this.activeLink;
-		if (t === void 0 || t.sub !== M) t = this.activeLink = new Ke(M, this), M.deps ? (t.prevDep = M.depsTail, M.depsTail.nextDep = t, M.depsTail = t) : M.deps = M.depsTail = t, Je(t);
+		if (t === void 0 || t.sub !== M) t = this.activeLink = new Ge(M, this), M.deps ? (t.prevDep = M.depsTail, M.depsTail.nextDep = t, M.depsTail = t) : M.deps = M.depsTail = t, qe(t);
 		else if (t.version === -1 && (t.version = this.version, t.nextDep)) {
 			let e = t.nextDep;
 			e.prevDep = t.prevDep, t.prevDep && (t.prevDep.nextDep = e), t.prevDep = M.depsTail, t.nextDep = void 0, M.depsTail.nextDep = t, M.depsTail = t, M.deps === t && (M.deps = e);
@@ -316,7 +316,7 @@ var Ge = 0, Ke = class {
 		return t;
 	}
 	trigger(e) {
-		this.version++, Ge++, this.notify(e);
+		this.version++, We++, this.notify(e);
 	}
 	notify(e) {
 		Me();
@@ -327,30 +327,30 @@ var Ge = 0, Ke = class {
 		}
 	}
 };
-function Je(e) {
+function qe(e) {
 	if (e.dep.sc++, e.sub.flags & 4) {
 		let t = e.dep.computed;
 		if (t && !e.dep.subs) {
 			t.flags |= 20;
-			for (let e = t.deps; e; e = e.nextDep) Je(e);
+			for (let e = t.deps; e; e = e.nextDep) qe(e);
 		}
 		let n = e.dep.subs;
 		n !== e && (e.prevSub = n, n && (n.nextSub = e)), e.dep.subs = e;
 	}
 }
-var Ye = /* @__PURE__ */ new WeakMap(), Xe = /* @__PURE__ */ Symbol(""), Ze = /* @__PURE__ */ Symbol(""), Qe = /* @__PURE__ */ Symbol("");
-function N(e, t, n) {
-	if (Be && M) {
-		let t = Ye.get(e);
-		t || Ye.set(e, t = /* @__PURE__ */ new Map());
+var Je = /* @__PURE__ */ new WeakMap(), Ye = /* @__PURE__ */ Symbol(""), Xe = /* @__PURE__ */ Symbol(""), Ze = /* @__PURE__ */ Symbol("");
+function P(e, t, n) {
+	if (N && M) {
+		let t = Je.get(e);
+		t || Je.set(e, t = /* @__PURE__ */ new Map());
 		let r = t.get(n);
-		r || (t.set(n, r = new qe()), r.map = t, r.key = n), r.track();
+		r || (t.set(n, r = new Ke()), r.map = t, r.key = n), r.track();
 	}
 }
-function $e(e, t, n, r, i, a) {
-	let o = Ye.get(e);
+function Qe(e, t, n, r, i, a) {
+	let o = Je.get(e);
 	if (!o) {
-		Ge++;
+		We++;
 		return;
 	}
 	let s = (e) => {
@@ -362,167 +362,167 @@ function $e(e, t, n, r, i, a) {
 		if (i && n === "length") {
 			let e = Number(r);
 			o.forEach((t, n) => {
-				(n === "length" || n === Qe || !_(n) && n >= e) && s(t);
+				(n === "length" || n === Ze || !_(n) && n >= e) && s(t);
 			});
-		} else switch ((n !== void 0 || o.has(void 0)) && s(o.get(n)), a && s(o.get(Qe)), t) {
+		} else switch ((n !== void 0 || o.has(void 0)) && s(o.get(n)), a && s(o.get(Ze)), t) {
 			case "add":
-				i ? a && s(o.get("length")) : (s(o.get(Xe)), f(e) && s(o.get(Ze)));
+				i ? a && s(o.get("length")) : (s(o.get(Ye)), f(e) && s(o.get(Xe)));
 				break;
 			case "delete":
-				i || (s(o.get(Xe)), f(e) && s(o.get(Ze)));
+				i || (s(o.get(Ye)), f(e) && s(o.get(Xe)));
 				break;
 			case "set":
-				f(e) && s(o.get(Xe));
+				f(e) && s(o.get(Ye));
 				break;
 		}
 	}
 	Ne();
 }
+function $e(e) {
+	let t = /* @__PURE__ */ I(e);
+	return t === e ? t : (P(t, "iterate", Ze), /* @__PURE__ */ F(e) ? t : t.map(Vt));
+}
 function et(e) {
-	let t = /* @__PURE__ */ F(e);
-	return t === e ? t : (N(t, "iterate", Qe), /* @__PURE__ */ P(e) ? t : t.map(I));
+	return P(e = /* @__PURE__ */ I(e), "iterate", Ze), e;
 }
-function tt(e) {
-	return N(e = /* @__PURE__ */ F(e), "iterate", Qe), e;
+function tt(e, t) {
+	return /* @__PURE__ */ Rt(e) ? Ht(/* @__PURE__ */ Lt(e) ? Vt(t) : t) : Vt(t);
 }
-function nt(e, t) {
-	return /* @__PURE__ */ zt(e) ? Ht(/* @__PURE__ */ Rt(e) ? I(t) : t) : I(t);
-}
-var rt = {
+var nt = {
 	__proto__: null,
 	[Symbol.iterator]() {
-		return it(this, Symbol.iterator, (e) => nt(this, e));
+		return rt(this, Symbol.iterator, (e) => tt(this, e));
 	},
 	concat(...e) {
-		return et(this).concat(...e.map((e) => d(e) ? et(e) : e));
+		return $e(this).concat(...e.map((e) => d(e) ? $e(e) : e));
 	},
 	entries() {
-		return it(this, "entries", (e) => (e[1] = nt(this, e[1]), e));
+		return rt(this, "entries", (e) => (e[1] = tt(this, e[1]), e));
 	},
 	every(e, t) {
-		return ot(this, "every", e, t, void 0, arguments);
+		return at(this, "every", e, t, void 0, arguments);
 	},
 	filter(e, t) {
-		return ot(this, "filter", e, t, (e) => e.map((e) => nt(this, e)), arguments);
+		return at(this, "filter", e, t, (e) => e.map((e) => tt(this, e)), arguments);
 	},
 	find(e, t) {
-		return ot(this, "find", e, t, (e) => nt(this, e), arguments);
+		return at(this, "find", e, t, (e) => tt(this, e), arguments);
 	},
 	findIndex(e, t) {
-		return ot(this, "findIndex", e, t, void 0, arguments);
+		return at(this, "findIndex", e, t, void 0, arguments);
 	},
 	findLast(e, t) {
-		return ot(this, "findLast", e, t, (e) => nt(this, e), arguments);
+		return at(this, "findLast", e, t, (e) => tt(this, e), arguments);
 	},
 	findLastIndex(e, t) {
-		return ot(this, "findLastIndex", e, t, void 0, arguments);
+		return at(this, "findLastIndex", e, t, void 0, arguments);
 	},
 	forEach(e, t) {
-		return ot(this, "forEach", e, t, void 0, arguments);
+		return at(this, "forEach", e, t, void 0, arguments);
 	},
 	includes(...e) {
-		return ct(this, "includes", e);
+		return st(this, "includes", e);
 	},
 	indexOf(...e) {
-		return ct(this, "indexOf", e);
+		return st(this, "indexOf", e);
 	},
 	join(e) {
-		return et(this).join(e);
+		return $e(this).join(e);
 	},
 	lastIndexOf(...e) {
-		return ct(this, "lastIndexOf", e);
+		return st(this, "lastIndexOf", e);
 	},
 	map(e, t) {
-		return ot(this, "map", e, t, void 0, arguments);
+		return at(this, "map", e, t, void 0, arguments);
 	},
 	pop() {
-		return lt(this, "pop");
+		return ct(this, "pop");
 	},
 	push(...e) {
-		return lt(this, "push", e);
+		return ct(this, "push", e);
 	},
 	reduce(e, ...t) {
-		return st(this, "reduce", e, t);
+		return ot(this, "reduce", e, t);
 	},
 	reduceRight(e, ...t) {
-		return st(this, "reduceRight", e, t);
+		return ot(this, "reduceRight", e, t);
 	},
 	shift() {
-		return lt(this, "shift");
+		return ct(this, "shift");
 	},
 	some(e, t) {
-		return ot(this, "some", e, t, void 0, arguments);
+		return at(this, "some", e, t, void 0, arguments);
 	},
 	splice(...e) {
-		return lt(this, "splice", e);
+		return ct(this, "splice", e);
 	},
 	toReversed() {
-		return et(this).toReversed();
+		return $e(this).toReversed();
 	},
 	toSorted(e) {
-		return et(this).toSorted(e);
+		return $e(this).toSorted(e);
 	},
 	toSpliced(...e) {
-		return et(this).toSpliced(...e);
+		return $e(this).toSpliced(...e);
 	},
 	unshift(...e) {
-		return lt(this, "unshift", e);
+		return ct(this, "unshift", e);
 	},
 	values() {
-		return it(this, "values", (e) => nt(this, e));
+		return rt(this, "values", (e) => tt(this, e));
 	}
 };
-function it(e, t, n) {
-	let r = tt(e), i = r[t]();
-	return r !== e && !/* @__PURE__ */ P(e) && (i._next = i.next, i.next = () => {
+function rt(e, t, n) {
+	let r = et(e), i = r[t]();
+	return r !== e && !/* @__PURE__ */ F(e) && (i._next = i.next, i.next = () => {
 		let e = i._next();
 		return e.done || (e.value = n(e.value)), e;
 	}), i;
 }
-var at = Array.prototype;
-function ot(e, t, n, r, i, a) {
-	let o = tt(e), s = o !== e && !/* @__PURE__ */ P(e), c = o[t];
-	if (c !== at[t]) {
+var it = Array.prototype;
+function at(e, t, n, r, i, a) {
+	let o = et(e), s = o !== e && !/* @__PURE__ */ F(e), c = o[t];
+	if (c !== it[t]) {
 		let t = c.apply(e, a);
-		return s ? I(t) : t;
+		return s ? Vt(t) : t;
 	}
 	let l = n;
 	o !== e && (s ? l = function(t, r) {
-		return n.call(this, nt(e, t), r, e);
+		return n.call(this, tt(e, t), r, e);
 	} : n.length > 2 && (l = function(t, r) {
 		return n.call(this, t, r, e);
 	}));
 	let u = c.call(o, l, r);
 	return s && i ? i(u) : u;
 }
-function st(e, t, n, r) {
-	let i = tt(e), a = i !== e && !/* @__PURE__ */ P(e), o = n, s = !1;
+function ot(e, t, n, r) {
+	let i = et(e), a = i !== e && !/* @__PURE__ */ F(e), o = n, s = !1;
 	i !== e && (a ? (s = r.length === 0, o = function(t, r, i) {
-		return s && (s = !1, t = nt(e, t)), n.call(this, t, nt(e, r), i, e);
+		return s && (s = !1, t = tt(e, t)), n.call(this, t, tt(e, r), i, e);
 	}) : n.length > 3 && (o = function(t, r, i) {
 		return n.call(this, t, r, i, e);
 	}));
 	let c = i[t](o, ...r);
-	return s ? nt(e, c) : c;
+	return s ? tt(e, c) : c;
 }
-function ct(e, t, n) {
-	let r = /* @__PURE__ */ F(e);
-	N(r, "iterate", Qe);
+function st(e, t, n) {
+	let r = /* @__PURE__ */ I(e);
+	P(r, "iterate", Ze);
 	let i = r[t](...n);
-	return (i === -1 || i === !1) && /* @__PURE__ */ Bt(n[0]) ? (n[0] = /* @__PURE__ */ F(n[0]), r[t](...n)) : i;
+	return (i === -1 || i === !1) && /* @__PURE__ */ zt(n[0]) ? (n[0] = /* @__PURE__ */ I(n[0]), r[t](...n)) : i;
 }
-function lt(e, t, n = []) {
-	He(), Me();
-	let r = (/* @__PURE__ */ F(e))[t].apply(e, n);
-	return Ne(), Ue(), r;
+function ct(e, t, n = []) {
+	Ve(), Me();
+	let r = (/* @__PURE__ */ I(e))[t].apply(e, n);
+	return Ne(), He(), r;
 }
-var ut = /* @__PURE__ */ e("__proto__,__v_isRef,__isVue"), dt = new Set(/* @__PURE__ */ Object.getOwnPropertyNames(Symbol).filter((e) => e !== "arguments" && e !== "caller").map((e) => Symbol[e]).filter(_));
-function ft(e) {
+var lt = /* @__PURE__ */ e("__proto__,__v_isRef,__isVue"), ut = new Set(/* @__PURE__ */ Object.getOwnPropertyNames(Symbol).filter((e) => e !== "arguments" && e !== "caller").map((e) => Symbol[e]).filter(_));
+function dt(e) {
 	_(e) || (e = String(e));
-	let t = /* @__PURE__ */ F(this);
-	return N(t, "has", e), t.hasOwnProperty(e);
+	let t = /* @__PURE__ */ I(this);
+	return P(t, "has", e), t.hasOwnProperty(e);
 }
-var pt = class {
+var ft = class {
 	constructor(e = !1, t = !1) {
 		this._isReadonly = e, this._isShallow = t;
 	}
@@ -532,46 +532,46 @@ var pt = class {
 		if (t === "__v_isReactive") return !r;
 		if (t === "__v_isReadonly") return r;
 		if (t === "__v_isShallow") return i;
-		if (t === "__v_raw") return n === (r ? i ? jt : At : i ? kt : Ot).get(e) || Object.getPrototypeOf(e) === Object.getPrototypeOf(n) ? e : void 0;
+		if (t === "__v_raw") return n === (r ? i ? At : kt : i ? Ot : Dt).get(e) || Object.getPrototypeOf(e) === Object.getPrototypeOf(n) ? e : void 0;
 		let a = d(e);
 		if (!r) {
 			let e;
-			if (a && (e = rt[t])) return e;
-			if (t === "hasOwnProperty") return ft;
+			if (a && (e = nt[t])) return e;
+			if (t === "hasOwnProperty") return dt;
 		}
 		let o = Reflect.get(e, t, /* @__PURE__ */ L(e) ? e : n);
-		if ((_(t) ? dt.has(t) : ut(t)) || (r || N(e, "get", t), i)) return o;
+		if ((_(t) ? ut.has(t) : lt(t)) || (r || P(e, "get", t), i)) return o;
 		if (/* @__PURE__ */ L(o)) {
 			let e = a && w(t) ? o : o.value;
-			return r && v(e) ? /* @__PURE__ */ It(e) : e;
+			return r && v(e) ? /* @__PURE__ */ Ft(e) : e;
 		}
-		return v(o) ? r ? /* @__PURE__ */ It(o) : /* @__PURE__ */ Pt(o) : o;
+		return v(o) ? r ? /* @__PURE__ */ Ft(o) : /* @__PURE__ */ Nt(o) : o;
 	}
-}, mt = class extends pt {
+}, pt = class extends ft {
 	constructor(e = !1) {
 		super(!1, e);
 	}
 	set(e, t, n, r) {
 		let i = e[t], a = d(e) && w(t);
 		if (!this._isShallow) {
-			let e = /* @__PURE__ */ zt(i);
-			if (!/* @__PURE__ */ P(n) && !/* @__PURE__ */ zt(n) && (i = /* @__PURE__ */ F(i), n = /* @__PURE__ */ F(n)), !a && /* @__PURE__ */ L(i) && !/* @__PURE__ */ L(n)) return e || (i.value = n), !0;
+			let e = /* @__PURE__ */ Rt(i);
+			if (!/* @__PURE__ */ F(n) && !/* @__PURE__ */ Rt(n) && (i = /* @__PURE__ */ I(i), n = /* @__PURE__ */ I(n)), !a && /* @__PURE__ */ L(i) && !/* @__PURE__ */ L(n)) return e || (i.value = n), !0;
 		}
 		let o = a ? Number(t) < e.length : u(e, t), s = Reflect.set(e, t, n, /* @__PURE__ */ L(e) ? e : r);
-		return e === /* @__PURE__ */ F(r) && (o ? D(n, i) && $e(e, "set", t, n, i) : $e(e, "add", t, n)), s;
+		return e === /* @__PURE__ */ I(r) && (o ? D(n, i) && Qe(e, "set", t, n, i) : Qe(e, "add", t, n)), s;
 	}
 	deleteProperty(e, t) {
 		let n = u(e, t), r = e[t], i = Reflect.deleteProperty(e, t);
-		return i && n && $e(e, "delete", t, void 0, r), i;
+		return i && n && Qe(e, "delete", t, void 0, r), i;
 	}
 	has(e, t) {
 		let n = Reflect.has(e, t);
-		return (!_(t) || !dt.has(t)) && N(e, "has", t), n;
+		return (!_(t) || !ut.has(t)) && P(e, "has", t), n;
 	}
 	ownKeys(e) {
-		return N(e, "iterate", d(e) ? "length" : Xe), Reflect.ownKeys(e);
+		return P(e, "iterate", d(e) ? "length" : Ye), Reflect.ownKeys(e);
 	}
-}, ht = class extends pt {
+}, mt = class extends ft {
 	constructor(e = !1) {
 		super(!0, e);
 	}
@@ -581,11 +581,11 @@ var pt = class {
 	deleteProperty(e, t) {
 		return !0;
 	}
-}, gt = /* @__PURE__ */ new mt(), _t = /* @__PURE__ */ new ht(), vt = /* @__PURE__ */ new mt(!0), yt = (e) => e, bt = (e) => Reflect.getPrototypeOf(e);
-function xt(e, t, n) {
+}, ht = /* @__PURE__ */ new pt(), gt = /* @__PURE__ */ new mt(), _t = /* @__PURE__ */ new pt(!0), vt = (e) => e, yt = (e) => Reflect.getPrototypeOf(e);
+function bt(e, t, n) {
 	return function(...r) {
-		let i = this.__v_raw, a = /* @__PURE__ */ F(i), o = f(a), c = e === "entries" || e === Symbol.iterator && o, l = e === "keys" && o, u = i[e](...r), d = n ? yt : t ? Ht : I;
-		return !t && N(a, "iterate", l ? Ze : Xe), s(Object.create(u), { next() {
+		let i = this.__v_raw, a = /* @__PURE__ */ I(i), o = f(a), c = e === "entries" || e === Symbol.iterator && o, l = e === "keys" && o, u = i[e](...r), d = n ? vt : t ? Ht : Vt;
+		return !t && P(a, "iterate", l ? Xe : Ye), s(Object.create(u), { next() {
 			let { value: e, done: t } = u.next();
 			return t ? {
 				value: e,
@@ -597,60 +597,60 @@ function xt(e, t, n) {
 		} });
 	};
 }
-function St(e) {
+function xt(e) {
 	return function(...t) {
 		return e === "delete" ? !1 : e === "clear" ? void 0 : this;
 	};
 }
-function Ct(e, t) {
+function St(e, t) {
 	let n = {
 		get(n) {
-			let r = this.__v_raw, i = /* @__PURE__ */ F(r), a = /* @__PURE__ */ F(n);
-			e || (D(n, a) && N(i, "get", n), N(i, "get", a));
-			let { has: o } = bt(i), s = t ? yt : e ? Ht : I;
+			let r = this.__v_raw, i = /* @__PURE__ */ I(r), a = /* @__PURE__ */ I(n);
+			e || (D(n, a) && P(i, "get", n), P(i, "get", a));
+			let { has: o } = yt(i), s = t ? vt : e ? Ht : Vt;
 			if (o.call(i, n)) return s(r.get(n));
 			if (o.call(i, a)) return s(r.get(a));
 			r !== i && r.get(n);
 		},
 		get size() {
 			let t = this.__v_raw;
-			return !e && N(/* @__PURE__ */ F(t), "iterate", Xe), t.size;
+			return !e && P(/* @__PURE__ */ I(t), "iterate", Ye), t.size;
 		},
 		has(t) {
-			let n = this.__v_raw, r = /* @__PURE__ */ F(n), i = /* @__PURE__ */ F(t);
-			return e || (D(t, i) && N(r, "has", t), N(r, "has", i)), t === i ? n.has(t) : n.has(t) || n.has(i);
+			let n = this.__v_raw, r = /* @__PURE__ */ I(n), i = /* @__PURE__ */ I(t);
+			return e || (D(t, i) && P(r, "has", t), P(r, "has", i)), t === i ? n.has(t) : n.has(t) || n.has(i);
 		},
 		forEach(n, r) {
-			let i = this, a = i.__v_raw, o = /* @__PURE__ */ F(a), s = t ? yt : e ? Ht : I;
-			return !e && N(o, "iterate", Xe), a.forEach((e, t) => n.call(r, s(e), s(t), i));
+			let i = this, a = i.__v_raw, o = /* @__PURE__ */ I(a), s = t ? vt : e ? Ht : Vt;
+			return !e && P(o, "iterate", Ye), a.forEach((e, t) => n.call(r, s(e), s(t), i));
 		}
 	};
 	return s(n, e ? {
-		add: St("add"),
-		set: St("set"),
-		delete: St("delete"),
-		clear: St("clear")
+		add: xt("add"),
+		set: xt("set"),
+		delete: xt("delete"),
+		clear: xt("clear")
 	} : {
 		add(e) {
-			let n = /* @__PURE__ */ F(this), r = bt(n), i = /* @__PURE__ */ F(e), a = !t && !/* @__PURE__ */ P(e) && !/* @__PURE__ */ zt(e) ? i : e;
-			return r.has.call(n, a) || D(e, a) && r.has.call(n, e) || D(i, a) && r.has.call(n, i) || (n.add(a), $e(n, "add", a, a)), this;
+			let n = /* @__PURE__ */ I(this), r = yt(n), i = /* @__PURE__ */ I(e), a = !t && !/* @__PURE__ */ F(e) && !/* @__PURE__ */ Rt(e) ? i : e;
+			return r.has.call(n, a) || D(e, a) && r.has.call(n, e) || D(i, a) && r.has.call(n, i) || (n.add(a), Qe(n, "add", a, a)), this;
 		},
 		set(e, n) {
-			!t && !/* @__PURE__ */ P(n) && !/* @__PURE__ */ zt(n) && (n = /* @__PURE__ */ F(n));
-			let r = /* @__PURE__ */ F(this), { has: i, get: a } = bt(r), o = i.call(r, e);
-			o ||= (e = /* @__PURE__ */ F(e), i.call(r, e));
+			!t && !/* @__PURE__ */ F(n) && !/* @__PURE__ */ Rt(n) && (n = /* @__PURE__ */ I(n));
+			let r = /* @__PURE__ */ I(this), { has: i, get: a } = yt(r), o = i.call(r, e);
+			o ||= (e = /* @__PURE__ */ I(e), i.call(r, e));
 			let s = a.call(r, e);
-			return r.set(e, n), o ? D(n, s) && $e(r, "set", e, n, s) : $e(r, "add", e, n), this;
+			return r.set(e, n), o ? D(n, s) && Qe(r, "set", e, n, s) : Qe(r, "add", e, n), this;
 		},
 		delete(e) {
-			let t = /* @__PURE__ */ F(this), { has: n, get: r } = bt(t), i = n.call(t, e);
-			i ||= (e = /* @__PURE__ */ F(e), n.call(t, e));
+			let t = /* @__PURE__ */ I(this), { has: n, get: r } = yt(t), i = n.call(t, e);
+			i ||= (e = /* @__PURE__ */ I(e), n.call(t, e));
 			let a = r ? r.call(t, e) : void 0, o = t.delete(e);
-			return i && $e(t, "delete", e, void 0, a), o;
+			return i && Qe(t, "delete", e, void 0, a), o;
 		},
 		clear() {
-			let e = /* @__PURE__ */ F(this), t = e.size !== 0, n = e.clear();
-			return t && $e(e, "clear", void 0, void 0, void 0), n;
+			let e = /* @__PURE__ */ I(this), t = e.size !== 0, n = e.clear();
+			return t && Qe(e, "clear", void 0, void 0, void 0), n;
 		}
 	}), [
 		"keys",
@@ -658,15 +658,15 @@ function Ct(e, t) {
 		"entries",
 		Symbol.iterator
 	].forEach((r) => {
-		n[r] = xt(r, e, t);
+		n[r] = bt(r, e, t);
 	}), n;
 }
-function wt(e, t) {
-	let n = Ct(e, t);
+function Ct(e, t) {
+	let n = St(e, t);
 	return (t, r, i) => r === "__v_isReactive" ? !e : r === "__v_isReadonly" ? e : r === "__v_raw" ? t : Reflect.get(u(n, r) && r in t ? n : t, r, i);
 }
-var Tt = { get: /* @__PURE__ */ wt(!1, !1) }, Et = { get: /* @__PURE__ */ wt(!1, !0) }, Dt = { get: /* @__PURE__ */ wt(!0, !1) }, Ot = /* @__PURE__ */ new WeakMap(), kt = /* @__PURE__ */ new WeakMap(), At = /* @__PURE__ */ new WeakMap(), jt = /* @__PURE__ */ new WeakMap();
-function Mt(e) {
+var wt = { get: /* @__PURE__ */ Ct(!1, !1) }, Tt = { get: /* @__PURE__ */ Ct(!1, !0) }, Et = { get: /* @__PURE__ */ Ct(!0, !1) }, Dt = /* @__PURE__ */ new WeakMap(), Ot = /* @__PURE__ */ new WeakMap(), kt = /* @__PURE__ */ new WeakMap(), At = /* @__PURE__ */ new WeakMap();
+function jt(e) {
 	switch (e) {
 		case "Object":
 		case "Array": return 1;
@@ -677,24 +677,24 @@ function Mt(e) {
 		default: return 0;
 	}
 }
+function Mt(e) {
+	return e.__v_skip || !Object.isExtensible(e) ? 0 : jt(S(e));
+}
+/* @__NO_SIDE_EFFECTS__ */
 function Nt(e) {
-	return e.__v_skip || !Object.isExtensible(e) ? 0 : Mt(S(e));
+	return /* @__PURE__ */ Rt(e) ? e : It(e, !1, ht, wt, Dt);
 }
 /* @__NO_SIDE_EFFECTS__ */
 function Pt(e) {
-	return /* @__PURE__ */ zt(e) ? e : Lt(e, !1, gt, Tt, Ot);
+	return It(e, !1, _t, Tt, Ot);
 }
 /* @__NO_SIDE_EFFECTS__ */
 function Ft(e) {
-	return Lt(e, !1, vt, Et, kt);
+	return It(e, !0, gt, Et, kt);
 }
-/* @__NO_SIDE_EFFECTS__ */
-function It(e) {
-	return Lt(e, !0, _t, Dt, At);
-}
-function Lt(e, t, n, r, i) {
+function It(e, t, n, r, i) {
 	if (!v(e) || e.__v_raw && !(t && e.__v_isReactive)) return e;
-	let a = Nt(e);
+	let a = Mt(e);
 	if (a === 0) return e;
 	let o = i.get(e);
 	if (o) return o;
@@ -702,30 +702,30 @@ function Lt(e, t, n, r, i) {
 	return i.set(e, s), s;
 }
 /* @__NO_SIDE_EFFECTS__ */
-function Rt(e) {
-	return /* @__PURE__ */ zt(e) ? /* @__PURE__ */ Rt(e.__v_raw) : !!(e && e.__v_isReactive);
+function Lt(e) {
+	return /* @__PURE__ */ Rt(e) ? /* @__PURE__ */ Lt(e.__v_raw) : !!(e && e.__v_isReactive);
 }
 /* @__NO_SIDE_EFFECTS__ */
-function zt(e) {
+function Rt(e) {
 	return !!(e && e.__v_isReadonly);
 }
 /* @__NO_SIDE_EFFECTS__ */
-function P(e) {
+function F(e) {
 	return !!(e && e.__v_isShallow);
 }
 /* @__NO_SIDE_EFFECTS__ */
-function Bt(e) {
+function zt(e) {
 	return e ? !!e.__v_raw : !1;
 }
 /* @__NO_SIDE_EFFECTS__ */
-function F(e) {
+function I(e) {
 	let t = e && e.__v_raw;
-	return t ? /* @__PURE__ */ F(t) : e;
+	return t ? /* @__PURE__ */ I(t) : e;
 }
-function Vt(e) {
+function Bt(e) {
 	return !u(e, "__v_skip") && Object.isExtensible(e) && O(e, "__v_skip", !0), e;
 }
-var I = (e) => v(e) ? /* @__PURE__ */ Pt(e) : e, Ht = (e) => v(e) ? /* @__PURE__ */ It(e) : e;
+var Vt = (e) => v(e) ? /* @__PURE__ */ Nt(e) : e, Ht = (e) => v(e) ? /* @__PURE__ */ Ft(e) : e;
 /* @__NO_SIDE_EFFECTS__ */
 function L(e) {
 	return e ? e.__v_isRef === !0 : !1;
@@ -739,14 +739,14 @@ function Ut(e, t) {
 }
 var Wt = class {
 	constructor(e, t) {
-		this.dep = new qe(), this.__v_isRef = !0, this.__v_isShallow = !1, this._rawValue = t ? e : /* @__PURE__ */ F(e), this._value = t ? e : I(e), this.__v_isShallow = t;
+		this.dep = new Ke(), this.__v_isRef = !0, this.__v_isShallow = !1, this._rawValue = t ? e : /* @__PURE__ */ I(e), this._value = t ? e : Vt(e), this.__v_isShallow = t;
 	}
 	get value() {
 		return this.dep.track(), this._value;
 	}
 	set value(e) {
-		let t = this._rawValue, n = this.__v_isShallow || /* @__PURE__ */ P(e) || /* @__PURE__ */ zt(e);
-		e = n ? e : /* @__PURE__ */ F(e), D(e, t) && (this._rawValue = e, this._value = n ? e : I(e), this.dep.trigger());
+		let t = this._rawValue, n = this.__v_isShallow || /* @__PURE__ */ F(e) || /* @__PURE__ */ Rt(e);
+		e = n ? e : /* @__PURE__ */ I(e), D(e, t) && (this._rawValue = e, this._value = n ? e : Vt(e), this.dep.trigger());
 	}
 };
 function Gt(e) {
@@ -760,11 +760,11 @@ var Kt = {
 	}
 };
 function qt(e) {
-	return /* @__PURE__ */ Rt(e) ? e : new Proxy(e, Kt);
+	return /* @__PURE__ */ Lt(e) ? e : new Proxy(e, Kt);
 }
 var Jt = class {
 	constructor(e, t, n) {
-		this.fn = e, this.setter = t, this._value = void 0, this.dep = new qe(this), this.__v_isRef = !0, this.deps = void 0, this.depsTail = void 0, this.flags = 16, this.globalVersion = Ge - 1, this.next = void 0, this.effect = this, this.__v_isReadonly = !t, this.isSSR = n;
+		this.fn = e, this.setter = t, this._value = void 0, this.dep = new Ke(this), this.__v_isRef = !0, this.deps = void 0, this.depsTail = void 0, this.flags = 16, this.globalVersion = We - 1, this.next = void 0, this.effect = this, this.__v_isReadonly = !t, this.isSSR = n;
 	}
 	notify() {
 		if (this.flags |= 16, !(this.flags & 8) && M !== this) return je(this, !0), !0;
@@ -790,18 +790,18 @@ function $t(e, t = !1, n = Qt) {
 	}
 }
 function en(e, n, i = t) {
-	let { immediate: a, deep: o, once: s, scheduler: l, augmentJob: u, call: f } = i, p = (e) => o ? e : /* @__PURE__ */ P(e) || o === !1 || o === 0 ? tn(e, 1) : tn(e), m, g, _, v, y = !1, b = !1;
-	if (/* @__PURE__ */ L(e) ? (g = () => e.value, y = /* @__PURE__ */ P(e)) : /* @__PURE__ */ Rt(e) ? (g = () => p(e), y = !0) : d(e) ? (b = !0, y = e.some((e) => /* @__PURE__ */ Rt(e) || /* @__PURE__ */ P(e)), g = () => e.map((e) => {
+	let { immediate: a, deep: o, once: s, scheduler: l, augmentJob: u, call: f } = i, p = (e) => o ? e : /* @__PURE__ */ F(e) || o === !1 || o === 0 ? tn(e, 1) : tn(e), m, g, _, v, y = !1, b = !1;
+	if (/* @__PURE__ */ L(e) ? (g = () => e.value, y = /* @__PURE__ */ F(e)) : /* @__PURE__ */ Lt(e) ? (g = () => p(e), y = !0) : d(e) ? (b = !0, y = e.some((e) => /* @__PURE__ */ Lt(e) || /* @__PURE__ */ F(e)), g = () => e.map((e) => {
 		if (/* @__PURE__ */ L(e)) return e.value;
-		if (/* @__PURE__ */ Rt(e)) return p(e);
+		if (/* @__PURE__ */ Lt(e)) return p(e);
 		if (h(e)) return f ? f(e, 2) : e();
 	})) : g = h(e) ? n ? f ? () => f(e, 2) : e : () => {
 		if (_) {
-			He();
+			Ve();
 			try {
 				_();
 			} finally {
-				Ue();
+				He();
 			}
 		}
 		let t = Qt;
@@ -900,11 +900,11 @@ function an(e, n, r, i = !0) {
 			t = t.parent;
 		}
 		if (o) {
-			He(), nn(o, null, 10, [
+			Ve(), nn(o, null, 10, [
 				e,
 				i,
 				a
-			]), Ue();
+			]), He();
 			return;
 		}
 	}
@@ -1021,12 +1021,12 @@ function Tn(e, t, n, r) {
 		let s = i[o];
 		a && (s.oldValue = a[o].value);
 		let c = s.dir[r];
-		c && (He(), rn(c, n, 8, [
+		c && (Ve(), rn(c, n, 8, [
 			e.el,
 			s,
 			e,
 			t
-		]), Ue());
+		]), He());
 	}
 }
 function En(e, t) {
@@ -1205,7 +1205,7 @@ function $n(e, n, r, a, o = !1) {
 		a.shapeFlag & 512 && a.type.__asyncResolved && a.component.subTree.component && $n(e, n, r, a.component.subTree);
 		return;
 	}
-	let s = a.shapeFlag & 4 ? va(a.component) : a.el, l = o ? null : s, { i: f, r: p } = e, m = n && n.r, _ = f.refs === t ? f.refs = {} : f.refs, v = f.setupState, y = /* @__PURE__ */ F(v), b = v === t ? i : (e) => Zn(_, e) ? !1 : u(y, e), x = (e, t) => !(t && Zn(_, t));
+	let s = a.shapeFlag & 4 ? va(a.component) : a.el, l = o ? null : s, { i: f, r: p } = e, m = n && n.r, _ = f.refs === t ? f.refs = {} : f.refs, v = f.setupState, y = /* @__PURE__ */ I(v), b = v === t ? i : (e) => Zn(_, e) ? !1 : u(y, e), x = (e, t) => !(t && Zn(_, t));
 	if (m != null && m !== p) {
 		if (er(n), g(m)) _[m] = null, b(m) && (v[m] = null);
 		else if (/* @__PURE__ */ L(m)) {
@@ -1273,9 +1273,9 @@ function or(e, t, n, r) {
 function sr(e, t, n = Z, r = !1) {
 	if (n) {
 		let i = n[e] || (n[e] = []), a = t.__weh ||= (...r) => {
-			He();
+			Ve();
 			let i = oa(n), a = rn(t, n, e, r);
-			return i(), Ue(), a;
+			return i(), He(), a;
 		};
 		return r ? i.unshift(a) : i.push(a), a;
 	}
@@ -1290,9 +1290,9 @@ var yr = /* @__PURE__ */ Symbol.for("v-ndc");
 function br(e, t, n, r) {
 	let i, a = n && n[r], o = d(e);
 	if (o || g(e)) {
-		let n = o && /* @__PURE__ */ Rt(e), r = !1, s = !1;
-		n && (r = !/* @__PURE__ */ P(e), s = /* @__PURE__ */ zt(e), e = tt(e)), i = Array(e.length);
-		for (let n = 0, o = e.length; n < o; n++) i[n] = t(r ? s ? Ht(I(e[n])) : I(e[n]) : e[n], n, void 0, a && a[n]);
+		let n = o && /* @__PURE__ */ Lt(e), r = !1, s = !1;
+		n && (r = !/* @__PURE__ */ F(e), s = /* @__PURE__ */ Rt(e), e = et(e)), i = Array(e.length);
+		for (let n = 0, o = e.length; n < o; n++) i[n] = t(r ? s ? Ht(Vt(e[n])) : Vt(e[n]) : e[n], n, void 0, a && a[n]);
 	} else if (typeof e == "number") {
 		i = Array(e);
 		for (let n = 0; n < e; n++) i[n] = t(n + 1, n, void 0, a && a[n]);
@@ -1345,7 +1345,7 @@ var xr = (e) => e ? ca(e) ? va(e) : xr(e.parent) : null, Sr = /* @__PURE__ */ s(
 			else Er && (s[n] = 0);
 		}
 		let d = Sr[n], f, p;
-		if (d) return n === "$attrs" && N(e.attrs, "get", ""), d(e);
+		if (d) return n === "$attrs" && P(e.attrs, "get", ""), d(e);
 		if ((f = c.__cssModules) && (f = f[n])) return f;
 		if (r !== t && u(r, n)) return s[n] = 4, r[n];
 		if (p = l.config.globalProperties, u(p, n)) return p[n];
@@ -1376,7 +1376,7 @@ function Dr(e) {
 	}
 	if (a) {
 		let t = a.call(n, n);
-		v(t) && (e.data = /* @__PURE__ */ Pt(t));
+		v(t) && (e.data = /* @__PURE__ */ Nt(t));
 	}
 	if (Er = !0, o) for (let e in o) {
 		let t = o[e], a = ba({
@@ -1694,10 +1694,10 @@ function ai(e, t, n, r = !1) {
 	let i = {}, a = ri();
 	e.propsDefaults = /* @__PURE__ */ Object.create(null), si(e, t, i, a);
 	for (let t in e.propsOptions[0]) t in i || (i[t] = void 0);
-	n ? e.props = r ? i : /* @__PURE__ */ Ft(i) : e.type.props ? e.props = i : e.props = a, e.attrs = a;
+	n ? e.props = r ? i : /* @__PURE__ */ Pt(i) : e.type.props ? e.props = i : e.props = a, e.attrs = a;
 }
 function oi(e, t, n, r) {
-	let { props: i, attrs: a, vnode: { patchFlag: o } } = e, s = /* @__PURE__ */ F(i), [c] = e.propsOptions, l = !1;
+	let { props: i, attrs: a, vnode: { patchFlag: o } } = e, s = /* @__PURE__ */ I(i), [c] = e.propsOptions, l = !1;
 	if ((r || o > 0) && !(o & 16)) {
 		if (o & 8) {
 			let n = e.vnode.dynamicProps;
@@ -1719,7 +1719,7 @@ function oi(e, t, n, r) {
 		for (let a in s) (!t || !u(t, a) && ((r = E(a)) === a || !u(t, r))) && (c ? n && (n[a] !== void 0 || n[r] !== void 0) && (i[a] = ci(c, s, a, void 0, e, !0)) : delete i[a]);
 		if (a !== s) for (let e in a) (!t || !u(t, e)) && (delete a[e], l = !0);
 	}
-	l && $e(e.attrs, "set", "");
+	l && Qe(e.attrs, "set", "");
 }
 function si(e, n, r, i) {
 	let [a, o] = e.propsOptions, s = !1, c;
@@ -1729,7 +1729,7 @@ function si(e, n, r, i) {
 		a && u(a, d = T(t)) ? !o || !o.includes(d) ? r[d] = l : (c ||= {})[d] = l : Jr(e.emitsOptions, t) || (!(t in i) || l !== i[t]) && (i[t] = l, s = !0);
 	}
 	if (o) {
-		let n = /* @__PURE__ */ F(r), i = c || t;
+		let n = /* @__PURE__ */ I(r), i = c || t;
 		for (let t = 0; t < o.length; t++) {
 			let s = o[t];
 			r[s] = ci(a, n, s, i[s], e, !u(i, s));
@@ -2007,7 +2007,7 @@ function xi(e, i) {
 	}, ue = (e, t, n) => {
 		t.component = e;
 		let r = e.vnode.props;
-		e.vnode = t, e.next = null, oi(e, t.props, r, n), yi(e, t.children, n), He(), vn(e), Ue();
+		e.vnode = t, e.next = null, oi(e, t.props, r, n), yi(e, t.children, n), Ve(), vn(e), He();
 	}, de = (e, t, n, r, i, a, o, s, c = !1) => {
 		let l = e && e.children, u = e ? e.shapeFlag : 0, d = t.children, { patchFlag: f, shapeFlag: m } = t;
 		if (f > 0) {
@@ -2114,7 +2114,7 @@ function xi(e, i) {
 		else o(a, t, n);
 	}, k = (e, t, n, r = !1, i = !1) => {
 		let { type: a, props: o, ref: s, children: c, dynamicChildren: l, shapeFlag: u, patchFlag: d, dirs: f, cacheIndex: p, memo: m } = e;
-		if (d === -2 && (i = !1), s != null && (He(), $n(s, null, n, e, !0), Ue()), p != null && (t.renderCache[p] = void 0), u & 256) {
+		if (d === -2 && (i = !1), s != null && (Ve(), $n(s, null, n, e, !0), He()), p != null && (t.renderCache[p] = void 0), u & 256) {
 			t.ctx.deactivate(e);
 			return;
 		}
@@ -2306,13 +2306,13 @@ function Ki(e, t = null, n = null, r = 0, i = null, a = !1) {
 	if (ya(e) && (e = e.__vccOpts), t) {
 		t = qi(t);
 		let { class: e, style: n } = t;
-		e && !g(e) && (t.class = k(e)), v(n) && (/* @__PURE__ */ Bt(n) && !d(n) && (n = s({}, n)), t.style = ue(n));
+		e && !g(e) && (t.class = k(e)), v(n) && (/* @__PURE__ */ zt(n) && !d(n) && (n = s({}, n)), t.style = ue(n));
 	}
 	let o = g(e) ? 1 : Ai(e) ? 128 : In(e) ? 64 : v(e) ? 4 : h(e) ? 2 : 0;
 	return J(e, t, n, r, i, o, a, !0);
 }
 function qi(e) {
-	return e ? /* @__PURE__ */ Bt(e) || ii(e) ? s({}, e) : e : null;
+	return e ? /* @__PURE__ */ zt(e) || ii(e) ? s({}, e) : e : null;
 }
 function Ji(e, t, n = !1, r = !1) {
 	let { props: i, ref: a, patchFlag: o, children: s, transition: c } = e, l = t ? Qi(i || {}, t) : i, u = {
@@ -2497,9 +2497,9 @@ function da(e, t) {
 	e.accessCache = /* @__PURE__ */ Object.create(null), e.proxy = new Proxy(e.ctx, wr);
 	let { setup: r } = n;
 	if (r) {
-		He();
+		Ve();
 		let n = e.setupContext = r.length > 1 ? _a(e) : null, i = oa(e), a = nn(r, e, 0, [e.props, n]), o = y(a);
-		if (Ue(), i(), (o || e.sp) && !tr(e) && Xn(e), o) {
+		if (He(), i(), (o || e.sp) && !tr(e) && Xn(e), o) {
 			if (a.then(sa, sa), t) return a.then((n) => {
 				fa(e, n, t);
 			}).catch((t) => {
@@ -2530,16 +2530,16 @@ function ha(e, t, n) {
 	}
 	{
 		let t = oa(e);
-		He();
+		Ve();
 		try {
 			Dr(e);
 		} finally {
-			Ue(), t();
+			He(), t();
 		}
 	}
 }
 var ga = { get(e, t) {
-	return N(e, "get", ""), e[t];
+	return P(e, "get", ""), e[t];
 } };
 function _a(e) {
 	return {
@@ -2552,7 +2552,7 @@ function _a(e) {
 	};
 }
 function va(e) {
-	return e.exposed ? e.exposeProxy ||= new Proxy(qt(Vt(e.exposed)), {
+	return e.exposed ? e.exposeProxy ||= new Proxy(qt(Bt(e.exposed)), {
 		get(t, n) {
 			if (n in t) return t[n];
 			if (n in Sr) return Sr[n](e);
@@ -3091,22 +3091,37 @@ var Do = (e, t) => {
 }, ss = { class: "field" }, cs = { class: "checkbox-field" }, ls = { class: "checkbox-field" }, us = { class: "checkbox-field" }, ds = {
 	key: 1,
 	class: "tab-pane"
-}, fs = { class: "query-fields" }, ps = ["onClick"], ms = { class: "query-input-row" }, hs = ["onUpdate:modelValue", "placeholder"], gs = ["onClick"], _s = ["onClick"], vs = { class: "grid-2" }, ys = { class: "field" }, bs = { class: "field" }, xs = {
+}, fs = { class: "query-fields" }, ps = ["onClick"], ms = { class: "query-input-row" }, hs = ["onUpdate:modelValue", "placeholder"], gs = ["onClick"], _s = ["onClick"], vs = { class: "grid-2" }, ys = { class: "field" }, bs = { class: "field" }, xs = { class: "grid-2" }, Ss = { class: "field" }, Cs = ["value"], ws = { class: "field" }, Ts = ["value"], Es = {
 	key: 2,
 	class: "tab-pane"
-}, Ss = { class: "field" }, Cs = { class: "input-with-btn" }, ws = { class: "checkbox-field" }, Ts = { class: "checkbox-field" }, Es = { class: "checkbox-field" }, Ds = {
-	key: 3,
-	class: "tab-pane"
-}, Os = { class: "checkbox-field" }, ks = {
+}, Ds = { class: "field" }, Os = { class: "input-with-btn" }, ks = { class: "checkbox-field" }, As = {
 	key: 0,
 	class: "sub-options"
-}, As = { class: "checkbox-field" }, js = {
+}, js = { class: "checkbox-field" }, Ms = { class: "checkbox-field" }, Ns = { class: "checkbox-field" }, Ps = { class: "checkbox-field" }, Fs = {
 	key: 1,
 	class: "sub-options"
-}, Ms = { class: "checkbox-field" }, Ns = {
+}, Is = { class: "checkbox-field" }, Ls = {
+	key: 3,
+	class: "tab-pane"
+}, Rs = { class: "checkbox-field" }, zs = {
+	key: 0,
+	class: "sub-options"
+}, Bs = { class: "checkbox-field" }, Vs = {
+	key: 1,
+	class: "sub-options"
+}, Hs = { class: "checkbox-field" }, Us = {
+	key: 0,
+	class: "sub-options"
+}, Ws = { class: "checkbox-field" }, Gs = { class: "checkbox-field" }, Ks = { class: "checkbox-field" }, qs = { class: "checkbox-field" }, Js = {
 	key: 4,
 	class: "tab-pane"
-}, Ps = { class: "field" }, Fs = { class: "checkbox-field" }, Is = { class: "checkbox-field" }, Ls = { class: "checkbox-field" }, Rs = /* @__PURE__ */ Do({
+}, Ys = { class: "field" }, Xs = { class: "checkbox-field" }, Zs = { class: "checkbox-field" }, Qs = {
+	key: 0,
+	class: "sub-options"
+}, $s = { class: "checkbox-field" }, ec = { class: "checkbox-field" }, tc = {
+	key: 5,
+	class: "tab-pane"
+}, nc = { class: "checkbox-field" }, rc = { class: "checkbox-field" }, ic = { class: "editor-footer" }, ac = /* @__PURE__ */ Do({
 	__name: "SubscriptionEditor",
 	props: { subscription: {
 		type: Object,
@@ -3152,6 +3167,17 @@ var Do = (e, t) => {
 				}
 			});
 		}
+		function p(e) {
+			return e ? e.split("T")[0] : "";
+		}
+		function m(e, t, n) {
+			if (!n) {
+				e[t] = null;
+				return;
+			}
+			let r = new Date(n);
+			t === "MaxBroadcastDate" && r.setHours(23, 59, 59, 999), e[t] = r.toISOString();
+		}
 		return (e, t) => i.value ? (K(), q("div", ts, [J("div", ns, [
 			J("header", rs, [J("h2", null, A(i.value.Id ? "Abonnement bearbeiten" : "Neues Abonnement"), 1), J("div", { class: "header-actions" }, [J("button", {
 				onClick: d,
@@ -3177,31 +3203,36 @@ var Do = (e, t) => {
 				J("button", {
 					class: k(["tab-btn", { active: a.value === "metadata" }]),
 					onClick: t[4] ||= (e) => a.value = "metadata"
-				}, "Metadaten", 2)
+				}, "Metadaten", 2),
+				J("button", {
+					class: k(["tab-btn", { active: a.value === "accessibility" }]),
+					onClick: t[5] ||= (e) => a.value = "accessibility"
+				}, "Barrierefreiheit", 2)
 			]),
 			J("div", as, [
 				a.value === "basic" ? (K(), q("div", os, [
-					J("div", ss, [t[22] ||= J("label", null, "Name", -1), V(J("input", {
-						"onUpdate:modelValue": t[5] ||= (e) => i.value.Name = e,
+					J("div", ss, [t[36] ||= J("label", null, "Name (Serienname)", -1), V(J("input", {
+						"onUpdate:modelValue": t[6] ||= (e) => i.value.Name = e,
 						type: "text",
 						class: "field-input",
-						placeholder: "z.B. Tatort"
+						placeholder: "z.B. Tatort",
+						required: ""
 					}, null, 512), [[Q, i.value.Name]])]),
 					J("div", cs, [J("label", null, [V(J("input", {
-						"onUpdate:modelValue": t[6] ||= (e) => i.value.IsEnabled = e,
+						"onUpdate:modelValue": t[7] ||= (e) => i.value.IsEnabled = e,
 						type: "checkbox"
-					}, null, 512), [[$, i.value.IsEnabled]]), t[23] ||= Y(" Aktiviert ", -1)])]),
+					}, null, 512), [[$, i.value.IsEnabled]]), t[37] ||= Y(" Aktiviert ", -1)])]),
 					J("div", ls, [J("label", null, [V(J("input", {
-						"onUpdate:modelValue": t[7] ||= (e) => i.value.IgnoreLocalFiles = e,
+						"onUpdate:modelValue": t[8] ||= (e) => i.value.IgnoreLocalFiles = e,
 						type: "checkbox"
-					}, null, 512), [[$, i.value.IgnoreLocalFiles]]), t[24] ||= Y(" Lokale Dateien ignorieren ", -1)])]),
+					}, null, 512), [[$, i.value.IgnoreLocalFiles]]), t[38] ||= Y(" Lokale Dateien ignorieren ", -1)]), t[39] ||= J("p", { class: "field-desc" }, "Erzwingt den Download, auch wenn die Datei bereits lokal existiert.", -1)]),
 					J("div", us, [J("label", null, [V(J("input", {
-						"onUpdate:modelValue": t[8] ||= (e) => i.value.IgnoreHistory = e,
+						"onUpdate:modelValue": t[9] ||= (e) => i.value.IgnoreHistory = e,
 						type: "checkbox"
-					}, null, 512), [[$, i.value.IgnoreHistory]]), t[25] ||= Y(" Download-Verlauf ignorieren ", -1)])])
+					}, null, 512), [[$, i.value.IgnoreHistory]]), t[40] ||= Y(" Download-Verlauf ignorieren ", -1)]), t[41] ||= J("p", { class: "field-desc" }, "Erzwingt den Download, auch wenn die Sendung bereits früher geladen wurde.", -1)])
 				])) : X("", !0),
 				a.value === "search" ? (K(), q("div", ds, [
-					t[28] ||= J("h3", null, "Suchanfragen", -1),
+					t[46] ||= J("h3", null, "Suchanfragen", -1),
 					(K(!0), q(W, null, br(i.value.Search.Criteria, (e, t) => (K(), q("div", {
 						key: t,
 						class: "query-row"
@@ -3214,7 +3245,7 @@ var Do = (e, t) => {
 						key: t,
 						onClick: (n) => l(e, t),
 						class: k(["field-tag", { active: e.Fields.includes(t) }])
-					}, A(t), 11, ps)), 64))]), J("div", ms, [
+					}, A(t === "Title" ? "Titel" : t === "Topic" ? "Thema" : t === "Description" ? "Beschreibung" : "Sender"), 11, ps)), 64))]), J("div", ms, [
 						V(J("input", {
 							"onUpdate:modelValue": (t) => e.Query = t,
 							type: "text",
@@ -3234,103 +3265,181 @@ var Do = (e, t) => {
 						onClick: s,
 						class: "btn btn-secondary"
 					}, "Anfrage hinzufügen"),
-					t[29] ||= J("hr", null, null, -1),
-					J("div", vs, [J("div", ys, [t[26] ||= J("label", null, "Min. Dauer (Min)", -1), V(J("input", {
-						"onUpdate:modelValue": t[9] ||= (e) => i.value.Search.MinDurationMinutes = e,
+					t[47] ||= J("hr", null, null, -1),
+					J("div", vs, [J("div", ys, [t[42] ||= J("label", null, "Min. Dauer (Minuten)", -1), V(J("input", {
+						"onUpdate:modelValue": t[10] ||= (e) => i.value.Search.MinDurationMinutes = e,
 						type: "number",
 						class: "field-input"
-					}, null, 512), [[Q, i.value.Search.MinDurationMinutes]])]), J("div", bs, [t[27] ||= J("label", null, "Max. Dauer (Min)", -1), V(J("input", {
-						"onUpdate:modelValue": t[10] ||= (e) => i.value.Search.MaxDurationMinutes = e,
+					}, null, 512), [[Q, i.value.Search.MinDurationMinutes]])]), J("div", bs, [t[43] ||= J("label", null, "Max. Dauer (Minuten)", -1), V(J("input", {
+						"onUpdate:modelValue": t[11] ||= (e) => i.value.Search.MaxDurationMinutes = e,
 						type: "number",
 						class: "field-input"
-					}, null, 512), [[Q, i.value.Search.MaxDurationMinutes]])])])
+					}, null, 512), [[Q, i.value.Search.MaxDurationMinutes]])])]),
+					J("div", xs, [J("div", Ss, [t[44] ||= J("label", null, "Min. Sendedatum", -1), J("input", {
+						value: p(i.value.Search.MinBroadcastDate),
+						onInput: t[12] ||= (e) => m(i.value.Search, "MinBroadcastDate", e.target.value),
+						type: "date",
+						class: "field-input"
+					}, null, 40, Cs)]), J("div", ws, [t[45] ||= J("label", null, "Max. Sendedatum", -1), J("input", {
+						value: p(i.value.Search.MaxBroadcastDate),
+						onInput: t[13] ||= (e) => m(i.value.Search, "MaxBroadcastDate", e.target.value),
+						type: "date",
+						class: "field-input"
+					}, null, 40, Ts)])])
 				])) : X("", !0),
-				a.value === "download" ? (K(), q("div", xs, [
-					J("div", Ss, [
-						t[30] ||= J("label", null, "Speicherpfad (optional)", -1),
-						J("div", Cs, [V(J("input", {
-							"onUpdate:modelValue": t[11] ||= (e) => i.value.Download.DownloadPath = e,
+				a.value === "download" ? (K(), q("div", Es, [
+					J("div", Ds, [
+						t[48] ||= J("label", null, "Download Pfad (Optional)", -1),
+						J("div", Os, [V(J("input", {
+							"onUpdate:modelValue": t[14] ||= (e) => i.value.Download.DownloadPath = e,
 							type: "text",
-							class: "field-input"
+							class: "field-input",
+							placeholder: "Wenn leer werden die Standardpfade verwendet"
 						}, null, 512), [[Q, i.value.Download.DownloadPath]]), J("button", {
 							onClick: f,
 							class: "btn btn-secondary"
 						}, "Wählen")]),
-						t[31] ||= J("p", { class: "field-desc" }, "Leer lassen, um den globalen Standardpfad zu verwenden.", -1)
+						t[49] ||= J("p", { class: "field-desc" }, "Leer lassen, um den Standardpfad zu nutzen. Bei Serien wird automatisch ein Unterordner mit dem Abo-Namen erstellt. Bei Filmen wird ein Unterordner mit dem Abo-Namen nur erstellt, wenn die Option \"Ordner für das Thema erstellen\" in den Einstellungen aktiviert ist.", -1)
 					]),
-					J("div", ws, [J("label", null, [V(J("input", {
-						"onUpdate:modelValue": t[12] ||= (e) => i.value.Download.UseStreamingUrlFiles = e,
+					J("div", ks, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[15] ||= (e) => i.value.Download.UseStreamingUrlFiles = e,
 						type: "checkbox"
-					}, null, 512), [[$, i.value.Download.UseStreamingUrlFiles]]), t[32] ||= Y(" .strm Dateien verwenden (kein Download) ", -1)])]),
-					J("div", Ts, [J("label", null, [V(J("input", {
-						"onUpdate:modelValue": t[13] ||= (e) => i.value.Download.AlwaysCreateSubfolder = e,
+					}, null, 512), [[$, i.value.Download.UseStreamingUrlFiles]]), t[50] ||= Y(" Streaming-URL-Dateien (.strm) verwenden ", -1)]), t[51] ||= J("p", { class: "field-desc" }, "Verwendet Streaming-URL-Dateien (.strm) anstelle des Herunterladens der tatsächlichen Videodateien. Es werden keine Videodateien gespeichert, die Videos werden von ARD/ZDF direkt gestreamt. Untertitel sind hiervon nicht betroffen.", -1)]),
+					i.value.Download.UseStreamingUrlFiles ? X("", !0) : (K(), q("div", As, [J("div", js, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[16] ||= (e) => i.value.Download.DownloadFullVideoForSecondaryAudio = e,
 						type: "checkbox"
-					}, null, 512), [[$, i.value.Download.AlwaysCreateSubfolder]]), t[33] ||= Y(" Immer Unterordner erstellen ", -1)])]),
-					J("div", Es, [J("label", null, [V(J("input", {
-						"onUpdate:modelValue": t[14] ||= (e) => i.value.Download.AllowFallbackToLowerQuality = e,
+					}, null, 512), [[$, i.value.Download.DownloadFullVideoForSecondaryAudio]]), t[52] ||= Y(" Vollständiges Video für sekundäre Audiosprachen herunterladen ", -1)]), t[53] ||= J("p", { class: "field-desc" }, "Wenn aktiviert, wird das vollständige Video heruntergeladen, auch wenn es eine andere Audiosprache als Deutsch enthält. Andernfalls wird nur die Audiospur dieser Sprache extrahiert.", -1)])])),
+					J("div", Ms, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[17] ||= (e) => i.value.Download.AlwaysCreateSubfolder = e,
 						type: "checkbox"
-					}, null, 512), [[$, i.value.Download.AllowFallbackToLowerQuality]]), t[34] ||= Y(" Qualität-Fallback erlauben ", -1)])])
+					}, null, 512), [[$, i.value.Download.AlwaysCreateSubfolder]]), t[54] ||= Y(" Unterordner für dieses Abo erstellen ", -1)]), t[55] ||= J("p", { class: "field-desc" }, "Erstellt immer einen Unterordner mit dem Namen des Abonnements, auch wenn es sich um Filme handelt und die globale Einstellung \"Beim Film Downloads Ordner für das Thema erstellen\" deaktiviert ist.", -1)]),
+					J("div", Ns, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[18] ||= (e) => i.value.Download.EnhancedDuplicateDetection = e,
+						type: "checkbox"
+					}, null, 512), [[$, i.value.Download.EnhancedDuplicateDetection]]), t[56] ||= Y(" Erweiterte Duplikaterkennung ", -1)]), t[57] ||= J("p", { class: "field-desc" }, "Scannt das Zielverzeichnis nach vorhandenen Dateien mit passenden SxxExx-Mustern (oder absoluter Nummerierung), um doppelte Downloads zu vermeiden (auch bei abweichenden Dateinamen).", -1)]),
+					J("div", Ps, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[19] ||= (e) => i.value.Download.AllowFallbackToLowerQuality = e,
+						type: "checkbox"
+					}, null, 512), [[$, i.value.Download.AllowFallbackToLowerQuality]]), t[58] ||= Y(" Fallback auf niedrigere Qualität erlauben ", -1)]), t[59] ||= J("p", { class: "field-desc" }, "Wenn aktiviert, wird beim Herunterladen einer Episode geprüft, ob eine niedrigere Qualität verfügbar ist falls die HD-URL nicht gesetzt ist.", -1)]),
+					i.value.Download.AllowFallbackToLowerQuality ? (K(), q("div", Fs, [J("div", Is, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[20] ||= (e) => i.value.Download.QualityCheckWithUrl = e,
+						type: "checkbox"
+					}, null, 512), [[$, i.value.Download.QualityCheckWithUrl]]), t[60] ||= Y(" Prüft ob die URLs gültig ist. ", -1)]), t[61] ||= J("p", { class: "field-desc" }, "Wenn aktiviert wird auch geprüft, ob die URLs von MediathekView noch verfügbar sind und ggf. die nächst niedrigere versucht. HD → Default → SD", -1)])])) : X("", !0)
 				])) : X("", !0),
-				a.value === "series" ? (K(), q("div", Ds, [J("div", Os, [J("label", null, [V(J("input", {
-					"onUpdate:modelValue": t[15] ||= (e) => i.value.Series.EnforceSeriesParsing = e,
+				a.value === "series" ? (K(), q("div", Ls, [J("div", Rs, [J("label", null, [V(J("input", {
+					"onUpdate:modelValue": t[21] ||= (e) => i.value.Series.EnforceSeriesParsing = e,
 					type: "checkbox"
-				}, null, 512), [[$, i.value.Series.EnforceSeriesParsing]]), t[35] ||= Y(" Serien-Erkennung erzwingen (S01E01) ", -1)])]), i.value.Series.EnforceSeriesParsing ? (K(), q("div", ks, [J("div", As, [J("label", null, [V(J("input", {
-					"onUpdate:modelValue": t[16] ||= (e) => i.value.Series.AllowAbsoluteEpisodeNumbering = e,
+				}, null, 512), [[$, i.value.Series.EnforceSeriesParsing]]), t[62] ||= Y(" Nur Serien herunterladen ", -1)]), t[63] ||= J("p", { class: "field-desc" }, "Nur Videos herunterladen, die als Serie erkannt werden", -1)]), i.value.Series.EnforceSeriesParsing ? (K(), q("div", zs, [J("div", Bs, [J("label", null, [V(J("input", {
+					"onUpdate:modelValue": t[22] ||= (e) => i.value.Series.AllowAbsoluteEpisodeNumbering = e,
 					type: "checkbox"
-				}, null, 512), [[$, i.value.Series.AllowAbsoluteEpisodeNumbering]]), t[36] ||= Y(" Absolute Episodennummerierung erlauben ", -1)])])])) : (K(), q("div", js, [J("div", Ms, [J("label", null, [V(J("input", {
-					"onUpdate:modelValue": t[17] ||= (e) => i.value.Series.TreatNonEpisodesAsExtras = e,
+				}, null, 512), [[$, i.value.Series.AllowAbsoluteEpisodeNumbering]]), t[64] ||= Y(" Absolute Episodennummerierung erlauben ", -1)]), t[65] ||= J("p", { class: "field-desc" }, "Episoden auch herunterladen, wenn nur Absolute Episodennummerierung vorliegt (z.B. \"Episode 5\" statt \"Staffel 1, Episode 5\").", -1)])])) : (K(), q("div", Vs, [J("div", Hs, [J("label", null, [V(J("input", {
+					"onUpdate:modelValue": t[23] ||= (e) => i.value.Series.TreatNonEpisodesAsExtras = e,
 					type: "checkbox"
-				}, null, 512), [[$, i.value.Series.TreatNonEpisodesAsExtras]]), t[37] ||= Y(" Nicht erkannte Folgen als Extras behandeln ", -1)])])]))])) : X("", !0),
-				a.value === "metadata" ? (K(), q("div", Ns, [
-					J("div", Ps, [t[38] ||= J("label", null, "Originalsprache (3-Letter ISO)", -1), V(J("input", {
-						"onUpdate:modelValue": t[18] ||= (e) => i.value.Metadata.OriginalLanguage = e,
-						type: "text",
-						class: "field-input",
-						placeholder: "z.B. deu"
-					}, null, 512), [[Q, i.value.Metadata.OriginalLanguage]])]),
-					J("div", Fs, [J("label", null, [V(J("input", {
-						"onUpdate:modelValue": t[19] ||= (e) => i.value.Metadata.CreateNfo = e,
+				}, null, 512), [[$, i.value.Series.TreatNonEpisodesAsExtras]]), t[66] ||= Y(" Nicht Episoden als Extras behandeln ", -1)]), t[67] ||= J("p", { class: "field-desc" }, "Nicht als Episoden erkannte Videos als Extras behandeln.", -1)]), i.value.Series.TreatNonEpisodesAsExtras ? (K(), q("div", Us, [
+					J("div", Ws, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[24] ||= (e) => i.value.Series.SaveTrailers = e,
 						type: "checkbox"
-					}, null, 512), [[$, i.value.Metadata.CreateNfo]]), t[39] ||= Y(" .nfo Dateien erstellen ", -1)])]),
-					J("div", Is, [J("label", null, [V(J("input", {
-						"onUpdate:modelValue": t[20] ||= (e) => i.value.Metadata.AppendDateToTitle = e,
+					}, null, 512), [[$, i.value.Series.SaveTrailers]]), t[68] ||= Y(" Trailer speichern", -1)]), t[69] ||= J("p", { class: "field-desc" }, "Trailer werden gespeichert.", -1)]),
+					J("div", Gs, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[25] ||= (e) => i.value.Series.SaveInterviews = e,
 						type: "checkbox"
-					}, null, 512), [[$, i.value.Metadata.AppendDateToTitle]]), t[40] ||= Y(" Datum an Titel anhängen ", -1)])]),
-					J("div", Ls, [J("label", null, [V(J("input", {
-						"onUpdate:modelValue": t[21] ||= (e) => i.value.Metadata.KeepOriginalTitle = e,
+					}, null, 512), [[$, i.value.Series.SaveInterviews]]), t[70] ||= Y(" Interviews speichern", -1)]), t[71] ||= J("p", { class: "field-desc" }, "Interviews werden gespeichert.", -1)]),
+					J("div", Ks, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[26] ||= (e) => i.value.Series.SaveGenericExtras = e,
 						type: "checkbox"
-					}, null, 512), [[$, i.value.Metadata.KeepOriginalTitle]]), t[41] ||= Y(" Originaltitel beibehalten ", -1)])])
-				])) : X("", !0)
+					}, null, 512), [[$, i.value.Series.SaveGenericExtras]]), t[72] ||= Y(" Generische Extras speichern", -1)]), t[73] ||= J("p", { class: "field-desc" }, "Alle anderen Extras (nicht Trailer/Interviews) werden gespeichert.", -1)]),
+					J("div", qs, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[27] ||= (e) => i.value.Series.SaveExtrasAsStrm = e,
+						type: "checkbox"
+					}, null, 512), [[$, i.value.Series.SaveExtrasAsStrm]]), t[74] ||= Y(" Extras als Stream (.strm) speichern", -1)]), t[75] ||= J("p", { class: "field-desc" }, "Extras werden als .strm Dateien gespeichert (spart Speicherplatz).", -1)])
+				])) : X("", !0)]))])) : X("", !0),
+				a.value === "metadata" ? (K(), q("div", Js, [
+					J("div", Ys, [
+						t[76] ||= J("label", null, "Originalsprache (ISO Code, z.B. 'eng')", -1),
+						V(J("input", {
+							"onUpdate:modelValue": t[28] ||= (e) => i.value.Metadata.OriginalLanguage = e,
+							type: "text",
+							class: "field-input",
+							placeholder: "z.B. eng oder fra"
+						}, null, 512), [[Q, i.value.Metadata.OriginalLanguage]]),
+						t[77] ||= J("p", { class: "field-desc" }, "Falls gesetzt, wird dieser Sprachcode verwendet, wenn der Inhalt als Originalversion (OV/OmU) erkannt wird (statt 'und').", -1)
+					]),
+					J("div", Xs, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[29] ||= (e) => i.value.Metadata.CreateNfo = e,
+						type: "checkbox"
+					}, null, 512), [[$, i.value.Metadata.CreateNfo]]), t[78] ||= Y(" NFO Dateien erstellen ", -1)]), t[79] ||= J("p", { class: "field-desc" }, "Erstellt eine .nfo Datei mit Metadaten (Beschreibung, Episodennummer) neben der Videodatei.", -1)]),
+					J("div", Zs, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[30] ||= (e) => i.value.Metadata.AppendDateToTitle = e,
+						type: "checkbox"
+					}, null, 512), [[$, i.value.Metadata.AppendDateToTitle]]), t[80] ||= Y(" Datum an Titel anhängen ", -1)]), t[81] ||= J("p", { class: "field-desc" }, "Hängt das Sendedatum an den Titel an (z.B. \"Titel - 2026-01-01\") und erzwingt die Erkennung als Serie. Nützlich für Sendungen wie \"Tagesschau in 100 Sekunden\", die kein Release-Datum im Titel haben.", -1)]),
+					i.value.Metadata.AppendDateToTitle ? (K(), q("div", Qs, [J("div", $s, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[31] ||= (e) => i.value.Metadata.AppendTimeToTitle = e,
+						type: "checkbox"
+					}, null, 512), [[$, i.value.Metadata.AppendTimeToTitle]]), t[82] ||= Y(" Uhrzeit an Titel anhängen ", -1)]), t[83] ||= J("p", { class: "field-desc" }, "Hängt die Uhrzeit an den Titel an (z.B. \"Titel - 2026-01-01 20-00\").", -1)])])) : X("", !0),
+					J("div", ec, [J("label", null, [V(J("input", {
+						"onUpdate:modelValue": t[32] ||= (e) => i.value.Metadata.KeepOriginalTitle = e,
+						type: "checkbox"
+					}, null, 512), [[$, i.value.Metadata.KeepOriginalTitle]]), t[84] ||= Y(" Originaltitel beibehalten ", -1)]), t[85] ||= J("p", { class: "field-desc" }, "Behält den Originaltitel bei und entfernt keine Informationen wie (AD), Gebärdensprache oder Episodennummern aus dem Titel.", -1)])
+				])) : X("", !0),
+				a.value === "accessibility" ? (K(), q("div", tc, [J("div", nc, [J("label", null, [V(J("input", {
+					"onUpdate:modelValue": t[33] ||= (e) => i.value.Accessibility.AllowAudioDescription = e,
+					type: "checkbox"
+				}, null, 512), [[$, i.value.Accessibility.AllowAudioDescription]]), t[86] ||= Y(" Versionen mit Audiodeskription herunterladen ", -1)]), t[87] ||= J("p", { class: "field-desc" }, "Lädt auch Inhalte mit Audiodeskription herunter (sofern verfügbar).", -1)]), J("div", rc, [J("label", null, [V(J("input", {
+					"onUpdate:modelValue": t[34] ||= (e) => i.value.Accessibility.AllowSignLanguage = e,
+					type: "checkbox"
+				}, null, 512), [[$, i.value.Accessibility.AllowSignLanguage]]), t[88] ||= Y(" Versionen mit Gebärdensprache herunterladen ", -1)]), t[89] ||= J("p", { class: "field-desc" }, "Lädt auch Inhalte mit Gebärdensprache herunter. (sofern verfügbar).", -1)])])) : X("", !0)
 			]),
-			J("footer", { class: "editor-footer" }, [J("button", {
-				onClick: d,
-				class: "btn btn-secondary"
-			}, "Abbrechen"), J("button", {
-				onClick: u,
-				class: "btn btn-primary"
-			}, "Speichern")])
+			J("footer", ic, [
+				J("button", {
+					onClick: d,
+					class: "btn btn-secondary"
+				}, "Abbrechen"),
+				J("button", {
+					onClick: t[35] ||= (t) => e.$emit("test", i.value),
+					class: "btn btn-secondary"
+				}, "Abo prüfen (Dry Run)"),
+				J("button", {
+					onClick: u,
+					class: "btn btn-primary"
+				}, "Abo Speichern")
+			])
 		])])) : X("", !0);
 	}
-}, [["__scopeId", "data-v-09216a1d"]]), zs = { class: "card" }, Bs = { class: "header-row" }, Vs = ["disabled"], Hs = {
+}, [["__scopeId", "data-v-91b0064b"]]), oc = { class: "card" }, sc = { class: "header-row" }, cc = ["disabled"], lc = {
 	key: 0,
 	class: "state-msg"
-}, Us = {
+}, uc = {
 	key: 1,
 	class: "error-container"
-}, Ws = { class: "error-msg" }, Gs = {
+}, dc = { class: "error-msg" }, fc = {
 	key: 2,
 	class: "subscriptions-list"
-}, Ks = { class: "sub-info" }, qs = { class: "sub-name" }, Js = {
+}, pc = { class: "sub-info" }, mc = { class: "sub-name" }, hc = {
 	key: 0,
 	class: "badge"
-}, Ys = { class: "sub-meta" }, Xs = { class: "sub-actions" }, Zs = ["onClick"], Qs = ["onClick"], $s = ["onClick"], ec = {
+}, gc = { class: "sub-meta" }, _c = { class: "sub-actions" }, vc = ["onClick"], yc = ["onClick"], bc = ["onClick"], xc = {
 	key: 3,
 	class: "no-data"
-}, tc = /* @__PURE__ */ Do({
+}, Sc = {
+	key: 0,
+	class: "modal-overlay test-overlay"
+}, Cc = { class: "modal-card test-modal card" }, wc = { class: "modal-header" }, Tc = { class: "modal-content" }, Ec = {
+	key: 0,
+	class: "loading-results"
+}, Dc = {
+	key: 1,
+	class: "no-hits"
+}, Oc = {
+	key: 2,
+	class: "test-results-list"
+}, kc = { class: "test-item-title" }, Ac = { class: "test-item-meta" }, jc = {
+	key: 0,
+	class: "test-item-desc"
+}, Mc = { class: "modal-footer" }, Nc = /* @__PURE__ */ Do({
 	__name: "SubscriptionsTab",
 	setup(e) {
-		let t = window.ApiClient ?? null, n = window.Dashboard ?? null, r = /* @__PURE__ */ R([]), i = /* @__PURE__ */ R(!1), a = /* @__PURE__ */ R(null), o = /* @__PURE__ */ R(null), s = /* @__PURE__ */ R(null);
-		async function c() {
+		let t = window.ApiClient ?? null, n = window.Dashboard ?? null, r = /* @__PURE__ */ R([]), i = /* @__PURE__ */ R(!1), a = /* @__PURE__ */ R(null), o = /* @__PURE__ */ R(null), s = /* @__PURE__ */ R(null), c = /* @__PURE__ */ R(!1), l = /* @__PURE__ */ R([]), u = /* @__PURE__ */ R(!1);
+		async function d() {
 			if (t) {
 				i.value = !0, a.value = null;
 				try {
@@ -3343,11 +3452,13 @@ var Do = (e, t) => {
 				}
 			}
 		}
-		async function l() {
+		async function f() {
 			t && (s.value = await t.getPluginConfiguration("a31b415a-5264-419d-b152-8c8192a54994"));
 		}
-		function u() {
-			s.value && (o.value = {
+		function p() {
+			if (!s.value) return;
+			let e = s.value.SubscriptionDefaults || {};
+			o.value = {
 				Name: "",
 				IsEnabled: !0,
 				Search: {
@@ -3356,32 +3467,46 @@ var Do = (e, t) => {
 						Query: "",
 						IsExclude: !1
 					}],
-					MinDurationMinutes: s.value.SubscriptionDefaults.SearchSettings.MinDurationMinutes,
-					MaxDurationMinutes: s.value.SubscriptionDefaults.SearchSettings.MaxDurationMinutes
+					MinDurationMinutes: e.SearchSettings?.MinDurationMinutes || null,
+					MaxDurationMinutes: e.SearchSettings?.MaxDurationMinutes || null,
+					MinBroadcastDate: null,
+					MaxBroadcastDate: null
 				},
 				Download: {
 					DownloadPath: "",
-					UseStreamingUrlFiles: s.value.SubscriptionDefaults.DownloadSettings.UseStreamingUrlFiles,
-					AlwaysCreateSubfolder: s.value.SubscriptionDefaults.DownloadSettings.AlwaysCreateSubfolder,
-					AllowFallbackToLowerQuality: s.value.SubscriptionDefaults.DownloadSettings.AllowFallbackToLowerQuality
+					UseStreamingUrlFiles: e.DownloadSettings?.UseStreamingUrlFiles || !1,
+					AlwaysCreateSubfolder: e.DownloadSettings?.AlwaysCreateSubfolder || !1,
+					AllowFallbackToLowerQuality: e.DownloadSettings?.AllowFallbackToLowerQuality ?? !0,
+					EnhancedDuplicateDetection: e.DownloadSettings?.EnhancedDuplicateDetection || !1,
+					QualityCheckWithUrl: e.DownloadSettings?.QualityCheckWithUrl || !1,
+					DownloadFullVideoForSecondaryAudio: e.DownloadSettings?.DownloadFullVideoForSecondaryAudio || !1
 				},
 				Series: {
-					EnforceSeriesParsing: s.value.SubscriptionDefaults.SeriesSettings.EnforceSeriesParsing,
-					AllowAbsoluteEpisodeNumbering: s.value.SubscriptionDefaults.SeriesSettings.AllowAbsoluteEpisodeNumbering,
-					TreatNonEpisodesAsExtras: s.value.SubscriptionDefaults.SeriesSettings.TreatNonEpisodesAsExtras
+					EnforceSeriesParsing: e.SeriesSettings?.EnforceSeriesParsing || !1,
+					AllowAbsoluteEpisodeNumbering: e.SeriesSettings?.AllowAbsoluteEpisodeNumbering || !1,
+					TreatNonEpisodesAsExtras: e.SeriesSettings?.TreatNonEpisodesAsExtras || !1,
+					SaveTrailers: e.SeriesSettings?.SaveTrailers ?? !0,
+					SaveInterviews: e.SeriesSettings?.SaveInterviews ?? !0,
+					SaveGenericExtras: e.SeriesSettings?.SaveGenericExtras ?? !0,
+					SaveExtrasAsStrm: e.SeriesSettings?.SaveExtrasAsStrm || !1
 				},
 				Metadata: {
-					OriginalLanguage: s.value.SubscriptionDefaults.MetadataSettings.OriginalLanguage,
-					CreateNfo: s.value.SubscriptionDefaults.MetadataSettings.CreateNfo,
-					AppendDateToTitle: s.value.SubscriptionDefaults.MetadataSettings.AppendDateToTitle,
-					KeepOriginalTitle: s.value.SubscriptionDefaults.MetadataSettings.KeepOriginalTitle
+					OriginalLanguage: e.MetadataSettings?.OriginalLanguage || "",
+					CreateNfo: e.MetadataSettings?.CreateNfo || !1,
+					AppendDateToTitle: e.MetadataSettings?.AppendDateToTitle || !1,
+					KeepOriginalTitle: e.MetadataSettings?.KeepOriginalTitle || !1,
+					AppendTimeToTitle: e.MetadataSettings?.AppendTimeToTitle || !1
+				},
+				Accessibility: {
+					AllowAudioDescription: e.AccessibilitySettings?.AllowAudioDescription || !1,
+					AllowSignLanguage: e.AccessibilitySettings?.AllowSignLanguage || !1
 				}
-			});
+			};
 		}
-		function d(e) {
+		function m(e) {
 			o.value = e;
 		}
-		async function f(e) {
+		async function h(e) {
 			if (t) try {
 				let r = !e.Id, i = r ? t.getUrl("MediathekViewDL/Subscriptions") : t.getUrl("MediathekViewDL/Subscriptions/" + e.Id);
 				await t.ajax({
@@ -3389,25 +3514,44 @@ var Do = (e, t) => {
 					url: i,
 					data: JSON.stringify(e),
 					contentType: "application/json"
-				}), o.value = null, await c(), n && n.alert("Abonnement gespeichert.");
+				}), o.value = null, await d(), n && n.alert("Abonnement gespeichert.");
 			} catch (e) {
 				console.error("Save failed", e), n && n.alert("Fehler beim Speichern des Abonnements.");
 			}
 		}
-		async function p(e) {
+		async function g(e) {
+			if (t) {
+				l.value = [], u.value = !0, c.value = !0;
+				try {
+					let n = t.getUrl("MediathekViewDL/Subscriptions/Test");
+					l.value = await t.ajax({
+						type: "POST",
+						url: n,
+						data: JSON.stringify(e),
+						contentType: "application/json",
+						dataType: "json"
+					}), console.log("Final test results count:", l.value.length);
+				} catch (e) {
+					console.error("Test failed", e), n && n.alert("Fehler beim Testen des Abonnements."), c.value = !1;
+				} finally {
+					u.value = !1;
+				}
+			}
+		}
+		async function _(e) {
 			!t || !n || n.confirm("Soll dieses Abonnement wirklich gelöscht werden?", "Löschen bestätigen", async (r) => {
 				if (r) try {
 					let r = t.getUrl("MediathekViewDL/Subscriptions/" + e);
 					await t.ajax({
 						type: "DELETE",
 						url: r
-					}), await c(), n.alert("Abonnement gelöscht.");
+					}), await d(), n.alert("Abonnement gelöscht.");
 				} catch (e) {
 					console.error("Delete failed", e), n.alert("Fehler beim Löschen des Abonnements.");
 				}
 			});
 		}
-		async function m(e) {
+		async function v(e) {
 			if (!(!t || !n)) try {
 				let r = t.getUrl("MediathekViewDL/Subscriptions/" + e + "/Process"), i = await t.ajax({
 					type: "POST",
@@ -3419,54 +3563,73 @@ var Do = (e, t) => {
 			}
 		}
 		return ur(() => {
-			c(), l();
-		}), (e, t) => (K(), q("div", zs, [
-			J("div", Bs, [t[1] ||= J("h2", null, "Abo Verwaltung", -1), J("button", {
+			d(), f();
+		}), (e, t) => (K(), q("div", oc, [
+			J("div", sc, [t[3] ||= J("h2", null, "Abo Verwaltung", -1), J("button", {
 				class: "btn btn-primary",
-				onClick: u,
+				onClick: p,
 				disabled: i.value
-			}, "Neues Abo", 8, Vs)]),
-			i.value ? (K(), q("div", Hs, [...t[2] ||= [J("div", { class: "spinner" }, null, -1), Y(" Lade Abonnements... ", -1)]])) : a.value ? (K(), q("div", Us, [J("div", Ws, A(a.value), 1), J("button", {
-				onClick: c,
+			}, "Neues Abo", 8, cc)]),
+			i.value ? (K(), q("div", lc, [...t[4] ||= [J("div", { class: "spinner" }, null, -1), Y(" Lade Abonnements... ", -1)]])) : a.value ? (K(), q("div", uc, [J("div", dc, A(a.value), 1), J("button", {
+				onClick: d,
 				class: "btn btn-secondary"
-			}, "Erneut versuchen")])) : r.value.length > 0 ? (K(), q("div", Gs, [(K(!0), q(W, null, br(r.value, (e) => (K(), q("div", {
+			}, "Erneut versuchen")])) : r.value.length > 0 ? (K(), q("div", fc, [(K(!0), q(W, null, br(r.value, (e) => (K(), q("div", {
 				key: e.Id,
 				class: k(["subscription-item", { disabled: !e.IsEnabled }])
-			}, [J("div", Ks, [J("div", qs, [Y(A(e.Name) + " ", 1), e.IsEnabled ? X("", !0) : (K(), q("span", Js, "Deaktiviert"))]), J("div", Ys, " Letzter Download: " + A(e.LastDownloadedTimestamp ? new Date(e.LastDownloadedTimestamp).toLocaleString() : "Nie"), 1)]), J("div", Xs, [
+			}, [J("div", pc, [J("div", mc, [Y(A(e.Name) + " ", 1), e.IsEnabled ? X("", !0) : (K(), q("span", hc, "Deaktiviert"))]), J("div", gc, " Letzter Download: " + A(e.LastDownloadedTimestamp ? new Date(e.LastDownloadedTimestamp).toLocaleString() : "Nie"), 1)]), J("div", _c, [
 				J("button", {
-					onClick: (t) => m(e.Id),
+					onClick: (t) => v(e.Id),
 					class: "btn-icon",
 					title: "Jetzt verarbeiten"
-				}, "🔄", 8, Zs),
+				}, "🔄", 8, vc),
 				J("button", {
-					onClick: (t) => d(e),
+					onClick: (t) => m(e),
 					class: "btn-icon",
 					title: "Bearbeiten"
-				}, "✏️", 8, Qs),
+				}, "✏️", 8, yc),
 				J("button", {
-					onClick: (t) => p(e.Id),
+					onClick: (t) => _(e.Id),
 					class: "btn-icon btn-delete",
 					title: "Löschen"
-				}, "🗑️", 8, $s)
-			])], 2))), 128))])) : (K(), q("div", ec, " Keine Abonnements konfiguriert. ")),
-			(K(), Bi(Gn, { to: "body" }, [Gi(Rs, {
+				}, "🗑️", 8, bc)
+			])], 2))), 128))])) : (K(), q("div", xc, " Keine Abonnements konfiguriert. ")),
+			(K(), Bi(Gn, { to: "body" }, [Gi(ac, {
 				subscription: o.value,
-				onSave: f,
+				onSave: h,
+				onTest: g,
 				onCancel: t[0] ||= (e) => o.value = null
-			}, null, 8, ["subscription"])]))
+			}, null, 8, ["subscription"])])),
+			(K(), Bi(Gn, { to: "body" }, [c.value ? (K(), q("div", Sc, [J("div", Cc, [
+				J("header", wc, [t[5] ||= J("h2", null, "Abo-Test Ergebnisse", -1), J("button", {
+					onClick: t[1] ||= (e) => c.value = !1,
+					class: "btn-icon"
+				}, "✕")]),
+				J("div", Tc, [u.value ? (K(), q("div", Ec, [...t[6] ||= [J("div", { class: "spinner" }, null, -1), Y(" Suche nach Treffern... ", -1)]])) : l.value.length === 0 ? (K(), q("div", Dc, " Keine Sendungen gefunden, die den Kriterien entsprechen und noch nicht geladen wurden. ")) : (K(), q("div", Oc, [J("p", null, "Folgende " + A(l.value.length) + " Sendungen würden heruntergeladen werden:", 1), (K(!0), q(W, null, br(l.value, (e) => (K(), q("div", {
+					key: e.Id || e.id,
+					class: "test-item"
+				}, [
+					J("div", kc, A(e.Title || e.title), 1),
+					J("div", Ac, A(e.Channel || e.channel) + " | " + A(e.Topic || e.topic) + " | " + A(e.Duration || e.duration), 1),
+					e.Description || e.description ? (K(), q("div", jc, A(e.Description || e.description), 1)) : X("", !0)
+				]))), 128))]))]),
+				J("footer", Mc, [J("button", {
+					onClick: t[2] ||= (e) => c.value = !1,
+					class: "btn btn-primary"
+				}, "Schließen")])
+			])])) : X("", !0)]))
 		]));
 	}
-}, [["__scopeId", "data-v-0eb81f25"]]), nc = {}, rc = { class: "card" };
-function ic(e, t) {
-	return K(), q("div", rc, [...t[0] ||= [J("h2", null, "Downloads", -1), J("p", null, "Download-Verlauf kommt hierhin.", -1)]]);
+}, [["__scopeId", "data-v-3d506b2d"]]), Pc = {}, Fc = { class: "card" };
+function Ic(e, t) {
+	return K(), q("div", Fc, [...t[0] ||= [J("h2", null, "Downloads", -1), J("p", null, "Download-Verlauf kommt hierhin.", -1)]]);
 }
-var ac = /* @__PURE__ */ Do(nc, [["render", ic]]), oc = { class: "plugin-config" }, sc = { class: "tab-row" }, cc = { class: "tab-content" }, lc = /* @__PURE__ */ Do({
+var Lc = /* @__PURE__ */ Do(Pc, [["render", Ic]]), Rc = { class: "plugin-config" }, zc = { class: "tab-row" }, Bc = { class: "tab-content" }, Vc = /* @__PURE__ */ Do({
 	__name: "PluginConfig",
 	setup(e) {
 		let t = /* @__PURE__ */ R("search");
-		return (e, n) => (K(), q("div", oc, [
+		return (e, n) => (K(), q("div", Rc, [
 			n[4] ||= J("header", { class: "config-header" }, [J("h1", { class: "config-title" }, "MediathekViewDL"), J("p", { class: "config-subtitle" }, "Plugin Konfiguration")], -1),
-			J("div", sc, [
+			J("div", zc, [
 				J("button", {
 					class: k(["tab-btn", { active: t.value === "search" }]),
 					onClick: n[0] ||= (e) => t.value = "search"
@@ -3484,34 +3647,34 @@ var ac = /* @__PURE__ */ Do(nc, [["render", ic]]), oc = { class: "plugin-config"
 					onClick: n[3] ||= (e) => t.value = "downloads"
 				}, "Downloads", 2)
 			]),
-			J("div", cc, [
+			J("div", Bc, [
 				t.value === "search" ? (K(), Bi(Yo, { key: 0 })) : X("", !0),
 				t.value === "settings" ? (K(), Bi(es, { key: 1 })) : X("", !0),
-				t.value === "subscriptions" ? (K(), Bi(tc, { key: 2 })) : X("", !0),
-				t.value === "downloads" ? (K(), Bi(ac, { key: 3 })) : X("", !0)
+				t.value === "subscriptions" ? (K(), Bi(Nc, { key: 2 })) : X("", !0),
+				t.value === "downloads" ? (K(), Bi(Lc, { key: 3 })) : X("", !0)
 			])
 		]));
 	}
-}, [["__scopeId", "data-v-a62a1791"]]), uc = {
+}, [["__scopeId", "data-v-a62a1791"]]), Hc = {
 	__name: "App",
 	setup(e) {
-		return (e, t) => (K(), Bi(lc));
+		return (e, t) => (K(), Bi(Vc));
 	}
-}, dc = null;
-function fc(e) {
-	dc || (dc = wo(uc), dc.mount(e));
+}, Uc = null;
+function Wc(e) {
+	Uc || (Uc = wo(Hc), Uc.mount(e));
 }
-function pc() {
-	dc &&= (dc.unmount(), null);
+function Gc() {
+	Uc &&= (Uc.unmount(), null);
 }
-var mc = document.getElementById("configPageVueJSPage"), hc = !window.Dashboard;
-if (mc) if (hc) {
-	let e = mc.querySelector("#app");
-	e && fc(e);
-} else mc.addEventListener("pageshow", (e) => {
-	let t = mc.querySelector("#app");
-	t && (pc(), fc(t));
-}), mc.addEventListener("pagehide", () => {
-	pc();
+var Kc = document.getElementById("configPageVueJSPage"), qc = !window.Dashboard;
+if (Kc) if (qc) {
+	let e = Kc.querySelector("#app");
+	e && Wc(e);
+} else Kc.addEventListener("pageshow", (e) => {
+	let t = Kc.querySelector("#app");
+	t && (Gc(), Wc(t));
+}), Kc.addEventListener("pagehide", () => {
+	Gc();
 });
 //#endregion
