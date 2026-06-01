@@ -347,6 +347,11 @@ class ApiService {
                 url: url
             })
             console.log(`✅ ProcessSubscription success`, response)
+            
+            // Handle raw response (which can be a number or string)
+            if (response && typeof response.text === 'function') {
+                return await response.text()
+            }
             return response
         } catch (error) {
             console.error(`❌ ProcessSubscription failed:`, error)
