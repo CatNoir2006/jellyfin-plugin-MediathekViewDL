@@ -207,6 +207,33 @@ public class SubscriptionsController : ControllerBase
     }
 
     /// <summary>
+    /// Sets the active state of a subscription.
+    /// </summary>
+    /// <param name="id">The ID of the Subscription.</param>
+    /// <param name="active">Whether the subscription should be active.</param>
+    /// <returns>The updated active state.</returns>
+    [HttpPost("{id}/Active")]
+    [ProducesResponseType(typeof(bool), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public ActionResult<bool> SetActiveState(Guid id, [FromQuery] bool active)
+    {
+        var subscription = _configurationProvider.Configuration.Subscriptions.FirstOrDefault(s => s.Id == id);
+
+        if (subscription == null)
+        {
+            return NotFound("Subscription not found");
+        }
+
+        subscription.IsEnabled = active;
+        if (_configurationProvider.TrySave())
+        {
+            return Ok(subscription.IsEnabled);
+        }
+
+        return BadRequest("Failed to update subscription state");
+    }
+
+    /// <summary>
     /// Tests a subscription. This will return all items that would be downloaded if the subscription would be processed, but it won't update the last downloaded timestamp.
     /// </summary>
     /// <param name="subscription">The Subscription to Test.</param>
