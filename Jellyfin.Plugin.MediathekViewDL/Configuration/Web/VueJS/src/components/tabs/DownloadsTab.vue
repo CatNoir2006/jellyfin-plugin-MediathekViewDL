@@ -9,6 +9,7 @@ const groupedHistory = ref([])
 const loading = ref(true)
 const error = ref(null)
 const expandedGroups = ref(new Set())
+const expandedActive = ref(new Set())
 let refreshInterval = null
 
 const statusMap = {
@@ -124,6 +125,14 @@ function toggleGroup(group) {
   }
 }
 
+function toggleActive(id) {
+  if (expandedActive.value.has(id)) {
+    expandedActive.value.delete(id)
+  } else {
+    expandedActive.value.add(id)
+  }
+}
+
 function getGroupKey(group) {
   return (group.SubscriptionId || 'manual') + '_' + (group.ItemId || group.Title)
 }
@@ -133,6 +142,7 @@ function getFileIcon(path) {
   if (ext === 'vtt' || ext === 'ttml') return 'Subtitle'
   if (ext === 'nfo') return 'Metadata'
   if (ext === 'strm') return 'Stream'
+  if (['mp4', 'mkv', 'webm', 'ts'].includes(ext)) return 'Video'
   return ''
 }
 
@@ -178,36 +188,54 @@ onUnmounted(() => {
         Keine aktiven Downloads.
       </div>
       <div v-else class="active-list">
-        <div v-for="dl in activeDownloads" :key="dl.Id" class="active-item">
-          <div class="active-item-info">
-            <div class="active-item-title">{{ dl.Job.Title }}</div>
-            <div class="active-item-meta">
-              <span :class="['status-badge', getStatusClass(dl.Status)]">
-                {{ getStatusLabel(dl.Status) }}
-              </span>
-              <span v-if="dl.Status === 'Downloading'" class="progress-text">{{ Math.round(dl.Progress) }}%</span>
+        <div v-for="dl in activeDownloads" :key="dl.Id" class="active-item-container">
+          <div class="active-item" @click="toggleActive(dl.Id)">
+            <div class="active-item-info">
+              <div class="active-item-title">
+                <span class="expand-icon-small">{{ expandedActive.has(dl.Id) ? '▼' : '▶' }}</span>
+                {{ dl.Job.Title }}
+              </div>
+              <div class="active-item-meta">
+                <span :class="['status-badge', getStatusClass(dl.Status)]">
+                  {{ getStatusLabel(dl.Status) }}
+                </span>
+                <span v-if="dl.Status === 'Downloading'" class="progress-text">{{ Math.round(dl.Progress) }}%</span>
+              </div>
             </div>
-          </div>
-          
-          <div class="active-item-progress" v-if="showProgressBar(dl.Status)">
-            <div class="progress-bar-bg">
-              <div class="progress-bar-fill" :style="{ width: dl.Progress + '%' }"></div>
+            
+            <div class="active-item-progress" v-if="showProgressBar(dl.Status)">
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill" :style="{ width: dl.Progress + '%' }"></div>
+              </div>
+            </div>
+
+            <div v-if="dl.ErrorMessage" class="error-msg-small">
+              {{ dl.ErrorMessage }}
+            </div>
+
+            <div class="active-item-actions">
+              <button 
+                v-if="isCancellable(dl.Status)" 
+                @click.stop="cancelDownload(dl.Id)" 
+                class="btn-icon btn-cancel" 
+                title="Abbrechen"
+              >
+                ✕
+              </button>
             </div>
           </div>
 
-          <div v-if="dl.ErrorMessage" class="error-msg-small">
-            {{ dl.ErrorMessage }}
-          </div>
-
-          <div class="active-item-actions">
-            <button 
-              v-if="isCancellable(dl.Status)" 
-              @click="cancelDownload(dl.Id)" 
-              class="btn-icon btn-cancel" 
-              title="Abbrechen"
-            >
-              ✕
-            </button>
+          <!-- Active Details -->
+          <div v-if="expandedActive.has(dl.Id)" class="active-item-details">
+            <div v-for="(item, idx) in dl.Job.DownloadItems" :key="idx" class="history-entry">
+              <div class="entry-file">
+                <span v-if="getFileIcon(item.DestinationPath)" class="file-type-badge">
+                  {{ getFileIcon(item.DestinationPath) }}
+                </span>
+                <span class="file-name">{{ getFileName(item.DestinationPath) }}</span>
+              </div>
+              <div class="entry-path">{{ item.DestinationPath }}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -273,20 +301,28 @@ onUnmounted(() => {
 .btn-danger:hover { background: #dc2626; }
 
 /* Active Downloads */
-.active-list { display: grid; gap: 15px; }
-.active-item {
+.active-list { display: grid; gap: 10px; }
+.active-item-container {
   background: #27272a;
   border: 1px solid #3f3f46;
   border-radius: 8px;
+  overflow: hidden;
+}
+.active-item {
   padding: 15px;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 10px;
   align-items: center;
+  cursor: pointer;
 }
+.active-item:hover { background: rgba(255, 255, 255, 0.03); }
+
 .active-item-info { display: flex; flex-direction: column; gap: 5px; }
-.active-item-title { font-weight: bold; font-size: 1rem; }
+.active-item-title { font-weight: bold; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
 .active-item-meta { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+
+.expand-icon-small { font-size: 0.7rem; color: #71717a; width: 12px; }
 
 .status-badge {
   padding: 2px 8px;
@@ -305,6 +341,15 @@ onUnmounted(() => {
 .active-item-progress { grid-column: 1 / -1; margin-top: 5px; }
 .progress-bar-bg { background: #18181b; height: 8px; border-radius: 4px; overflow: hidden; }
 .progress-bar-fill { background: #7c3aed; height: 100%; transition: width 0.3s ease; }
+
+.active-item-details {
+  padding: 0 15px 15px 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 10px;
+}
 
 .error-msg-small { grid-column: 1 / -1; font-size: 0.8rem; color: #ef4444; margin-top: 5px; }
 
