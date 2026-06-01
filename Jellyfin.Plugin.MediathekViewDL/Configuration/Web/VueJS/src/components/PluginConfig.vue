@@ -19,6 +19,7 @@ const editingSub = ref(null)
 const showTestModal = ref(false)
 const testResults = ref([])
 const testLoading = ref(false)
+const subscriptionsTabRef = ref(null)
 
 async function fetchConfig() {
   if (!ApiClient) return
@@ -50,9 +51,12 @@ async function saveSubscription(sub) {
       contentType: 'application/json'
     })
 
-    editingSub.value = null
-    if (Dashboard) Dashboard.alert('Abonnement gespeichert.')
-    // Notify child components to refresh (could use a key or ref)
+     editingSub.value = null
+     if (Dashboard) Dashboard.alert('Abonnement gespeichert.')
+     // Refresh subscriptions tab
+     if (subscriptionsTabRef.value) {
+       subscriptionsTabRef.value.refresh()
+     }
   } catch (e) {
     console.error('Save failed', e)
     if (Dashboard) Dashboard.alert('Fehler beim Speichern des Abonnements.')
@@ -108,9 +112,9 @@ onMounted(() => {
     </div>
 
     <div class="tab-content">
-      <SearchTab v-if="currentTab === 'search'" @create-sub="openEditor" />
-      <SettingsTab v-if="currentTab === 'settings'" />
-      <SubscriptionsTab v-if="currentTab === 'subscriptions'" :on-edit="openEditor" />
+      <SearchTab v-if="currentTab === 'search'" @create-sub="openEditor" :plugin-config="pluginConfig" />
+      <SettingsTab v-if="currentTab === 'settings'" @config-saved="fetchConfig" />
+      <SubscriptionsTab ref="subscriptionsTabRef" v-if="currentTab === 'subscriptions'" :on-edit="openEditor" />
       <DownloadsTab v-if="currentTab === 'downloads'" />
     </div>
 

@@ -3,7 +3,8 @@ import {ref, watch} from 'vue'
 import { SubscriptionFactory } from '../../utils/SubscriptionFactory'
 
 const props = defineProps({
-    onCreateSub: { type: Function, required: true }
+    onCreateSub: { type: Function, required: true },
+    pluginConfig: { type: Object, default: null }
 })
 
 const ApiClient = window.ApiClient ?? null
@@ -83,56 +84,58 @@ function openVideo(item) {
 }
 
 async function createSubFromSearch() {
-    if (!ApiClient) return
-    
-    try {
-        const params = new URLSearchParams()
-        if (searchTitle.value) params.append('title', searchTitle.value)
-        if (searchTopic.value) params.append('topic', searchTopic.value)
-        if (searchChannel.value) params.append('channel', searchChannel.value)
-        if (searchCombined.value) params.append('combinedSearch', searchCombined.value)
-        
-        // Get structured criteria from API to handle comma separation correctly
-        const url = ApiClient.getUrl('MediathekViewDL/Search/Criteria?' + params.toString())
-        const criteria = await ApiClient.getJSON(url)
-        
-        const sub = SubscriptionFactory.createDefault()
-        sub.Name = searchTitle.value || searchTopic.value || searchCombined.value || 'Suche'
-        sub.Search.Criteria = criteria
-        sub.Search.MinDurationMinutes = minDuration.value
-        sub.Search.MaxDurationMinutes = maxDuration.value
-        sub.Search.MinBroadcastDate = minBroadcastDate.value ? new Date(minBroadcastDate.value).toISOString() : null
-        sub.Search.MaxBroadcastDate = maxBroadcastDate.value ? new Date(maxBroadcastDate.value).toISOString() : null
-        
-        props.onCreateSub(sub);
-    } catch (e) {
-        console.error('Failed to convert criteria', e)
-    }
-}
+     if (!ApiClient) return
+
+     try {
+         const params = new URLSearchParams()
+         if (searchTitle.value) params.append('title', searchTitle.value)
+         if (searchTopic.value) params.append('topic', searchTopic.value)
+         if (searchChannel.value) params.append('channel', searchChannel.value)
+         if (searchCombined.value) params.append('combinedSearch', searchCombined.value)
+
+         // Get structured criteria from API to handle comma separation correctly
+         const url = ApiClient.getUrl('MediathekViewDL/Search/Criteria?' + params.toString())
+         const criteria = await ApiClient.getJSON(url)
+
+         const defaults = props.pluginConfig?.SubscriptionDefaults || {}
+         const sub = SubscriptionFactory.createDefault(defaults)
+         sub.Name = searchTitle.value || searchTopic.value || searchCombined.value || 'Suche'
+         sub.Search.Criteria = criteria
+         sub.Search.MinDurationMinutes = minDuration.value
+         sub.Search.MaxDurationMinutes = maxDuration.value
+         sub.Search.MinBroadcastDate = minBroadcastDate.value ? new Date(minBroadcastDate.value).toISOString() : null
+         sub.Search.MaxBroadcastDate = maxBroadcastDate.value ? new Date(maxBroadcastDate.value).toISOString() : null
+
+         props.onCreateSub(sub);
+     } catch (e) {
+         console.error('Failed to convert criteria', e)
+     }
+ }
 
 async function createSubFromItem(item) {
-    if (!ApiClient) return
-    
-    try {
-        // Use the API to get clean criteria for this item
-        // This is important because Title/Topic/Channel might contain commas
-        const params = new URLSearchParams()
-        if (item.Title) params.append('title', item.Title)
-        if (item.Topic) params.append('topic', item.Topic)
-        if (item.Channel) params.append('channel', item.Channel)
-        
-        const url = ApiClient.getUrl('MediathekViewDL/Search/Criteria?' + params.toString())
-        const criteria = await ApiClient.getJSON(url)
-        
-        const sub = SubscriptionFactory.createDefault()
-        sub.Name = item.Topic || item.Title
-        sub.Search.Criteria = criteria
-        
-        props.onCreateSub(sub);
-    } catch (e) {
-        console.error('Failed to convert item criteria', e)
-    }
-}
+     if (!ApiClient) return
+
+     try {
+         // Use the API to get clean criteria for this item
+         // This is important because Title/Topic/Channel might contain commas
+         const params = new URLSearchParams()
+         if (item.Title) params.append('title', item.Title)
+         if (item.Topic) params.append('topic', item.Topic)
+         if (item.Channel) params.append('channel', item.Channel)
+
+         const url = ApiClient.getUrl('MediathekViewDL/Search/Criteria?' + params.toString())
+         const criteria = await ApiClient.getJSON(url)
+
+         const defaults = props.pluginConfig?.SubscriptionDefaults || {}
+         const sub = SubscriptionFactory.createDefault(defaults)
+         sub.Name = item.Topic || item.Title
+         sub.Search.Criteria = criteria
+
+         props.onCreateSub(sub);
+     } catch (e) {
+         console.error('Failed to convert item criteria', e)
+     }
+ }
 </script>
 
 <template>

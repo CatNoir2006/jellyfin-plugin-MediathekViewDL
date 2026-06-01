@@ -6,6 +6,8 @@ const Dashboard = window.Dashboard ?? null
 const PLUGIN_ID = 'a31b415a-5264-419d-b152-8c8192a54994'
 const PLUGIN_NAME = 'MediathekViewDL'
 
+const emit = defineEmits(['config-saved'])
+
 // --- State ---
 const loading = ref(false)
 const saving = ref(false)
@@ -248,8 +250,10 @@ async function saveConfig() {
       }
     }
 
-    await ApiClient.updatePluginConfiguration(PLUGIN_ID, config)
-    if (Dashboard) Dashboard.alert('Einstellungen gespeichert.')
+     await ApiClient.updatePluginConfiguration(PLUGIN_ID, config)
+     if (Dashboard) Dashboard.alert('Einstellungen gespeichert.')
+     // Notify parent to refresh config
+     emit('config-saved')
   } catch (e) {
     console.error('Failed to save config', e)
     if (Dashboard) Dashboard.alert('Fehler beim Speichern der Einstellungen.')

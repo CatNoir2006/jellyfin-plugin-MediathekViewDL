@@ -20,10 +20,12 @@ watch(() => props.subscription, (newVal) => {
     if (newVal) {
         // Deep copy
         editedSub.value = JSON.parse(JSON.stringify(newVal))
+        // Reset active tab when a new subscription is opened
+        activeTab.value = 'basic'
     } else {
         editedSub.value = null
     }
-}, {immediate: true})
+}, {immediate: true, deep: true})
 
 function addQuery() {
     editedSub.value.Search.Criteria.push({
