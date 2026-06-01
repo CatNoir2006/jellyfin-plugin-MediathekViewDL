@@ -185,9 +185,6 @@ onMounted(() => {
   max-height: 80vh;
   display: flex;
   flex-direction: column;
-  background: #18181b;
-  border: 1px solid #3f3f46;
-  border-radius: 8px;
   overflow: hidden;
 }
 .modal-header { padding: 20px; border-bottom: 1px solid #3f3f46; display: flex; justify-content: space-between; align-items: center; }
@@ -197,16 +194,5 @@ onMounted(() => {
 .test-item-title { font-weight: bold; margin-bottom: 2px; }
 .test-item-meta { font-size: 0.8rem; color: #a1a1aa; }
 .state-msg, .no-data { text-align: center; padding: 40px; color: #a1a1aa; }
-.spinner {
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  border-top: 3px solid #7c3aed;
-  width: 24px;
-  height: 24px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 10px;
-}
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-.btn-icon { background: none; border: none; color: white; cursor: pointer; font-size: 1.2rem; }
-.btn-primary { background: #7c3aed; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 600; }
 </style>

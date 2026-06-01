@@ -222,31 +222,6 @@ async function createSubFromItem(item) {
     width: 100%;
 }
 
-.field {
-    display: flex;
-    flex-direction: column; gap: 5px;
-}
-
-.field label {
-    font-size: 0.9rem;
-    color: #a1a1aa;
-}
-
-.field-input {
-    background: #27272a;
-    border: 1px solid #3f3f46;
-    color: white;
-    padding: 10px;
-    border-radius: 4px;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.field-input:focus {
-    border-color: #7c3aed;
-    outline: none;
-}
-
 .form-actions {
     margin-top: 20px;
     display: flex;
@@ -291,52 +266,6 @@ async function createSubFromItem(item) {
 .result-actions {
     display: flex;
     gap: 10px;
-}
-
-.btn-icon {
-    background: none;
-    border: none;
-    color: white;
-    cursor: pointer;
-    font-size: 1.4rem;
-    padding: 5px;
-    border-radius: 4px;
-}
-
-.btn-icon:hover {
-    background: #3f3f46;
-}
-
-.btn-primary {
-    background: #7c3aed;
-    color: white;
-    border: none;
-    padding: 10px 30px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    height: 42px;
-}
-
-.btn-primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.btn-secondary {
-    background: #3f3f46;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    height: 42px;
-}
-
-.btn-icon-only {
-    padding: 10px;
-    font-size: 1.2rem;
 }
 
 .no-results {

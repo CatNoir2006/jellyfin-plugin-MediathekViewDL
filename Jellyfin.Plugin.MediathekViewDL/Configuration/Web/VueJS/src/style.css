@@ -1,0 +1,156 @@
+/* Global Styles for MediathekViewDL VueJS */
+
+.btn {
+    cursor: pointer;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    transition: background 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 20px;
+    height: auto;
+    font-family: inherit;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: #7c3aed;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #6d28d9;
+}
+
+.btn-secondary {
+    background: #3f3f46;
+    color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #52525b;
+}
+
+.btn-save {
+    background: #10b981;
+    color: white;
+    padding: 10px 30px;
+}
+
+.btn-save:hover:not(:disabled) {
+    background: #059669;
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #dc2626;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: #a1a1aa;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon:hover:not(:disabled) {
+    background: #3f3f46;
+    color: white;
+}
+
+.btn-icon-only {
+    padding: 10px;
+    font-size: 1.2rem;
+}
+
+/* Common form styles */
+.field {
+    margin-bottom: 15px;
+}
+
+.field label, .field-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #a1a1aa;
+    font-size: 0.9rem;
+}
+
+.field-input, .field-select {
+    width: 100%;
+    background: #27272a;
+    border: 1px solid #3f3f46;
+    color: white;
+    padding: 10px;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.field-input:focus, .field-select:focus {
+    border-color: #7c3aed;
+    outline: none;
+}
+
+.checkbox-field {
+    margin-bottom: 15px;
+}
+
+.checkbox-field label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.field-desc {
+    font-size: 0.75rem;
+    color: #71717a;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
+.card {
+    background: #18181b;
+    border: 1px solid #3f3f46;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.spinner {
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    border-top: 3px solid #7c3aed;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}

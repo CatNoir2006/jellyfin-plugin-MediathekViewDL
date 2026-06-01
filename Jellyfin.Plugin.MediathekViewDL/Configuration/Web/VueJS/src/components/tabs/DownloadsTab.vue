@@ -293,13 +293,6 @@ onUnmounted(() => {
 .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .header-actions { display: flex; gap: 10px; }
 
-.btn { border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
-.btn-sm { padding: 4px 8px; }
-.btn-secondary { background: #3f3f46; color: white; }
-.btn-secondary:hover { background: #52525b; }
-.btn-danger { background: #ef4444; color: white; }
-.btn-danger:hover { background: #dc2626; }
-
 /* Shared List Layout */
 .list-container { display: grid; gap: 10px; }
 .item-container {
@@ -370,9 +363,4 @@ onUnmounted(() => {
 
 .no-data { text-align: center; color: #a1a1aa; padding: 30px; }
 .state-msg { text-align: center; padding: 30px; color: #a1a1aa; }
-.spinner {
-  border: 3px solid rgba(255, 255, 255, 0.1); border-radius: 50%; border-top: 3px solid #7c3aed;
-  width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto 10px;
-}
-@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>

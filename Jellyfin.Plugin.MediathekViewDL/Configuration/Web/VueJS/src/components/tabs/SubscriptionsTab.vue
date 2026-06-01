@@ -134,9 +134,6 @@ defineExpose({ refresh: fetchSubscriptions })
   justify-content: space-between; 
   align-items: center; 
   padding: 15px; 
-  background: #27272a; 
-  border: 1px solid #3f3f46; 
-  border-radius: 8px; 
 }
 .subscription-item.disabled { opacity: 0.6; border-style: dashed; }
 .sub-name { font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; gap: 10px; }
@@ -146,24 +143,9 @@ defineExpose({ refresh: fetchSubscriptions })
 .btn-icon { background: none; border: none; cursor: pointer; font-size: 1.4rem; padding: 5px; border-radius: 4px; filter: grayscale(1); color: white; }
 .btn-icon:hover { background: #3f3f46; filter: none; }
 .btn-delete:hover { color: #ef4444; }
-.btn-primary { background: #7c3aed; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-weight: 600; }
-.btn-secondary { background: #3f3f46; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-top: 10px; }
 .state-msg { text-align: center; padding: 40px; color: #a1a1aa; }
 .error-container { text-align: center; padding: 30px; background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 8px; color: #ef4444; }
 .error-msg { margin-bottom: 10px; font-weight: bold; }
-.no-data { text-align: center; color: #a1a1aa; padding: 40px; background: #27272a; border-radius: 8px; border: 1px dashed #3f3f46; }
+.no-data { text-align: center; color: #a1a1aa; padding: 40px; }
 
-.spinner {
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  border-top: 3px solid #7c3aed;
-  width: 24px;
-  height: 24px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 10px;
-}
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
 </style>

@@ -367,10 +367,6 @@ function updateDate(target, field, value) {
     min-height: 500px;
     display: flex;
     flex-direction: column;
-    background: #18181b;
-    border: 1px solid #3f3f46;
-    border-radius: 8px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
     overflow: hidden;
 }
 
@@ -416,46 +412,6 @@ function updateDate(target, field, value) {
     color: #7c3aed;
     background: #18181b;
     border-bottom: 2px solid #7c3aed;
-}
-
-.field {
-    margin-bottom: 15px;
-}
-
-.field label {
-    display: block;
-    margin-bottom: 5px;
-    color: #a1a1aa;
-    font-size: 0.9rem;
-}
-
-.field-input {
-    width: 100%;
-    background: #27272a;
-    border: 1px solid #3f3f46;
-    color: white;
-    padding: 10px;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-
-.field-desc {
-    font-size: 0.75rem;
-    color: #71717a;
-    margin-top: 4px;
-    line-height: 1.4;
-}
-
-.checkbox-field {
-    margin-bottom: 15px;
-}
-
-.checkbox-field label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    font-weight: 600;
 }
 
 .grid-2 {
