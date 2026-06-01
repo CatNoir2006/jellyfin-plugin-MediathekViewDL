@@ -311,6 +311,54 @@ class ApiService {
     }
 
     /**
+     * Save/Update a subscription
+     * @param {Object} sub - Subscription object
+     * @returns {Promise<any>} - Response
+     */
+    async saveSubscription(sub) {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+        const isNew = !sub.Id
+        const url = this.apiClient.getUrl('MediathekViewDL/Subscriptions' + (isNew ? '' : '/' + sub.Id))
+        console.log(`📤 ${isNew ? 'POST' : 'PUT'} Subscriptions`, sub)
+        try {
+            const response = await this.apiClient.ajax({
+                type: isNew ? 'POST' : 'PUT',
+                url: url,
+                data: JSON.stringify(sub),
+                contentType: 'application/json'
+            })
+            return response
+        } catch (error) {
+            console.error(`❌ SaveSubscription failed:`, error)
+            throw error
+        }
+    }
+
+    /**
+     * Test a subscription
+     * @param {Object} sub - Subscription object
+     * @returns {Promise<any>} - Test results
+     */
+    async testSubscription(sub) {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+        const url = this.apiClient.getUrl('MediathekViewDL/Subscriptions/Test')
+        console.log(`📤 POST Subscriptions/Test`, sub)
+        try {
+            const response = await this.apiClient.ajax({
+                type: 'POST',
+                url: url,
+                data: JSON.stringify(sub),
+                contentType: 'application/json',
+                dataType: 'json'
+            })
+            return response
+        } catch (error) {
+            console.error(`❌ TestSubscription failed:`, error)
+            throw error
+        }
+    }
+
+    /**
      * Reset subscription history
      * @param {string} id - Subscription ID
      * @returns {Promise<any>} - Response
@@ -398,11 +446,77 @@ class ApiService {
             throw error
         }
     }
+
+    /**
+     * Get plugin configuration
+     * @param {string} pluginId - Plugin ID
+     * @returns {Promise<Object>} - Plugin configuration
+     */
+    async getPluginConfig(pluginId) {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+        return await this.apiClient.getPluginConfiguration(pluginId)
+    }
+
+    /**
+     * Update plugin configuration
+     * @param {string} pluginId - Plugin ID
+     * @param {Object} config - Configuration object
+     * @returns {Promise<any>} - Response
+     */
+    async updatePluginConfig(pluginId, config) {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+        return await this.apiClient.updatePluginConfiguration(pluginId, config)
+    }
+
+    /**
+     * Get all scheduled tasks
+     * @returns {Promise<Array>} - List of tasks
+     */
+    async getScheduledTasks() {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+        return await this.apiClient.getScheduledTasks()
+    }
+
+    /**
+     * Start a scheduled task
+     * @param {string} id - Task ID
+     * @returns {Promise<any>} - Response
+     */
+    async startScheduledTask(id) {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+        return await this.apiClient.startScheduledTask(id)
+    }
+
+    /**
+     * Add Live TV Tuner Host
+     * @param {Object} tunerHost 
+     */
+    async addTunerHost(tunerHost) {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+        const url = this.apiClient.getUrl('LiveTv/TunerHosts')
+        return await this.apiClient.ajax({
+            type: 'POST',
+            url: url,
+            data: JSON.stringify(tunerHost),
+            contentType: 'application/json'
+        })
+    }
+
+    /**
+     * Add Live TV Listing Provider
+     * @param {Object} provider 
+     */
+    async addListingProvider(provider) {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+        const url = this.apiClient.getUrl('LiveTv/ListingProviders')
+        return await this.apiClient.ajax({
+            type: 'POST',
+            url: url,
+            data: JSON.stringify(provider),
+            contentType: 'application/json'
+        })
+    }
 }
 
 // Export singleton instance
 export default new ApiService()
-
-
-
-

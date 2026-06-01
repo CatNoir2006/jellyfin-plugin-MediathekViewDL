@@ -1,5 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import ApiService from '../utils/ApiService'
 import { SubscriptionFactory } from '../utils/SubscriptionFactory'
 import SearchTab from './tabs/SearchTab.vue'
 import SettingsTab from './tabs/SettingsTab.vue'
@@ -7,7 +8,6 @@ import SubscriptionsTab from './tabs/SubscriptionsTab.vue'
 import DownloadsTab from './tabs/DownloadsTab.vue'
 import SubscriptionEditor from './SubscriptionEditor.vue'
 
-const ApiClient = window.ApiClient ?? null
 const Dashboard = window.Dashboard ?? null
 const PLUGIN_ID = 'a31b415a-5264-419d-b152-8c8192a54994'
 
@@ -37,20 +37,8 @@ function openEditor(subData = null) {
 }
 
 async function saveSubscription(sub) {
-  if (!ApiClient) return
   try {
-    const isNew = !sub.Id
-    const url = isNew
-      ? ApiClient.getUrl('MediathekViewDL/Subscriptions')
-      : ApiClient.getUrl('MediathekViewDL/Subscriptions/' + sub.Id)
-
-    await ApiClient.ajax({
-      type: isNew ? 'POST' : 'PUT',
-      url: url,
-      data: JSON.stringify(sub),
-      contentType: 'application/json'
-    })
-
+     await ApiService.saveSubscription(sub)
      editingSub.value = null
      if (Dashboard) Dashboard.alert('Abonnement gespeichert.')
      // Refresh subscriptions tab
@@ -64,19 +52,11 @@ async function saveSubscription(sub) {
 }
 
 async function testSubscription(sub) {
-  if (!ApiClient) return
   testResults.value = []
   testLoading.value = true
   showTestModal.value = true
   try {
-    const url = ApiClient.getUrl('MediathekViewDL/Subscriptions/Test')
-    const results = await ApiClient.ajax({
-      type: 'POST',
-      url: url,
-      data: JSON.stringify(sub),
-      contentType: 'application/json',
-      dataType: 'json'
-    })
+    const results = await ApiService.testSubscription(sub)
 
     let finalArray = [];
     if (Array.isArray(results)) finalArray = results;

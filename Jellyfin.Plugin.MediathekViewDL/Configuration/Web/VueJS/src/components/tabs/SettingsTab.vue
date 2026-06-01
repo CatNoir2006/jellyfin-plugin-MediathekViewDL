@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import ApiService from "../../utils/ApiService.js";
 
-const ApiClient = window.ApiClient ?? null
 const Dashboard = window.Dashboard ?? null
 const PLUGIN_ID = 'a31b415a-5264-419d-b152-8c8192a54994'
 const PLUGIN_NAME = 'MediathekViewDL'
@@ -87,10 +87,9 @@ const searchTotalItems = computed(() => {
 
 // --- API ---
 async function loadConfig() {
-  if (!ApiClient) return
   loading.value = true
   try {
-    const config = await ApiClient.getPluginConfiguration(PLUGIN_ID)
+    const config = await ApiService.getPluginConfig(PLUGIN_ID)
 
     activeWebUi.value = config.ActiveWebUi ?? 'VueJS'
     lastRun.value = config.LastRun ? new Date(config.LastRun).toLocaleString() : 'Noch nie'
@@ -170,10 +169,9 @@ async function loadConfig() {
 }
 
 async function saveConfig() {
-  if (!ApiClient) return
   saving.value = true
   try {
-    const config = await ApiClient.getPluginConfiguration(PLUGIN_ID)
+    const config = await ApiService.getPluginConfig(PLUGIN_ID)
 
     config.ActiveWebUi = activeWebUi.value
 
@@ -250,7 +248,7 @@ async function saveConfig() {
       }
     }
 
-     await ApiClient.updatePluginConfiguration(PLUGIN_ID, config)
+     await ApiService.updatePluginConfig(PLUGIN_ID, config)
      if (Dashboard) Dashboard.alert('Einstellungen gespeichert.')
      // Notify parent to refresh config
      emit('config-saved')
@@ -263,9 +261,8 @@ async function saveConfig() {
 }
 
 async function copyConfig() {
-  if (!ApiClient) return
   try {
-    const config = await ApiClient.getPluginConfiguration(PLUGIN_ID)
+    const config = await ApiService.getPluginConfig(PLUGIN_ID)
     const text = JSON.stringify(config, null, 2)
     if (window.isSecureContext) {
       await navigator.clipboard.writeText(text)
@@ -298,15 +295,9 @@ function selectPath(targetRef, header) {
 }
 
 async function setupTuner() {
-  if (!ApiClient) return
   try {
     if (Dashboard) Dashboard.showLoadingMsg()
-    await ApiClient.ajax({
-      type: 'POST',
-      url: ApiClient.getUrl('LiveTv/TunerHosts'),
-      data: JSON.stringify({ Type: 'zapp', Url: 'zapp', FriendlyName: 'Zapp (MediathekView)', TunerCount: 0 }),
-      contentType: 'application/json'
-    })
+    await ApiService.addTunerHost({ Type: 'zapp', Url: 'zapp', FriendlyName: 'Zapp (MediathekView)', TunerCount: 0 })
     if (Dashboard) { Dashboard.hideLoadingMsg(); Dashboard.alert('Zapp Tuner erfolgreich hinzugefügt.') }
   } catch (e) {
     if (Dashboard) Dashboard.hideLoadingMsg()
@@ -316,15 +307,9 @@ async function setupTuner() {
 }
 
 async function setupGuide() {
-  if (!ApiClient) return
   try {
     if (Dashboard) Dashboard.showLoadingMsg()
-    await ApiClient.ajax({
-      type: 'POST',
-      url: ApiClient.getUrl('LiveTv/ListingProviders'),
-      data: JSON.stringify({ Type: 'zapp', Id: 'zapp_guide', Name: 'Zapp (MediathekView)' }),
-      contentType: 'application/json'
-    })
+    await ApiService.addListingProvider({ Type: 'zapp', Id: 'zapp_guide', Name: 'Zapp (MediathekView)' })
     if (Dashboard) { Dashboard.hideLoadingMsg(); Dashboard.alert('Zapp Guide Provider erfolgreich hinzugefügt.') }
   } catch (e) {
     if (Dashboard) Dashboard.hideLoadingMsg()

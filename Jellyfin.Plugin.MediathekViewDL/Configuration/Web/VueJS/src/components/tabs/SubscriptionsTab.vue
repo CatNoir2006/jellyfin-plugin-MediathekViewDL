@@ -80,10 +80,10 @@ async function toggleActive(sub) {
 }
 
 async function triggerDownloads() {
-  if (!ApiClient || !Dashboard) return
+  if (!Dashboard) return
   loading.value = true
   try {
-    const tasks = await ApiClient.getScheduledTasks()
+    const tasks = await ApiService.getScheduledTasks()
     const task = tasks.find(t => t.Key === 'MediathekViewDL-MediathekAboDownloader')
 
     if (!task) {
@@ -96,7 +96,7 @@ async function triggerDownloads() {
       return
     }
 
-    await ApiClient.startScheduledTask(task.Id)
+    await ApiService.startScheduledTask(task.Id)
 
     Dashboard.alert('Download-Task wurde gestartet.')
   } catch (e) {
