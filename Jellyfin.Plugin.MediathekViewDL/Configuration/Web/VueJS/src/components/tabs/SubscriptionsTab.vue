@@ -1,11 +1,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import ApiService from '../../utils/ApiService'
 
 const props = defineProps({
   onEdit: { type: Function, required: true }
 })
 
-const ApiClient = window.ApiClient ?? null
 const Dashboard = window.Dashboard ?? null
 
 const subscriptions = ref([])
@@ -13,12 +13,10 @@ const loading = ref(false)
 const error = ref(null)
 
 async function fetchSubscriptions() {
-  if (!ApiClient) return
   loading.value = true
   error.value = null
   try {
-    const url = ApiClient.getUrl('MediathekViewDL/Subscriptions')
-    subscriptions.value = await ApiClient.getJSON(url)
+    subscriptions.value = await ApiService.getSubscriptions()
   } catch (e) {
     error.value = 'Fehler beim Laden der Abonnements.'
     console.error('Failed to fetch subscriptions', e)
@@ -28,12 +26,11 @@ async function fetchSubscriptions() {
 }
 
 async function deleteSubscription(id) {
-  if (!ApiClient || !Dashboard) return
+  if (!Dashboard) return
   Dashboard.confirm('Soll dieses Abonnement wirklich gelöscht werden?', 'Löschen bestätigen', async (result) => {
     if (result) {
       try {
-        const url = ApiClient.getUrl('MediathekViewDL/Subscriptions/' + id)
-        await ApiClient.ajax({ type: 'DELETE', url })
+        await ApiService.deleteSubscription(id)
         await fetchSubscriptions()
         Dashboard.alert('Abonnement gelöscht.')
       } catch (e) {
@@ -45,12 +42,11 @@ async function deleteSubscription(id) {
 }
 
 async function resetProcessedItems(id) {
-  if (!ApiClient || !Dashboard) return
+  if (!Dashboard) return
   Dashboard.confirm('Soll der Verlauf der bereits verarbeiteten Elemente für dieses Abonnement wirklich zurückgesetzt werden?', 'Zurücksetzen bestätigen', async (result) => {
     if (result) {
       try {
-        const url = ApiClient.getUrl('MediathekViewDL/Subscriptions/' + id + '/ResetHistory')
-        await ApiClient.ajax({ type: 'POST', url })
+        await ApiService.resetSubscriptionHistory(id)
         Dashboard.alert('Verlauf wurde zurückgesetzt.')
         await fetchSubscriptions()
       } catch (e) {
@@ -62,13 +58,10 @@ async function resetProcessedItems(id) {
 }
 
 async function processSubscription(id) {
-  if (!ApiClient || !Dashboard) return
+  if (!Dashboard) return
   try {
-    const url = ApiClient.getUrl('MediathekViewDL/Subscriptions/' + id + '/Process')
-    const response = await ApiClient.ajax({ type: 'POST', url })
-    const reader = (response.body || response).getReader()
-    const { value } = await reader.read()
-    Dashboard.alert(new TextDecoder().decode(value) + ' neue Elemente gefunden.')
+    const response = await ApiService.processSubscription(id)
+    Dashboard.alert(response + ' neue Elemente gefunden.')
   } catch (e) {
     console.error('Processing failed', e)
     Dashboard.alert('Fehler beim Verarbeiten.')
@@ -76,18 +69,9 @@ async function processSubscription(id) {
 }
 
 async function toggleActive(sub) {
-  if (!ApiClient) return
   const newState = !sub.IsEnabled
   try {
-    const url = ApiClient.getUrl('MediathekViewDL/Subscriptions/' + sub.Id + '/Active?active=' + newState)
-    const response = await ApiClient.ajax({ type: 'POST', url })
-    
-    let result = response
-    if (response && typeof response.text === 'function') {
-      const text = await response.text()
-      result = text === 'true'
-    }
-    
+    const result = await ApiService.setSubscriptionActive(sub.Id, newState)
     sub.IsEnabled = result === true || result === 'true'
   } catch (e) {
     console.error('Toggle failed', e)
@@ -101,19 +85,19 @@ async function triggerDownloads() {
   try {
     const tasks = await ApiClient.getScheduledTasks()
     const task = tasks.find(t => t.Key === 'MediathekViewDL-MediathekAboDownloader')
-    
+
     if (!task) {
       Dashboard.alert('Scheduled Task "Mediathek Abo-Downloader" wurde nicht gefunden.')
       return
     }
-    
+
     if (task.State !== 'Idle') {
       Dashboard.alert('Der Abo-Downloader läuft bereits.')
       return
     }
-    
+
     await ApiClient.startScheduledTask(task.Id)
-    
+
     Dashboard.alert('Download-Task wurde gestartet.')
   } catch (e) {
     console.error('Failed to trigger downloads', e)
@@ -176,7 +160,7 @@ defineExpose({ refresh: fetchSubscriptions })
         </div>
       </div>
     </div>
-    
+
     <div v-else class="no-data">
       Keine Abonnements konfiguriert.
     </div>
@@ -187,11 +171,11 @@ defineExpose({ refresh: fetchSubscriptions })
 .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .header-actions { display: flex; gap: 10px; }
 .subscriptions-list { display: grid; gap: 10px; }
-.subscription-item { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  padding: 15px; 
+.subscription-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
 }
 .subscription-item.disabled { opacity: 0.6; border-style: dashed; }
 .sub-left { display: flex; align-items: center; gap: 20px; }

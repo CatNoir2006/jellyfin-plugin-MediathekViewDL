@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from 'vue'
+import ApiService from '../../utils/ApiService'
 
-const ApiClient = window.ApiClient ?? null
 const Dashboard = window.Dashboard ?? null
 
 const activeDownloads = ref([])
@@ -30,20 +30,16 @@ const hasInactiveJobs = computed(() => {
 })
 
 async function fetchActiveDownloads() {
-  if (!ApiClient) return
   try {
-    const url = ApiClient.getUrl('MediathekViewDL/Downloads/Active')
-    activeDownloads.value = await ApiClient.getJSON(url)
+    activeDownloads.value = await ApiService.getActiveDownloads()
   } catch (e) {
     console.error('Failed to fetch active downloads', e)
   }
 }
 
 async function fetchHistory() {
-  if (!ApiClient) return
   try {
-    const url = ApiClient.getUrl('MediathekViewDL/Downloads/History/Grouped')
-    groupedHistory.value = await ApiClient.getJSON(url)
+    groupedHistory.value = await ApiService.getDownloadHistory()
   } catch (e) {
     console.error('Failed to fetch download history', e)
     error.value = 'Fehler beim Laden des Verlaufs.'
@@ -53,12 +49,11 @@ async function fetchHistory() {
 }
 
 async function cancelDownload(id) {
-  if (!ApiClient || !Dashboard) return
+  if (!Dashboard) return
   Dashboard.confirm('Soll dieser Download wirklich abgebrochen werden?', 'Download abbrechen', async (result) => {
     if (result) {
       try {
-        const url = ApiClient.getUrl('MediathekViewDL/Downloads/' + id)
-        await ApiClient.ajax({ type: 'DELETE', url })
+        await ApiService.cancelDownload(id)
         await fetchActiveDownloads()
       } catch (e) {
         console.error('Cancel failed', e)
@@ -69,12 +64,11 @@ async function cancelDownload(id) {
 }
 
 async function cancelAllDownloads() {
-  if (!ApiClient || !Dashboard) return
+  if (!Dashboard) return
   Dashboard.confirm('Sollen wirklich ALLE aktiven Downloads abgebrochen werden?', 'Alle abbrechen', async (result) => {
     if (result) {
       try {
-        const url = ApiClient.getUrl('MediathekViewDL/Downloads')
-        await ApiClient.ajax({ type: 'DELETE', url })
+        await ApiService.cancelAllDownloads()
         await fetchActiveDownloads()
       } catch (e) {
         console.error('Cancel all failed', e)
@@ -85,10 +79,8 @@ async function cancelAllDownloads() {
 }
 
 async function clearInactiveDownloads() {
-  if (!ApiClient) return
   try {
-    const url = ApiClient.getUrl('MediathekViewDL/Downloads/ClearInactive')
-    await ApiClient.ajax({ type: 'POST', url })
+    await ApiService.clearInactiveDownloads()
     await fetchActiveDownloads()
   } catch (e) {
     console.error('Clear inactive failed', e)
@@ -167,16 +159,16 @@ onUnmounted(() => {
       <div class="header-row">
         <h2>Aktive Downloads</h2>
         <div class="header-actions">
-          <button 
-            v-if="hasInactiveJobs" 
-            @click="clearInactiveDownloads" 
+          <button
+            v-if="hasInactiveJobs"
+            @click="clearInactiveDownloads"
             class="btn btn-secondary btn-sm"
           >
             Liste bereinigen
           </button>
-          <button 
-            v-if="hasCancellableJobs" 
-            @click="cancelAllDownloads" 
+          <button
+            v-if="hasCancellableJobs"
+            @click="cancelAllDownloads"
             class="btn btn-danger btn-sm"
           >
             Alle abbrechen
@@ -202,7 +194,7 @@ onUnmounted(() => {
                 <span v-if="dl.Status === 'Downloading'" class="progress-text">{{ Math.round(dl.Progress) }}%</span>
               </div>
             </div>
-            
+
             <div class="item-progress" v-if="showProgressBar(dl.Status)">
               <div class="progress-bar-bg">
                 <div class="progress-bar-fill" :style="{ width: dl.Progress + '%' }"></div>
@@ -214,10 +206,10 @@ onUnmounted(() => {
             </div>
 
             <div class="item-actions">
-              <button 
-                v-if="isCancellable(dl.Status)" 
-                @click.stop="cancelDownload(dl.Id)" 
-                class="btn-icon btn-cancel" 
+              <button
+                v-if="isCancellable(dl.Status)"
+                @click.stop="cancelDownload(dl.Id)"
+                class="btn-icon btn-cancel"
                 title="Abbrechen"
               >
                 ✕
@@ -268,7 +260,7 @@ onUnmounted(() => {
               </div>
             </div>
           </div>
-          
+
           <div v-if="expandedGroups.has(getGroupKey(group))" class="item-details">
             <div v-for="entry in group.Entries" :key="entry.Id" class="detail-entry">
               <div class="entry-file">

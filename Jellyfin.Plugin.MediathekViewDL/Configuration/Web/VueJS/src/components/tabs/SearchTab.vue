@@ -2,13 +2,13 @@
 import {ref, watch} from 'vue'
 import { SubscriptionFactory } from '../../utils/SubscriptionFactory'
 import AdvancedDownloadDialog from '../AdvancedDownloadDialog.vue'
+import ApiService from '../../utils/ApiService'
 
 const props = defineProps({
     onCreateSub: { type: Function, required: true },
     pluginConfig: { type: Object, default: null }
 })
 
-const ApiClient = window.ApiClient ?? null
 const Dashboard = window.Dashboard ?? null
 
 const searchTitle = ref('')
@@ -31,7 +31,6 @@ const isDownloading = ref(false)
 let debounceTimer = null;
 
 async function performSearch() {
-    if (!ApiClient) return
     if (!searchTitle.value && !searchTopic.value && !searchChannel.value && !searchCombined.value) {
         results.value = [];
         return
@@ -39,28 +38,23 @@ async function performSearch() {
 
     loading.value = true
     try {
-        const params = new URLSearchParams()
-        if (searchTitle.value) params.append('title', searchTitle.value)
-        if (searchTopic.value) params.append('topic', searchTopic.value)
-        if (searchChannel.value) params.append('channel', searchChannel.value)
-        if (searchCombined.value) params.append('combinedSearch', searchCombined.value)
-
-         if (minDuration.value) params.append('minDuration', String(minDuration.value * 60))
-         if (maxDuration.value) params.append('maxDuration', String(maxDuration.value * 60))
-
-        if (minBroadcastDate.value) {
-            params.append('minBroadcastDate', new Date(minBroadcastDate.value).toISOString())
-        }
-        if (maxBroadcastDate.value) {
-            const d = new Date(maxBroadcastDate.value)
-            d.setHours(23, 59, 59, 999)
-            params.append('maxBroadcastDate', d.toISOString())
+        const filters = {
+            title: searchTitle.value,
+            topic: searchTopic.value,
+            channel: searchChannel.value,
+            combinedSearch: searchCombined.value,
+            minDuration: minDuration.value ? minDuration.value * 60 : null,
+            maxDuration: maxDuration.value ? maxDuration.value * 60 : null,
+            minBroadcastDate: minBroadcastDate.value ? new Date(minBroadcastDate.value).toISOString() : null,
+            maxBroadcastDate: maxBroadcastDate.value
+                ? new Date(new Date(maxBroadcastDate.value).getTime() + 86399999).toISOString()
+                : null
         }
 
-        const url = ApiClient.getUrl('MediathekViewDL/Search?' + params.toString())
-        results.value = await ApiClient.getJSON(url)
+        results.value = await ApiService.search(filters)
     } catch (e) {
         console.error('Search failed', e)
+        if (Dashboard) Dashboard.alert('Fehler bei der Suche: ' + (e?.message || 'Unbekannter Fehler'))
     } finally {
         loading.value = false
     }
@@ -90,18 +84,15 @@ function openVideo(item) {
 }
 
 async function createSubFromSearch() {
-     if (!ApiClient) return
-
      try {
-         const params = new URLSearchParams()
-         if (searchTitle.value) params.append('title', searchTitle.value)
-         if (searchTopic.value) params.append('topic', searchTopic.value)
-         if (searchChannel.value) params.append('channel', searchChannel.value)
-         if (searchCombined.value) params.append('combinedSearch', searchCombined.value)
+         const params = {
+             title: searchTitle.value,
+             topic: searchTopic.value,
+             channel: searchChannel.value,
+             combinedSearch: searchCombined.value
+         }
 
-         // Get structured criteria from API to handle comma separation correctly
-         const url = ApiClient.getUrl('MediathekViewDL/Search/Criteria?' + params.toString())
-         const criteria = await ApiClient.getJSON(url)
+         const criteria = await ApiService.getSearchCriteria(params)
 
          const defaults = props.pluginConfig?.SubscriptionDefaults || {}
          const sub = SubscriptionFactory.createDefault(defaults)
@@ -115,22 +106,19 @@ async function createSubFromSearch() {
          props.onCreateSub(sub);
      } catch (e) {
          console.error('Failed to convert criteria', e)
+         if (Dashboard) Dashboard.alert('Fehler beim Erstellen des Abos: ' + (e?.message || 'Unbekannter Fehler'))
      }
- }
+}
 
 async function createSubFromItem(item) {
-      if (!ApiClient) return
-
       try {
-          // Use the API to get clean criteria for this item
-          // This is important because Title/Topic/Channel might contain commas
-          const params = new URLSearchParams()
-          if (item.Title) params.append('title', item.Title)
-          if (item.Topic) params.append('topic', item.Topic)
-          if (item.Channel) params.append('channel', item.Channel)
+          const params = {
+              title: item.Title,
+              topic: item.Topic,
+              channel: item.Channel
+          }
 
-          const url = ApiClient.getUrl('MediathekViewDL/Search/Criteria?' + params.toString())
-          const criteria = await ApiClient.getJSON(url)
+          const criteria = await ApiService.getSearchCriteria(params)
 
           const defaults = props.pluginConfig?.SubscriptionDefaults || {}
           const sub = SubscriptionFactory.createDefault(defaults)
@@ -140,24 +128,18 @@ async function createSubFromItem(item) {
           props.onCreateSub(sub);
       } catch (e) {
           console.error('Failed to convert item criteria', e)
+          if (Dashboard) Dashboard.alert('Fehler beim Erstellen des Abos: ' + (e?.message || 'Unbekannter Fehler'))
       }
   }
 
 async function simpleDownload(item) {
-      if (!ApiClient || !Dashboard) return
       try {
           isDownloading.value = true
-          const url = ApiClient.getUrl('MediathekViewDL/Download')
-          await ApiClient.ajax({
-              type: 'POST',
-              url: url,
-              data: JSON.stringify(item),
-              contentType: 'application/json'
-          })
-          Dashboard.alert('Download erfolgreich in Warteschlange eingereiht.')
+          await ApiService.downloadItem(item)
+          if (Dashboard) Dashboard.alert('Download erfolgreich in Warteschlange eingereiht.')
       } catch (e) {
           console.error('Simple download failed', e)
-          Dashboard.alert('Fehler beim Starten des Downloads: ' + (e.message || 'Unbekannter Fehler'))
+          if (Dashboard) Dashboard.alert('Fehler beim Starten des Downloads: ' + (e?.message || 'Unbekannter Fehler'))
       } finally {
           isDownloading.value = false
       }

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
+import ApiService from '../utils/ApiService'
 
 const props = defineProps({
     item: {
@@ -11,7 +12,6 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'download'])
 
-const ApiClient = window.ApiClient ?? null
 const Dashboard = window.Dashboard ?? null
 
 const downloadPath = ref('')
@@ -20,7 +20,6 @@ const downloadSubtitles = ref(true)
 const subtitleFileName = ref('')
 const isLoading = ref(false)
 const isDownloading = ref(false)
-const recommendedPath = ref(null)
 
 watch(() => props.item, async (newItem) => {
     if (newItem) {
@@ -30,8 +29,6 @@ watch(() => props.item, async (newItem) => {
 }, { immediate: true })
 
 async function loadRecommendedPath(item) {
-    if (!ApiClient) return
-
     try {
         isLoading.value = true
 
@@ -46,35 +43,10 @@ async function loadRecommendedPath(item) {
             Title: item.Title || ''
         }
 
-        const url = ApiClient.getUrl('MediathekViewDL/Items/RecommendedPath')
-        console.log('📤 Requesting recommended path from:', url)
-        console.log('📦 VideoInfo:', videoInfo)
+        console.log('📤 Requesting recommended path with VideoInfo:', videoInfo)
 
         try {
-            // Call the API
-            const response = await ApiClient.ajax({
-                type: 'POST',
-                url: url,
-                data: JSON.stringify(videoInfo),
-                processData: false,
-                contentType: 'application/json',
-                dataType: 'json'
-            })
-
-            console.log('📥 Raw response:', response)
-            console.log('📥 Response type:', typeof response)
-
-            let data = response
-
-            // Handle different response types from ApiClient
-            if (typeof response === 'string') {
-                data = JSON.parse(response)
-            } else if (response && response.Path) {
-                // Already parsed as object
-                data = response
-            }
-
-            console.log('✅ Parsed data:', data)
+            const data = await ApiService.getRecommendedPath(videoInfo)
 
             if (data && data.Path) {
                 downloadPath.value = data.Path
@@ -116,14 +88,13 @@ function selectDownloadPath() {
 }
 
 async function startDownload() {
-    if (!ApiClient || !Dashboard || !props.item || !downloadPath.value || !downloadFileName.value) {
-        Dashboard.alert('Bitte füllen Sie alle erforderlichen Felder aus.')
+    if (!props.item || !downloadPath.value || !downloadFileName.value) {
+        if (Dashboard) Dashboard.alert('Bitte füllen Sie alle erforderlichen Felder aus.')
         return
     }
 
     try {
         isDownloading.value = true
-        const url = ApiClient.getUrl('MediathekViewDL/AdvancedDownload')
         const options = {
             Item: props.item,
             DownloadPath: downloadPath.value,
@@ -131,18 +102,13 @@ async function startDownload() {
             DownloadSubtitles: downloadSubtitles.value,
             SubtitleName: subtitleFileName.value
         }
-        await ApiClient.ajax({
-            type: 'POST',
-            url: url,
-            data: JSON.stringify(options),
-            contentType: 'application/json'
-        })
-        Dashboard.alert('Erweiterte Download erfolgreich in Warteschlange eingereiht.')
+        await ApiService.advancedDownload(options)
+        if (Dashboard) Dashboard.alert('Erweiterte Download erfolgreich in Warteschlange eingereiht.')
         emit('download')
         emit('close')
     } catch (e) {
         console.error('Advanced download failed', e)
-        Dashboard.alert('Fehler beim Starten des erweiterten Downloads: ' + (e.message || 'Unbekannter Fehler'))
+        if (Dashboard) Dashboard.alert('Fehler beim Starten des erweiterten Downloads: ' + (e?.message || 'Unbekannter Fehler'))
     } finally {
         isDownloading.value = false
     }
