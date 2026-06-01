@@ -60,6 +60,9 @@ interface ApiClient {
     // Server interaction helpers
     getServerConfiguration(): Promise<any>;
     getScheduledTasks(options?: any): Promise<any[]>;
+    getScheduledTask(id: string): Promise<any>;
+    startScheduledTask(id: string): Promise<any>;
+    stopScheduledTask(id: string): Promise<any>;
     getSystemInfo(): Promise<any>;
 }
 

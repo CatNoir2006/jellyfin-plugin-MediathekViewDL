@@ -95,6 +95,34 @@ async function toggleActive(sub) {
   }
 }
 
+async function triggerDownloads() {
+  if (!ApiClient || !Dashboard) return
+  loading.value = true
+  try {
+    const tasks = await ApiClient.getScheduledTasks()
+    const task = tasks.find(t => t.Key === 'MediathekViewDL-MediathekAboDownloader')
+    
+    if (!task) {
+      Dashboard.alert('Scheduled Task "Mediathek Abo-Downloader" wurde nicht gefunden.')
+      return
+    }
+    
+    if (task.State !== 'Idle') {
+      Dashboard.alert('Der Abo-Downloader läuft bereits.')
+      return
+    }
+    
+    await ApiClient.startScheduledTask(task.Id)
+    
+    Dashboard.alert('Download-Task wurde gestartet.')
+  } catch (e) {
+    console.error('Failed to trigger downloads', e)
+    Dashboard.alert('Fehler beim Starten des Download-Tasks.')
+  } finally {
+    loading.value = false
+  }
+}
+
 onMounted(() => {
   fetchSubscriptions()
 })
@@ -107,7 +135,10 @@ defineExpose({ refresh: fetchSubscriptions })
   <div class="card">
     <div class="header-row">
       <h2>Abo Verwaltung</h2>
-      <button class="btn btn-primary" @click="onEdit()" :disabled="loading">Neues Abo</button>
+      <div class="header-actions">
+        <button class="btn btn-secondary" @click="triggerDownloads" :disabled="loading">Downloads manuell starten</button>
+        <button class="btn btn-primary" @click="onEdit()" :disabled="loading">Neues Abo</button>
+      </div>
     </div>
 
     <div v-if="loading" class="state-msg">
@@ -154,6 +185,7 @@ defineExpose({ refresh: fetchSubscriptions })
 
 <style scoped>
 .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.header-actions { display: flex; gap: 10px; }
 .subscriptions-list { display: grid; gap: 10px; }
 .subscription-item { 
   display: flex; 
