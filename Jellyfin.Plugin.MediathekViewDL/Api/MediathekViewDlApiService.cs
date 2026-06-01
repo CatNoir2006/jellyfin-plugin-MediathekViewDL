@@ -105,62 +105,6 @@ public class MediathekViewDlApiService : ControllerBase
     }
 
     /// <summary>
-    /// Gets the currently active downloads.
-    /// </summary>
-    /// <returns>A list of active downloads.</returns>
-    [HttpGet("Downloads/Active")]
-    public ActionResult<IEnumerable<ActiveDownload>> GetActiveDownloads()
-    {
-        if (Plugin.Instance?.InitializationException is not null)
-        {
-            return StatusCode(503, new ApiErrorDto(ApiErrorId.InitializationError, Plugin.Instance.InitializationException.Message));
-        }
-
-        return Ok(_downloadQueueManager.GetActiveDownloads());
-    }
-
-    /// <summary>
-    /// Gets the download history.
-    /// </summary>
-    /// <param name="limit">The maximum number of entries to return.</param>
-    /// <returns>A list of download history entries.</returns>
-    [HttpGet("Downloads/History")]
-    public async Task<ActionResult<IEnumerable<DownloadHistoryEntry>>> GetDownloadHistory([FromQuery] int limit = 50)
-    {
-        if (Plugin.Instance?.InitializationException is not null)
-        {
-            return StatusCode(503, new ApiErrorDto(ApiErrorId.InitializationError, Plugin.Instance.InitializationException.Message));
-        }
-
-        var history = await _downloadHistoryRepository.GetRecentHistoryAsync(limit).ConfigureAwait(false);
-        return Ok(history);
-    }
-
-    /// <summary>
-    /// Cancels a specific download.
-    /// </summary>
-    /// <param name="id">The active download identifier.</param>
-    /// <returns>An OK result.</returns>
-    [HttpDelete("Downloads/{id}")]
-    [Authorize(Policy = Policies.RequiresElevation)]
-    public IActionResult CancelDownload([FromRoute] Guid id)
-    {
-        try
-        {
-            _downloadQueueManager.CancelJob(id);
-            return Ok($"Download '{id}' Abbruch angefordert.");
-        }
-        catch (KeyNotFoundException)
-        {
-            return NotFound(new ApiErrorDto(ApiErrorId.NotFound, $"Download mit ID '{id}' wurde nicht gefunden."));
-        }
-        catch (InvalidOperationException ex)
-        {
-            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidOperation, ex.Message));
-        }
-    }
-
-    /// <summary>
     /// Tests a subscription to see what items would be downloaded.
     /// </summary>
     /// <param name="subscription">The subscription configuration to test.</param>

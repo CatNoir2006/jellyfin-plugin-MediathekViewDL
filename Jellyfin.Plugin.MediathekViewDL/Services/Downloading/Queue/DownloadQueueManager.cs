@@ -107,6 +107,46 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
     }
 
     /// <inheritdoc />
+    public void CancelAllJobs()
+    {
+        _logger.LogInformation("Cancellation of all download jobs requested.");
+        foreach (var download in _activeDownloads.Values)
+        {
+            if (download.Status == DownloadStatus.Queued ||
+                download.Status == DownloadStatus.Downloading ||
+                download.Status == DownloadStatus.Processing)
+            {
+                try
+                {
+                    download.Cts.Cancel();
+                    download.Status = DownloadStatus.Cancelled;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error cancelling job '{Title}' (ID: {Id}).", download.Job.Title, download.Id);
+                }
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    public void ClearInactiveJobs()
+    {
+        _logger.LogInformation("Clearing all inactive download jobs from list.");
+        var keysToRemove = _activeDownloads
+            .Where(kvp => kvp.Value.Status == DownloadStatus.Finished ||
+                           kvp.Value.Status == DownloadStatus.Failed ||
+                           kvp.Value.Status == DownloadStatus.Cancelled)
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        foreach (var key in keysToRemove)
+        {
+            _activeDownloads.TryRemove(key, out _);
+        }
+    }
+
+    /// <inheritdoc />
     public IEnumerable<ActiveDownload> GetActiveDownloads()
     {
         return _activeDownloads.Values.OrderByDescending(d => d.CreatedAt);

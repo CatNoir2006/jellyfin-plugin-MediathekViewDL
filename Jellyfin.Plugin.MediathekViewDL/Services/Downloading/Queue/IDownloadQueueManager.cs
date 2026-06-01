@@ -24,6 +24,16 @@ public interface IDownloadQueueManager
     void CancelJob(Guid id);
 
     /// <summary>
+    /// Cancels all active download jobs.
+    /// </summary>
+    void CancelAllJobs();
+
+    /// <summary>
+    /// Removes all finished, failed or cancelled jobs from the list.
+    /// </summary>
+    void ClearInactiveJobs();
+
+    /// <summary>
     /// Gets all active downloads (queued, running, processing, failed).
     /// </summary>
     /// <returns>A list of active downloads.</returns>

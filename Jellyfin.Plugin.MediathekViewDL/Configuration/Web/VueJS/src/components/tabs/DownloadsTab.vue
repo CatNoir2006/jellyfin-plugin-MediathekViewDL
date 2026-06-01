@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 
 const ApiClient = window.ApiClient ?? null
 const Dashboard = window.Dashboard ?? null
@@ -18,6 +18,14 @@ const statusMap = {
   'Failed': { label: 'Fehlgeschlagen', class: 'status-failed' },
   'Cancelled': { label: 'Abgebrochen', class: 'status-cancelled' }
 }
+
+const hasCancellableJobs = computed(() => {
+  return activeDownloads.value.some(dl => isCancellable(dl.Status))
+})
+
+const hasInactiveJobs = computed(() => {
+  return activeDownloads.value.some(dl => !isCancellable(dl.Status))
+})
 
 async function fetchActiveDownloads() {
   if (!ApiClient) return
@@ -58,6 +66,33 @@ async function cancelDownload(id) {
   })
 }
 
+async function cancelAllDownloads() {
+  if (!ApiClient || !Dashboard) return
+  Dashboard.confirm('Sollen wirklich ALLE aktiven Downloads abgebrochen werden?', 'Alle abbrechen', async (result) => {
+    if (result) {
+      try {
+        const url = ApiClient.getUrl('MediathekViewDL/Downloads')
+        await ApiClient.ajax({ type: 'DELETE', url })
+        await fetchActiveDownloads()
+      } catch (e) {
+        console.error('Cancel all failed', e)
+        Dashboard.alert('Fehler beim Abbrechen der Downloads.')
+      }
+    }
+  })
+}
+
+async function clearInactiveDownloads() {
+  if (!ApiClient) return
+  try {
+    const url = ApiClient.getUrl('MediathekViewDL/Downloads/ClearInactive')
+    await ApiClient.ajax({ type: 'POST', url })
+    await fetchActiveDownloads()
+  } catch (e) {
+    console.error('Clear inactive failed', e)
+  }
+}
+
 function formatDate(dateStr) {
   if (!dateStr) return '-'
   return new Date(dateStr).toLocaleString()
@@ -93,7 +128,26 @@ onUnmounted(() => {
   <div class="downloads-tab">
     <!-- Active Downloads -->
     <section class="card active-downloads-section">
-      <h2>Aktive Downloads</h2>
+      <div class="header-row">
+        <h2>Aktive Downloads</h2>
+        <div class="header-actions">
+          <button 
+            v-if="hasInactiveJobs" 
+            @click="clearInactiveDownloads" 
+            class="btn btn-secondary btn-sm"
+          >
+            Liste bereinigen
+          </button>
+          <button 
+            v-if="hasCancellableJobs" 
+            @click="cancelAllDownloads" 
+            class="btn btn-danger btn-sm"
+          >
+            Alle abbrechen
+          </button>
+        </div>
+      </div>
+
       <div v-if="activeDownloads.length === 0" class="no-data">
         Keine aktiven Downloads.
       </div>
@@ -163,6 +217,16 @@ onUnmounted(() => {
 
 <style scoped>
 .downloads-tab { display: flex; flex-direction: column; gap: 20px; }
+
+.header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+.header-actions { display: flex; gap: 10px; }
+
+.btn { border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+.btn-sm { padding: 4px 8px; }
+.btn-secondary { background: #3f3f46; color: white; }
+.btn-secondary:hover { background: #52525b; }
+.btn-danger { background: #ef4444; color: white; }
+.btn-danger:hover { background: #dc2626; }
 
 /* Active Downloads */
 .active-list { display: grid; gap: 15px; }
