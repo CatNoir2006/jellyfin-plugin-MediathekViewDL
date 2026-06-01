@@ -187,15 +187,15 @@ onUnmounted(() => {
       <div v-if="activeDownloads.length === 0" class="no-data">
         Keine aktiven Downloads.
       </div>
-      <div v-else class="active-list">
-        <div v-for="dl in activeDownloads" :key="dl.Id" class="active-item-container">
-          <div class="active-item" @click="toggleActive(dl.Id)">
-            <div class="active-item-info">
-              <div class="active-item-title">
-                <span class="expand-icon-small">{{ expandedActive.has(dl.Id) ? '▼' : '▶' }}</span>
+      <div v-else class="list-container">
+        <div v-for="dl in activeDownloads" :key="dl.Id" class="item-container">
+          <div class="item-header" @click="toggleActive(dl.Id)">
+            <div class="item-info">
+              <div class="item-title">
+                <span class="expand-icon">{{ expandedActive.has(dl.Id) ? '▼' : '▶' }}</span>
                 {{ dl.Job.Title }}
               </div>
-              <div class="active-item-meta">
+              <div class="item-meta">
                 <span :class="['status-badge', getStatusClass(dl.Status)]">
                   {{ getStatusLabel(dl.Status) }}
                 </span>
@@ -203,7 +203,7 @@ onUnmounted(() => {
               </div>
             </div>
             
-            <div class="active-item-progress" v-if="showProgressBar(dl.Status)">
+            <div class="item-progress" v-if="showProgressBar(dl.Status)">
               <div class="progress-bar-bg">
                 <div class="progress-bar-fill" :style="{ width: dl.Progress + '%' }"></div>
               </div>
@@ -213,7 +213,7 @@ onUnmounted(() => {
               {{ dl.ErrorMessage }}
             </div>
 
-            <div class="active-item-actions">
+            <div class="item-actions">
               <button 
                 v-if="isCancellable(dl.Status)" 
                 @click.stop="cancelDownload(dl.Id)" 
@@ -226,8 +226,8 @@ onUnmounted(() => {
           </div>
 
           <!-- Active Details -->
-          <div v-if="expandedActive.has(dl.Id)" class="active-item-details">
-            <div v-for="(item, idx) in dl.Job.DownloadItems" :key="idx" class="history-entry">
+          <div v-if="expandedActive.has(dl.Id)" class="item-details">
+            <div v-for="(item, idx) in dl.Job.DownloadItems" :key="idx" class="detail-entry">
               <div class="entry-file">
                 <span v-if="getFileIcon(item.DestinationPath)" class="file-type-badge">
                   {{ getFileIcon(item.DestinationPath) }}
@@ -254,23 +254,23 @@ onUnmounted(() => {
       <div v-else-if="groupedHistory.length === 0" class="no-data">
         Kein Download-Verlauf vorhanden.
       </div>
-      <div v-else class="history-list">
-        <div v-for="group in groupedHistory" :key="getGroupKey(group)" class="history-group">
-          <div class="history-group-header" @click="toggleGroup(group)">
-            <div class="history-info">
-              <div class="history-title">{{ group.DisplayName || 'Unbekannter Titel' }}</div>
-              <div class="history-meta">
-                {{ formatDate(group.LatestTimestamp) }} 
+      <div v-else class="list-container">
+        <div v-for="group in groupedHistory" :key="getGroupKey(group)" class="item-container">
+          <div class="item-header" @click="toggleGroup(group)">
+            <div class="item-info">
+              <div class="item-title">
+                <span class="expand-icon">{{ expandedGroups.has(getGroupKey(group)) ? '▼' : '▶' }}</span>
+                {{ group.DisplayName || 'Unbekannter Titel' }}
+              </div>
+              <div class="item-meta">
+                <span class="timestamp-text">{{ formatDate(group.LatestTimestamp) }}</span>
                 <span v-if="group.Entries.length > 1" class="file-count">({{ group.Entries.length }} Dateien)</span>
               </div>
             </div>
-            <div class="history-actions">
-              <span class="expand-icon">{{ expandedGroups.has(getGroupKey(group)) ? '▼' : '▶' }}</span>
-            </div>
           </div>
           
-          <div v-if="expandedGroups.has(getGroupKey(group))" class="history-group-details">
-            <div v-for="entry in group.Entries" :key="entry.Id" class="history-entry">
+          <div v-if="expandedGroups.has(getGroupKey(group))" class="item-details">
+            <div v-for="entry in group.Entries" :key="entry.Id" class="detail-entry">
               <div class="entry-file">
                 <span v-if="getFileIcon(entry.DownloadPath)" class="file-type-badge">
                   {{ getFileIcon(entry.DownloadPath) }}
@@ -300,15 +300,15 @@ onUnmounted(() => {
 .btn-danger { background: #ef4444; color: white; }
 .btn-danger:hover { background: #dc2626; }
 
-/* Active Downloads */
-.active-list { display: grid; gap: 10px; }
-.active-item-container {
+/* Shared List Layout */
+.list-container { display: grid; gap: 10px; }
+.item-container {
   background: #27272a;
   border: 1px solid #3f3f46;
   border-radius: 8px;
   overflow: hidden;
 }
-.active-item {
+.item-header {
   padding: 15px;
   display: grid;
   grid-template-columns: 1fr auto;
@@ -316,13 +316,13 @@ onUnmounted(() => {
   align-items: center;
   cursor: pointer;
 }
-.active-item:hover { background: rgba(255, 255, 255, 0.03); }
+.item-header:hover { background: rgba(255, 255, 255, 0.03); }
 
-.active-item-info { display: flex; flex-direction: column; gap: 5px; }
-.active-item-title { font-weight: bold; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
-.active-item-meta { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+.item-info { display: flex; flex-direction: column; gap: 5px; }
+.item-title { font-weight: bold; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+.item-meta { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
 
-.expand-icon-small { font-size: 0.7rem; color: #71717a; width: 12px; }
+.expand-icon { font-size: 0.7rem; color: #71717a; width: 12px; text-align: center; }
 
 .status-badge {
   padding: 2px 8px;
@@ -338,76 +338,41 @@ onUnmounted(() => {
 .status-cancelled { background: #71717a; color: white; }
 .status-queued { background: #f59e0b; color: white; }
 
-.active-item-progress { grid-column: 1 / -1; margin-top: 5px; }
+.timestamp-text { color: #a1a1aa; }
+.file-count { color: #71717a; }
+
+.item-progress { grid-column: 1 / -1; margin-top: 5px; }
 .progress-bar-bg { background: #18181b; height: 8px; border-radius: 4px; overflow: hidden; }
 .progress-bar-fill { background: #7c3aed; height: 100%; transition: width 0.3s ease; }
 
-.active-item-details {
+.item-details {
   padding: 0 15px 15px 38px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: flex; flex-direction: column; gap: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   padding-top: 10px;
 }
 
-.error-msg-small { grid-column: 1 / -1; font-size: 0.8rem; color: #ef4444; margin-top: 5px; }
-
-.btn-cancel { color: #ef4444; font-size: 1.2rem; font-weight: bold; background: none; border: none; cursor: pointer; padding: 5px; }
-.btn-cancel:hover { background: rgba(239, 68, 68, 0.1); border-radius: 4px; }
-
-/* History */
-.history-list { display: flex; flex-direction: column; }
-.history-group { border-bottom: 1px solid #27272a; }
-.history-group:last-child { border-bottom: none; }
-
-.history-group-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  cursor: pointer;
-}
-.history-group-header:hover { background: rgba(255, 255, 255, 0.05); }
-
-.history-info { display: flex; flex-direction: column; gap: 2px; }
-.history-title { font-weight: 600; font-size: 0.95rem; }
-.history-meta { font-size: 0.85rem; color: #a1a1aa; }
-.file-count { color: #71717a; margin-left: 5px; }
-
-.expand-icon { color: #71717a; font-size: 0.8rem; width: 20px; text-align: center; }
-
-.history-group-details {
-  padding: 0 12px 12px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.history-entry { display: flex; flex-direction: column; gap: 2px; }
+.detail-entry { display: flex; flex-direction: column; gap: 2px; }
 .entry-file { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: 500; }
 .entry-path { font-size: 0.75rem; color: #71717a; word-break: break-all; }
 
 .file-type-badge {
-  font-size: 0.65rem;
-  background: #3f3f46;
-  color: #e4e4e7;
-  padding: 1px 4px;
-  border-radius: 3px;
-  font-weight: bold;
+  font-size: 0.65rem; background: #3f3f46; color: #e4e4e7;
+  padding: 1px 4px; border-radius: 3px; font-weight: bold;
 }
 .file-lang { color: #71717a; font-size: 0.8rem; }
+
+.error-msg-small { grid-column: 1 / -1; font-size: 0.8rem; color: #ef4444; margin-top: 5px; }
+
+.btn-icon { background: none; border: none; cursor: pointer; padding: 5px; }
+.btn-cancel { color: #ef4444; font-size: 1.2rem; font-weight: bold; }
+.btn-cancel:hover { background: rgba(239, 68, 68, 0.1); border-radius: 4px; }
 
 .no-data { text-align: center; color: #a1a1aa; padding: 30px; }
 .state-msg { text-align: center; padding: 30px; color: #a1a1aa; }
 .spinner {
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  border-top: 3px solid #7c3aed;
-  width: 24px;
-  height: 24px;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 10px;
+  border: 3px solid rgba(255, 255, 255, 0.1); border-radius: 50%; border-top: 3px solid #7c3aed;
+  width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto 10px;
 }
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
