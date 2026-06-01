@@ -1,6 +1,7 @@
 <script setup>
 import {ref, watch} from 'vue'
 import { SubscriptionFactory } from '../../utils/SubscriptionFactory'
+import AdvancedDownloadDialog from '../AdvancedDownloadDialog.vue'
 
 const props = defineProps({
     onCreateSub: { type: Function, required: true },
@@ -8,7 +9,7 @@ const props = defineProps({
 })
 
 const ApiClient = window.ApiClient ?? null
-const PLUGIN_ID = 'a31b415a-5264-419d-b152-8c8192a54994'
+const Dashboard = window.Dashboard ?? null
 
 const searchTitle = ref('')
 const searchTopic = ref('')
@@ -21,6 +22,11 @@ const maxBroadcastDate = ref(null)
 
 const results = ref([])
 const loading = ref(false)
+
+// Download dialog state
+const showAdvancedDownload = ref(false)
+const selectedItemForDownload = ref(null)
+const isDownloading = ref(false)
 
 let debounceTimer = null;
 
@@ -39,8 +45,8 @@ async function performSearch() {
         if (searchChannel.value) params.append('channel', searchChannel.value)
         if (searchCombined.value) params.append('combinedSearch', searchCombined.value)
 
-        if (minDuration.value) params.append('minDuration', minDuration.value * 60)
-        if (maxDuration.value) params.append('maxDuration', maxDuration.value * 60)
+         if (minDuration.value) params.append('minDuration', String(minDuration.value * 60))
+         if (maxDuration.value) params.append('maxDuration', String(maxDuration.value * 60))
 
         if (minBroadcastDate.value) {
             params.append('minBroadcastDate', new Date(minBroadcastDate.value).toISOString())
@@ -113,29 +119,59 @@ async function createSubFromSearch() {
  }
 
 async function createSubFromItem(item) {
-     if (!ApiClient) return
+      if (!ApiClient) return
 
-     try {
-         // Use the API to get clean criteria for this item
-         // This is important because Title/Topic/Channel might contain commas
-         const params = new URLSearchParams()
-         if (item.Title) params.append('title', item.Title)
-         if (item.Topic) params.append('topic', item.Topic)
-         if (item.Channel) params.append('channel', item.Channel)
+      try {
+          // Use the API to get clean criteria for this item
+          // This is important because Title/Topic/Channel might contain commas
+          const params = new URLSearchParams()
+          if (item.Title) params.append('title', item.Title)
+          if (item.Topic) params.append('topic', item.Topic)
+          if (item.Channel) params.append('channel', item.Channel)
 
-         const url = ApiClient.getUrl('MediathekViewDL/Search/Criteria?' + params.toString())
-         const criteria = await ApiClient.getJSON(url)
+          const url = ApiClient.getUrl('MediathekViewDL/Search/Criteria?' + params.toString())
+          const criteria = await ApiClient.getJSON(url)
 
-         const defaults = props.pluginConfig?.SubscriptionDefaults || {}
-         const sub = SubscriptionFactory.createDefault(defaults)
-         sub.Name = item.Topic || item.Title
-         sub.Search.Criteria = criteria
+          const defaults = props.pluginConfig?.SubscriptionDefaults || {}
+          const sub = SubscriptionFactory.createDefault(defaults)
+          sub.Name = item.Topic || item.Title
+          sub.Search.Criteria = criteria
 
-         props.onCreateSub(sub);
-     } catch (e) {
-         console.error('Failed to convert item criteria', e)
-     }
- }
+          props.onCreateSub(sub);
+      } catch (e) {
+          console.error('Failed to convert item criteria', e)
+      }
+  }
+
+async function simpleDownload(item) {
+      if (!ApiClient || !Dashboard) return
+      try {
+          isDownloading.value = true
+          const url = ApiClient.getUrl('MediathekViewDL/Download')
+          await ApiClient.ajax({
+              type: 'POST',
+              url: url,
+              data: JSON.stringify(item),
+              contentType: 'application/json'
+          })
+          Dashboard.alert('Download erfolgreich in Warteschlange eingereiht.')
+      } catch (e) {
+          console.error('Simple download failed', e)
+          Dashboard.alert('Fehler beim Starten des Downloads: ' + (e.message || 'Unbekannter Fehler'))
+      } finally {
+          isDownloading.value = false
+      }
+}
+
+function openAdvancedDownloadDialog(item) {
+      selectedItemForDownload.value = item
+      showAdvancedDownload.value = true
+}
+
+function closeAdvancedDownloadDialog() {
+      showAdvancedDownload.value = false
+      selectedItemForDownload.value = null
+}
 </script>
 
 <template>
@@ -201,6 +237,8 @@ async function createSubFromItem(item) {
                 </div>
                 <div class="result-actions">
                     <button @click="openVideo(item)" class="btn-icon" title="Im Browser abspielen">▶</button>
+                    <button @click="simpleDownload(item)" class="btn-icon" title="Schneller Download" :disabled="isDownloading">⬇</button>
+                    <button @click="openAdvancedDownloadDialog(item)" class="btn-icon" title="Erweiterte Download-Optionen">⬇⚙</button>
                     <button @click="createSubFromItem(item)" class="btn-icon" title="Abo für diese Sendung erstellen">➕</button>
                 </div>
             </div>
@@ -209,6 +247,15 @@ async function createSubFromItem(item) {
             Keine Ergebnisse gefunden.
         </div>
     </div>
+
+    <!-- Advanced Download Dialog -->
+    <AdvancedDownloadDialog
+        v-if="showAdvancedDownload"
+        :item="selectedItemForDownload"
+        :pluginConfig="pluginConfig"
+        @close="closeAdvancedDownloadDialog"
+        @download="() => {}"
+    />
 </template>
 
 <style scoped>
@@ -269,6 +316,25 @@ async function createSubFromItem(item) {
 .result-actions {
     display: flex;
     gap: 10px;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px 8px;
+    font-size: 1rem;
+    color: #a1a1aa;
+    transition: color 0.2s;
+}
+
+.btn-icon:hover:not(:disabled) {
+    color: #fff;
+}
+
+.btn-icon:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .no-results {
