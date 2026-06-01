@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
@@ -66,6 +67,79 @@ public class DownloadsController : ControllerBase
 
         var history = await _downloadHistoryRepository.GetRecentHistoryAsync(limit).ConfigureAwait(false);
         return Ok(history);
+    }
+
+    /// <summary>
+    /// Gets the grouped download history.
+    /// </summary>
+    /// <param name="limit">The maximum number of raw entries to fetch before grouping.</param>
+    /// <returns>A list of grouped download history entries.</returns>
+    [HttpGet("History/Grouped")]
+    public async Task<ActionResult<IEnumerable<GroupedDownloadHistoryDto>>> GetGroupedDownloadHistory([FromQuery] int limit = 100)
+    {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, new ApiErrorDto(ApiErrorId.InitializationError, Plugin.Instance.InitializationException.Message));
+        }
+
+        var history = await _downloadHistoryRepository.GetRecentHistoryAsync(limit).ConfigureAwait(false);
+        var groups = new List<GroupedDownloadHistoryDto>();
+
+        foreach (var entry in history)
+        {
+            var entrySubId = entry.SubscriptionId;
+            var entryItemId = entry.ItemId;
+            var entryTitle = entry.Title;
+            var entryFileName = System.IO.Path.GetFileName(entry.DownloadPath);
+            var entryDisplayName = !string.IsNullOrWhiteSpace(entryTitle) ? entryTitle : entryFileName;
+
+            var group = groups.Find(g =>
+            {
+                if (g.SubscriptionId != entrySubId)
+                {
+                    return false;
+                }
+
+                if (!string.IsNullOrEmpty(entryItemId) && !string.IsNullOrEmpty(g.ItemId) && entryItemId == g.ItemId)
+                {
+                    return true;
+                }
+
+                if (!string.IsNullOrEmpty(entryTitle) && !string.IsNullOrEmpty(g.Title) && entryTitle == g.Title)
+                {
+                    return true;
+                }
+
+                return !string.IsNullOrEmpty(entryDisplayName) && !string.IsNullOrEmpty(g.DisplayName) && entryDisplayName == g.DisplayName;
+            });
+
+            if (group == null)
+            {
+                group = new GroupedDownloadHistoryDto
+                {
+                    SubscriptionId = entrySubId,
+                    Title = entryTitle,
+                    DisplayName = entryDisplayName,
+                    ItemId = entryItemId,
+                    LatestTimestamp = entry.Timestamp
+                };
+                groups.Add(group);
+            }
+
+            group.Entries.Add(entry);
+
+            if (!string.IsNullOrEmpty(entryDisplayName) && (string.IsNullOrEmpty(group.DisplayName) || entryDisplayName.Length < group.DisplayName.Length))
+            {
+                group.DisplayName = entryDisplayName;
+            }
+
+            if (entry.Timestamp > group.LatestTimestamp)
+            {
+                group.LatestTimestamp = entry.Timestamp;
+            }
+        }
+
+        return Ok(groups.OrderByDescending(g => g.LatestTimestamp));
     }
 
     /// <summary>

@@ -5,9 +5,10 @@ const ApiClient = window.ApiClient ?? null
 const Dashboard = window.Dashboard ?? null
 
 const activeDownloads = ref([])
-const history = ref([])
+const groupedHistory = ref([])
 const loading = ref(true)
 const error = ref(null)
+const expandedGroups = ref(new Set())
 let refreshInterval = null
 
 const statusMap = {
@@ -40,8 +41,8 @@ async function fetchActiveDownloads() {
 async function fetchHistory() {
   if (!ApiClient) return
   try {
-    const url = ApiClient.getUrl('MediathekViewDL/Downloads/History')
-    history.value = await ApiClient.getJSON(url)
+    const url = ApiClient.getUrl('MediathekViewDL/Downloads/History/Grouped')
+    groupedHistory.value = await ApiClient.getJSON(url)
   } catch (e) {
     console.error('Failed to fetch download history', e)
     error.value = 'Fehler beim Laden des Verlaufs.'
@@ -112,6 +113,31 @@ function isCancellable(status) {
 
 function showProgressBar(status) {
   return ['Downloading', 'Processing'].includes(status)
+}
+
+function toggleGroup(group) {
+  const key = getGroupKey(group)
+  if (expandedGroups.value.has(key)) {
+    expandedGroups.value.delete(key)
+  } else {
+    expandedGroups.value.add(key)
+  }
+}
+
+function getGroupKey(group) {
+  return (group.SubscriptionId || 'manual') + '_' + (group.ItemId || group.Title)
+}
+
+function getFileIcon(path) {
+  const ext = path.split('.').pop().toLowerCase()
+  if (ext === 'vtt' || ext === 'ttml') return 'Subtitle'
+  if (ext === 'nfo') return 'Metadata'
+  if (ext === 'strm') return 'Stream'
+  return ''
+}
+
+function getFileName(path) {
+  return path.split(/[\\\/]/).pop()
 }
 
 onMounted(async () => {
@@ -197,17 +223,35 @@ onUnmounted(() => {
       <div v-else-if="error" class="error-container">
         {{ error }}
       </div>
-      <div v-else-if="history.length === 0" class="no-data">
+      <div v-else-if="groupedHistory.length === 0" class="no-data">
         Kein Download-Verlauf vorhanden.
       </div>
       <div v-else class="history-list">
-        <div v-for="entry in history" :key="entry.Id" class="history-item">
-          <div class="history-info">
-            <div class="history-title">{{ entry.Title }}</div>
-            <div class="history-path">{{ entry.DownloadPath }}</div>
+        <div v-for="group in groupedHistory" :key="getGroupKey(group)" class="history-group">
+          <div class="history-group-header" @click="toggleGroup(group)">
+            <div class="history-info">
+              <div class="history-title">{{ group.DisplayName || 'Unbekannter Titel' }}</div>
+              <div class="history-meta">
+                {{ formatDate(group.LatestTimestamp) }} 
+                <span v-if="group.Entries.length > 1" class="file-count">({{ group.Entries.length }} Dateien)</span>
+              </div>
+            </div>
+            <div class="history-actions">
+              <span class="expand-icon">{{ expandedGroups.has(getGroupKey(group)) ? '▼' : '▶' }}</span>
+            </div>
           </div>
-          <div class="history-meta">
-            {{ formatDate(entry.Timestamp) }}
+          
+          <div v-if="expandedGroups.has(getGroupKey(group))" class="history-group-details">
+            <div v-for="entry in group.Entries" :key="entry.Id" class="history-entry">
+              <div class="entry-file">
+                <span v-if="getFileIcon(entry.DownloadPath)" class="file-type-badge">
+                  {{ getFileIcon(entry.DownloadPath) }}
+                </span>
+                <span class="file-name">{{ getFileName(entry.DownloadPath) }}</span>
+                <span v-if="entry.Language" class="file-lang">({{ entry.Language }})</span>
+              </div>
+              <div class="entry-path">{{ entry.DownloadPath }}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -269,18 +313,45 @@ onUnmounted(() => {
 
 /* History */
 .history-list { display: flex; flex-direction: column; }
-.history-item {
+.history-group { border-bottom: 1px solid #27272a; }
+.history-group:last-child { border-bottom: none; }
+
+.history-group-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 12px;
-  border-bottom: 1px solid #27272a;
+  cursor: pointer;
 }
-.history-item:last-child { border-bottom: none; }
+.history-group-header:hover { background: rgba(255, 255, 255, 0.05); }
+
 .history-info { display: flex; flex-direction: column; gap: 2px; }
 .history-title { font-weight: 600; font-size: 0.95rem; }
-.history-path { font-size: 0.75rem; color: #71717a; word-break: break-all; }
-.history-meta { font-size: 0.85rem; color: #a1a1aa; white-space: nowrap; margin-left: 15px; }
+.history-meta { font-size: 0.85rem; color: #a1a1aa; }
+.file-count { color: #71717a; margin-left: 5px; }
+
+.expand-icon { color: #71717a; font-size: 0.8rem; width: 20px; text-align: center; }
+
+.history-group-details {
+  padding: 0 12px 12px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.history-entry { display: flex; flex-direction: column; gap: 2px; }
+.entry-file { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; font-weight: 500; }
+.entry-path { font-size: 0.75rem; color: #71717a; word-break: break-all; }
+
+.file-type-badge {
+  font-size: 0.65rem;
+  background: #3f3f46;
+  color: #e4e4e7;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: bold;
+}
+.file-lang { color: #71717a; font-size: 0.8rem; }
 
 .no-data { text-align: center; color: #a1a1aa; padding: 30px; }
 .state-msg { text-align: center; padding: 30px; color: #a1a1aa; }
