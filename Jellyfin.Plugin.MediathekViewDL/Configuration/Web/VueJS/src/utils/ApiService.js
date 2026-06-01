@@ -91,6 +91,10 @@ class ApiService {
                 processData: false
             })
             console.log(`✅ GetRecommendedPath success:`, response)
+            
+            if (response && typeof response.json === 'function') {
+                return await response.json()
+            }
             return response
         } catch (error) {
             console.error(`❌ GetRecommendedPath failed:`, error)
