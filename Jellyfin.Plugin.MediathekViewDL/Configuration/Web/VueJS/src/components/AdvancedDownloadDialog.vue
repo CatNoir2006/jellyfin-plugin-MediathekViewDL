@@ -23,7 +23,7 @@ const isDownloading = ref(false)
 
 watch(() => props.item, async (newItem) => {
     if (newItem) {
-        downloadSubtitles.value = props.pluginConfig?.DownloadDefaults?.DownloadSubtitles !== false
+        downloadSubtitles.value = props.pluginConfig?.Download?.DownloadSubtitles !== false
         await loadRecommendedPath(newItem)
     }
 }, { immediate: true })
@@ -32,9 +32,9 @@ async function loadRecommendedPath(item) {
     try {
         isLoading.value = true
 
-        // First, set defaults from config if available
-        if (props.pluginConfig?.DownloadDefaults?.DownloadPath) {
-            downloadPath.value = props.pluginConfig.DownloadDefaults.DownloadPath
+        // Set defaults from config if available
+        if (props.pluginConfig?.Paths?.DefaultDownloadPath) {
+            downloadPath.value = props.pluginConfig.Paths.DefaultDownloadPath
         }
 
         // Create minimal VideoInfo with only required fields

@@ -130,6 +130,7 @@ function getGroupKey(group) {
 }
 
 function getFileIcon(path) {
+  if (!path) return ''
   const ext = path.split('.').pop().toLowerCase()
   if (ext === 'vtt' || ext === 'ttml') return 'Subtitle'
   if (ext === 'nfo') return 'Metadata'
@@ -139,6 +140,7 @@ function getFileIcon(path) {
 }
 
 function getFileName(path) {
+  if (!path) return ''
   return path.split(/[\\\/]/).pop()
 }
 

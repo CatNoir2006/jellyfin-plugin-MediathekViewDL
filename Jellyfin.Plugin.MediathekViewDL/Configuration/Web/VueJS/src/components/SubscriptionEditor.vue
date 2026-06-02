@@ -13,13 +13,20 @@ const emit = defineEmits(['save', 'cancel'])
 const editedSub = ref(null)
 const activeTab = ref('basic')
 
-const ApiClient = window.ApiClient ?? null
 const Dashboard = window.Dashboard ?? null
 
 watch(() => props.subscription, (newVal) => {
     if (newVal) {
         // Deep copy
-        editedSub.value = JSON.parse(JSON.stringify(newVal))
+        const copy = JSON.parse(JSON.stringify(newVal))
+        // Ensure nested objects are initialized to prevent template crashes
+        copy.Search = copy.Search || {}
+        copy.Search.Criteria = copy.Search.Criteria || []
+        copy.Download = copy.Download || {}
+        copy.Series = copy.Series || {}
+        copy.Metadata = copy.Metadata || {}
+        copy.Accessibility = copy.Accessibility || {}
+        editedSub.value = copy
         // Reset active tab when a new subscription is opened
         activeTab.value = 'basic'
     } else {
@@ -67,9 +74,6 @@ function selectPath() {
         includeFiles: false,
         callback: (path) => {
             if (path) {
-                if (!editedSub.value.Download) {
-                    editedSub.value.Download = {DownloadPath: ''}
-                }
                 editedSub.value.Download.DownloadPath = path
             }
             picker.close()

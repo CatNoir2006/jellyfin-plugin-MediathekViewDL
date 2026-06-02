@@ -363,7 +363,7 @@ onMounted(() => {
             <label class="field-label">Globaler Standard Download Pfad <span class="badge-deprecated">Veraltet</span></label>
             <div class="path-row">
               <input v-model="defaultDownloadPath" type="text" class="field-input" placeholder="Leer lassen für Standard">
-              <button type="button" class="btn btn-secondary btn-sm" @click="selectPath(defaultDownloadPath_ref, 'Globalen Standard Download Pfad wählen')" title="Ordner auswählen">📁</button>
+              <button type="button" class="btn btn-secondary btn-sm" @click="selectPath(defaultDownloadPath, 'Globalen Standard Download Pfad wählen')" title="Ordner auswählen">📁</button>
             </div>
             <p class="field-desc">Der globale Fallback-Ordner für alle Downloads. <span style="color:#f87171;font-weight:bold;">Hinweis: Dieser Pfad ist veraltet und wird in einer zukünftigen Version entfernt.</span></p>
           </div>
