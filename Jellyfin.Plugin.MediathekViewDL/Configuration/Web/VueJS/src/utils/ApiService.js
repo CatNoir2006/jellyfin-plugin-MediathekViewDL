@@ -72,6 +72,37 @@ class ApiService {
     }
 
     /**
+     * Parse search item into video information
+     * @param {Object} item - Result item
+     * @returns {Promise<Object>} - Parsed video info
+     */
+    async parseItem(item) {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+
+        const url = this.apiClient.getUrl('MediathekViewDL/Items/Parse')
+        console.log(`📤 POST Items/Parse`, item)
+
+        try {
+            const response = await this.apiClient.ajax({
+                type: 'POST',
+                url: url,
+                data: JSON.stringify(item),
+                contentType: 'application/json',
+                processData: false
+            })
+            console.log(`✅ ParseItem success:`, response)
+            
+            if (response && typeof response.json === 'function') {
+                return await response.json()
+            }
+            return response
+        } catch (error) {
+            console.error(`❌ ParseItem failed:`, error)
+            throw error
+        }
+    }
+
+    /**
      * Get recommended download path for item
      * @param {Object} videoInfo - Video information (Topic, Title)
      * @returns {Promise<Object>} - Recommended path object

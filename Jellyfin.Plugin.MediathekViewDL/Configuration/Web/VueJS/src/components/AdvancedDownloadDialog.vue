@@ -37,15 +37,12 @@ async function loadRecommendedPath(item) {
             downloadPath.value = props.pluginConfig.Paths.DefaultDownloadPath
         }
 
-        // Create minimal VideoInfo with only required fields
-        const videoInfo = {
-            Topic: item.Topic || '',
-            Title: item.Title || ''
-        }
-
-        console.log('📤 Requesting recommended path with VideoInfo:', videoInfo)
+        console.log('📤 Parsing item:', item)
 
         try {
+            const videoInfo = await ApiService.parseItem(item)
+            console.log('📤 Requesting recommended path with VideoInfo:', videoInfo)
+
             const data = await ApiService.getRecommendedPath(videoInfo)
 
             if (data && data.Path) {

@@ -62,7 +62,7 @@
       <VueDir>Configuration/Web/VueJS</VueDir>
     </PropertyGroup>
     <Message Importance="high" Text="Building VueJS configuration page..." />
-    <Exec Command="npm install" WorkingDirectory="$(VueDir)" Condition="!Exists('$(VueDir)\node_modules')" />
+    <Exec Command="npm install" WorkingDirectory="$(VueDir)" />
     <Exec Command="npm run build" WorkingDirectory="$(VueDir)" />
     <Copy SourceFiles="$(VueDir)\dist\MediathekViewDLVueJS.js" DestinationFiles="Configuration\Web\MediathekViewDLVueJS.js" />
   </Target>
