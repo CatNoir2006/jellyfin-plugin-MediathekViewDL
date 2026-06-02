@@ -202,6 +202,7 @@ public class SubscriptionsController : ControllerBase
         }
 
         var count = await _subscriptionProcessor.ProcessSubscriptionAsync(subscription, cancellationToken).ConfigureAwait(false);
+        _configurationProvider.TrySave();
 
         return Ok(count);
     }
