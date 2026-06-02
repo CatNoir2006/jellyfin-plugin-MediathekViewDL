@@ -90,7 +90,7 @@ public class DownloadsController : ControllerBase
             var entrySubId = entry.SubscriptionId;
             var entryItemId = entry.ItemId;
             var entryTitle = entry.Title;
-            var entryFileName = System.IO.Path.GetFileName(entry.DownloadPath);
+            var entryFileName = !string.IsNullOrEmpty(entry.DownloadPath) ? System.IO.Path.GetFileName(entry.DownloadPath) : string.Empty;
             var entryDisplayName = !string.IsNullOrWhiteSpace(entryTitle) ? entryTitle : entryFileName;
 
             var group = groups.Find(g =>

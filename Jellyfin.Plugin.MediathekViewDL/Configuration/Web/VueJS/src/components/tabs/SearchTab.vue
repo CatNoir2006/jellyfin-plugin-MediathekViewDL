@@ -1,6 +1,7 @@
 <script setup>
 import {ref, watch} from 'vue'
 import { SubscriptionFactory } from '../../utils/SubscriptionFactory'
+import { MS_PER_DAY_MINUS_ONE } from '../../utils/Constants'
 import AdvancedDownloadDialog from '../AdvancedDownloadDialog.vue'
 import ApiService from '../../utils/ApiService'
 
@@ -47,7 +48,7 @@ async function performSearch() {
             maxDuration: maxDuration.value ? maxDuration.value * 60 : null,
             minBroadcastDate: minBroadcastDate.value ? new Date(minBroadcastDate.value).toISOString() : null,
             maxBroadcastDate: maxBroadcastDate.value
-                ? new Date(new Date(maxBroadcastDate.value).getTime() + 86399999).toISOString()
+                ? new Date(new Date(maxBroadcastDate.value).getTime() + MS_PER_DAY_MINUS_ONE).toISOString()
                 : null
         }
 

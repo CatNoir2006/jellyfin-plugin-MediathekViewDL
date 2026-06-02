@@ -1,5 +1,6 @@
 <script setup>
 import {ref, watch} from 'vue'
+import { MS_PER_DAY_MINUS_ONE } from '../utils/Constants'
 
 const props = defineProps({
     subscription: {
@@ -92,9 +93,9 @@ function updateDate(target, field, value) {
         target[field] = null
         return
     }
-    const date = new Date(value)
+    let date = new Date(value)
     if (field === 'MaxBroadcastDate') {
-        date.setHours(23, 59, 59, 999)
+        date = new Date(date.getTime() + MS_PER_DAY_MINUS_ONE)
     }
     target[field] = date.toISOString()
 }

@@ -92,6 +92,7 @@ public class SubscriptionsController : ControllerBase
             return CreatedAtAction(nameof(GetSubscription), new { id = subscription.Id }, subscription);
         }
 
+        _configurationProvider.Configuration.Subscriptions.Remove(subscription);
         return BadRequest("Failed to create subscription");
     }
 

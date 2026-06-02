@@ -53,6 +53,7 @@ public class SearchController : ControllerBase
     /// <param name="maxDuration">Optional maximum duration in seconds.</param>
     /// <param name="minBroadcastDate">The minimum Date of the Item.</param>
     /// <param name="maxBroadcastDate">The max Age of the Item. (e.g. In Future).</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>A list of search results.</returns>
     [HttpGet("")]
     public async Task<ActionResult<IEnumerable<ResultItemDto>>> Search(
@@ -63,7 +64,8 @@ public class SearchController : ControllerBase
         [FromQuery] int? minDuration,
         [FromQuery] int? maxDuration,
         [FromQuery] DateTimeOffset? minBroadcastDate,
-        [FromQuery] DateTimeOffset? maxBroadcastDate)
+        [FromQuery] DateTimeOffset? maxBroadcastDate,
+        CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(title) &&
             string.IsNullOrWhiteSpace(topic) &&
@@ -87,7 +89,7 @@ public class SearchController : ControllerBase
                 Size = _configurationProvider.Configuration.Search.PageSize,
             };
 
-            var results = await _apiClient.SearchAsync(apiQuery, CancellationToken.None).ConfigureAwait(false);
+            var results = await _apiClient.SearchAsync(apiQuery, cancellationToken).ConfigureAwait(false);
             return Ok(results.Results);
         }
         catch (MediathekConnectionException ex)
