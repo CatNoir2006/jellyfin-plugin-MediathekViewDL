@@ -16,7 +16,7 @@ The plugin integrates with Jellyfin's scheduled task system to automatically dow
 *   **Core Logic:** Encapsulated in `DownloadScheduledTask`.
 *   **Dependency Injection (DI):** Services are registered in `ServiceRegistrator.cs` using `Microsoft.Extensions.DependencyInjection`.
 *   **Database:** Uses EF Core with SQLite for download history and quality cache.
-*   **Configuration:** Managed via `PluginConfiguration` and a `configPage.html` dashboard.
+*   **Configuration:** Managed via `PluginConfiguration` and a Vue.js-based dashboard.
 
 ## 🛠️ Development Environment
 
@@ -38,36 +38,40 @@ dotnet build Jellyfin.Plugin.MediathekViewDL.sln
 ### Testing
 ```bash
 dotnet test Jellyfin.Plugin.MediathekViewDL.sln
-# Verify JS Syntax
-node --check Jellyfin.Plugin.MediathekViewDL/Configuration/Web/configPage.js
+# Build VueJS manually to verify syntax and bundling
+cd Jellyfin.Plugin.MediathekViewDL/Configuration/Web/VueJS && npm run build
 ```
 
 ## 📜 Development Conventions
 
 ### 💻 Coding Standards
 *   **Style:** Standard C# conventions (PascalCase). StyleCop analyzers are enforced.
+*   **Clean Code:** Strictly adhere to Clean Code principles (SOLID, DRY, KISS) for both C# backend and Vue.js frontend code.
 *   **Types:** Use `record` for DTOs/immutable types.
 *   **Nullability:** Nullable reference types are enabled; handle `null` explicitly.
 *   **Documentation:** XML summary comments for all public members.
 *   **Logging:** Use `ILogger` provided by Jellyfin.
-*   **JavaScript:** Since `dotnet build` does not check JavaScript, always verify syntax using `node --check`.
+*   **Vue.js:** Use Vue 3 (Composition API / `<script setup>`).
 
-### 📁 Structure & Scope
-*   **File per Class:** One class per file (except nested classes).
-*   **Minimal Changes:** Strictly limit changes to the requested task. Do not refactor unrelated code.
+### 🚫 Anti-Patterns (Do NOT do)
+* **No Manual HttpClients:** Never instantiate `new HttpClient()`. Always inject `IHttpClientFactory` or use Jellyfin's built-in HTTP handling.
+* **No Environment-Specific Paths:** Use Jellyfin's `IApplicationPaths` for plugin data storage; never hardcode paths or use `Environment.SpecialFolder`.
+* **JSON Serialization:** Use `System.Text.Json` matching Jellyfin's standard configuration, avoid introducing external JSON libraries.
 
-### 🌐 UI & Web (configPage.html)
-*   **No String Templates:** Do **not** use `` `S${season}E${Episode}` ``. Use string concatenation (`'S'+s+'E'+e`).
-*   **JS Verification:** Always run `node --check <path_to_js>` to ensure no syntax errors were introduced.
+### 🌐 UI & Web (Vue.js)
+*   **Frontend:** The web interface is built with Vue.js located in `Configuration/Web/VueJS`.
+*   **Workflow:** UI changes require `npm run build` within the `VueJS` directory to generate the required `MediathekViewDLVueJS.js`.
+*   **Preview:** UI previews are managed via GitHub Pages, updated automatically via GitHub Actions upon push to `master`.
 
 ## 📝 Documentation & Maintenance
 
 *   **README.md:** Must be updated for all user-facing changes (new features, settings).
+    *   **Auto-Update & Reminders:** If a task adds, removes, or modifies user-facing features or settings, automatically update the `README.md` or explicitly remind the user to do so.
     *   **Footer:** Always include the version and last commit hash: `last update plugin vX.X.X.X, commit: [hash]`.
 *   **GEMINI.md:** Must be updated for architectural changes or new development rules.
 
 ## 🔍 Workflow & Verification
 
 1.  **Understand:** Ask for clarification if a task is ambiguous.
-2.  **Verify:** Always run `dotnet build` before finishing. The project treats warnings as errors. Additionally, check all modified JavaScript files using `node --check`.
+2.  **Verify:** Always run `dotnet build` and ensure the Vue.js build completes successfully before finishing.
 3.  **Research:** Use the web or other Jellyfin plugins for best practices.
