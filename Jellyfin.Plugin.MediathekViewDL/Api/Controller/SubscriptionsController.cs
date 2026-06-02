@@ -120,6 +120,7 @@ public class SubscriptionsController : ControllerBase
             return NotFound("Subscription not found");
         }
 
+        var oldSubscription = _configurationProvider.Configuration.Subscriptions[existingSubscriptionIndex];
         subscription.Id = id;
         _configurationProvider.Configuration.Subscriptions[existingSubscriptionIndex] = subscription;
 
@@ -128,6 +129,7 @@ public class SubscriptionsController : ControllerBase
             return Ok(subscription);
         }
 
+        _configurationProvider.Configuration.Subscriptions[existingSubscriptionIndex] = oldSubscription;
         return BadRequest("Failed to update subscription");
     }
 
@@ -147,6 +149,7 @@ public class SubscriptionsController : ControllerBase
             return NotFound("Subscription not found");
         }
 
+        var oldSubscription = _configurationProvider.Configuration.Subscriptions[existingSubscriptionIndex];
         _configurationProvider.Configuration.Subscriptions.RemoveAt(existingSubscriptionIndex);
 
         if (_configurationProvider.TrySave())
@@ -154,6 +157,7 @@ public class SubscriptionsController : ControllerBase
             return NoContent();
         }
 
+        _configurationProvider.Configuration.Subscriptions.Insert(existingSubscriptionIndex, oldSubscription);
         return BadRequest("Failed to delete subscription");
     }
 
@@ -174,6 +178,7 @@ public class SubscriptionsController : ControllerBase
             return NotFound("Subscription not found");
         }
 
+        var oldTimestamp = subscription.LastDownloadedTimestamp;
         await _downloadHistoryRepository.RemoveBySubscriptionIdAsync(id).ConfigureAwait(false);
         subscription.LastDownloadedTimestamp = null;
         if (_configurationProvider.TrySave())
@@ -181,6 +186,7 @@ public class SubscriptionsController : ControllerBase
             return Ok();
         }
 
+        subscription.LastDownloadedTimestamp = oldTimestamp;
         return BadRequest("Failed to reset subscription history");
     }
 
@@ -226,12 +232,14 @@ public class SubscriptionsController : ControllerBase
             return NotFound("Subscription not found");
         }
 
+        var oldActiveState = subscription.IsEnabled;
         subscription.IsEnabled = active;
         if (_configurationProvider.TrySave())
         {
             return Ok(subscription.IsEnabled);
         }
 
+        subscription.IsEnabled = oldActiveState;
         return BadRequest("Failed to update subscription state");
     }
 
