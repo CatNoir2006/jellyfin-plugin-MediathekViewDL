@@ -1,5 +1,5 @@
 <script setup>
-import {ref, watch, computed} from 'vue'
+import {ref, watch, computed, nextTick} from 'vue'
 import { SubscriptionFactory } from '../../utils/SubscriptionFactory'
 import { MS_PER_DAY_MINUS_ONE } from '../../utils/Constants'
 import AdvancedDownloadDialog from '../AdvancedDownloadDialog.vue'
@@ -30,6 +30,8 @@ const availableTopics = ref([])
 const showTopicSuggestions = ref(false)
 const showChannelSuggestions = ref(false)
 const selectedSuggestionIndex = ref(-1)
+const topicSuggestionsRef = ref(null)
+const channelSuggestionsRef = ref(null)
 
 const filteredTopics = computed(() => {
     const rawParts = searchTopic.value.split(',')
@@ -74,6 +76,17 @@ const filteredChannels = computed(() => {
         .slice(0, 15)
 })
 
+async function scrollToSelected(field) {
+    await nextTick()
+    const container = field === 'topic' ? topicSuggestionsRef.value : channelSuggestionsRef.value
+    if (!container) return
+    
+    const selectedItem = container.querySelector('.selected')
+    if (selectedItem) {
+        selectedItem.scrollIntoView({ block: 'nearest' })
+    }
+}
+
 function onKeyDown(e, field) {
     const suggestions = field === 'topic' ? filteredTopics.value : filteredChannels.value
     
@@ -88,9 +101,11 @@ function onKeyDown(e, field) {
     if (e.key === 'ArrowDown') {
         e.preventDefault()
         selectedSuggestionIndex.value = (selectedSuggestionIndex.value + 1) % suggestions.length
+        scrollToSelected(field)
     } else if (e.key === 'ArrowUp') {
         e.preventDefault()
         selectedSuggestionIndex.value = (selectedSuggestionIndex.value - 1 + suggestions.length) % suggestions.length
+        scrollToSelected(field)
     } else if (e.key === 'Enter' || e.key === 'Tab') {
         if (selectedSuggestionIndex.value >= 0) {
             e.preventDefault()
@@ -293,10 +308,11 @@ function closeAdvancedDownloadDialog() {
                         @focus="showTopicSuggestions = true; selectedSuggestionIndex = -1" 
                         @blur="onBlur('topic')"
                         @keydown="onKeyDown($event, 'topic')">
-                    <ul v-if="showTopicSuggestions && filteredTopics.length > 0" class="suggestions-list">
+                    <ul v-if="showTopicSuggestions && filteredTopics.length > 0" ref="topicSuggestionsRef" class="suggestions-list" tabindex="-1">
                         <li v-for="(topic, index) in filteredTopics" :key="topic" 
                             :class="{ selected: index === selectedSuggestionIndex }"
-                            @mousedown.prevent="selectSuggestion('topic', topic)">
+                            @mousedown.prevent="selectSuggestion('topic', topic)"
+                            tabindex="-1">
                             {{ topic }}
                         </li>
                     </ul>
@@ -307,10 +323,11 @@ function closeAdvancedDownloadDialog() {
                         @focus="showChannelSuggestions = true; selectedSuggestionIndex = -1" 
                         @blur="onBlur('channel')"
                         @keydown="onKeyDown($event, 'channel')">
-                    <ul v-if="showChannelSuggestions && filteredChannels.length > 0" class="suggestions-list">
+                    <ul v-if="showChannelSuggestions && filteredChannels.length > 0" ref="channelSuggestionsRef" class="suggestions-list" tabindex="-1">
                         <li v-for="(channel, index) in filteredChannels" :key="channel" 
                             :class="{ selected: index === selectedSuggestionIndex }"
-                            @mousedown.prevent="selectSuggestion('channel', channel)">
+                            @mousedown.prevent="selectSuggestion('channel', channel)"
+                            tabindex="-1">
                             {{ channel }}
                         </li>
                     </ul>
