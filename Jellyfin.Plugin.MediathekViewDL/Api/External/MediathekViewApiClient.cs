@@ -40,11 +40,8 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     private static readonly SemaphoreSlim _channelsSemaphore = new(1, 1);
     private static readonly SemaphoreSlim _topicsSemaphore = new(1, 1);
 
-    private static IReadOnlyCollection<string>? _cachedChannels;
-    private static DateTimeOffset _channelsCacheExpiry;
-
-    private static IReadOnlyCollection<string>? _cachedTopics;
-    private static DateTimeOffset _topicsCacheExpiry;
+    private static CacheEntry? _channelsCache;
+    private static CacheEntry? _topicsCache;
 
     private readonly HttpClient _httpClient;
     private readonly ILogger<MediathekViewApiClient> _logger;
@@ -288,17 +285,19 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     /// <inheritdoc />
     public async Task<IReadOnlyCollection<string>> GetChannelsAsync(CancellationToken cancellationToken)
     {
-        if (_cachedChannels != null && DateTimeOffset.UtcNow < _channelsCacheExpiry)
+        var cache = _channelsCache;
+        if (cache != null && DateTimeOffset.UtcNow < cache.Expiry)
         {
-            return _cachedChannels;
+            return cache.Items;
         }
 
         await _channelsSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (_cachedChannels != null && DateTimeOffset.UtcNow < _channelsCacheExpiry)
+            cache = _channelsCache;
+            if (cache != null && DateTimeOffset.UtcNow < cache.Expiry)
             {
-                return _cachedChannels;
+                return cache.Items;
             }
 
             _logger.LogDebug("Retrieving channels from: {Url}", ChannelsEndpoint);
@@ -321,9 +320,9 @@ public class MediathekViewApiClient : IMediathekViewApiClient
                 return Array.Empty<string>();
             }
 
-            _cachedChannels = apiResponse.Channels.AsReadOnly();
-            _channelsCacheExpiry = DateTimeOffset.UtcNow.AddHours(24);
-            return _cachedChannels;
+            var items = apiResponse.Channels.AsReadOnly();
+            _channelsCache = new CacheEntry(items, DateTimeOffset.UtcNow.AddHours(24));
+            return items;
         }
         catch (Exception ex) when (ex is not MediathekException)
         {
@@ -339,17 +338,19 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     /// <inheritdoc />
     public async Task<IReadOnlyCollection<string>> GetTopicsAsync(CancellationToken cancellationToken)
     {
-        if (_cachedTopics != null && DateTimeOffset.UtcNow < _topicsCacheExpiry)
+        var cache = _topicsCache;
+        if (cache != null && DateTimeOffset.UtcNow < cache.Expiry)
         {
-            return _cachedTopics;
+            return cache.Items;
         }
 
         await _topicsSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (_cachedTopics != null && DateTimeOffset.UtcNow < _topicsCacheExpiry)
+            cache = _topicsCache;
+            if (cache != null && DateTimeOffset.UtcNow < cache.Expiry)
             {
-                return _cachedTopics;
+                return cache.Items;
             }
 
             _logger.LogDebug("Retrieving topics from: {Url}", TopicsEndpoint);
@@ -372,9 +373,9 @@ public class MediathekViewApiClient : IMediathekViewApiClient
                 return Array.Empty<string>();
             }
 
-            _cachedTopics = apiResponse.Topics.AsReadOnly();
-            _topicsCacheExpiry = DateTimeOffset.UtcNow.AddHours(24);
-            return _cachedTopics;
+            var items = apiResponse.Topics.AsReadOnly();
+            _topicsCache = new CacheEntry(items, DateTimeOffset.UtcNow.AddHours(24));
+            return items;
         }
         catch (Exception ex) when (ex is not MediathekException)
         {
@@ -477,4 +478,6 @@ public class MediathekViewApiClient : IMediathekViewApiClient
 
         return null;
     }
+
+    private sealed record CacheEntry(IReadOnlyCollection<string> Items, DateTimeOffset Expiry);
 }
