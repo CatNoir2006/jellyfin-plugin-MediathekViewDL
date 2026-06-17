@@ -4,7 +4,7 @@ name: '🚀 3rd-Party Release'
 
 on:
   release:
-    types: [published]
+    types: [published, created, edited]
   workflow_dispatch:
 
 # IMPORTANT:
@@ -81,14 +81,12 @@ jobs:
 
       - name: 'Upload Artifact to Release'
         if: github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ${{ steps.jprm.outputs.artifact }}
-          asset_name: ${{ steps.get_filename.outputs.ASSET_FILENAME }}
-          asset_content_type: application/zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Lädt die Datei direkt in das bestehende (Draft-)Release hoch.
+          # --clobber sorgt dafür, dass alte Artefakte bei erneuten Läufen überschrieben werden.
+          gh release upload ${{ github.event.release.tag_name }} "${{ steps.jprm.outputs.artifact }}" --clobber
 
 
       - name: 'Upload checksum for next job'
