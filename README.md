@@ -15,7 +15,6 @@ Dieses Plugin integriert die [MediathekViewWeb-API](https://mediathekviewweb.de/
     *   [Allgemeine Einstellungen](#-allgemeine-einstellungen)
     *   [Abonnements (Automatische Downloads)](#-abonnements-automatische-downloads)
     *   [Downloads](#-downloads)
-    *   [Datei-Adoption (Manuelle Zuordnung)](#-datei-adoption-manuelle-zuordnung)
 *   [🧠 Funktionsweise](#-funktionsweise)
 *   [❤️ Danksagung & Disclaimer](#-danksagung--disclaimer)
 
@@ -166,22 +165,6 @@ Behalten Sie den Überblick über laufende und vergangene Downloads.
 
 *   **Aktive Downloads:** Zeigt den aktuellen Fortschritt, Status und Geschwindigkeit. Laufende Downloads können hier abgebrochen werden.
 *   **Historie:** Eine Liste der erfolgreich abgeschlossenen Downloads.
-
-### 🧩 Datei-Adoption (Manuelle Zuordnung)
-(Tab: *Datei Adoption*)
-
-Dieses Feature ermöglicht es, bereits lokal vorhandene Dateien (z.B. manuelle Downloads oder alte Bestände) einem Abonnement und der internen Datenbank zuzuordnen. Dies verhindert, dass das Plugin dieselben Inhalte erneut herunterlädt.
-
-<details>
-<summary><strong>🔽 Datei-Adoption Ansicht (Screenshot)</strong></summary>
-<br>
-
-<img src="Images/LokalFileAdoption.png" width="800" alt="Datei Adoption">
-</details>
-
-*   **Intelligentes Matching:** Das Plugin scannt Ihre lokalen Ordner und vergleicht sie mit den API-Ergebnissen der Mediathek.
-*   **Confidence-Score:** Zeigt an, wie sicher sich das Plugin bei einer Zuordnung ist (basierend auf Titel, S/E-Nummerierung oder URLs aus `.txt`-Infodateien).
-*   **Filter & Batch-Aktion:** Filtern Sie nach Sicherheit (%) oder Match-Quelle (z.B. "Fuzzy-Suche" oder "URL-Treffer") und bestätigen Sie alle gefilterten Ergebnisse mit einem Klick.
 
 ---
 
