@@ -24,6 +24,9 @@ const maxBroadcastDate = ref(null)
 const results = ref([])
 const loading = ref(false)
 
+const availableChannels = ref([])
+const availableTopics = ref([])
+
 // Download dialog state
 const showAdvancedDownload = ref(false)
 const selectedItemForDownload = ref(null)
@@ -60,6 +63,21 @@ async function performSearch() {
         loading.value = false
     }
 }
+
+async function loadAutocompleteData() {
+    try {
+        const [channels, topics] = await Promise.all([
+            ApiService.getChannels(),
+            ApiService.getTopics()
+        ])
+        availableChannels.value = channels || []
+        availableTopics.value = topics || []
+    } catch (e) {
+        console.error('Failed to load autocomplete data', e)
+    }
+}
+
+loadAutocompleteData()
 
 function debouncedSearch() {
     clearTimeout(debounceTimer);
@@ -168,11 +186,17 @@ function closeAdvancedDownloadDialog() {
                 </div>
                 <div class="field">
                     <label>Thema</label>
-                    <input v-model="searchTopic" type="text" class="field-input" placeholder="Thema / Sendereihe">
+                    <input v-model="searchTopic" type="text" class="field-input" placeholder="Thema / Sendereihe" list="search-topics">
+                    <datalist id="search-topics">
+                        <option v-for="topic in availableTopics" :key="topic" :value="topic" />
+                    </datalist>
                 </div>
                 <div class="field">
                     <label>Sender</label>
-                    <input v-model="searchChannel" type="text" class="field-input" placeholder="z.B. ARD, ZDF">
+                    <input v-model="searchChannel" type="text" class="field-input" placeholder="z.B. ARD, ZDF" list="search-channels">
+                    <datalist id="search-channels">
+                        <option v-for="channel in availableChannels" :key="channel" :value="channel" />
+                    </datalist>
                 </div>
                 <div class="field">
                     <label>Kombinierte Suche</label>

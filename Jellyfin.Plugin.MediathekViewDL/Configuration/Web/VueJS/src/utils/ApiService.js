@@ -50,6 +50,46 @@ class ApiService {
     }
 
     /**
+     * Get all available channels
+     * @returns {Promise<Array<string>>} - List of channel names
+     */
+    async getChannels() {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+
+        const url = this.apiClient.getUrl('MediathekViewDL/Search/Channels')
+        console.log(`📥 GET Search/Channels`)
+
+        try {
+            const response = await this.apiClient.getJSON(url)
+            console.log(`✅ GetChannels success`)
+            return response
+        } catch (error) {
+            console.error(`❌ GetChannels failed:`, error)
+            throw error
+        }
+    }
+
+    /**
+     * Get all available topics
+     * @returns {Promise<Array<string>>} - List of topic names
+     */
+    async getTopics() {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+
+        const url = this.apiClient.getUrl('MediathekViewDL/Search/Topics')
+        console.log(`📥 GET Search/Topics`)
+
+        try {
+            const response = await this.apiClient.getJSON(url)
+            console.log(`✅ GetTopics success`)
+            return response
+        } catch (error) {
+            console.error(`❌ GetTopics failed:`, error)
+            throw error
+        }
+    }
+
+    /**
      * Get search criteria
      * @param {Object} params - Search parameters
      * @returns {Promise<Array>} - Criteria objects

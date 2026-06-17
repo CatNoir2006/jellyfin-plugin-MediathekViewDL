@@ -1,6 +1,7 @@
 <script setup>
 import {ref, watch} from 'vue'
 import { MS_PER_DAY_MINUS_ONE } from '../utils/Constants'
+import ApiService from '../utils/ApiService'
 
 const props = defineProps({
     subscription: {
@@ -14,7 +15,25 @@ const emit = defineEmits(['save', 'cancel'])
 const editedSub = ref(null)
 const activeTab = ref('basic')
 
+const availableChannels = ref([])
+const availableTopics = ref([])
+
 const Dashboard = window.Dashboard ?? null
+
+async function loadAutocompleteData() {
+    try {
+        const [channels, topics] = await Promise.all([
+            ApiService.getChannels(),
+            ApiService.getTopics()
+        ])
+        availableChannels.value = channels || []
+        availableTopics.value = topics || []
+    } catch (e) {
+        console.error('Failed to load autocomplete data', e)
+    }
+}
+
+loadAutocompleteData()
 
 watch(() => props.subscription, (newVal) => {
     if (newVal) {
@@ -163,13 +182,25 @@ function updateDate(target, field, value) {
                             </button>
                         </div>
                         <div class="query-input-row">
-                            <input v-model="query.Query" type="text" class="field-input" :placeholder="query.IsExclude ? 'Ausschließen...' : 'Suchen...'">
+                            <input
+                                v-model="query.Query"
+                                type="text"
+                                class="field-input"
+                                :placeholder="query.IsExclude ? 'Ausschließen...' : 'Suchen...'"
+                                :list="query.Fields.includes('Channel') && !query.Fields.includes('Topic') ? 'sub-channels' : (query.Fields.includes('Topic') ? 'sub-topics' : null)"
+                            >
                             <button @click="query.IsExclude = !query.IsExclude" class="btn-small" :class="{ 'btn-danger': query.IsExclude }">
                                 {{ query.IsExclude ? 'NICHT' : 'SUCHE' }}
                             </button>
                             <button @click="removeQuery(idx)" class="btn-icon">🗑️</button>
                         </div>
                     </div>
+                    <datalist id="sub-channels">
+                        <option v-for="channel in availableChannels" :key="channel" :value="channel" />
+                    </datalist>
+                    <datalist id="sub-topics">
+                        <option v-for="topic in availableTopics" :key="topic" :value="topic" />
+                    </datalist>
                     <button @click="addQuery" class="btn btn-secondary">Anfrage hinzufügen</button>
 
                     <hr>
