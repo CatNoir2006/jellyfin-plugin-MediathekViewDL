@@ -36,6 +36,20 @@ public interface IMediathekViewApiClient
     Task<IReadOnlyCollection<ZappChannelDto>> GetZappChannelsAsync(CancellationToken cancellationToken);
 
     /// <summary>
+    /// Gets the list of available channels from the MediathekViewWeb API.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A collection of channel names.</returns>
+    Task<IReadOnlyCollection<string>> GetChannelsAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Gets the list of available topics from the MediathekViewWeb API.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A collection of topic names.</returns>
+    Task<IReadOnlyCollection<string>> GetTopicsAsync(CancellationToken cancellationToken);
+
+    /// <summary>
     /// Gets the current show for a specific channel from the Zapp API.
     /// </summary>
     /// <param name="channelId">The channel ID.</param>

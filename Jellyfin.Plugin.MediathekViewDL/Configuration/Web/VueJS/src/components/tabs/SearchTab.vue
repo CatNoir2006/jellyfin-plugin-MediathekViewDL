@@ -1,5 +1,5 @@
 <script setup>
-import {ref, watch} from 'vue'
+import {ref, watch, computed, nextTick} from 'vue'
 import { SubscriptionFactory } from '../../utils/SubscriptionFactory'
 import { MS_PER_DAY_MINUS_ONE } from '../../utils/Constants'
 import AdvancedDownloadDialog from '../AdvancedDownloadDialog.vue'
@@ -23,6 +23,127 @@ const maxBroadcastDate = ref(null)
 
 const results = ref([])
 const loading = ref(false)
+
+const availableChannels = ref([])
+const availableTopics = ref([])
+
+const showTopicSuggestions = ref(false)
+const showChannelSuggestions = ref(false)
+const selectedSuggestionIndex = ref(-1)
+const topicSuggestionsRef = ref(null)
+const channelSuggestionsRef = ref(null)
+
+const filteredTopics = computed(() => {
+    const rawParts = searchTopic.value.split(',')
+    const lastPart = rawParts[rawParts.length - 1]
+    const query = lastPart.trim().toLowerCase()
+    const existing = new Set(rawParts.map(p => p.trim().toLowerCase()).filter(p => p))
+    
+    let baseList = availableTopics.value.filter(t => !existing.has(t.toLowerCase()))
+
+    // If it ends with comma or is empty but focused, or we have a query
+    const shouldShowAll = searchTopic.value.endsWith(',') || searchTopic.value.endsWith(', ')
+    
+    if (shouldShowAll) {
+        return baseList.slice(0, 15)
+    }
+    
+    if (!query) return []
+    
+    return baseList
+        .filter(t => t.toLowerCase().includes(query))
+        .slice(0, 15)
+})
+
+const filteredChannels = computed(() => {
+    const rawParts = searchChannel.value.split(',')
+    const lastPart = rawParts[rawParts.length - 1]
+    const query = lastPart.trim().toLowerCase()
+    const existing = new Set(rawParts.map(p => p.trim().toLowerCase()).filter(p => p))
+    
+    let baseList = availableChannels.value.filter(c => !existing.has(c.toLowerCase()))
+
+    const shouldShowAll = searchChannel.value.endsWith(',') || searchChannel.value.endsWith(', ')
+
+    if (shouldShowAll) {
+        return baseList.slice(0, 15)
+    }
+
+    if (!query) return []
+    
+    return baseList
+        .filter(c => c.toLowerCase().includes(query))
+        .slice(0, 15)
+})
+
+async function scrollToSelected(field) {
+    await nextTick()
+    const container = field === 'topic' ? topicSuggestionsRef.value : channelSuggestionsRef.value
+    if (!container) return
+    
+    const selectedItem = container.querySelector('.selected')
+    if (selectedItem) {
+        selectedItem.scrollIntoView({ block: 'nearest' })
+    }
+}
+
+function onKeyDown(e, field) {
+    const suggestions = field === 'topic' ? filteredTopics.value : filteredChannels.value
+    
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        if (field === 'topic') showTopicSuggestions.value = true
+        else showChannelSuggestions.value = true
+    }
+
+    const isVisible = field === 'topic' ? showTopicSuggestions.value : showChannelSuggestions.value
+    if (!isVisible || suggestions.length === 0) return
+
+    if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        selectedSuggestionIndex.value = (selectedSuggestionIndex.value + 1) % suggestions.length
+        scrollToSelected(field)
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        selectedSuggestionIndex.value = (selectedSuggestionIndex.value - 1 + suggestions.length) % suggestions.length
+        scrollToSelected(field)
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+        if (selectedSuggestionIndex.value >= 0) {
+            e.preventDefault()
+            selectSuggestion(field, suggestions[selectedSuggestionIndex.value])
+        } else if (suggestions.length > 0 && (e.key === 'Tab' || e.key === 'Enter')) {
+             // Optional: auto-select first one on tab if nothing selected? 
+             // Better keep it explicit for now.
+        }
+    } else if (e.key === 'Escape') {
+        showTopicSuggestions.value = false
+        showChannelSuggestions.value = false
+    }
+}
+
+function onBlur(field) {
+    // Timeout to allow mousedown to fire on suggestion
+    setTimeout(() => {
+        if (field === 'topic') showTopicSuggestions.value = false
+        else showChannelSuggestions.value = false
+    }, 200)
+}
+
+function selectSuggestion(field, value) {
+    if (field === 'topic') {
+        const parts = searchTopic.value.split(',')
+        parts.pop() // remove the current partial query
+        parts.push(value)
+        searchTopic.value = parts.map(p => p.trim()).filter(p => p).join(', ') + ', '
+        showTopicSuggestions.value = true
+    } else if (field === 'channel') {
+        const parts = searchChannel.value.split(',')
+        parts.pop()
+        parts.push(value)
+        searchChannel.value = parts.map(p => p.trim()).filter(p => p).join(', ') + ', '
+        showChannelSuggestions.value = true
+    }
+    selectedSuggestionIndex.value = -1
+}
 
 // Download dialog state
 const showAdvancedDownload = ref(false)
@@ -60,6 +181,21 @@ async function performSearch() {
         loading.value = false
     }
 }
+
+async function loadAutocompleteData() {
+    try {
+        const [channels, topics] = await Promise.all([
+            ApiService.getChannels(),
+            ApiService.getTopics()
+        ])
+        availableChannels.value = channels || []
+        availableTopics.value = topics || []
+    } catch (e) {
+        console.error('Failed to load autocomplete data', e)
+    }
+}
+
+loadAutocompleteData()
 
 function debouncedSearch() {
     clearTimeout(debounceTimer);
@@ -166,13 +302,35 @@ function closeAdvancedDownloadDialog() {
                     <label>Titel</label>
                     <input v-model="searchTitle" type="text" class="field-input" placeholder="Titel der Sendung">
                 </div>
-                <div class="field">
+                <div class="field autocomplete-wrapper">
                     <label>Thema</label>
-                    <input v-model="searchTopic" type="text" class="field-input" placeholder="Thema / Sendereihe">
+                    <input v-model="searchTopic" type="text" class="field-input" placeholder="Thema / Sendereihe" 
+                        @focus="showTopicSuggestions = true; selectedSuggestionIndex = -1" 
+                        @blur="onBlur('topic')"
+                        @keydown="onKeyDown($event, 'topic')">
+                    <ul v-if="showTopicSuggestions && filteredTopics.length > 0" ref="topicSuggestionsRef" class="suggestions-list" tabindex="-1">
+                        <li v-for="(topic, index) in filteredTopics" :key="topic" 
+                            :class="{ selected: index === selectedSuggestionIndex }"
+                            @mousedown.prevent="selectSuggestion('topic', topic)"
+                            tabindex="-1">
+                            {{ topic }}
+                        </li>
+                    </ul>
                 </div>
-                <div class="field">
+                <div class="field autocomplete-wrapper">
                     <label>Sender</label>
-                    <input v-model="searchChannel" type="text" class="field-input" placeholder="z.B. ARD, ZDF">
+                    <input v-model="searchChannel" type="text" class="field-input" placeholder="z.B. ARD, ZDF" 
+                        @focus="showChannelSuggestions = true; selectedSuggestionIndex = -1" 
+                        @blur="onBlur('channel')"
+                        @keydown="onKeyDown($event, 'channel')">
+                    <ul v-if="showChannelSuggestions && filteredChannels.length > 0" ref="channelSuggestionsRef" class="suggestions-list" tabindex="-1">
+                        <li v-for="(channel, index) in filteredChannels" :key="channel" 
+                            :class="{ selected: index === selectedSuggestionIndex }"
+                            @mousedown.prevent="selectSuggestion('channel', channel)"
+                            tabindex="-1">
+                            {{ channel }}
+                        </li>
+                    </ul>
                 </div>
                 <div class="field">
                     <label>Kombinierte Suche</label>
@@ -246,6 +404,39 @@ function closeAdvancedDownloadDialog() {
     width: 100%;
     max-width: none;
     margin-bottom: 20px;
+}
+
+.autocomplete-wrapper {
+    position: relative;
+}
+
+.suggestions-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #18181b;
+    border: 1px solid #3f3f46;
+    border-radius: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.suggestions-list li {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.suggestions-list li:hover,
+.suggestions-list li.selected {
+    background: #7c3aed;
+    color: white;
 }
 
 .search-grid {

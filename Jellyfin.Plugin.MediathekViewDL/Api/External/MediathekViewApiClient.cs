@@ -34,6 +34,15 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     private const string ZappChannelsEndpoint = ZappBaseApiUrl + "/channelInfoList";
     private const string ZappShowsEndpoint = ZappBaseApiUrl + "/shows/";
 
+    private const string ChannelsEndpoint = BaseApiUrl + "/channels";
+    private const string TopicsEndpoint = BaseApiUrl + "/topics";
+
+    private static readonly SemaphoreSlim _channelsSemaphore = new(1, 1);
+    private static readonly SemaphoreSlim _topicsSemaphore = new(1, 1);
+
+    private static CacheEntry? _channelsCache;
+    private static CacheEntry? _topicsCache;
+
     private readonly HttpClient _httpClient;
     private readonly ILogger<MediathekViewApiClient> _logger;
     private readonly IConfigurationProvider _configurationProvider;
@@ -274,6 +283,112 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyCollection<string>> GetChannelsAsync(CancellationToken cancellationToken)
+    {
+        var cache = _channelsCache;
+        if (cache != null && DateTimeOffset.UtcNow < cache.Expiry)
+        {
+            return cache.Items;
+        }
+
+        await _channelsSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            cache = _channelsCache;
+            if (cache != null && DateTimeOffset.UtcNow < cache.Expiry)
+            {
+                return cache.Items;
+            }
+
+            _logger.LogDebug("Retrieving channels from: {Url}", ChannelsEndpoint);
+
+            var response = await _resiliencePolicy.ExecuteAsync(
+                async ct => await _httpClient.GetAsync(ChannelsEndpoint, ct).ConfigureAwait(false),
+                cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Channels API request failed with status code {StatusCode}", response.StatusCode);
+                throw new MediathekApiException($"Channels API request failed with status code {response.StatusCode}", response.StatusCode);
+            }
+
+            var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            var apiResponse = await JsonSerializer.DeserializeAsync<ApiChannelsResponse>(responseStream, _jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
+
+            if (apiResponse?.Channels == null)
+            {
+                return Array.Empty<string>();
+            }
+
+            var items = apiResponse.Channels.AsReadOnly();
+            _channelsCache = new CacheEntry(items, DateTimeOffset.UtcNow.AddHours(24));
+            return items;
+        }
+        catch (Exception ex) when (ex is not MediathekException)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while calling the channels API");
+            throw new MediathekApiException("An unexpected error occurred while calling the channels API", ex);
+        }
+        finally
+        {
+            _channelsSemaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyCollection<string>> GetTopicsAsync(CancellationToken cancellationToken)
+    {
+        var cache = _topicsCache;
+        if (cache != null && DateTimeOffset.UtcNow < cache.Expiry)
+        {
+            return cache.Items;
+        }
+
+        await _topicsSemaphore.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            cache = _topicsCache;
+            if (cache != null && DateTimeOffset.UtcNow < cache.Expiry)
+            {
+                return cache.Items;
+            }
+
+            _logger.LogDebug("Retrieving topics from: {Url}", TopicsEndpoint);
+
+            var response = await _resiliencePolicy.ExecuteAsync(
+                async ct => await _httpClient.GetAsync(TopicsEndpoint, ct).ConfigureAwait(false),
+                cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Topics API request failed with status code {StatusCode}", response.StatusCode);
+                throw new MediathekApiException($"Topics API request failed with status code {response.StatusCode}", response.StatusCode);
+            }
+
+            var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+            var apiResponse = await JsonSerializer.DeserializeAsync<ApiTopicsResponse>(responseStream, _jsonSerializerOptions, cancellationToken).ConfigureAwait(false);
+
+            if (apiResponse?.Topics == null)
+            {
+                return Array.Empty<string>();
+            }
+
+            var items = apiResponse.Topics.AsReadOnly();
+            _topicsCache = new CacheEntry(items, DateTimeOffset.UtcNow.AddHours(24));
+            return items;
+        }
+        catch (Exception ex) when (ex is not MediathekException)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while calling the topics API");
+            throw new MediathekApiException("An unexpected error occurred while calling the topics API", ex);
+        }
+        finally
+        {
+            _topicsSemaphore.Release();
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<IReadOnlyCollection<ZappChannelDto>> GetZappChannelsAsync(CancellationToken cancellationToken)
     {
         try
@@ -363,4 +478,6 @@ public class MediathekViewApiClient : IMediathekViewApiClient
 
         return null;
     }
+
+    private sealed record CacheEntry(IReadOnlyCollection<string> Items, DateTimeOffset Expiry);
 }

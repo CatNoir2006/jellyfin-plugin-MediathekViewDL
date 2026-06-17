@@ -116,6 +116,48 @@ public class SearchController : ControllerBase
     }
 
     /// <summary>
+    /// Gets the list of available channels.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A list of channels.</returns>
+    [HttpGet("Channels")]
+    [ResponseCache(Duration = 86400)] // Cache for 24 hours
+    public async Task<ActionResult<IEnumerable<string>>> GetChannels(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var channels = await _apiClient.GetChannelsAsync(cancellationToken).ConfigureAwait(false);
+            return Ok(channels);
+        }
+        catch (MediathekException ex)
+        {
+            _logger.LogError(ex, "Error while getting channels.");
+            return StatusCode(502, new ApiErrorDto(ApiErrorId.MediathekApiError, "Fehler beim Abrufen der Senderliste von der MediathekView API."));
+        }
+    }
+
+    /// <summary>
+    /// Gets the list of available topics.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A list of topics.</returns>
+    [HttpGet("Topics")]
+    [ResponseCache(Duration = 86400)] // Cache for 24 hours
+    public async Task<ActionResult<IEnumerable<string>>> GetTopics(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var topics = await _apiClient.GetTopicsAsync(cancellationToken).ConfigureAwait(false);
+            return Ok(topics);
+        }
+        catch (MediathekException ex)
+        {
+            _logger.LogError(ex, "Error while getting topics.");
+            return StatusCode(502, new ApiErrorDto(ApiErrorId.MediathekApiError, "Fehler beim Abrufen der Themenliste von der MediathekView API."));
+        }
+    }
+
+    /// <summary>
     /// Converts search parameters into subscription criteria.
     /// </summary>
     /// <param name="title">The title query.</param>
