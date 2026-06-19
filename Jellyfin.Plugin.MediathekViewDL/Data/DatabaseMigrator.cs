@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +49,19 @@ public class DatabaseMigrator : IDisposable
             using var scope = _scopeFactory.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
             await context.Database.MigrateAsync().ConfigureAwait(false);
+
+            // Run custom migration tasks
+            var migrationTasks = new List<IMigrationTask> { new DownloadHistoryMigrationTask() };
+            foreach (var task in migrationTasks)
+            {
+                var exists = await context.MigrationHistory.AnyAsync(m => m.MigrationName == task.Name).ConfigureAwait(false);
+                if (!exists)
+                {
+                    await task.ExecuteAsync(context, CancellationToken.None).ConfigureAwait(false);
+                    context.MigrationHistory.Add(new MigrationHistory { MigrationName = task.Name, ExecutedAt = DateTimeOffset.UtcNow });
+                    await context.SaveChangesAsync().ConfigureAwait(false);
+                }
+            }
 
             _migrated = true;
         }
