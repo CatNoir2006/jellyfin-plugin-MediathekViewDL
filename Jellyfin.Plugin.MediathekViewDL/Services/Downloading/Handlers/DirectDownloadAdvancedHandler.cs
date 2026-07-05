@@ -15,7 +15,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Handlers;
 /// <inheritdoc />
 public class DirectDownloadAdvancedHandler : BaseDownloadHandler
 {
-    private readonly ILogger<DirectDownloadHandler> _logger;
+    private readonly ILogger<DirectDownloadAdvancedHandler> _logger;
     private readonly IConfigurationProvider _configProvider;
     private readonly IServerApplicationPaths _appPaths;
 
@@ -25,7 +25,7 @@ public class DirectDownloadAdvancedHandler : BaseDownloadHandler
     /// <param name="logger">The logger.</param>
     /// <param name="configProvider">The configuration provider.</param>
     /// <param name="appPaths">The application paths.</param>
-    public DirectDownloadAdvancedHandler(ILogger<DirectDownloadHandler> logger, IConfigurationProvider configProvider, IServerApplicationPaths appPaths)
+    public DirectDownloadAdvancedHandler(ILogger<DirectDownloadAdvancedHandler> logger, IConfigurationProvider configProvider, IServerApplicationPaths appPaths)
     {
         _logger = logger;
         _configProvider = configProvider;
