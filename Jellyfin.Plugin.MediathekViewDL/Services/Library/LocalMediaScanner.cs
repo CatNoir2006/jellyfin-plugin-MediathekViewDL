@@ -16,7 +16,7 @@ public class LocalMediaScanner : ILocalMediaScanner
     private readonly IVideoParser _videoParser;
 
     // Supported video extensions
-    private readonly string[] _videoExtensions = { ".mkv", ".mp4", ".avi", ".mov", ".wmv", ".m4v", ".strm", ".mka" };
+    private readonly string[] _videoExtensions = { ".mkv", ".mp4", ".avi", ".mov", ".wmv", ".m4v", ".strm", ".mka", ".webm" };
 
     // Supported subtitle extensions
     private readonly string[] _subtitleExtensions = { ".vtt", ".ttml", ".srt" };
