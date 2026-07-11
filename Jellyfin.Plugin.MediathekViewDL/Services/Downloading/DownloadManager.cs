@@ -68,14 +68,16 @@ public class DownloadManager : IDownloadManager
                 bool isValidUrl = await _urlValidationService.ValidateUrlAsync(item.SourceUrl, cancellationToken).ConfigureAwait(false);
                 if (!isValidUrl)
                 {
-                    _logger.LogError("Invalid URL: {Url}", item.DestinationPath);
+                    _logger.LogError("Invalid URL: {Url}", item.SourceUrl);
                     success = false;
+                    continue;
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "URL validation failed for {Url}", item.SourceUrl);
                 success = false;
+                continue;
             }
 
             var directory = Path.GetDirectoryName(item.DestinationPath);
