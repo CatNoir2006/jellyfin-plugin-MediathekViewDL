@@ -141,7 +141,7 @@ public class PluginConfiguration : BasePluginConfiguration
 
     /// <summary>
     /// Gets or sets a value indicating whether direct audio extraction from URL is enabled.
-    /// DO NOT USE. Use Download.EnableDirectAudioExtraction instead.
+    /// DO NOT USE. This property has been removed with no direct replacement.
     /// </summary>
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
@@ -171,7 +171,7 @@ public class PluginConfiguration : BasePluginConfiguration
 
     /// <summary>
     /// Gets or sets the maximum download bandwidth in MBit/s.
-    /// DO NOT USE. Use Download.MaxBandwidthMBits instead.
+    /// DEPRECATED: Removed. Use Download.ReadRate for FFmpeg-based speed limiting instead.
     /// </summary>
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]

@@ -27,10 +27,9 @@ const tempDownloadPath = ref('')
 
 // Download
 const downloadSubtitles = ref(false)
-const enableDirectAudioExtraction = ref(true)
+const readRate = ref(0)
 const scanLibraryAfterDownload = ref(true)
 const minFreeDiskSpaceMiB = ref('')
-const maxBandwidthMBits = ref(0)
 
 // Search
 const fetchStreamSizes = ref(false)
@@ -105,12 +104,11 @@ async function loadConfig() {
 
     // Download
     downloadSubtitles.value = config.Download?.DownloadSubtitles ?? false
-    enableDirectAudioExtraction.value = config.Download?.EnableDirectAudioExtraction ?? true
+    readRate.value = config.Download?.ReadRate ?? 0
     scanLibraryAfterDownload.value = config.Download?.ScanLibraryAfterDownload ?? true
     minFreeDiskSpaceMiB.value = config.Download?.MinFreeDiskSpaceBytes
       ? (config.Download.MinFreeDiskSpaceBytes / (1024 * 1024)).toString()
       : ''
-    maxBandwidthMBits.value = config.Download?.MaxBandwidthMBits ?? 0
 
     // Search
     fetchStreamSizes.value = config.Search?.FetchStreamSizes ?? false
@@ -188,12 +186,10 @@ async function saveConfig() {
     // Download
     if (!config.Download) config.Download = {}
     config.Download.DownloadSubtitles = downloadSubtitles.value
-    config.Download.EnableDirectAudioExtraction = enableDirectAudioExtraction.value
     config.Download.ScanLibraryAfterDownload = scanLibraryAfterDownload.value
+    config.Download.ReadRate = readRate.value
     const minFree = parseInt(minFreeDiskSpaceMiB.value)
     config.Download.MinFreeDiskSpaceBytes = isNaN(minFree) ? (1.5 * 1024 * 1024 * 1024) : (minFree * 1024 * 1024)
-    const maxBw = parseInt(maxBandwidthMBits.value)
-    config.Download.MaxBandwidthMBits = isNaN(maxBw) ? 0 : maxBw
 
     // Search
     if (!config.Search) config.Search = {}
@@ -423,10 +419,7 @@ onMounted(() => {
             <label><input v-model="downloadSubtitles" type="checkbox"> Untertitel herunterladen (wenn verfügbar)</label>
             <p class="field-desc">Lädt eine separate VTT- oder TTML-Datei für Untertitel herunter, falls vom Sender bereitgestellt.</p>
           </div>
-          <div class="checkbox-field">
-            <label><input v-model="enableDirectAudioExtraction" type="checkbox"> Direkte Audio-Extraktion aktivieren</label>
-            <p class="field-desc">Wenn aktiviert, wird versucht, Audio direkt aus der URL zu extrahieren. Die Bandbreitenbegrenzung funktioniert hierbei nicht, aber es müssen generell weniger Daten heruntergeladen werden. (Standard: An)</p>
-          </div>
+
           <div class="checkbox-field">
             <label><input v-model="scanLibraryAfterDownload" type="checkbox"> Bibliotheks-Scan nach Download</label>
             <p class="field-desc">Startet automatisch einen Scan der Medienbibliothek, nachdem neue Inhalte heruntergeladen wurden.</p>
@@ -438,9 +431,9 @@ onMounted(() => {
               <p class="field-desc">Minimaler freier Speicherplatz um einen neuen Download zu starten.</p>
             </div>
             <div class="field">
-              <label class="field-label">Maximale Download-Bandbreite (MBit/s)</label>
-              <input v-model="maxBandwidthMBits" type="number" class="field-input" min="0" placeholder="0 = unbegrenzt">
-              <p class="field-desc">Begrenzt die Download-Geschwindigkeit. 0 bedeutet unbegrenzt.</p>
+              <label class="field-label">Maximale Download-Rate (MB/s)</label>
+              <input v-model="readRate" type="number" class="field-input" min="0" placeholder="0 = unbegrenzt">
+              <p class="field-desc">Begrenzt die FFmpeg-Download-Rate über -readrate. 0 bedeutet unbegrenzt. (Ersetzt die alte Bandbreitenbegrenzung.)</p>
             </div>
           </div>
         </div>
