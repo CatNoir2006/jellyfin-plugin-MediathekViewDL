@@ -431,9 +431,9 @@ onMounted(() => {
               <p class="field-desc">Minimaler freier Speicherplatz um einen neuen Download zu starten.</p>
             </div>
             <div class="field">
-              <label class="field-label">Maximale Download-Rate (MB/s)</label>
-              <input v-model="readRate" type="number" class="field-input" min="0" placeholder="0 = unbegrenzt">
-              <p class="field-desc">Begrenzt die FFmpeg-Download-Rate über -readrate. 0 bedeutet unbegrenzt. (Ersetzt die alte Bandbreitenbegrenzung.)</p>
+              <label class="field-label">Download-Geschwindigkeit</label>
+              <input v-model="readRate" type="number" class="field-input" min="0" step="0.1" placeholder="0 = unbegrenzt">
+              <p class="field-desc">FFmpeg readrate: 1 = Echtzeit, 2 = doppelte Geschwindigkeit, 0 = unbegrenzt.</p>
             </div>
           </div>
         </div>
