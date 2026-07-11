@@ -11,6 +11,9 @@ const selectedFile = ref(null)
 const rawContent = ref('')
 const parsedEntries = ref([])
 const filterPluginOnly = ref(true)
+const searchQuery = ref('')
+const searchRegex = ref(false)
+const searchError = ref(null)
 const autoScroll = ref(true)
 const autoUpdate = ref(false)
 const loading = ref(false)
@@ -32,8 +35,24 @@ const levelClassMap = {
 
 const filteredEntries = computed(() => {
   if (!parsedEntries.value.length) return []
-  if (!filterPluginOnly.value) return parsedEntries.value
-  return parsedEntries.value.filter(entry => entry.text.includes('MediathekViewDL'))
+  let entries = parsedEntries.value
+  if (filterPluginOnly.value) {
+    entries = entries.filter(entry => entry.text.includes('MediathekViewDL'))
+  }
+  const q = searchQuery.value.trim()
+  if (!q) return entries
+  searchError.value = null
+  if (searchRegex.value) {
+    try {
+      const re = new RegExp(q, 'i')
+      return entries.filter(entry => re.test(entry.text))
+    } catch (e) {
+      searchError.value = 'Ungültiger Regex: ' + e.message
+      return entries
+    }
+  }
+  const lower = q.toLowerCase()
+  return entries.filter(entry => entry.text.toLowerCase().includes(lower))
 })
 
 function parseEntries(raw) {
@@ -227,8 +246,30 @@ onUnmounted(() => {
             <input type="checkbox" v-model="autoUpdate" />
             <span>Auto-Update (5s)</span>
           </label>
-          <span class="entry-count">{{ filteredEntries.length }} Einträge</span>
         </div>
+      </div>
+
+      <div class="search-row">
+        <div class="field search-input-wrap">
+          <input
+            type="text"
+            class="field-input"
+            v-model="searchQuery"
+            placeholder="Suchen..."
+          />
+          <button
+            v-if="searchQuery"
+            class="btn-icon search-clear"
+            @click="searchQuery = ''"
+            title="Suche löschen"
+          >✕</button>
+        </div>
+        <label class="checkbox-field">
+          <input type="checkbox" v-model="searchRegex" />
+          <span>Regex</span>
+        </label>
+        <span class="entry-count">{{ filteredEntries.length }} Einträge</span>
+        <span v-if="searchError" class="search-error">{{ searchError }}</span>
       </div>
 
       <div v-if="loadingFiles" class="state-msg">
@@ -294,6 +335,33 @@ onUnmounted(() => {
 .entry-count {
   font-size: 0.8rem;
   color: #71717a;
+}
+
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.search-input-wrap {
+  flex: 1;
+  margin-bottom: 0;
+  position: relative;
+}
+
+.search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  padding: 2px 4px;
+}
+
+.search-error {
+  font-size: 0.8rem;
+  color: #ef4444;
 }
 
 .log-content {
