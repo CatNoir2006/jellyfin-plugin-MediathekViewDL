@@ -574,6 +574,55 @@ class ApiService {
     }
 
     /**
+     * Get available server log files
+     * @returns {Promise<Array>} - List of log file info objects
+     */
+    async getServerLogs() {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+
+        const url = this.apiClient.getUrl('System/Logs')
+        console.log(`📥 GET System/Logs`)
+
+        try {
+            const response = await this.apiClient.getJSON(url)
+            console.log(`✅ GetServerLogs success`)
+            return response
+        } catch (error) {
+            console.error(`❌ GetServerLogs failed:`, error)
+            throw error
+        }
+    }
+
+    /**
+     * Get log file content as plain text
+     * @param {string} name - Log file name
+     * @returns {Promise<string>} - Log file content
+     */
+    async getLogFileContent(name) {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+
+        const url = this.apiClient.getUrl('System/Logs/Log?name=' + encodeURIComponent(name))
+        console.log(`📥 GET System/Logs/Log?name=${name}`)
+
+        try {
+            const response = await this.apiClient.ajax({
+                type: 'GET',
+                url: url,
+                dataType: 'text'
+            })
+            console.log(`✅ GetLogFileContent success`)
+
+            if (response && typeof response.text === 'function') {
+                return await response.text()
+            }
+            return response
+        } catch (error) {
+            console.error(`❌ GetLogFileContent failed:`, error)
+            throw error
+        }
+    }
+
+    /**
      * Add Live TV Listing Provider
      * @param {Object} provider 
      */

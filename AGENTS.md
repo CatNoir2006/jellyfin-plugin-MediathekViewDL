@@ -63,3 +63,15 @@ EnableEfDesign=true dotnet tool run dotnet-ef migrations add <Name> --project Je
 After any change: `dotnet build` and `dotnet test` must both pass. For UI changes, verify `npm run build` in the VueJS directory succeeds. The CI delegates to `jellyfin/jellyfin-meta-plugins` reusable workflows.
 
 Update `README.md` for user-facing changes.
+
+## Notes
+
+When working on this codebase, note interesting Jellyfin-specific patterns or APIs for future development:
+
+- `ApiClient.getUrl()` prepends base URL — use for all Jellyfin system endpoints
+- `ApiClient.getJSON(url)` for JSON responses, `ApiClient.ajax({ type, url, dataType })` + `.text()` for plain text
+- `window.isSecureContext` check + `prompt()` fallback for clipboard API (non-HTTPS dev environments)
+- `Dashboard.alert()` for toast notifications, `Dashboard.confirm()` for confirmation dialogs
+- Log files API: `GET System/Logs` (returns `LogFile[]`), `GET System/Logs/Log?name=` (returns plain text, requires admin)
+- Jellyfin log entry format: `[YYYY-MM-DD HH:MM:SS.mmm +ZZZZ] [LEVEL] [THREAD_ID] Namespace.Class: Message`
+- Multi-line log entries (stack traces) continue until the next timestamp line

@@ -6,6 +6,7 @@ import SearchTab from './tabs/SearchTab.vue'
 import SettingsTab from './tabs/SettingsTab.vue'
 import SubscriptionsTab from './tabs/SubscriptionsTab.vue'
 import DownloadsTab from './tabs/DownloadsTab.vue'
+import LogsTab from './tabs/LogsTab.vue'
 import SubscriptionEditor from './SubscriptionEditor.vue'
 
 const Dashboard = window.Dashboard ?? null
@@ -89,6 +90,7 @@ onMounted(() => {
       <button class="tab-btn" :class="{ active: currentTab === 'settings' }" @click="currentTab = 'settings'">Einstellungen</button>
       <button class="tab-btn" :class="{ active: currentTab === 'subscriptions' }" @click="currentTab = 'subscriptions'">Abos</button>
       <button class="tab-btn" :class="{ active: currentTab === 'downloads' }" @click="currentTab = 'downloads'">Downloads</button>
+      <button class="tab-btn" :class="{ active: currentTab === 'logs' }" @click="currentTab = 'logs'">Logs</button>
     </div>
 
     <div class="tab-content">
@@ -96,6 +98,7 @@ onMounted(() => {
       <SettingsTab v-if="currentTab === 'settings'" @config-saved="fetchConfig" />
       <SubscriptionsTab ref="subscriptionsTabRef" v-if="currentTab === 'subscriptions'" :on-edit="openEditor" />
       <DownloadsTab v-if="currentTab === 'downloads'" />
+      <LogsTab v-if="currentTab === 'logs'" />
     </div>
 
     <!-- Shared Subscription Editor -->

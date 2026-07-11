@@ -15,6 +15,7 @@ Dieses Plugin integriert die [MediathekViewWeb-API](https://mediathekviewweb.de/
     *   [Allgemeine Einstellungen](#-allgemeine-einstellungen)
     *   [Abonnements (Automatische Downloads)](#-abonnements-automatische-downloads)
     *   [Downloads](#-downloads)
+    *   [Logs](#-logs)
 *   [🧠 Funktionsweise](#-funktionsweise)
 *   [❤️ Danksagung & Disclaimer](#-danksagung--disclaimer)
 
@@ -165,6 +166,19 @@ Behalten Sie den Überblick über laufende und vergangene Downloads.
 
 *   **Aktive Downloads:** Zeigt den aktuellen Fortschritt, Status und Geschwindigkeit. Laufende Downloads können hier abgebrochen werden.
 *   **Historie:** Eine Liste der erfolgreich abgeschlossenen Downloads.
+
+### 📋 Logs
+(Tab: *Logs*)
+
+Zeigt die Server-Logs an, gefiltert auf Plugin-Einträge.
+
+*   **Log-Datei Auswahl:** Wählen Sie eine beliebige Log-Datei aus dem Dropdown (sortiert nach Änderungsdatum).
+*   **Nur MediathekViewDL:** Standardmäßig aktiv — filtert Einträge, die den Plugin-Namespace enthalten.
+*   **Suche:** Durchsuchen Sie die geladenen Einträge (case-insensitive). Mit der Regex-Checkbox können reguläre Ausdrücke verwendet werden.
+*   **Auto-Scroll:** Hält den automatischen Scroll nach unten beim Aktualisieren bei.
+*   **Auto-Update (5s):** Aktualisiert den Log-Inhalt alle 5 Sekunden automatisch.
+*   **Kopieren:** Kopiert alle sichtbaren (gefilterten) Einträge in die Zwischenablage.
+*   **Doppelklick:** Kopiert einen einzelnen Log-Eintrag (inkl. Stack-Trace) in die Zwischenablage.
 
 ---
 
