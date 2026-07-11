@@ -47,11 +47,12 @@ public class DownloadManager : IDownloadManager
     /// <param name="job">The job to execute.</param>
     /// <param name="progress">The progress reporter.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>True if the job was successful (or file already existed), otherwise false.</returns>
-    public async Task<bool> ExecuteJobAsync(DownloadJob job, IProgress<double> progress, CancellationToken cancellationToken)
+    /// <returns>The result of the download job with per-item details.</returns>
+    public async Task<DownloadJobResult> ExecuteJobAsync(DownloadJob job, IProgress<double> progress, CancellationToken cancellationToken)
     {
         _logger.LogInformation("Starting download job for '{Title}'.", job.Title);
-        var success = true;
+        var overallSuccess = true;
+        var itemResults = new List<DownloadItemResult>();
 
         foreach (var item in job.DownloadItems)
         {
@@ -59,7 +60,13 @@ public class DownloadManager : IDownloadManager
             if (File.Exists(item.DestinationPath))
             {
                 _logger.LogDebug("File '{Path}' already exists. Skipping download.", item.DestinationPath);
-                // Still continue execution so NFO and other files continue downloading.
+                itemResults.Add(new DownloadItemResult
+                {
+                    DestinationPath = item.DestinationPath,
+                    JobType = item.JobType,
+                    Success = true,
+                    Skipped = true
+                });
                 continue;
             }
 
@@ -69,14 +76,28 @@ public class DownloadManager : IDownloadManager
                 if (!isValidUrl)
                 {
                     _logger.LogError("Invalid URL: {Url}", item.SourceUrl);
-                    success = false;
+                    overallSuccess = false;
+                    itemResults.Add(new DownloadItemResult
+                    {
+                        DestinationPath = item.DestinationPath,
+                        JobType = item.JobType,
+                        Success = false,
+                        ErrorMessage = $"Ungültige URL: {item.SourceUrl}"
+                    });
                     continue;
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "URL validation failed for {Url}", item.SourceUrl);
-                success = false;
+                overallSuccess = false;
+                itemResults.Add(new DownloadItemResult
+                {
+                    DestinationPath = item.DestinationPath,
+                    JobType = item.JobType,
+                    Success = false,
+                    ErrorMessage = $"URL-Validierung fehlgeschlagen: {ex.Message}"
+                });
                 continue;
             }
 
@@ -90,24 +111,46 @@ public class DownloadManager : IDownloadManager
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Failed to create directory '{Directory}'.", directory);
-                    success = false;
-                    continue; // Skip this item
+                    overallSuccess = false;
+                    itemResults.Add(new DownloadItemResult
+                    {
+                        DestinationPath = item.DestinationPath,
+                        JobType = item.JobType,
+                        Success = false,
+                        ErrorMessage = $"Verzeichnis konnte nicht erstellt werden: {ex.Message}"
+                    });
+                    continue;
                 }
             }
 
             var handler = _downloadHandlers.FirstOrDefault(h => h.CanHandle(item.JobType));
             if (handler != null)
             {
-                success &= await handler.ExecuteAsync(item, job, progress, cancellationToken).ConfigureAwait(false);
+                var itemSuccess = await handler.ExecuteAsync(item, job, progress, cancellationToken).ConfigureAwait(false);
+                overallSuccess &= itemSuccess;
+                itemResults.Add(new DownloadItemResult
+                {
+                    DestinationPath = item.DestinationPath,
+                    JobType = item.JobType,
+                    Success = itemSuccess,
+                    ErrorMessage = itemSuccess ? null : $"Download fehlgeschlagen ({item.JobType})"
+                });
             }
             else
             {
                 _logger.LogError("No handler found for download type: {Type}", item.JobType);
-                success = false;
+                overallSuccess = false;
+                itemResults.Add(new DownloadItemResult
+                {
+                    DestinationPath = item.DestinationPath,
+                    JobType = item.JobType,
+                    Success = false,
+                    ErrorMessage = $"Kein Handler für Typ '{item.JobType}' gefunden"
+                });
             }
         }
 
-        if (success)
+        if (overallSuccess)
         {
             progress.Report(100);
 
@@ -117,6 +160,10 @@ public class DownloadManager : IDownloadManager
             }
         }
 
-        return success;
+        return new DownloadJobResult
+        {
+            Success = overallSuccess,
+            ItemResults = itemResults
+        };
     }
 }
