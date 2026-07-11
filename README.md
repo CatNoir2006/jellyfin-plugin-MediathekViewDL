@@ -172,6 +172,13 @@ Behalten Sie den Überblick über laufende und vergangene Downloads.
 
 Zeigt die Server-Logs an, gefiltert auf Plugin-Einträge.
 
+<details>
+<summary><strong>🔽 Logs Ansicht (Bild)</strong></summary>
+<br>
+
+<img src="Images/Logs.png" width="800" alt="Logs Übersicht">
+</details>
+
 *   **Log-Datei Auswahl:** Wählen Sie eine beliebige Log-Datei aus dem Dropdown (sortiert nach Änderungsdatum).
 *   **Nur MediathekViewDL:** Standardmäßig aktiv — filtert Einträge, die den Plugin-Namespace enthalten.
 *   **Suche:** Durchsuchen Sie die geladenen Einträge (case-insensitive). Mit der Regex-Checkbox können reguläre Ausdrücke verwendet werden.
