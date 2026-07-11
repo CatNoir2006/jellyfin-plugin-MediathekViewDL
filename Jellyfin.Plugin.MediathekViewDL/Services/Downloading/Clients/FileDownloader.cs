@@ -122,6 +122,12 @@ public class FileDownloader : IFileDownloader
                 async ct => await httpClient.GetAsync(fileUrl, HttpCompletionOption.ResponseHeadersRead, ct).ConfigureAwait(false),
                 cancellationToken).ConfigureAwait(false);
 
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Download of '{FileUrl}' failed with status code {StatusCode}", fileUrl, response.StatusCode);
+                return false;
+            }
+
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
             // Check disk space again considering the file size
             if (totalBytes != -1 && diskSpace != null)
