@@ -29,7 +29,7 @@ EnableEfDesign=true dotnet tool run dotnet-ef migrations add <Name> --project Je
 - **Plugin entry:** `Plugin.cs` (BasePlugin\<PluginConfiguration\>)
 - **DI:** `ServiceRegistrator.cs` (IPluginServiceRegistrator)
 - **Scheduled download task:** `Tasks/DownloadScheduledTask.cs`
-- **Config:** `Configuration/PluginConfiguration.cs` — has active + deprecated properties; use grouped settings classes (`SearchSettings`, `DownloadSettings`, etc.), never the deprecated flat properties
+- **Config:** `Configuration/PluginConfiguration.cs` — uses grouped settings classes (`SearchSettings`, `DownloadSettings`, etc.)
 - **Database:** EF Core SQLite via `MediathekViewDlDbContext`
 - **Vue.js UI:** `Configuration/Web/VueJS/` — compiled output is an embedded resource (gitignored), built as Vite library with CSS injected inline
 
