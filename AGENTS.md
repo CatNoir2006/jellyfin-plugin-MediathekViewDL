@@ -50,6 +50,14 @@ EnableEfDesign=true dotnet tool run dotnet-ef migrations add <Name> --project Je
 - Jellyfin Controller/Model/EF Core packages are excluded from plugin bundle (provided by server at runtime)
 - `FuzzySharp.dll` gets special MSBuild handling — `netstandard2.1` version copied to output, native runtime folders cleaned to prevent `BadImageFormatException`
 
+## Tests
+
+- xUnit + Moq, flat layout in `Jellyfin.Plugin.MediathekViewDL.Tests/`
+- Test naming: `MethodName_ShouldExpectedBehavior` or `MethodName_ExpectedBehavior_WhenCondition`
+- Every test uses explicit `// Arrange`, `// Act`, `// Assert` comment blocks
+- Constructor-based setup with mocks, no shared fixtures
+- When changing or adding production code, keep existing tests up to date and add new tests for new logic
+
 ## Verification
 
 After any change: `dotnet build` and `dotnet test` must both pass. For UI changes, verify `npm run build` in the VueJS directory succeeds. The CI delegates to `jellyfin/jellyfin-meta-plugins` reusable workflows.
