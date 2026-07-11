@@ -13,9 +13,6 @@ const loading = ref(false)
 const saving = ref(false)
 const lastRun = ref(null)
 
-// General
-const activeWebUi = ref('VueJS')
-
 // Paths
 const useTopicForMoviePath = ref(false)
 const defaultDownloadPath = ref('')
@@ -90,7 +87,6 @@ async function loadConfig() {
   try {
     const config = await ApiService.getPluginConfig(PLUGIN_ID)
 
-    activeWebUi.value = config.ActiveWebUi ?? 'VueJS'
     lastRun.value = config.LastRun ? new Date(config.LastRun).toLocaleString() : 'Noch nie'
 
     // Paths
@@ -170,8 +166,6 @@ async function saveConfig() {
   saving.value = true
   try {
     const config = await ApiService.getPluginConfig(PLUGIN_ID)
-
-    config.ActiveWebUi = activeWebUi.value
 
     // Paths
     if (!config.Paths) config.Paths = {}
@@ -325,19 +319,10 @@ onMounted(() => {
 
     <form v-else @submit.prevent="saveConfig">
 
-      <!-- ===== ALLGEMEIN ===== -->
-      <details open class="settings-section">
+      <!-- ===== ALLGEMEIN (hidden, no active options) ===== -->
+      <details hidden class="settings-section">
         <summary class="section-title">Allgemeine Einstellungen</summary>
-        <div class="section-body">
-          <div class="field">
-            <label class="field-label" for="optActiveWebUi">Aktive WebUI</label>
-            <select id="optActiveWebUi" v-model="activeWebUi" class="field-select">
-              <option value="VueJS">VueJS</option>
-              <option value="ShowBoth">Beide anzeigen</option>
-              <option value="Html">HTML Legacy</option>
-            </select>
-          </div>
-        </div>
+        <div class="section-body"></div>
       </details>
 
       <!-- ===== PFADE ===== -->
