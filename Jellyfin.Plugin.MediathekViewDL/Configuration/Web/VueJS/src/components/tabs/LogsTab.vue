@@ -249,11 +249,12 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <div class="search-row">
+        <div class="search-row">
         <div class="field search-input-wrap">
           <input
             type="text"
             class="field-input"
+            :class="{ 'field-input-error': searchError }"
             v-model="searchQuery"
             placeholder="Suchen..."
           />
@@ -269,8 +270,8 @@ onUnmounted(() => {
           <span>Regex</span>
         </label>
         <span class="entry-count">{{ filteredEntries.length }} Einträge</span>
-        <span v-if="searchError" class="search-error">{{ searchError }}</span>
       </div>
+      <div v-if="searchError" class="search-error">{{ searchError }}</div>
 
       <div v-if="loadingFiles" class="state-msg">
         <div class="spinner"></div>
@@ -362,6 +363,11 @@ onUnmounted(() => {
 .search-error {
   font-size: 0.8rem;
   color: #ef4444;
+  margin-bottom: 15px;
+}
+
+.field-input-error {
+  border-color: #ef4444 !important;
 }
 
 .log-content {
