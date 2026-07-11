@@ -73,11 +73,10 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddSingleton<IListingsProvider, LiveTv.ZappListingsProvider>();
 
             // Register Download Handlers
-            serviceCollection.AddTransient<IDownloadHandler, DirectDownloadHandler>();
-            serviceCollection.AddTransient<IDownloadHandler, DirectDownloadAdvancedHandler>();
-            serviceCollection.AddTransient<IDownloadHandler, StreamingUrlHandler>();
-            serviceCollection.AddTransient<IDownloadHandler, M3U8DownloadHandler>();
+            serviceCollection.AddTransient<IDownloadHandler, FFmpegDownloadHandler>();
+            serviceCollection.AddTransient<IDownloadHandler, SubtitleDownloadHandler>();
             serviceCollection.AddTransient<IDownloadHandler, AudioExtractionHandler>();
+            serviceCollection.AddTransient<IDownloadHandler, StreamingUrlHandler>();
 
             serviceCollection.AddTransient<IDownloadManager, DownloadManager>();
             serviceCollection.AddSingleton<IDownloadQueueManager, DownloadQueueManager>();

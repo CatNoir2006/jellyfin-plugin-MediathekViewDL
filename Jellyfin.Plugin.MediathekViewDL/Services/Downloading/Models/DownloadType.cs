@@ -6,12 +6,17 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 public enum DownloadType
 {
     /// <summary>
-    /// Direct file download (e.g. video, subtitle).
+    /// Video download via FFmpeg (supports HTTP URLs and M3U8/HLS streams).
     /// </summary>
-    DirectDownload,
+    FFmpegDownload,
 
     /// <summary>
-    /// Extract audio from video.
+    /// Subtitle download via HTTP (no bandwidth limiting).
+    /// </summary>
+    SubtitleDownload,
+
+    /// <summary>
+    /// Extract audio from a video URL via FFmpeg.
     /// </summary>
     AudioExtraction,
 
@@ -19,9 +24,4 @@ public enum DownloadType
     /// Create a streaming URL file (.strm).
     /// </summary>
     StreamingUrl,
-
-    /// <summary>
-    /// Download an M3U8 stream.
-    /// </summary>
-    M3U8Download,
 }

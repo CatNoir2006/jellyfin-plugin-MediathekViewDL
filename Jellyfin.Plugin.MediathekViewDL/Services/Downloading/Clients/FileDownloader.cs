@@ -148,16 +148,10 @@ public class FileDownloader : IFileDownloader
             var receivedBytes = 0L;
             Memory<byte> buffer = new byte[8192];
 
-#pragma warning disable CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
+#pragma warning disable CA2007 // Do not await a Task
             await using (var fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
             {
-#pragma warning disable CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
                 var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                if (pluginConfig.Download.MaxBandwidthMBits > 0)
-                {
-                    var bytesPerSecond = (long)pluginConfig.Download.MaxBandwidthMBits * 1_000_000 / 8;
-                    stream = new ThrottledStream(stream, bytesPerSecond);
-                }
 
                 await using (stream)
                 {
@@ -177,9 +171,8 @@ public class FileDownloader : IFileDownloader
                         }
                     }
                 }
-#pragma warning restore CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
             }
-#pragma warning restore CA2007 // Aufruf von "ConfigureAwait" für erwarteten Task erwägen
+#pragma warning restore CA2007 // Do not await a Task
 
             _logger.LogInformation("Successfully downloaded '{DestinationPath}'.", destinationPath);
             return true;

@@ -43,14 +43,16 @@ public interface IFFmpegService
     Task<Library.LocalMediaInfo?> GetMediaInfoAsync(string urlOrPath, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Downloads an M3U8 stream and saves it as a local file.
+    /// Downloads a media file from a URL via FFmpeg and saves it as a local file.
+    /// Supports both regular HTTP URLs and M3U8/HLS streams.
     /// </summary>
-    /// <param name="url">The URL of the M3U8 stream.</param>
+    /// <param name="url">The URL of the media file.</param>
     /// <param name="outputPath">The path for the output file.</param>
+    /// <param name="readRate">The FFmpeg readrate multiplier. 0 means unlimited.</param>
     /// <param name="progress">The progress reporter.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>True if the download was successful, otherwise false.</returns>
-    Task<bool> DownloadM3U8Async(string url, string outputPath, IProgress<double> progress, CancellationToken cancellationToken);
+    Task<bool> DownloadFileAsync(string url, string outputPath, int readRate, IProgress<double> progress, CancellationToken cancellationToken);
 
     /// <summary>
     /// Executes FFmpeg with the specified arguments.

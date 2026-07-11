@@ -225,7 +225,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             Assert.Single(jobs);
             var job = jobs[0];
             Assert.Equal(2, job.DownloadItems.Count); // Video + Subtitle
-            Assert.Contains(job.DownloadItems, d => d.JobType == DownloadType.DirectDownload && d.SourceUrl == "http://subs.ttml");
+            Assert.Contains(job.DownloadItems, d => d.JobType == DownloadType.SubtitleDownload && d.SourceUrl == "http://subs.ttml");
         }
 
         [Fact]

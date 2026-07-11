@@ -11,15 +11,11 @@ public record DownloadOptions
     public bool DownloadSubtitles { get; set; } = true;
 
     /// <summary>
-    /// Gets or sets a value indicating whether direct audio extraction from URL is enabled.
+    /// Gets or sets the FFmpeg readrate multiplier for download speed limiting.
+    /// 0 means unlimited (no -readrate argument is passed to FFmpeg).
+    /// Values above 0 slow down the download (e.g. 0.5 = half speed).
     /// </summary>
-    public bool EnableDirectAudioExtraction { get; set; } = true;
-
-    /// <summary>
-    /// Gets or sets the maximum download bandwidth in MBit/s.
-    /// 0 means unlimited.
-    /// </summary>
-    public int MaxBandwidthMBits { get; set; } = 0;
+    public int ReadRate { get; set; } = 0;
 
     /// <summary>
     /// Gets or sets the minimum free disk space in bytes required to start a new download.

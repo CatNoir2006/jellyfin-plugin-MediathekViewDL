@@ -207,10 +207,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                     downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.StreamingUrl });
                     break;
                 case FileType.Video:
-                    var jobType = videoUrl.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase)
-                        ? DownloadType.M3U8Download
-                        : DownloadType.DirectDownload;
-                    downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = jobType });
+                    downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.FFmpegDownload });
 
                     break;
                 case FileType.Audio:
@@ -239,7 +236,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                         subPath = Path.ChangeExtension(subPath, ".vtt");
                     }
 
-                    downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = sub.Url, DestinationPath = subPath, JobType = DownloadType.DirectDownload });
+                    downloadJob.DownloadItems.Add(new DownloadItem { SourceUrl = sub.Url, DestinationPath = subPath, JobType = DownloadType.SubtitleDownload });
                 }
             }
 

@@ -118,8 +118,7 @@ public class MigrationHostedService : IHostedService
             config.Download = new DownloadOptions
             {
                 DownloadSubtitles = config.DeprecatedDownloadSubtitles,
-                EnableDirectAudioExtraction = config.DeprecatedEnableDirectAudioExtraction,
-                MaxBandwidthMBits = config.DeprecatedMaxBandwidthMBits,
+                ReadRate = 0,
                 MinFreeDiskSpaceBytes = config.DeprecatedMinFreeDiskSpaceBytes,
                 ScanLibraryAfterDownload = config.DeprecatedScanLibraryAfterDownload
             };

@@ -247,7 +247,7 @@ public class FFmpegService : IFFmpegService
     }
 
     /// <inheritdoc />
-    public async Task<bool> DownloadM3U8Async(string url, string outputPath, IProgress<double> progress, CancellationToken cancellationToken)
+    public async Task<bool> DownloadFileAsync(string url, string outputPath, int readRate, IProgress<double> progress, CancellationToken cancellationToken)
     {
         try
         {
@@ -263,25 +263,42 @@ public class FFmpegService : IFFmpegService
             return false;
         }
 
-        _logger.LogInformation("Downloading M3U8 stream from '{Url}' to '{Output}'", url, outputPath);
+        _logger.LogInformation("Downloading media from '{Url}' to '{Output}'", url, outputPath);
 
-        // Build ffmpeg arguments for downloading HLS stream
-        // -protocol_whitelist file,http,https,tcp,tls: Allow necessary protocols
-        var args = new List<string>
+        var args = new List<string>();
+
+        // M3U8/HLS streams need protocol whitelist
+        if (url.EndsWith(".m3u8", StringComparison.OrdinalIgnoreCase))
         {
-            "-protocol_whitelist",
-            "file,http,https,tcp,tls",
-            "-i",
-            url,
-            "-c",
-            "copy",
-            "-f",
-            "matroska",
-            "-y",
-            outputPath
-        };
+            args.Add("-protocol_whitelist");
+            args.Add("file,http,https,tcp,tls");
+        }
+
+        if (readRate > 0)
+        {
+            args.Add("-readrate");
+            args.Add(readRate.ToString(CultureInfo.InvariantCulture));
+        }
+
+        args.Add("-i");
+        args.Add(url);
+
+        args.Add("-c");
+        args.Add("copy");
+        args.Add("-f");
+        args.Add("matroska");
+        args.Add("-y");
+        args.Add(outputPath);
 
         var res = await ExecuteFFmpegAsync(args, cancellationToken, false, progress).ConfigureAwait(false);
+
+        if (res.ExitCode != 0)
+        {
+            _logger.LogError(
+                "FFmpeg download failed with exit code {ExitCode}. Error output (last 2000 chars): {Error}",
+                res.ExitCode,
+                res.Error?.Length > 2000 ? res.Error[^2000..] : res.Error);
+        }
 
         return res.ExitCode == 0;
     }
