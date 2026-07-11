@@ -181,8 +181,8 @@ class ApiService {
     async downloadItem(item) {
         if (!this.apiClient) throw new Error('ApiClient not available')
 
-        const url = this.apiClient.getUrl('MediathekViewDL/Download')
-        console.log(`📤 POST Download`, item.Title)
+        const url = this.apiClient.getUrl('MediathekViewDL/Downloads')
+        console.log(`📤 POST Downloads`, item.Title)
 
         try {
             const response = await this.apiClient.ajax({
@@ -208,8 +208,8 @@ class ApiService {
     async advancedDownload(options) {
         if (!this.apiClient) throw new Error('ApiClient not available')
 
-        const url = this.apiClient.getUrl('MediathekViewDL/AdvancedDownload')
-        console.log(`📤 POST AdvancedDownload`, options.FileName)
+        const url = this.apiClient.getUrl('MediathekViewDL/Downloads/Advanced')
+        console.log(`📤 POST Downloads/Advanced`, options.FileName)
 
         try {
             const response = await this.apiClient.ajax({
