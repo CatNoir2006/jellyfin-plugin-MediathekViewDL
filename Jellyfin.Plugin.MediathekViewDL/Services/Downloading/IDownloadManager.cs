@@ -16,6 +16,6 @@ public interface IDownloadManager
     /// <param name="job">The job to execute.</param>
     /// <param name="progress">The progress reporter.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>True if the job was successful (or file already existed), otherwise false.</returns>
-    Task<bool> ExecuteJobAsync(DownloadJob job, IProgress<double> progress, CancellationToken cancellationToken);
+    /// <returns>The result of the download job with per-item details.</returns>
+    Task<DownloadJobResult> ExecuteJobAsync(DownloadJob job, IProgress<double> progress, CancellationToken cancellationToken);
 }

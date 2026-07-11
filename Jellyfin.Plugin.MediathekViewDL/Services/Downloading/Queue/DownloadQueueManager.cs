@@ -235,12 +235,13 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
 
         try
         {
-            var success = await downloadManager.ExecuteJobAsync(download.Job, progress, download.Cts.Token).ConfigureAwait(false);
+            var result = await downloadManager.ExecuteJobAsync(download.Job, progress, download.Cts.Token).ConfigureAwait(false);
 
-            if (success)
+            if (result.Success)
             {
                 download.Status = DownloadStatus.Finished;
                 download.Progress = 100;
+                download.ItemResults = result.ItemResults;
 
                 // Save every item in the job to history
                 foreach (var item in download.Job.DownloadItems)
@@ -263,7 +264,8 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
             else if (download.Status != DownloadStatus.Cancelled)
             {
                 download.Status = DownloadStatus.Failed;
-                download.ErrorMessage = "Download failed (check logs).";
+                download.ErrorMessage = "Download fehlgeschlagen (Details siehe unten).";
+                download.ItemResults = result.ItemResults;
             }
         }
         catch (OperationCanceledException)

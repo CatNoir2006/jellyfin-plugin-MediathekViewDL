@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using System.Threading;
 
@@ -38,6 +39,11 @@ public class ActiveDownload
     /// Gets or sets the error message if the job failed.
     /// </summary>
     public string? ErrorMessage { get; set; }
+
+    /// <summary>
+    /// Gets or sets the per-item results after execution.
+    /// </summary>
+    public IReadOnlyList<DownloadItemResult>? ItemResults { get; set; }
 
     /// <summary>
     /// Gets or sets the time when the download was created/queued.

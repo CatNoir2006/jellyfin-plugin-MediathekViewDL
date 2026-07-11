@@ -144,6 +144,11 @@ function getFileName(path) {
   return path.split(/[\\\/]/).pop()
 }
 
+function getItemResult(dl, destinationPath) {
+  if (!dl.ItemResults) return null
+  return dl.ItemResults.find(r => r.DestinationPath === destinationPath) || null
+}
+
 onMounted(async () => {
   await Promise.all([fetchActiveDownloads(), fetchHistory()])
   refreshInterval = setInterval(fetchActiveDownloads, 3000)
@@ -227,8 +232,15 @@ onUnmounted(() => {
                   {{ getFileIcon(item.DestinationPath) }}
                 </span>
                 <span class="file-name">{{ getFileName(item.DestinationPath) }}</span>
+                <template v-if="getItemResult(dl, item.DestinationPath)">
+                  <span v-if="getItemResult(dl, item.DestinationPath).Success" class="item-status item-success">✓</span>
+                  <span v-else class="item-status item-failed">✗</span>
+                </template>
               </div>
               <div class="entry-path">{{ item.DestinationPath }}</div>
+              <div v-if="getItemResult(dl, item.DestinationPath) && !getItemResult(dl, item.DestinationPath).Success && getItemResult(dl, item.DestinationPath).ErrorMessage" class="item-error-msg">
+                {{ getItemResult(dl, item.DestinationPath).ErrorMessage }}
+              </div>
             </div>
           </div>
         </div>
@@ -348,6 +360,11 @@ onUnmounted(() => {
   padding: 1px 4px; border-radius: 3px; font-weight: bold;
 }
 .file-lang { color: #71717a; font-size: 0.8rem; }
+
+.item-status { font-weight: bold; font-size: 0.85rem; }
+.item-success { color: #10b981; }
+.item-failed { color: #ef4444; }
+.item-error-msg { font-size: 0.75rem; color: #ef4444; margin-top: 2px; padding-left: 4px; }
 
 .error-msg-small { grid-column: 1 / -1; font-size: 0.8rem; color: #ef4444; margin-top: 5px; }
 

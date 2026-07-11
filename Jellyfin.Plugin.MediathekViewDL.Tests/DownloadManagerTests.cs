@@ -80,7 +80,7 @@ public class DownloadManagerTests
         var result = await _downloadManager.ExecuteJobAsync(job, Mock.Of<IProgress<double>>(), CancellationToken.None);
 
         // Assert
-        Assert.False(result);
+        Assert.False(result.Success);
         _fileDownloaderMock.As<IDownloadHandler>().Verify(
             h => h.ExecuteAsync(It.IsAny<DownloadItem>(), It.IsAny<DownloadJob>(),
                 It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()),
@@ -102,7 +102,7 @@ public class DownloadManagerTests
         var result = await _downloadManager.ExecuteJobAsync(job, Mock.Of<IProgress<double>>(), CancellationToken.None);
 
         // Assert
-        Assert.False(result);
+        Assert.False(result.Success);
         _fileDownloaderMock.As<IDownloadHandler>().Verify(
             h => h.ExecuteAsync(It.IsAny<DownloadItem>(), It.IsAny<DownloadJob>(),
                 It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()),
@@ -124,7 +124,7 @@ public class DownloadManagerTests
         var result = await _downloadManager.ExecuteJobAsync(job, Mock.Of<IProgress<double>>(), CancellationToken.None);
 
         // Assert
-        Assert.True(result);
+        Assert.True(result.Success);
         _fileDownloaderMock.As<IDownloadHandler>().Verify(
             h => h.ExecuteAsync(
                 It.Is<DownloadItem>(i => i.SourceUrl == "https://ard.de/video.mp4"),
@@ -152,7 +152,7 @@ public class DownloadManagerTests
             var result = await _downloadManager.ExecuteJobAsync(job, Mock.Of<IProgress<double>>(), CancellationToken.None);
 
             // Assert
-            Assert.True(result);
+            Assert.True(result.Success);
             _fileDownloaderMock.As<IDownloadHandler>().Verify(
                 h => h.ExecuteAsync(It.IsAny<DownloadItem>(), It.IsAny<DownloadJob>(),
                     It.IsAny<IProgress<double>>(), It.IsAny<CancellationToken>()),
