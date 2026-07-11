@@ -1,15 +1,21 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
+using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
+using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Queue;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
+using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 using MediaBrowser.Common.Api;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Api.Controller;
 
@@ -23,18 +29,34 @@ public class DownloadsController : ControllerBase
 {
     private readonly IDownloadQueueManager _downloadQueueManager;
     private readonly IDownloadHistoryRepository _downloadHistoryRepository;
+    private readonly IConfigurationProvider _configurationProvider;
+    private readonly IVideoParser _videoParser;
+    private readonly IFileNameBuilderService _fileNameBuilder;
+    private readonly ILogger<DownloadsController> _logger;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DownloadsController"/> class.
     /// </summary>
     /// <param name="downloadQueueManager">The download queue manager.</param>
     /// <param name="downloadHistoryRepository">The download history repository.</param>
+    /// <param name="configurationProvider">The configuration provider.</param>
+    /// <param name="videoParser">The video parser.</param>
+    /// <param name="fileNameBuilder">The file name builder service.</param>
+    /// <param name="logger">The logger.</param>
     public DownloadsController(
         IDownloadQueueManager downloadQueueManager,
-        IDownloadHistoryRepository downloadHistoryRepository)
+        IDownloadHistoryRepository downloadHistoryRepository,
+        IConfigurationProvider configurationProvider,
+        IVideoParser videoParser,
+        IFileNameBuilderService fileNameBuilder,
+        ILogger<DownloadsController> logger)
     {
         _downloadQueueManager = downloadQueueManager;
         _downloadHistoryRepository = downloadHistoryRepository;
+        _configurationProvider = configurationProvider;
+        _videoParser = videoParser;
+        _fileNameBuilder = fileNameBuilder;
+        _logger = logger;
     }
 
     /// <summary>
@@ -185,5 +207,164 @@ public class DownloadsController : ControllerBase
     {
         _downloadQueueManager.ClearInactiveJobs();
         return Ok("Inaktive Downloads aus der Liste entfernt.");
+    }
+
+    /// <summary>
+    /// Triggers a download for a single item.
+    /// </summary>
+    /// <param name="item">The item to download.</param>
+    /// <returns>An OK result.</returns>
+    [HttpPost]
+    public IActionResult Download([FromBody] ResultItemDto? item)
+    {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, new ApiErrorDto(ApiErrorId.InitializationError, Plugin.Instance.InitializationException.Message));
+        }
+
+        var config = _configurationProvider.ConfigurationOrNull;
+        if (config == null)
+        {
+            _logger.LogError("Plugin configuration is not available. Cannot start manual download.");
+            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin-Konfiguration ist nicht verfügbar."));
+        }
+
+        var videoUrl = item?.GetVideoByQuality()?.Url;
+
+        if (item == null || string.IsNullOrWhiteSpace(videoUrl))
+        {
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidItem, "Ungültiges Element für den Download bereitgestellt (keine Video-URL)."));
+        }
+
+        var videoInfo = _videoParser.ParseVideoInfo(item.Topic, item.Title);
+        if (videoInfo == null)
+        {
+            _logger.LogError("Could not parse video info for item: {Title}", item.Title);
+            return BadRequest(new ApiErrorDto(ApiErrorId.ParseError, "Video-Informationen konnten nicht analysiert werden."));
+        }
+
+        var defaultSub = new Subscription() { Name = item.Topic };
+        var paths = _fileNameBuilder.GenerateDownloadPaths(videoInfo, defaultSub, DownloadContext.Manual, FileType.Video);
+
+        if (!paths.IsValid)
+        {
+            _logger.LogError("Could not generate download paths for item: {Title}", item.Title);
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidPath, "Download-Pfade konnten nicht generiert werden."));
+        }
+
+        if (FileDownloader.GetDiskSpace(paths.DirectoryPath) < config.Download.MinFreeDiskSpaceBytes)
+        {
+            _logger.LogError("Not enough free disk space to start download for item: {Title} at {Path}", item.Title, paths.DirectoryPath);
+            return BadRequest(new ApiErrorDto(ApiErrorId.InsufficientDiskSpace, "Nicht genügend freier Speicherplatz, um den Download zu starten."));
+        }
+
+        _logger.LogInformation("Manual download requested for item: {Title}", item.Title);
+
+        var job = new DownloadJob { ItemId = item.Id, Title = item.Title, ItemInfo = videoInfo };
+
+        job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.FFmpegDownload });
+
+        var subtitle = item.GetSubtitle();
+        if (config.Download.DownloadSubtitles && !string.IsNullOrWhiteSpace(subtitle?.Url))
+        {
+            job.DownloadItems.Add(new DownloadItem { SourceUrl = subtitle.Url, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.SubtitleDownload });
+        }
+
+        _downloadQueueManager.QueueJob(job);
+        return Ok($"Download für '{item.Title}' in Warteschlange.");
+    }
+
+    /// <summary>
+    /// Triggers an advanced download for a single item with custom options.
+    /// </summary>
+    /// <param name="options">The advanced download options.</param>
+    /// <returns>An OK result.</returns>
+    [HttpPost("Advanced")]
+    public IActionResult AdvancedDownload([FromBody] AdvancedDownloadOptions? options)
+    {
+        if (Plugin.Instance?.InitializationException is not null)
+        {
+            return StatusCode(503, new ApiErrorDto(ApiErrorId.InitializationError, Plugin.Instance.InitializationException.Message));
+        }
+
+        var config = _configurationProvider.ConfigurationOrNull;
+        if (config == null)
+        {
+            _logger.LogError("Plugin configuration is not available. Cannot start advanced download.");
+            return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin-Konfiguration ist nicht verfügbar."));
+        }
+
+        if (options == null)
+        {
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidOptions, "Erweiterte Download-Optionen sind erforderlich."));
+        }
+
+        var item = options.Item;
+        var videoUrl = item.GetVideoByQuality()?.Url;
+
+        if (string.IsNullOrWhiteSpace(videoUrl))
+        {
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidItem, "Ungültiges Element für den Download bereitgestellt (keine Video-URL)."));
+        }
+
+        if (string.IsNullOrWhiteSpace(options.DownloadPath) || string.IsNullOrWhiteSpace(options.FileName))
+        {
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidOptions, "Download-Pfad und Dateiname sind für den erweiterten Download erforderlich."));
+        }
+
+        if (!_fileNameBuilder.IsPathSafe(options.DownloadPath))
+        {
+            _logger.LogWarning("Blocked advanced download request to unsafe path: {Path}", options.DownloadPath);
+            return BadRequest(new ApiErrorDto(ApiErrorId.UnsafePath, "Der angegebene Download-Pfad ist nicht zulässig. Bitte verwenden Sie einen Pfad innerhalb Ihrer Bibliothek oder der konfigurierten Download-Verzeichnisse."));
+        }
+
+        if (_fileNameBuilder.SanitizeFileName(options.FileName) != options.FileName)
+        {
+            return BadRequest(new ApiErrorDto(ApiErrorId.InvalidFilename, "Der Dateiname enthält ungültige Zeichen."));
+        }
+
+        var videoInfo = _videoParser.ParseVideoInfo(item.Topic, item.Title);
+        if (videoInfo == null)
+        {
+            _logger.LogError("Could not parse video info for item: {Title}", item.Title);
+            return BadRequest(new ApiErrorDto(ApiErrorId.ParseError, "Video-Informationen konnten nicht analysiert werden."));
+        }
+
+#pragma warning disable CA3003 // Path is validated via manual check and directory creation rules
+        if (FileDownloader.GetDiskSpace(options.DownloadPath) < config.Download.MinFreeDiskSpaceBytes)
+#pragma warning restore CA3003
+        {
+            _logger.LogError("Not enough free disk space to start advanced download for item: {Title} at {Path}", item.Title, options.DownloadPath);
+            return BadRequest(new ApiErrorDto(ApiErrorId.InsufficientDiskSpace, "Nicht genügend freier Speicherplatz, um den Download zu starten."));
+        }
+
+        _logger.LogInformation("Advanced download requested for item: {Title} to path: {Path} with filename: {FileName}", item.Title, options.DownloadPath, options.FileName);
+
+        var videoDestinationPath = Path.Combine(options.DownloadPath, _fileNameBuilder.SanitizeFileName(options.FileName));
+        var job = new DownloadJob { ItemId = item.Id, Title = item.Title, ItemInfo = videoInfo };
+
+        job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = videoDestinationPath, JobType = DownloadType.FFmpegDownload });
+
+        var subtitle = item.GetSubtitle();
+        if (options.DownloadSubtitles && !string.IsNullOrWhiteSpace(subtitle?.Url))
+        {
+            string subtitleFileName;
+            if (!string.IsNullOrWhiteSpace(options.SubtitleName))
+            {
+                subtitleFileName = _fileNameBuilder.SanitizeFileName(options.SubtitleName);
+            }
+            else
+            {
+                var defaultSub = new Subscription() { Name = item.Topic };
+                var genPaths = _fileNameBuilder.GenerateDownloadPaths(videoInfo, defaultSub, DownloadContext.Manual, FileType.Video);
+                subtitleFileName = Path.GetFileName(genPaths.SubtitleFilePath);
+            }
+
+            var subtitleDestinationPath = Path.Combine(options.DownloadPath, subtitleFileName);
+            job.DownloadItems.Add(new DownloadItem { SourceUrl = subtitle.Url, DestinationPath = subtitleDestinationPath, JobType = DownloadType.SubtitleDownload });
+        }
+
+        _downloadQueueManager.QueueJob(job);
+        return Ok($"Advanced download for '{item.Title}' queued.");
     }
 }
