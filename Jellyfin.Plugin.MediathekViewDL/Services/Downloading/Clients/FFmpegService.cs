@@ -274,14 +274,14 @@ public class FFmpegService : IFFmpegService
             args.Add("file,http,https,tcp,tls");
         }
 
-        args.Add("-i");
-        args.Add(url);
-
         if (readRate > 0)
         {
             args.Add("-readrate");
             args.Add(readRate.ToString(CultureInfo.InvariantCulture));
         }
+
+        args.Add("-i");
+        args.Add(url);
 
         args.Add("-c");
         args.Add("copy");
@@ -291,6 +291,14 @@ public class FFmpegService : IFFmpegService
         args.Add(outputPath);
 
         var res = await ExecuteFFmpegAsync(args, cancellationToken, false, progress).ConfigureAwait(false);
+
+        if (res.ExitCode != 0)
+        {
+            _logger.LogError(
+                "FFmpeg download failed with exit code {ExitCode}. Error output (last 2000 chars): {Error}",
+                res.ExitCode,
+                res.Error?.Length > 2000 ? res.Error[^2000..] : res.Error);
+        }
 
         return res.ExitCode == 0;
     }
