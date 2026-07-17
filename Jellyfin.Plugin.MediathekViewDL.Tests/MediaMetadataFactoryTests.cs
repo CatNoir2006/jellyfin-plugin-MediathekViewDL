@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models.ResourceItem;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using Xunit;
 
@@ -14,7 +15,7 @@ public class MediaMetadataFactoryTests
         {
             Id = "id-123",
             Title = "Original Titel",
-            Topic = "Topic",
+            Topic = "Original Topic",
             Channel = "ARD",
             Description = "Eine Beschreibung.",
             Timestamp = System.DateTimeOffset.UnixEpoch,
@@ -49,8 +50,14 @@ public class MediaMetadataFactoryTests
         Assert.Equal(downloadUrl, metadata.DownloadUrl);
         Assert.Equal(subtitleUrl, metadata.SubtitleUrl);
         Assert.Equal(item.Title, metadata.OriginalTitle);
+        Assert.Equal(item.Topic, metadata.OriginalTopic);
         Assert.Equal(item.Description, metadata.Description);
         Assert.Equal(new[] { item.VideoUrls[0].Url, item.VideoUrls[1].Url }, metadata.VideoUrls);
+
+        // Without a VideoInfo, season / episode / absoluteEpisode stay null
+        Assert.Null(metadata.SeasonNumber);
+        Assert.Null(metadata.EpisodeNumber);
+        Assert.Null(metadata.AbsoluteEpisodeNumber);
     }
 
     [Fact]
@@ -94,5 +101,65 @@ public class MediaMetadataFactoryTests
         // Assert
         Assert.Single(metadata.VideoUrls);
         Assert.Equal("https://example.com/a.mp4", metadata.VideoUrls[0]);
+    }
+
+    [Fact]
+    public void Create_ShouldPopulateSeasonAndEpisode_FromVideoInfo()
+    {
+        // Arrange
+        var item = BuildItem();
+        var videoInfo = new VideoInfo
+        {
+            Title = "Cleaned Title",
+            Topic = "Original Topic",
+            SeasonNumber = 3,
+            EpisodeNumber = 7,
+            AbsoluteEpisodeNumber = 42,
+        };
+
+        // Act
+        var metadata = MediaMetadataFactory.Create(item, "https://example.com/video-1080.mp4", null, videoInfo);
+
+        // Assert
+        Assert.Equal(3, metadata.SeasonNumber);
+        Assert.Equal(7, metadata.EpisodeNumber);
+        Assert.Equal(42, metadata.AbsoluteEpisodeNumber);
+    }
+
+    [Fact]
+    public void Create_ShouldPopulateOnlyAbsoluteEpisodeNumber_WhenSeasonAndEpisodeMissing()
+    {
+        // Arrange
+        var item = BuildItem();
+        var videoInfo = new VideoInfo
+        {
+            Title = "Folge 5",
+            Topic = "Original Topic",
+            AbsoluteEpisodeNumber = 5,
+        };
+
+        // Act
+        var metadata = MediaMetadataFactory.Create(item, "https://example.com/video-1080.mp4", null, videoInfo);
+
+        // Assert
+        Assert.Null(metadata.SeasonNumber);
+        Assert.Null(metadata.EpisodeNumber);
+        Assert.Equal(5, metadata.AbsoluteEpisodeNumber);
+    }
+
+    [Fact]
+    public void Create_ShouldPreserveOriginalTopic_EvenWhenSubscriptionNameDiffers()
+    {
+        // Arrange — verify the original topic is always the API topic, regardless of
+        // whatever name the user gave the subscription (handled by the caller, not by
+        // this factory).
+        var item = BuildItem();
+        const string downloadUrl = "https://example.com/video-1080.mp4";
+
+        // Act
+        var metadata = MediaMetadataFactory.Create(item, downloadUrl);
+
+        // Assert
+        Assert.Equal("Original Topic", metadata.OriginalTopic);
     }
 }

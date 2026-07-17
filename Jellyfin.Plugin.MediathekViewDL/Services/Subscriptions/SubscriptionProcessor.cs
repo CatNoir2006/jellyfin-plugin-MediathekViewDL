@@ -206,7 +206,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 ItemId = item.Id,
                 Title = tempVideoInfo.Title,
                 ItemInfo = tempVideoInfo,
-                MediaMetadata = MediaMetadataFactory.Create(item, videoUrl, preferredSubtitleUrl),
+                MediaMetadata = MediaMetadataFactory.Create(item, videoUrl, preferredSubtitleUrl, tempVideoInfo),
             };
 
             // Video/Main Item

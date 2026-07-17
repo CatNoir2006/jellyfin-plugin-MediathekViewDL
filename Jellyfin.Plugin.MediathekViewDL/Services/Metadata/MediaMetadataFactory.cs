@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
+using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 
@@ -16,8 +17,14 @@ public static class MediaMetadataFactory
     /// <param name="item">The result item from the MediathekView API.</param>
     /// <param name="downloadUrl">The URL that was selected for the download.</param>
     /// <param name="subtitleUrl">The optional URL of the preferred subtitle.</param>
+    /// <param name="videoInfo">The optional parsed video info that contains the season/episode
+    /// numbers extracted from the title. When <c>null</c> the season/episode fields stay empty.</param>
     /// <returns>The populated <see cref="MediaMetadata"/> instance.</returns>
-    public static MediaMetadata Create(ResultItemDto item, string downloadUrl, string? subtitleUrl = null)
+    public static MediaMetadata Create(
+        ResultItemDto item,
+        string downloadUrl,
+        string? subtitleUrl = null,
+        VideoInfo? videoInfo = null)
     {
         var videoUrls = item.VideoUrls
             .Select(v => v.Url)
@@ -31,6 +38,10 @@ public static class MediaMetadataFactory
             VideoUrls = videoUrls,
             SubtitleUrl = subtitleUrl,
             OriginalTitle = item.Title,
+            OriginalTopic = item.Topic,
+            SeasonNumber = videoInfo?.SeasonNumber,
+            EpisodeNumber = videoInfo?.EpisodeNumber,
+            AbsoluteEpisodeNumber = videoInfo?.AbsoluteEpisodeNumber,
             Description = item.Description,
         };
     }

@@ -17,6 +17,10 @@ public class MediaMetadataTests
             VideoUrls = ["https://example.com/video-1080p.mp4", "https://example.com/video-720p.mp4"],
             SubtitleUrl = "https://example.com/subtitle.vtt",
             OriginalTitle = "Tatort: Der Clown",
+            OriginalTopic = "Tatort",
+            SeasonNumber = 5,
+            EpisodeNumber = 12,
+            AbsoluteEpisodeNumber = 87,
             Description = "Ein spannender Krimi aus Münster.",
         };
 
@@ -31,6 +35,10 @@ public class MediaMetadataTests
         Assert.Contains("\"videoUrls\":[", json);
         Assert.Contains("\"subtitleUrl\":\"https://example.com/subtitle.vtt\"", json);
         Assert.Contains("\"originalTitle\":\"Tatort: Der Clown\"", json);
+        Assert.Contains("\"originalTopic\":\"Tatort\"", json);
+        Assert.Contains("\"seasonNumber\":5", json);
+        Assert.Contains("\"episodeNumber\":12", json);
+        Assert.Contains("\"absoluteEpisodeNumber\":87", json);
         Assert.Contains("\"description\":\"Ein spannender Krimi aus Münster.\"", json);
     }
 
@@ -52,6 +60,27 @@ public class MediaMetadataTests
         // When subtitleUrl is null it is serialized as null (not omitted)
         // because the property is not declared as nullable in the DTO.
         Assert.Contains("\"subtitleUrl\":null", json);
+    }
+
+    [Fact]
+    public void Serialize_ShouldOmitSeasonAndEpisodeNumbering_WhenNull()
+    {
+        // Arrange
+        var metadata = new MediaMetadata
+        {
+            Id = "abc123",
+            DownloadUrl = "https://example.com/video.mp4",
+        };
+
+        // Act
+        var json = MediaMetadataKeys.Serialize(metadata);
+
+        // Assert
+        // Season / episode / absoluteEpisode are serialized as null when not set
+        // (matches the existing behaviour for subtitleUrl).
+        Assert.Contains("\"seasonNumber\":null", json);
+        Assert.Contains("\"episodeNumber\":null", json);
+        Assert.Contains("\"absoluteEpisodeNumber\":null", json);
     }
 
     [Fact]
@@ -105,6 +134,10 @@ public class MediaMetadataTests
             VideoUrls = ["https://example.com/video-1080p.mp4", "https://example.com/video-720p.mp4"],
             SubtitleUrl = "https://example.com/subtitle.vtt",
             OriginalTitle = "Tatort",
+            OriginalTopic = "Tatort",
+            SeasonNumber = 5,
+            EpisodeNumber = 12,
+            AbsoluteEpisodeNumber = 87,
             Description = "Beschreibung mit \"Anführungszeichen\" und \\Backslash\\.",
         };
 
@@ -119,6 +152,10 @@ public class MediaMetadataTests
         Assert.Equal(original.VideoUrls, deserialized.VideoUrls);
         Assert.Equal(original.SubtitleUrl, deserialized.SubtitleUrl);
         Assert.Equal(original.OriginalTitle, deserialized.OriginalTitle);
+        Assert.Equal(original.OriginalTopic, deserialized.OriginalTopic);
+        Assert.Equal(original.SeasonNumber, deserialized.SeasonNumber);
+        Assert.Equal(original.EpisodeNumber, deserialized.EpisodeNumber);
+        Assert.Equal(original.AbsoluteEpisodeNumber, deserialized.AbsoluteEpisodeNumber);
         Assert.Equal(original.Description, deserialized.Description);
     }
 

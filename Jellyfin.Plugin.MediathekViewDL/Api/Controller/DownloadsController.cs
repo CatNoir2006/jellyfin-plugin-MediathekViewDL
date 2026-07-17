@@ -269,7 +269,7 @@ public class DownloadsController : ControllerBase
             ItemId = item.Id,
             Title = item.Title,
             ItemInfo = videoInfo,
-            MediaMetadata = MediaMetadataFactory.Create(item, videoUrl, subtitleUrl),
+            MediaMetadata = MediaMetadataFactory.Create(item, videoUrl, subtitleUrl, videoInfo),
         };
 
         job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.FFmpegDownload });
@@ -358,7 +358,7 @@ public class DownloadsController : ControllerBase
             ItemId = item.Id,
             Title = item.Title,
             ItemInfo = videoInfo,
-            MediaMetadata = MediaMetadataFactory.Create(item, videoUrl, subtitleUrl),
+            MediaMetadata = MediaMetadataFactory.Create(item, videoUrl, subtitleUrl, videoInfo),
         };
 
         job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = videoDestinationPath, JobType = DownloadType.FFmpegDownload });

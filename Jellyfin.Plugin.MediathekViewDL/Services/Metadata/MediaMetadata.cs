@@ -42,6 +42,33 @@ public class MediaMetadata
     public string OriginalTitle { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets the original (unmodified) topic of the item as returned by the MediathekView API.
+    /// This is the show / series name and is preserved even when the subscription uses a custom
+    /// name for the series or the file name builder has rewritten the local topic.
+    /// </summary>
+    [JsonPropertyName("originalTopic")]
+    public string OriginalTopic { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the season number extracted from the title, if the item is part of a series.
+    /// </summary>
+    [JsonPropertyName("seasonNumber")]
+    public int? SeasonNumber { get; set; }
+
+    /// <summary>
+    /// Gets or sets the episode number extracted from the title, if the item is part of a series.
+    /// </summary>
+    [JsonPropertyName("episodeNumber")]
+    public int? EpisodeNumber { get; set; }
+
+    /// <summary>
+    /// Gets or sets the absolute episode number extracted from the title, if the series uses
+    /// absolute (continuous) numbering instead of per-season numbering.
+    /// </summary>
+    [JsonPropertyName("absoluteEpisodeNumber")]
+    public int? AbsoluteEpisodeNumber { get; set; }
+
+    /// <summary>
     /// Gets or sets the description / plot of the item.
     /// </summary>
     [JsonPropertyName("description")]
