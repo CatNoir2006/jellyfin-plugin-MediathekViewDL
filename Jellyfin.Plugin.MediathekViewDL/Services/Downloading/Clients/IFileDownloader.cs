@@ -21,10 +21,13 @@ public interface IFileDownloader
 
     /// <summary>
     /// Generates a streaming URL file (.strm) at the specified destination path.
+    /// If <paramref name="metadata"/> is provided, the metadata is appended as a comment line
+    /// in the format <c># MediathekViewDL-Metadata: {json}</c> below the URL.
     /// </summary>
     /// <param name="fileUrl">The URL to be written into the streaming URL file.</param>
     /// <param name="destinationPath">The file path where the streaming URL file will be created.</param>
     /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+    /// <param name="metadata">Optional metadata to append to the .strm file as a comment.</param>
     /// <returns>True if the streaming URL file was successfully created, otherwise false.</returns>
-    Task<bool> GenerateStreamingUrlFileAsync(string fileUrl, string destinationPath, CancellationToken cancellationToken);
+    Task<bool> GenerateStreamingUrlFileAsync(string fileUrl, string destinationPath, CancellationToken cancellationToken, Metadata.MediaMetadata? metadata = null);
 }

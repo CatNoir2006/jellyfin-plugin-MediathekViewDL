@@ -27,7 +27,7 @@ Dieses Plugin integriert die [MediathekViewWeb-API](https://mediathekviewweb.de/
 | :--- | :--- |
 | **🔎 Suche & Abos** | • **Automatische Downloads:** Neue Episoden Ihrer Lieblingssendungen werden sofort geladen.<br>• **Manuelle Suche:** Durchsuchen Sie die gesamte Mediathek direkt in Jellyfin.<br>• **Smart Filters:** Filtern nach Thema, Sender oder Titel. |
 | **💾 Download-Manager** | • **Zentrale Übersicht:** Neuer Tab für aktive Downloads, Historie und Warteschlange.<br>• **Kontrolle:** Downloads pausieren, abbrechen oder priorisieren.<br>• **Duplikat-Schutz:** Eine lokale Datenbank verhindert doppelte Downloads. |
-| **📂 Organisation** | • **Metadaten (NFO):** Generiert NFO-Dateien für perfekte Integration in Jellyfin/Kodi.<br>• **Streaming (.strm):** Optional nur verknüpfen statt herunterladen (spart Speicher).<br>• **Extras:** Separate Steuerung für Trailer, Interviews und Bonusmaterial. |
+| **📂 Organisation** | • **Metadaten (NFO):** Generiert NFO-Dateien für perfekte Integration in Jellyfin/Kodi.<br>• **Streaming (.strm):** Optional nur verknüpfen statt herunterladen (spart Speicher).<br>• **Extras:** Separate Steuerung für Trailer, Interviews und Bonusmaterial.<br>• **MediathekViewDL-Metadaten:** Betten einen JSON-Block mit ID, Download-URL, Video-URLs, Untertitel-URL, Originaltitel, Original-Topic, Staffel-/Episodennummer (sowie absoluter Episodennummer) und Beschreibung in `.mkv`-Dateien (Matroska via ffmpeg) bzw. als Kommentar in `.strm`-Dateien ein. |
 
 ---
 
