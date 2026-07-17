@@ -11,6 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Services.Library;
+using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using MediaBrowser.Controller.MediaEncoding;
 using Microsoft.Extensions.Logging;
 
@@ -247,7 +248,7 @@ public class FFmpegService : IFFmpegService
     }
 
     /// <inheritdoc />
-    public async Task<bool> DownloadFileAsync(string url, string outputPath, int readRate, IProgress<double> progress, CancellationToken cancellationToken)
+    public async Task<bool> DownloadFileAsync(string url, string outputPath, int readRate, IProgress<double> progress, CancellationToken cancellationToken, Metadata.MediaMetadata? metadata = null)
     {
         try
         {
@@ -282,6 +283,13 @@ public class FFmpegService : IFFmpegService
 
         args.Add("-i");
         args.Add(url);
+
+        if (metadata is not null)
+        {
+            var metadataJson = MediaMetadataKeys.Serialize(metadata);
+            args.Add("-metadata");
+            args.Add($"{MediaMetadataKeys.MetadataKey}={metadataJson}");
+        }
 
         args.Add("-c");
         args.Add("copy");

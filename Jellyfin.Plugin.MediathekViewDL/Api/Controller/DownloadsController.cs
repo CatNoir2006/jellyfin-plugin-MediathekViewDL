@@ -11,6 +11,7 @@ using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Queue;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
+using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 using MediaBrowser.Common.Api;
 using Microsoft.AspNetCore.Authorization;
@@ -260,14 +261,22 @@ public class DownloadsController : ControllerBase
 
         _logger.LogInformation("Manual download requested for item: {Title}", item.Title);
 
-        var job = new DownloadJob { ItemId = item.Id, Title = item.Title, ItemInfo = videoInfo };
+        var subtitle = item.GetSubtitle();
+        var subtitleUrl = (config.Download.DownloadSubtitles && !string.IsNullOrWhiteSpace(subtitle?.Url)) ? subtitle!.Url : null;
+
+        var job = new DownloadJob
+        {
+            ItemId = item.Id,
+            Title = item.Title,
+            ItemInfo = videoInfo,
+            MediaMetadata = MediaMetadataFactory.Create(item, videoUrl, subtitleUrl),
+        };
 
         job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = paths.MainFilePath, JobType = DownloadType.FFmpegDownload });
 
-        var subtitle = item.GetSubtitle();
-        if (config.Download.DownloadSubtitles && !string.IsNullOrWhiteSpace(subtitle?.Url))
+        if (subtitleUrl is not null)
         {
-            job.DownloadItems.Add(new DownloadItem { SourceUrl = subtitle.Url, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.SubtitleDownload });
+            job.DownloadItems.Add(new DownloadItem { SourceUrl = subtitleUrl, DestinationPath = paths.SubtitleFilePath, JobType = DownloadType.SubtitleDownload });
         }
 
         _downloadQueueManager.QueueJob(job);
@@ -341,12 +350,20 @@ public class DownloadsController : ControllerBase
         _logger.LogInformation("Advanced download requested for item: {Title} to path: {Path} with filename: {FileName}", item.Title, options.DownloadPath, options.FileName);
 
         var videoDestinationPath = Path.Combine(options.DownloadPath, _fileNameBuilder.SanitizeFileName(options.FileName));
-        var job = new DownloadJob { ItemId = item.Id, Title = item.Title, ItemInfo = videoInfo };
+        var subtitle = item.GetSubtitle();
+        var subtitleUrl = (options.DownloadSubtitles && !string.IsNullOrWhiteSpace(subtitle?.Url)) ? subtitle!.Url : null;
+
+        var job = new DownloadJob
+        {
+            ItemId = item.Id,
+            Title = item.Title,
+            ItemInfo = videoInfo,
+            MediaMetadata = MediaMetadataFactory.Create(item, videoUrl, subtitleUrl),
+        };
 
         job.DownloadItems.Add(new DownloadItem { SourceUrl = videoUrl, DestinationPath = videoDestinationPath, JobType = DownloadType.FFmpegDownload });
 
-        var subtitle = item.GetSubtitle();
-        if (options.DownloadSubtitles && !string.IsNullOrWhiteSpace(subtitle?.Url))
+        if (subtitleUrl is not null)
         {
             string subtitleFileName;
             if (!string.IsNullOrWhiteSpace(options.SubtitleName))
@@ -361,7 +378,7 @@ public class DownloadsController : ControllerBase
             }
 
             var subtitleDestinationPath = Path.Combine(options.DownloadPath, subtitleFileName);
-            job.DownloadItems.Add(new DownloadItem { SourceUrl = subtitle.Url, DestinationPath = subtitleDestinationPath, JobType = DownloadType.SubtitleDownload });
+            job.DownloadItems.Add(new DownloadItem { SourceUrl = subtitleUrl, DestinationPath = subtitleDestinationPath, JobType = DownloadType.SubtitleDownload });
         }
 
         _downloadQueueManager.QueueJob(job);

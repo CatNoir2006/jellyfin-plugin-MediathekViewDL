@@ -197,8 +197,17 @@ public class SubscriptionProcessor : ISubscriptionProcessor
                 continue;
             }
 
+            // Subtitle URL for media metadata (only the preferred one).
+            string? preferredSubtitleUrl = downloadSubtitles ? item.GetSubtitle()?.Url : null;
+
             // Download Task
-            var downloadJob = new DownloadJob { ItemId = item.Id, Title = tempVideoInfo.Title, ItemInfo = tempVideoInfo };
+            var downloadJob = new DownloadJob
+            {
+                ItemId = item.Id,
+                Title = tempVideoInfo.Title,
+                ItemInfo = tempVideoInfo,
+                MediaMetadata = MediaMetadataFactory.Create(item, videoUrl, preferredSubtitleUrl),
+            };
 
             // Video/Main Item
             switch (paths.MainType)

@@ -36,4 +36,10 @@ public class DownloadJob
     /// Gets or sets the NFO metadata to be created for this item, if applicable.
     /// </summary>
     public NfoDTO? NfoMetadata { get; set; }
+
+    /// <summary>
+    /// Gets or sets the media metadata that should be embedded into the resulting
+    /// media files (matroska container via ffmpeg / .strm comment).
+    /// </summary>
+    public MediaMetadata? MediaMetadata { get; set; }
 }

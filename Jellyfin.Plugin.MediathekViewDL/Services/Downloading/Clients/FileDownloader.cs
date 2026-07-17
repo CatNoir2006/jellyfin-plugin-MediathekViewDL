@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;
@@ -213,12 +214,15 @@ public class FileDownloader : IFileDownloader
 
     /// <summary>
     /// Generates a streaming URL file (.strm) at the specified destination path.
+    /// If <paramref name="metadata"/> is provided, the metadata is appended as a comment line
+    /// in the format <c># MediathekViewDL-Metadata: {json}</c> below the URL.
     /// </summary>
     /// <param name="fileUrl">The URL to be written into the streaming URL file.</param>
     /// <param name="destinationPath">The file path where the streaming URL file will be created.</param>
     /// <param name="cancellationToken">The cancellation token to cancel the operation.</param>
+    /// <param name="metadata">Optional metadata to append to the .strm file as a comment.</param>
     /// <returns>True if the streaming URL file was successfully created, otherwise false.</returns>
-    public async Task<bool> GenerateStreamingUrlFileAsync(string fileUrl, string destinationPath, CancellationToken cancellationToken)
+    public async Task<bool> GenerateStreamingUrlFileAsync(string fileUrl, string destinationPath, CancellationToken cancellationToken, MediaMetadata? metadata = null)
     {
         try
         {
@@ -228,7 +232,14 @@ public class FileDownloader : IFileDownloader
                 Directory.CreateDirectory(directory);
             }
 
-            await File.WriteAllTextAsync(destinationPath, fileUrl, cancellationToken).ConfigureAwait(false);
+            var content = fileUrl;
+            if (metadata is not null)
+            {
+                var json = MediaMetadataKeys.Serialize(metadata);
+                content = string.Concat(fileUrl, Environment.NewLine, MediaMetadataKeys.StrmCommentPrefix, json);
+            }
+
+            await File.WriteAllTextAsync(destinationPath, content, cancellationToken).ConfigureAwait(false);
 
             _logger.LogInformation("Successfully created streaming URL file at '{DestinationPath}'.", destinationPath);
             return true;

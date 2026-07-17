@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
+using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
@@ -210,5 +211,48 @@ public class FileDownloaderTests : IDisposable
         Assert.True(result);
         Assert.True(File.Exists(path));
         Assert.Equal(TestUrl, await File.ReadAllTextAsync(path));
+    }
+
+    [Fact]
+    public async Task GenerateStreamingUrlFileAsync_WithMetadata_AppendsCommentAfterUrl()
+    {
+        // Arrange
+        var path = Path.Combine(_tempDir, "video.strm");
+        var metadata = new MediaMetadata
+        {
+            Id = "abc",
+            DownloadUrl = TestUrl,
+            VideoUrls = [TestUrl],
+            OriginalTitle = "Test Title",
+            Description = "Test Description",
+        };
+
+        // Act
+        var result = await _downloader.GenerateStreamingUrlFileAsync(TestUrl, path, CancellationToken.None, metadata);
+
+        // Assert
+        Assert.True(result);
+        Assert.True(File.Exists(path));
+        var lines = await File.ReadAllLinesAsync(path);
+        Assert.Equal(2, lines.Length);
+        Assert.Equal(TestUrl, lines[0]);
+        Assert.StartsWith(MediaMetadataKeys.StrmCommentPrefix, lines[1]);
+        Assert.Contains("\"id\":\"abc\"", lines[1]);
+        Assert.Contains("\"downloadUrl\":\"" + TestUrl + "\"", lines[1]);
+    }
+
+    [Fact]
+    public async Task GenerateStreamingUrlFileAsync_WithNullMetadata_DoesNotAddComment()
+    {
+        // Arrange
+        var path = Path.Combine(_tempDir, "video.strm");
+
+        // Act
+        var result = await _downloader.GenerateStreamingUrlFileAsync(TestUrl, path, CancellationToken.None, null);
+
+        // Assert
+        Assert.True(result);
+        var content = await File.ReadAllTextAsync(path);
+        Assert.Equal(TestUrl, content);
     }
 }
