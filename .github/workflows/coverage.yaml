@@ -15,7 +15,6 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   backend-coverage:
@@ -58,14 +57,16 @@ jobs:
           path: coverage/backend/**/coverage.cobertura.xml
           if-no-files-found: error
 
-      - name: Comment PR with backend coverage
-        if: github.event_name == 'pull_request'
-        continue-on-error: true
-        uses: 5monkeys/cobertura-action@v14
-        with:
-          path: coverage/backend/**/coverage.cobertura.xml
-          minimum_coverage: 0
-          fail_below_threshold: false
+      - name: Print backend coverage summary
+        run: |
+          echo "## Backend (.NET) coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          for f in coverage/backend/**/coverage.cobertura.xml; do
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "File: ${f}" >> $GITHUB_STEP_SUMMARY
+            grep -E 'line-rate|branch-rate' "$f" | head -2 >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          done
 
   frontend-coverage:
     name: 'Frontend (Vue) coverage'
@@ -100,10 +101,10 @@ jobs:
           path: Jellyfin.Plugin.MediathekViewDL/Configuration/Web/VueJS/coverage/lcov.info
           if-no-files-found: error
 
-      - name: Comment PR with frontend coverage
-        if: github.event_name == 'pull_request'
-        continue-on-error: true
-        uses: davelosert/vitest-coverage-report-action@v2.12.2
-        with:
-          coverage-summary-path: Jellyfin.Plugin.MediathekViewDL/Configuration/Web/VueJS/coverage/coverage-summary.json
-          vitest-coverage-fail-threshold: 0
+      - name: Print frontend coverage summary
+        run: |
+          echo "## Frontend (Vue) coverage" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          cat coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
