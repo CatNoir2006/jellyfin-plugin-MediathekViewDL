@@ -68,16 +68,6 @@ jobs:
             echo '```' >> $GITHUB_STEP_SUMMARY
           done
 
-      - name: Comment PR with backend coverage
-        if: github.event_name == 'pull_request'
-        continue-on-error: true
-        uses: 5monkeys/cobertura-action@v14
-        with:
-          path: coverage/backend/**/coverage.cobertura.xml
-          minimum_coverage: 0
-          fail_below_threshold: false
-          repo_token: ${{ secrets.PR_COMMENT_TOKEN }}
-
   frontend-coverage:
     name: 'Frontend (Vue) coverage'
     runs-on: ubuntu-latest
@@ -118,12 +108,3 @@ jobs:
           echo '```json' >> $GITHUB_STEP_SUMMARY
           cat coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Comment PR with frontend coverage
-        if: github.event_name == 'pull_request'
-        continue-on-error: true
-        uses: davelosert/vitest-coverage-report-action@v2.12.2
-        with:
-          coverage-summary-path: Jellyfin.Plugin.MediathekViewDL/Configuration/Web/VueJS/coverage/coverage-summary.json
-          vitest-coverage-fail-threshold: 0
-          github-token: ${{ secrets.PR_COMMENT_TOKEN }}
