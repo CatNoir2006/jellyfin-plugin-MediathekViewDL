@@ -60,11 +60,12 @@ jobs:
 
       - name: Comment PR with backend coverage
         if: github.event_name == 'pull_request'
+        continue-on-error: true
         uses: 5monkeys/cobertura-action@v14
         with:
           path: coverage/backend/**/coverage.cobertura.xml
           minimum_coverage: 0
-          fail_on_decrease: false
+          fail_below_threshold: false
 
   frontend-coverage:
     name: 'Frontend (Vue) coverage'
@@ -90,7 +91,7 @@ jobs:
         run: npm run build
 
       - name: Run tests with coverage
-        run: npm run coverage -- --reporter=lcov --reporter=text
+        run: npm run coverage
 
       - name: Upload frontend coverage artifact
         uses: actions/upload-artifact@v4
@@ -101,6 +102,7 @@ jobs:
 
       - name: Comment PR with frontend coverage
         if: github.event_name == 'pull_request'
+        continue-on-error: true
         uses: davelosert/vitest-coverage-report-action@v2.12.2
         with:
           coverage-summary-path: Jellyfin.Plugin.MediathekViewDL/Configuration/Web/VueJS/coverage/coverage-summary.json
