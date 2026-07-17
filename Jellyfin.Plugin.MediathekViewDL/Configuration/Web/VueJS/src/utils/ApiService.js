@@ -560,7 +560,7 @@ class ApiService {
 
     /**
      * Add Live TV Tuner Host
-     * @param {Object} tunerHost 
+     * @param {Object} tunerHost
      */
     async addTunerHost(tunerHost) {
         if (!this.apiClient) throw new Error('ApiClient not available')
@@ -571,6 +571,22 @@ class ApiService {
             data: JSON.stringify(tunerHost),
             contentType: 'application/json'
         })
+    }
+
+    /**
+     * Get the current Live TV configuration (includes TunerHosts + ListingProviders).
+     * @returns {Promise<Object|null>} Live TV configuration object or null on failure
+     */
+    async getLiveTvConfig() {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+        const url = this.apiClient.getUrl('System/Configuration/livetv')
+        try {
+            const response = await this.apiClient.getJSON(url)
+            return response || null
+        } catch (error) {
+            console.error(`❌ GetLiveTvConfig failed:`, error)
+            return null
+        }
     }
 
     /**
@@ -624,7 +640,7 @@ class ApiService {
 
     /**
      * Add Live TV Listing Provider
-     * @param {Object} provider 
+     * @param {Object} provider
      */
     async addListingProvider(provider) {
         if (!this.apiClient) throw new Error('ApiClient not available')

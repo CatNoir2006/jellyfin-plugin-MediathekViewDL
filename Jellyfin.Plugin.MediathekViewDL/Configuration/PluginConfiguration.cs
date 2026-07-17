@@ -57,6 +57,13 @@ public class PluginConfiguration : BasePluginConfiguration
     public SubscriptionDefaults SubscriptionDefaults { get; set; } = new();
 
     /// <summary>
+    /// Gets or sets a value indicating whether the setup wizard has been completed.
+    /// Used to auto-show the first-run wizard on fresh installations
+    /// and to suppress it once the user has finished (or explicitly skipped) the setup.
+    /// </summary>
+    public bool WizardCompleted { get; set; }
+
+    /// <summary>
     /// Gets the list of download subscriptions.
     /// </summary>
     public Collection<Subscription> Subscriptions { get; init; }

@@ -10,6 +10,7 @@ Dieses Plugin integriert die [MediathekViewWeb-API](https://mediathekviewweb.de/
 
 *   [✨ Features](#-features)
 *   [🚀 Installation](#-installation)
+*   [🧙 Einrichtungs-Assistent](#-einrichtungs-assistent)
 *   [⚙️ Konfiguration & Nutzung](#-konfiguration--nutzung)
     *   [Manuelle Suche](#-manuelle-suche)
     *   [Allgemeine Einstellungen](#-allgemeine-einstellungen)
@@ -66,6 +67,22 @@ Die einfachste Methode. Updates erfolgen automatisch über Jellyfin.
     *   Kopieren Sie **alle Dateien** aus `bin/Debug/net9.0` (oder `Release`) in diesen Ordner.
 4.  **Neustart:** Starten Sie den Jellyfin-Server neu.
 </details>
+
+---
+
+## 🧙 Einrichtungs-Assistent
+
+Bei einer **Neuinstallation** öffnet sich nach dem ersten Aufruf der Konfigurationsseite automatisch ein Einrichtungs-Assistent, der Sie in sieben kurzen Schritten durch die wichtigsten Einstellungen führt:
+
+1. **Willkommen** – Kurze Einführung in das Plugin.
+2. **Standard-Pfade** – Legen Sie fest, wo Serien, Filme und ggf. temporäre Downloads gespeichert werden.
+3. **Speicher sparen** – Wählen Sie, ob neue Abos standardmäßig als `.strm`-Streamlinks statt als kompletter Videodatei gespeichert werden sollen (spart Speicher, benötigt aber Internet beim Abspielen).
+4. **Live-TV (optional)** – Fügt den Zapp Tuner und/oder den Zapp Guide-Provider zur Jellyfin-Live-TV-Verwaltung hinzu.
+5. **Erstes Abo (optional)** – Legt direkt ein erstes Abonnement mit Sender und Suchbegriff an.
+6. **Tab-Tour** – Erklärt die fünf Tabs der Konfigurationsseite (Suche, Einstellungen, Abos, Downloads, Logs).
+7. **Fertig** – Speichert den Status und schließt den Assistenten.
+
+Den Assistenten können Sie jederzeit über die Schaltfläche **🧙 Einrichtungs-Assistent** im Kopfbereich der Konfigurationsseite erneut starten – auch nachdem Sie ihn bereits abgeschlossen oder übersprungen haben. Der Status wird in der Plugin-Konfiguration (`WizardCompleted`) gespeichert.
 
 ---
 
