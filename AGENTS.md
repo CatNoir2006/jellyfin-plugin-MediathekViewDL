@@ -2,19 +2,6 @@
 
 Jellyfin plugin (C# / .NET 9, Vue.js 3 frontend) that searches and downloads German public broadcasting content via MediathekViewWeb API.
 
-## Upstream / Original Repo
-
-The original/canonical upstream is **`CatNoir2006/jellyfin-plugin-MediathekViewDL`**.
-
-- The local `origin` remote in this checkout may point at a personal fork (e.g. `CatNoirBot/...`) and is **not** the source of truth.
-- The plugin manifest (`build.yaml` → `owner: "CatNoir2006"`) and the Jellyfin plugin manifest repository (`CatNoir2006/jellyfin-plugin-manifest`) are owned by `CatNoir2006`.
-- **When searching GitHub for issues, PRs, releases, or historical context, always scope queries to `CatNoir2006/jellyfin-plugin-MediathekViewDL`** (e.g. via `repo:CatNoir2006/jellyfin-plugin-MediathekViewDL` in `search_issues`, `search_pull_requests`, `search_code`, `list_issues`, etc.).
-
-## Tooling Notes
-
-- **Use the built-in tools** (`read`, `glob`, `grep`, `edit`, `write`, `bash`) instead of shell equivalents like `cat`, `head`, `tail`, `sed`, `awk`, or `echo` for file operations. Only fall back to `bash` for those commands when truly necessary.
-- Prefer `grep` over `rg`/`grep` via `bash`; prefer `glob` over `find`; prefer `read` over `cat`/`head`/`tail`.
-
 ## Build & Test
 
 ```bash
