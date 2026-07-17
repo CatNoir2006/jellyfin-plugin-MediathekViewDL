@@ -1,0 +1,107 @@
+name: '📊 Coverage Report'
+
+on:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '**/*.md'
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - '**/*.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  backend-coverage:
+    name: 'Backend (.NET) coverage'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Restore dependencies
+        run: dotnet restore Jellyfin.Plugin.MediathekViewDL.sln
+
+      - name: Build
+        run: dotnet build Jellyfin.Plugin.MediathekViewDL.sln --no-restore --configuration Release
+
+      - name: Run tests with coverage
+        run: >
+          dotnet test Jellyfin.Plugin.MediathekViewDL.sln
+          --configuration Release
+          --collect:"XPlat Code Coverage"
+          --results-directory ./coverage/backend
+          --logger "trx;LogFileName=backend-results.trx"
+
+      - name: Upload backend coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage
+          path: coverage/backend/**/coverage.cobertura.xml
+          if-no-files-found: error
+
+      - name: Comment PR with backend coverage
+        if: github.event_name == 'pull_request'
+        uses: 5monkeys/cobertura-action@main
+        with:
+          path: coverage/backend/**/coverage.cobertura.xml
+          minimum_coverage: 0
+          fail_on_decrease: false
+
+  frontend-coverage:
+    name: 'Frontend (Vue) coverage'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Jellyfin.Plugin.MediathekViewDL/Configuration/Web/VueJS
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: Jellyfin.Plugin.MediathekViewDL/Configuration/Web/VueJS/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build VueJS
+        run: npm run build
+
+      - name: Run tests with coverage
+        run: npm run coverage -- --reporter=lcov --reporter=text
+
+      - name: Upload frontend coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: Jellyfin.Plugin.MediathekViewDL/Configuration/Web/VueJS/coverage/lcov.info
+          if-no-files-found: error
+
+      - name: Comment PR with frontend coverage
+        if: github.event_name == 'pull_request'
+        uses: davelosert/vitest-coverage-report-action@v4
+        with:
+          coverage-summary-path: Jellyfin.Plugin.MediathekViewDL/Configuration/Web/VueJS/coverage/coverage-summary.json
+          vitest-coverage-fail-threshold: 0
