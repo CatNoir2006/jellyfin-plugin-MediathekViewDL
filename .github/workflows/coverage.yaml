@@ -60,7 +60,7 @@ jobs:
 
       - name: Comment PR with backend coverage
         if: github.event_name == 'pull_request'
-        uses: 5monkeys/cobertura-action@main
+        uses: 5monkeys/cobertura-action@v14
         with:
           path: coverage/backend/**/coverage.cobertura.xml
           minimum_coverage: 0
@@ -101,7 +101,7 @@ jobs:
 
       - name: Comment PR with frontend coverage
         if: github.event_name == 'pull_request'
-        uses: davelosert/vitest-coverage-report-action@v4
+        uses: davelosert/vitest-coverage-report-action@v2.12.2
         with:
           coverage-summary-path: Jellyfin.Plugin.MediathekViewDL/Configuration/Web/VueJS/coverage/coverage-summary.json
           vitest-coverage-fail-threshold: 0
