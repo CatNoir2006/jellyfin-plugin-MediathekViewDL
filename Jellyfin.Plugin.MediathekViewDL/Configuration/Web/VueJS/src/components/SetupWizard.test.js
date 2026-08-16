@@ -124,6 +124,13 @@ describe('SetupWizard', () => {
         expect(document.body.querySelector('[data-testid="wizard-card"]')).not.toBeNull()
         expect(document.body.querySelector('[data-testid="wizard-step-strm"]')).not.toBeNull()
         expect(wrapper.emitted('close')).toBeFalsy()
+        // Skipped step 2 should be recorded
+        expect(wrapper.vm.skippedSteps.has(2)).toBe(true)
+        // Navigate back - skip button label should now show "Schritt übersprungen"
+        document.body.querySelector('[data-testid="wizard-prev"]').click()
+        await flushPromises()
+        expect(document.body.querySelector('[data-testid="wizard-skip"]').textContent.trim())
+            .toBe('Schritt übersprungen')
         wrapper.unmount()
     })
 
@@ -155,10 +162,10 @@ describe('SetupWizard', () => {
         // Act
         document.body.querySelector('[data-testid="wizard-close"]').click()
         await flushPromises()
-        // Assert
+        // Assert - X button signals cancellation (skipped=true)
         const closeEmits = wrapper.emitted('close')
         expect(closeEmits).toBeTruthy()
-        expect(closeEmits[0][0].skipped).toBe(false)
+        expect(closeEmits[0][0].skipped).toBe(true)
         wrapper.unmount()
     })
 
@@ -238,7 +245,65 @@ describe('SetupWizard', () => {
         expect(closeEmits[0][0].paths.DefaultSubscriptionShowPath).toBe('/custom/sub-show')
         expect(closeEmits[0][0].paths.DefaultManualMoviePath).toBe('/custom/man-movie')
         expect(closeEmits[0][0].defaults.UseStreamingUrlFiles).toBe(true)
+        expect(closeEmits[0][0].skipped).toBe(true)
         wrapper.unmount()
+    })
+
+    it('ShouldIncludeSkippedStepsInClosePayload_WhenSkipping', async () => {
+        // Arrange
+        const wrapper = mountWizard()
+        await flushPromises()
+        // Skip step 2 and step 4
+        document.body.querySelector('[data-testid="wizard-next"]').click() // -> step 2
+        await flushPromises()
+        document.body.querySelector('[data-testid="wizard-skip"]').click() // -> step 3
+        await flushPromises()
+        document.body.querySelector('[data-testid="wizard-next"]').click() // -> step 4
+        await flushPromises()
+        document.body.querySelector('[data-testid="wizard-skip"]').click() // -> step 5
+        await flushPromises()
+        // Jump to last step and finish
+        wrapper.vm.currentStep = 7
+        await flushPromises()
+        document.body.querySelector('[data-testid="wizard-finish"]').click()
+        await flushPromises()
+        // Assert
+        const closeEmits = wrapper.emitted('close')
+        expect(closeEmits[0][0].skippedSteps.sort()).toEqual([2, 4])
+        wrapper.unmount()
+    })
+
+    it('ShouldResetStep5FormState_WhenWizardReopened', async () => {
+        // Arrange - first session: fill and save step 5
+        const wrapper = mountWizard()
+        await flushPromises()
+        wrapper.vm.currentStep = 5
+        await flushPromises()
+        const channelSelect = document.body.querySelector('[data-testid="wizard-channel"]')
+        channelSelect.value = 'ARD'
+        channelSelect.dispatchEvent(new Event('change'))
+        const queryInput = document.body.querySelector('[data-testid="wizard-query"]')
+        queryInput.value = 'Tatort'
+        queryInput.dispatchEvent(new Event('input'))
+        await flushPromises()
+        document.body.querySelector('[data-testid="wizard-create-sub"]').click()
+        await flushPromises()
+        // Close
+        document.body.querySelector('[data-testid="wizard-close"]').click()
+        await flushPromises()
+        wrapper.unmount()
+        // Act - re-open the wizard
+        const wrapper2 = mountWizard()
+        await flushPromises()
+        wrapper2.vm.currentStep = 5
+        await flushPromises()
+        // Assert - form should be reset, not pre-filled
+        expect(document.body.querySelector('[data-testid="wizard-channel"]').value).toBe('')
+        expect(document.body.querySelector('[data-testid="wizard-query"]').value).toBe('')
+        // Create button (not "Abo angelegt") should be present again
+        expect(document.body.querySelector('[data-testid="wizard-create-sub"]')).not.toBeNull()
+        expect(document.body.querySelector('[data-testid="wizard-sub-created"]')).toBeNull()
+        wrapper2.unmount()
     })
 
     it('ShouldAlwaysShowNextButton_OnSubscriptionStep_WhenInputsEmpty', async () => {
@@ -417,14 +482,27 @@ describe('SetupWizard', () => {
     })
 
     it('ShouldNotBreak_WhenDirectoryBrowserCallbackReceivesEmptyPath', async () => {
-        // Arrange - simulate Dashboard.DirectoryBrowser callback receiving ''
-        const Dashboard = { DirectoryBrowser: class { show() { /* will not fire */ } } }
+        // Arrange - simulate Dashboard.DirectoryBrowser firing its callback with ''
+        let lastCallback = null
+        const Dashboard = {
+            DirectoryBrowser: class {
+                show(opts) { lastCallback = opts.callback; pickerInstance = this }
+                close() { /* no-op for test */ }
+            }
+        }
+        let pickerInstance = null
         global.window.Dashboard = Dashboard
         const wrapper = mountWizard()
         await flushPromises()
         wrapper.vm.currentStep = 2
         await flushPromises()
-        // The selectPath function should be safe against empty path
+        // Act - trigger the pick button, then fire the callback with an empty string
+        document.body.querySelector('[data-testid="wizard-sub-show-pick"]').click()
+        await flushPromises()
+        expect(lastCallback).toBeTypeOf('function')
+        lastCallback('')
+        await flushPromises()
+        // Assert - the input should keep its current value (empty path is ignored)
         const subShow = document.body.querySelector('[data-testid="wizard-sub-show-path"]')
         expect(subShow.value).toBe('/media/shows')
         wrapper.unmount()

@@ -45,7 +45,7 @@ const setTempDownloadPath = (v) => { tempDownloadPath.value = v }
 const useStreamingUrlFiles = ref(false)
 
 // Step 4: Live TV
-const liveTvState = ref('idle') // 'idle' | 'busy' | 'active' (already added)
+const liveTvState = ref('idle') // 'idle' | 'active'
 const liveTvBusy = ref(false)
 
 // Step 5: First subscription
@@ -56,8 +56,8 @@ const newSubSaving = ref(false)
 const newSubError = ref(null)
 const newSubCreated = ref(false)
 
-// Internal dirty flag so parent knows when to save
-const isDirty = ref(false)
+// Steps explicitly skipped by the user via "Diesen Schritt überspringen"
+const skippedSteps = ref(new Set())
 
 const progressPercent = computed(() => Math.round((currentStep.value / TOTAL_STEPS) * 100))
 
@@ -77,9 +77,19 @@ watch(() => props.open, (open) => {
         loadFromConfig()
         loadChannels()
         checkLiveTvState()
+        resetStep5State()
+        skippedSteps.value = new Set()
         currentStep.value = 1
     }
 }, { immediate: true })
+
+function resetStep5State() {
+    newSubChannel.value = ''
+    newSubQuery.value = ''
+    newSubSaving.value = false
+    newSubError.value = null
+    newSubCreated.value = false
+}
 
 function loadFromConfig() {
     const cfg = props.pluginConfig
@@ -148,11 +158,18 @@ function prev() {
 }
 
 function skipCurrentStep() {
+    skippedSteps.value.add(currentStep.value)
     next()
 }
 
+const skipButtonLabel = computed(() => {
+    return skippedSteps.value.has(currentStep.value)
+        ? 'Schritt übersprungen'
+        : 'Diesen Schritt überspringen'
+})
+
 function closeWizard() {
-    finish(false)
+    finish(true)
 }
 
 async function finish(skipped = false) {
@@ -162,7 +179,6 @@ async function finish(skipped = false) {
             : 'Einrichtung abgeschlossen!'
         Dashboard.alert(msg)
     }
-    isDirty.value = true
     emit('close', {
         skipped,
         paths: {
@@ -174,7 +190,8 @@ async function finish(skipped = false) {
         },
         defaults: {
             UseStreamingUrlFiles: useStreamingUrlFiles.value
-        }
+        },
+        skippedSteps: Array.from(skippedSteps.value)
     })
 }
 
@@ -250,7 +267,7 @@ async function createFirstSubscription() {
 // Expose state for parent (used for testing only)
 defineExpose({
     currentStep,
-    isDirty
+    skippedSteps
 })
 </script>
 
@@ -490,8 +507,9 @@ defineExpose({
                         @click="prev" data-testid="wizard-prev">← Zurück</button>
                     <div class="wizard-footer-spacer"></div>
                     <button v-if="currentStep < TOTAL_STEPS && currentStep !== 1 && currentStep !== 6"
-                        type="button" class="btn btn-secondary btn-sm"
-                        @click="skipCurrentStep" data-testid="wizard-skip">Diesen Schritt überspringen</button>
+                        type="button" class="btn btn-secondary btn-sm wizard-skip-btn"
+                        :class="{ 'wizard-skip-btn--active': skippedSteps.has(currentStep) }"
+                        @click="skipCurrentStep" data-testid="wizard-skip">{{ skipButtonLabel }}</button>
                     <button v-if="currentStep < TOTAL_STEPS" type="button" class="btn btn-primary"
                         @click="next" data-testid="wizard-next">
                         {{ nextButtonLabel }}
@@ -688,5 +706,10 @@ defineExpose({
 
 .wizard-footer-spacer {
     flex: 1;
+}
+
+.wizard-skip-btn--active {
+    color: #a1a1aa;
+    border-color: #52525b;
 }
 </style>

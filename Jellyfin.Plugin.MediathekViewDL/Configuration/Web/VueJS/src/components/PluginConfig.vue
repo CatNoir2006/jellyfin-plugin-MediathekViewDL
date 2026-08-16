@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import ApiService from '../utils/ApiService'
 import { SubscriptionFactory } from '../utils/SubscriptionFactory'
 import SearchTab from './tabs/SearchTab.vue'
@@ -77,13 +77,23 @@ async function saveSubscription(sub) {
      await ApiService.saveSubscription(sub)
      editingSub.value = null
      if (Dashboard) Dashboard.alert('Abonnement gespeichert.')
-     // Refresh subscriptions tab
+     // Ensure Abos tab is mounted before refreshing
+     currentTab.value = 'subscriptions'
+     await nextTick()
      if (subscriptionsTabRef.value) {
        subscriptionsTabRef.value.refresh()
      }
   } catch (e) {
     console.error('Save failed', e)
     if (Dashboard) Dashboard.alert('Fehler beim Speichern des Abonnements.')
+  }
+}
+
+async function onWizardSubscriptionCreated() {
+  currentTab.value = 'subscriptions'
+  await nextTick()
+  if (subscriptionsTabRef.value) {
+    subscriptionsTabRef.value.refresh()
   }
 }
 
@@ -206,7 +216,7 @@ onMounted(() => {
 
     <!-- Setup Wizard -->
     <SetupWizard ref="wizardRef" :open="showWizard" :plugin-config="pluginConfig"
-      @close="persistWizardResult" @subscription-created="() => subscriptionsTabRef?.refresh?.()" />
+      @close="persistWizardResult" @subscription-created="onWizardSubscriptionCreated" />
 
     <!-- Shared Test Results Modal -->
     <Teleport to="body">
