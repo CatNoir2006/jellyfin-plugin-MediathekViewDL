@@ -213,5 +213,4 @@ Zeigt die Server-Logs an, gefiltert auf Plugin-Einträge.
 
 ---
 ## Letze Anpassung der Readme
-* Plugin: v0.8.0.2
-* Commit: ed5e38e5ca20855789e4d3a869e3ba36a0273aa5
+* Plugin: v0.8.0.3
