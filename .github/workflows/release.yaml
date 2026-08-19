@@ -4,7 +4,7 @@ name: '🚀 3rd-Party Release'
 
 on:
   release:
-    types: [published, created, edited]
+    types: [published]
   workflow_dispatch:
 
 # IMPORTANT:
