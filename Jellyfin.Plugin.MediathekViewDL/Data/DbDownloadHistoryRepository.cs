@@ -97,6 +97,29 @@ public class DbDownloadHistoryRepository : IDownloadHistoryRepository
     }
 
     /// <inheritdoc />
+    public async Task<bool> ExistsByAnyUrlAndSubscriptionIdAsync(IEnumerable<string> videoUrls, Guid subscriptionId)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<MediathekViewDlDbContext>();
+
+        var hashes = videoUrls
+            .Where(u => !string.IsNullOrWhiteSpace(u))
+            .Select(HashUrl)
+            .Distinct()
+            .ToList();
+
+        if (hashes.Count == 0)
+        {
+            return false;
+        }
+
+        return await context.DownloadHistory
+            .AsNoTracking()
+            .AnyAsync(e => e.SubscriptionId == subscriptionId && hashes.Contains(e.VideoUrlHash))
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public async Task<bool> ExistsByHashAsync(string videoUrlHash)
     {
         using var scope = _scopeFactory.CreateScope();

@@ -329,6 +329,58 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         }
 
         [Fact]
+        public async Task GetJobsForSubscriptionAsync_ShouldSkip_IfFoundInHistoryByUrl_AndItemIdChanged()
+        {
+            // Arrange
+            // The API re-published the same video under a new item ID, but the video URL is identical.
+            // The download history must still detect the duplicate by URL to avoid re-downloading.
+            var subscription = new Subscription { Id = Guid.NewGuid(), Name = "TestSub" };
+            var item = new ResultItem
+            {
+                Id = "new-id",
+                Title = "TestTitle",
+                UrlVideo = "http://test.com/video.mp4"
+            };
+
+            var resultChannels = new ResultChannels
+            {
+                Results = new Collection<ResultItem> { item },
+                QueryInfo = new QueryInfo { TotalResults = 1 }
+            };
+
+            _apiClientMock
+                .Setup(x => x.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultChannels.ToDto(new ApiQueryDto(), false));
+
+            var videoInfo = new VideoInfo { Title = "TestTitle", Language = "deu" };
+            _videoParserMock
+                .Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(videoInfo);
+
+            _fileNameBuilderServiceMock
+                .Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<DownloadContext>(), It.IsAny<FileType?>()))
+                .Returns(new DownloadPaths { DirectoryPath = "/tmp", MainFilePath = "/tmp/video.mp4" });
+
+            _downloadHistoryRepositoryMock
+                .Setup(x => x.ExistsByItemIdAndSubscriptionIdAsync("new-id", subscription.Id))
+                .ReturnsAsync(false);
+            _downloadHistoryRepositoryMock
+                .Setup(x => x.ExistsByAnyUrlAndSubscriptionIdAsync(It.IsAny<IEnumerable<string>>(), subscription.Id))
+                .ReturnsAsync(true);
+
+            var config = new PluginConfiguration();
+            config.Subscriptions.Add(subscription);
+            _configurationProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+            _configurationProviderMock.Setup(x => x.Configuration).Returns(config);
+
+            // Act
+            var jobs = await _processor.GetJobsForSubscriptionAsync(subscription, false, CancellationToken.None);
+
+            // Assert
+            Assert.Empty(jobs);
+        }
+
+        [Fact]
         public async Task ProcessSubscriptionAsync_ShouldQueueJobsAndUpdateTimestamp()
         {
             // Arrange

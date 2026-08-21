@@ -52,6 +52,16 @@ public interface IDownloadHistoryRepository
     Task<bool> ExistsByItemIdAndSubscriptionIdAsync(string itemId, Guid subscriptionId);
 
     /// <summary>
+    /// Gets whether a download history entry exists for any of the specified video URLs and subscription ID.
+    /// This is used as a more robust duplicate detection than the item ID alone, because the API item ID
+    /// can change when an entry is re-published or de-duplicated while the video URL stays the same.
+    /// </summary>
+    /// <param name="videoUrls">The candidate video URLs.</param>
+    /// <param name="subscriptionId">The SubID.</param>
+    /// <returns>True if any of the video URLs exists in history, otherwise false.</returns>
+    Task<bool> ExistsByAnyUrlAndSubscriptionIdAsync(IEnumerable<string> videoUrls, Guid subscriptionId);
+
+    /// <summary>
     /// Checks if a video URL hash has already been downloaded.
     /// </summary>
     /// <param name="videoUrlHash">The hash of the video URL.</param>

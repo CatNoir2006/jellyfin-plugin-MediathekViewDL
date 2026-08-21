@@ -121,7 +121,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
         await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            if (!subscription.IgnoreHistory && await IsInDownloadCache(item.Id, subscription.Id).ConfigureAwait(false))
+            if (!subscription.IgnoreHistory && await IsInDownloadCache(item, subscription.Id).ConfigureAwait(false))
             {
                 _logger.LogDebug("Skipping item '{Title}' (ID: {Id}) as it was already processed for subscription '{SubscriptionName}'.", item.Title, item.Id, subscription.Name);
                 continue;
@@ -378,10 +378,19 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         return true;
     }
 
-    private async Task<bool> IsInDownloadCache(string itemId, Guid subscriptionId)
+    private async Task<bool> IsInDownloadCache(ResultItemDto item, Guid subscriptionId)
     {
-        var item = await _downloadHistoryRepository.GetByItemIdAndSubscriptionIdAsync(itemId, subscriptionId).ConfigureAwait(false);
-        return item is not null;
+        // Primary check by the (possibly unstable) API item ID.
+        if (await _downloadHistoryRepository.ExistsByItemIdAndSubscriptionIdAsync(item.Id, subscriptionId).ConfigureAwait(false))
+        {
+            return true;
+        }
+
+        // Secondary, more robust check by video URL. The API item ID can change when an entry is
+        // re-published or de-duplicated, but the actual video URL stays the same. This prevents
+        // extras and one-off (non-series) items from being downloaded again and again.
+        var urls = item.VideoUrls.Select(v => v.Url).Where(u => !string.IsNullOrWhiteSpace(u));
+        return await _downloadHistoryRepository.ExistsByAnyUrlAndSubscriptionIdAsync(urls, subscriptionId).ConfigureAwait(false);
     }
 
     private void SetOvLanguageIfSet(Subscription subscription, VideoInfo? videoInfo)
