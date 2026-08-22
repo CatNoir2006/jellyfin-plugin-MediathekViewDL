@@ -27,6 +27,11 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
 {
     private const string FolderPrefix = "vsub:";
     private const string ItemPrefix = "vitem:";
+    private const int MaxCacheEntries = 512;
+
+    // The channel is a singleton, so the cache needs an entry lifetime and a hard cap to
+    // avoid unbounded growth and stale playback entries for removed subscriptions/items.
+    private static readonly TimeSpan CacheEntryLifetime = TimeSpan.FromMinutes(30);
 
     private readonly ILogger<MediathekChannel> _logger;
     private readonly IConfigurationProvider _configurationProvider;
@@ -34,6 +39,9 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
 
     // Cache of channel item id -> the API result used to resolve the stream URL on playback.
     private readonly ConcurrentDictionary<string, ApiResultCacheEntry> _itemCache = new(StringComparer.OrdinalIgnoreCase);
+
+    // The state (DataVersion) the cache was built from; a mismatch invalidates all entries.
+    private string? _cacheStateKey;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekChannel"/> class.
@@ -72,9 +80,12 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
                 ",",
                 config.Subscriptions
                     .Where(s => s.IsEnabled && s.IsVirtual)
-                    .Select(s => s.Id.ToString("N", System.Globalization.CultureInfo.InvariantCulture)));
+                    .Select(s => s.Id.ToString("N", System.Globalization.CultureInfo.InvariantCulture))
+                    .OrderBy(static id => id, StringComparer.OrdinalIgnoreCase));
 
-            return "v1:" + ids;
+            // Jellyfin caches channel listings while DataVersion stays constant. Bucketing by
+            // day forces a daily refresh so newly published items appear without config changes.
+            return $"v2:{DateTime.UtcNow:yyyyMMdd}:{ids}";
         }
     }
 
@@ -118,6 +129,8 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
             return new ChannelItemResult();
         }
 
+        InvalidateStaleCache();
+
         var virtualSubscriptions = config.Subscriptions
             .Where(s => s.IsEnabled && s.IsVirtual)
             .ToList();
@@ -145,9 +158,9 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
     /// <inheritdoc />
     public async Task<IEnumerable<MediaSourceInfo>> GetChannelItemMediaInfo(string id, CancellationToken cancellationToken)
     {
-        if (!_itemCache.TryGetValue(id, out var entry))
+        if (!_itemCache.TryGetValue(id, out var entry) || IsExpired(entry))
         {
-            _logger.LogWarning("No cached item found for channel item '{Id}'.", id);
+            _logger.LogWarning("No (longer) cached item found for channel item '{Id}'.", id);
             return [];
         }
 
@@ -200,7 +213,7 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
         await foreach (var (item, videoInfo) in _subscriptionProcessor.GetChannelItemsAsync(subscription, cancellationToken).ConfigureAwait(false))
         {
             var itemId = ItemPrefix + subscription.Id.ToString("N", System.Globalization.CultureInfo.InvariantCulture) + "-" + item.Id;
-            _itemCache[itemId] = new ApiResultCacheEntry(subscription, item);
+            _itemCache[itemId] = new ApiResultCacheEntry(subscription, item, DateTimeOffset.UtcNow);
 
             var isEpisode = videoInfo.IsShow;
             var channelItem = new ChannelItemInfo
@@ -240,6 +253,46 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
     }
 
     /// <summary>
+    /// Drops expired cache entries and invalidates the whole cache when the set of enabled
+    /// virtual subscriptions (or the daily refresh bucket) changed. Called before listings are
+    /// rebuilt so removed subscriptions/items can no longer be resolved for playback.
+    /// </summary>
+    private void InvalidateStaleCache()
+    {
+        var stateKey = DataVersion;
+        if (_cacheStateKey != stateKey)
+        {
+            _itemCache.Clear();
+            _cacheStateKey = stateKey;
+            return;
+        }
+
+        if (_itemCache.IsEmpty)
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        foreach (var (key, entry) in _itemCache)
+        {
+            if (IsExpired(entry, now))
+            {
+                _itemCache.TryRemove(key, out _);
+            }
+        }
+
+        if (_itemCache.Count > MaxCacheEntries)
+        {
+            _logger.LogDebug("Channel item cache exceeded {MaxCacheEntries} entries; clearing.", MaxCacheEntries);
+            _itemCache.Clear();
+        }
+    }
+
+    private bool IsExpired(in ApiResultCacheEntry entry) => IsExpired(entry, DateTimeOffset.UtcNow);
+
+    private static bool IsExpired(in ApiResultCacheEntry entry, DateTimeOffset now) => now - entry.CachedAt > CacheEntryLifetime;
+
+    /// <summary>
     /// Creates a stable <see cref="Guid"/> from an arbitrary string.
     /// Jellyfin's streaming pipeline Guid.Parse's the MediaSourceId (e.g. for trickplay),
     /// so channel media sources must expose a valid Guid instead of the raw external id.
@@ -254,5 +307,5 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
         return new Guid(hash.AsSpan(0, 16));
     }
 
-    private readonly record struct ApiResultCacheEntry(Subscription Subscription, Api.Models.ResultItemDto Item);
+    private readonly record struct ApiResultCacheEntry(Subscription Subscription, Api.Models.ResultItemDto Item, DateTimeOffset CachedAt);
 }
