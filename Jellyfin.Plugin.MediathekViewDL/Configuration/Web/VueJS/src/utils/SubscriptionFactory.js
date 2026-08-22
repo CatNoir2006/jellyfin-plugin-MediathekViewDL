@@ -2,6 +2,7 @@ export const SubscriptionFactory = {
   createDefault: (defaults = {}) => ({
     Name: '',
     IsEnabled: true,
+    IsVirtual: false,
     Search: {
       Criteria: [{ Fields: ['Title', 'Topic'], Query: '', IsExclude: false }],
       MinDurationMinutes: defaults.SearchSettings?.MinDurationMinutes || null,

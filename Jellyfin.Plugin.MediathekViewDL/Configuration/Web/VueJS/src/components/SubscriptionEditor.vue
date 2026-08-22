@@ -152,6 +152,13 @@ function updateDate(target, field, value) {
                         </label>
                     </div>
 
+                    <div class="checkbox-field">
+                        <label>
+                            <input v-model="editedSub.IsVirtual" type="checkbox"> Virtuell (nur Kanal, kein Download)
+                        </label>
+                        <p class="field-desc">Sendungen werden nicht heruntergeladen und es werden keine STRMs erstellt. Stattdessen erscheinen sie im Jellyfin-Kanal und werden direkt aus der Mediathek gestreamt.</p>
+                    </div>
+
                     <div class="checkbox-field" hidden>
                         <label>
                             <input v-model="editedSub.IgnoreLocalFiles" type="checkbox"> Lokale Dateien ignorieren

@@ -3,6 +3,7 @@ using System.IO;
 using System.Net.Http;
 using Jellyfin.Plugin.MediathekViewDL.Api;
 using Jellyfin.Plugin.MediathekViewDL.Api.External;
+using Jellyfin.Plugin.MediathekViewDL.Channels;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services;
@@ -16,6 +17,7 @@ using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 using MediaBrowser.Controller;
+using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Controller.Plugins;
 using Microsoft.EntityFrameworkCore;
@@ -70,6 +72,9 @@ namespace Jellyfin.Plugin.MediathekViewDL
             // Live TV
             serviceCollection.AddSingleton<ITunerHost, LiveTv.ZappTunerHost>();
             serviceCollection.AddSingleton<IListingsProvider, LiveTv.ZappListingsProvider>();
+
+            // Virtual channel (no download / STRMs; streams on demand)
+            serviceCollection.AddSingleton<IChannel, MediathekChannel>();
 
             // Register Download Handlers
             serviceCollection.AddTransient<IDownloadHandler, FFmpegDownloadHandler>();

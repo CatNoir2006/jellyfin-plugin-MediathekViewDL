@@ -149,6 +149,7 @@ Das Herzstück des Plugins. Hier definieren Sie, was regelmäßig gesucht wird.
 | Option | Beschreibung |
 | :--- | :--- |
 | **Name** | Der Name des Abos. Bestimmt den Unterordner für die Serie im Zielverzeichnis. |
+| **Virtuell (nur Kanal)** | Markiert das Abo als *virtuell*. Es werden **keine Dateien heruntergeladen** und **keine STRMs erstellt**. Die Sendungen erscheinen stattdessen im Jellyfin-**Kanal** *Mediathek (Virtual)* und werden bei der Wiedergabe direkt aus der Mediathek gestreamt. Ideal, um Speicherplatz zu sparen und trotzdem bequem durch die Inhalte zu browsen. |
 | **Suchanfragen** | Eine oder mehrere Suchkriterien (Titel, Thema, Sender). <br>• **Ausschluss (NOT):** Klicken Sie auf die `NOT`-Schaltfläche im Abo-Editor, um einen Begriff auszuschließen (rot markiert). Ergebnisse mit diesem Begriff werden ignoriert. |
 | **Download-Pfad** | Überschreibt den globalen Standard-Download-Pfad nur für dieses Abo. |
 | **Min. / Max. Dauer** | Filtert Ergebnisse anhand der Dauer (in Minuten). |

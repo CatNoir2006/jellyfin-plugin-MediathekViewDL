@@ -78,6 +78,13 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <inheritdoc/>
     public async Task<int> ProcessSubscriptionAsync(Subscription subscription, CancellationToken cancellationToken)
     {
+        // Virtual subscriptions are not downloaded; their items are served through the channel.
+        if (subscription.IsVirtual)
+        {
+            _logger.LogDebug("Skipping download for virtual subscription '{SubscriptionName}'.", subscription.Name);
+            return 0;
+        }
+
         var config = _configurationProvider.ConfigurationOrNull;
         if (config == null)
         {
@@ -109,6 +116,56 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         Subscription subscription,
         [EnumeratorCancellation] CancellationToken cancellationToken)
     {
+        await foreach (var entry in GetEligibleItemsAsync(subscription, honorHistory: true, cancellationToken).ConfigureAwait(false))
+        {
+            yield return entry;
+        }
+    }
+
+    /// <summary>
+    /// Returns all items matching the subscription that should be surfaced in the virtual channel.
+    /// Unlike <see cref="GetEligibleItemsAsync(Subscription, CancellationToken)"/> this does not filter by download history, so the
+    /// channel always reflects the currently available items in the Mediathek.
+    /// </summary>
+    /// <param name="subscription">The subscription.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The matching items.</returns>
+    public async IAsyncEnumerable<(ResultItemDto Item, VideoInfo VideoInfo)> GetChannelItemsAsync(
+        Subscription subscription,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
+        await foreach (var entry in GetEligibleItemsAsync(subscription, honorHistory: false, cancellationToken).ConfigureAwait(false))
+        {
+            yield return entry;
+        }
+    }
+
+    /// <summary>
+    /// Resolves the best streamable video URL for a single API item, honoring the subscription's
+    /// quality and fallback settings. Used by the virtual channel to build playable media sources.
+    /// </summary>
+    /// <param name="subscription">The subscription the item belongs to.</param>
+    /// <param name="item">The API result item.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The streamable URL, or <c>null</c> if none could be resolved.</returns>
+    public Task<string?> GetStreamUrlAsync(Subscription subscription, ResultItemDto item, CancellationToken cancellationToken = default)
+    {
+        return GetUrlCandidate(item, subscription, cancellationToken);
+    }
+
+    /// <summary>
+    /// Returns all items matching the subscription, optionally filtering out items that were
+    /// already processed according to the download history.
+    /// </summary>
+    /// <param name="subscription">The subscription.</param>
+    /// <param name="honorHistory">Whether to skip items already present in the download history.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The matching items.</returns>
+    private async IAsyncEnumerable<(ResultItemDto Item, VideoInfo VideoInfo)> GetEligibleItemsAsync(
+        Subscription subscription,
+        bool honorHistory,
+        [EnumeratorCancellation] CancellationToken cancellationToken)
+    {
         LocalEpisodeCache? localEpisodeCache = null;
         if (subscription.Download.EnhancedDuplicateDetection && !subscription.IgnoreLocalFiles)
         {
@@ -121,7 +178,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
 
         await foreach (var item in QueryApiAsync(subscription, cancellationToken: cancellationToken).ConfigureAwait(false))
         {
-            if (!subscription.IgnoreHistory && await IsInDownloadCache(item, subscription.Id).ConfigureAwait(false))
+            if (honorHistory && !subscription.IgnoreHistory && await IsInDownloadCache(item, subscription.Id).ConfigureAwait(false))
             {
                 _logger.LogDebug("Skipping item '{Title}' (ID: {Id}) as it was already processed for subscription '{SubscriptionName}'.", item.Title, item.Id, subscription.Name);
                 continue;

@@ -54,4 +54,28 @@ public interface ISubscriptionProcessor
     IAsyncEnumerable<ResultItemDto> TestSubscriptionAsync(
         Subscription subscription,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Returns all items matching the subscription that should be surfaced in the virtual channel,
+    /// ignoring the download history so the channel always reflects the currently available items.
+    /// </summary>
+    /// <param name="subscription">The subscription.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The matching items and their parsed video info.</returns>
+    IAsyncEnumerable<(ResultItemDto Item, VideoInfo VideoInfo)> GetChannelItemsAsync(
+        Subscription subscription,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Resolves the best streamable video URL for a single API item, honoring the subscription's
+    /// quality and fallback settings. Used by the virtual channel to build playable media sources.
+    /// </summary>
+    /// <param name="subscription">The subscription the item belongs to.</param>
+    /// <param name="item">The API result item.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The streamable URL, or <c>null</c> if none could be resolved.</returns>
+    Task<string?> GetStreamUrlAsync(
+        Subscription subscription,
+        ResultItemDto item,
+        CancellationToken cancellationToken = default);
 }

@@ -77,4 +77,12 @@ public record Subscription
     /// Gets or sets a value indicating whether to ignore the download history when processing this subscription.
     /// </summary>
     public bool IgnoreHistory { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether this subscription is virtual.
+    /// A virtual subscription does not download any files or create STRMs. Instead its items
+    /// are exposed through the plugin's Jellyfin channel and streamed on demand directly from
+    /// the Mediathek URL.
+    /// </summary>
+    public bool IsVirtual { get; set; }
 }
