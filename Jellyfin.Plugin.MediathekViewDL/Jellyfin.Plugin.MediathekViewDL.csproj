@@ -6,6 +6,7 @@
     <AssemblyName>Jellyfin.Plugin.MediathekViewDL</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>NU1903</WarningsNotAsErrors>
     <Nullable>enable</Nullable>
     <AnalysisMode>AllEnabledByDefault</AnalysisMode>
     <CodeAnalysisRuleSet>../jellyfin.ruleset</CodeAnalysisRuleSet>
@@ -24,12 +25,12 @@
     <PackageReference Include="Jellyfin.Model" Version="10.11.0">
       <ExcludeAssets>$(PluginDependencyExcludeAssets)</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
       <ExcludeAssets>$(PluginDependencyExcludeAssets)</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0">
       <ExcludeAssets>$(PluginDependencyExcludeAssets)</ExcludeAssets>
     </PackageReference>
     <PackageReference Include="Polly" Version="8.6.4" />
