@@ -4,9 +4,9 @@ using System.Threading.Tasks;
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Library;
 
 /// <summary>
-/// Interface for the StrmValidationService.
+/// Interface for the UrlValidationService.
 /// </summary>
-public interface IStrmValidationService
+public interface IUrlValidationService
 {
     /// <summary>
     /// Validates a streaming URL.

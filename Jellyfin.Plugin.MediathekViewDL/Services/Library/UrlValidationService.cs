@@ -12,19 +12,19 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services.Library;
 /// <summary>
 /// Service for validating streaming URLs in .strm files.
 /// </summary>
-public class StrmValidationService : IStrmValidationService
+public class UrlValidationService : IUrlValidationService
 {
-    private readonly ILogger<StrmValidationService> _logger;
+    private readonly ILogger<UrlValidationService> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfigurationProvider _configurationProvider;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="StrmValidationService"/> class.
+    /// Initializes a new instance of the <see cref="UrlValidationService"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="httpClientFactory">The HTTP client factory.</param>
     /// <param name="configurationProvider">The configuration provider.</param>
-    public StrmValidationService(ILogger<StrmValidationService> logger, IHttpClientFactory httpClientFactory, IConfigurationProvider configurationProvider)
+    public UrlValidationService(ILogger<UrlValidationService> logger, IHttpClientFactory httpClientFactory, IConfigurationProvider configurationProvider)
     {
         _logger = logger;
         _httpClientFactory = httpClientFactory;

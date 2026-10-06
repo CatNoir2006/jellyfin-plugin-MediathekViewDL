@@ -19,7 +19,7 @@ public class StrmCleanupTask : IScheduledTask
 {
     private const long MaxStrmFileSize = 4096; // 4 KB max size for .strm files to prevent accidents
     private readonly ILogger<StrmCleanupTask> _logger;
-    private readonly IStrmValidationService _validationService;
+    private readonly IUrlValidationService _validationService;
     private readonly IConfigurationProvider _configurationProvider;
 
     /// <summary>
@@ -28,7 +28,7 @@ public class StrmCleanupTask : IScheduledTask
     /// <param name="logger">The logger.</param>
     /// <param name="validationService">The validation service.</param>
     /// <param name="configurationProvider">The configuration provider.</param>
-    public StrmCleanupTask(ILogger<StrmCleanupTask> logger, IStrmValidationService validationService, IConfigurationProvider configurationProvider)
+    public StrmCleanupTask(ILogger<StrmCleanupTask> logger, IUrlValidationService validationService, IConfigurationProvider configurationProvider)
     {
         _logger = logger;
         _validationService = validationService;
@@ -70,6 +70,9 @@ public class StrmCleanupTask : IScheduledTask
         }
 
         _logger.LogInformation("Starting .strm cleanup task.");
+        // ToDo: Remove this exception once the cleanup logic is updated to handle the new split paths for Show and Movie downloads.
+        throw new NotSupportedException("Strm cleanup is currently disabled because its not updated to the split paths for Show and Movie downloads.");
+#pragma warning disable CS0162 // Unreachable code detected
         progress.Report(0);
 
         var subscriptions = config.Subscriptions.Where(s => s.IsEnabled).ToList();
@@ -168,5 +171,6 @@ public class StrmCleanupTask : IScheduledTask
 
         _logger.LogInformation("Strm cleanup task finished. Processed {Processed} files, deleted {Deleted} files.", filesProcessed, filesDeleted);
         progress.Report(100);
+#pragma warning restore CS0162 // Unreachable code detected
     }
 }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Queue;

@@ -12,18 +12,18 @@ using Xunit;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Tests;
 
-public class StrmValidationServiceTests
+public class UrlValidationServiceTests
 {
-    private readonly Mock<ILogger<StrmValidationService>> _loggerMock;
+    private readonly Mock<ILogger<UrlValidationService>> _loggerMock;
     private readonly Mock<IHttpClientFactory> _httpClientFactoryMock;
     private readonly Mock<HttpMessageHandler> _httpMessageHandlerMock;
     private readonly Mock<IConfigurationProvider> _configProviderMock;
-    private readonly StrmValidationService _service;
+    private readonly UrlValidationService _service;
     private readonly PluginConfiguration _testConfig;
 
-    public StrmValidationServiceTests()
+    public UrlValidationServiceTests()
     {
-        _loggerMock = new Mock<ILogger<StrmValidationService>>();
+        _loggerMock = new Mock<ILogger<UrlValidationService>>();
         _httpClientFactoryMock = new Mock<IHttpClientFactory>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         _configProviderMock = new Mock<IConfigurationProvider>();
@@ -34,7 +34,7 @@ public class StrmValidationServiceTests
         var client = new HttpClient(_httpMessageHandlerMock.Object);
         _httpClientFactoryMock.Setup(x => x.CreateClient(It.IsAny<string>())).Returns(client);
 
-        _service = new StrmValidationService(_loggerMock.Object, _httpClientFactoryMock.Object, _configProviderMock.Object);
+        _service = new UrlValidationService(_loggerMock.Object, _httpClientFactoryMock.Object, _configProviderMock.Object);
     }
 
     [Fact]
