@@ -20,7 +20,7 @@ public class DownloadManager : IDownloadManager
     private readonly ILogger<DownloadManager> _logger;
     private readonly INfoService _nfoService;
     private readonly IEnumerable<IDownloadHandler> _downloadHandlers;
-    private readonly IStrmValidationService _urlValidationService;
+    private readonly IUrlValidationService _urlValidationService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DownloadManager"/> class.
@@ -33,7 +33,7 @@ public class DownloadManager : IDownloadManager
         ILogger<DownloadManager> logger,
         INfoService nfoService,
         IEnumerable<IDownloadHandler> downloadHandlers,
-        IStrmValidationService urlValidationService)
+        IUrlValidationService urlValidationService)
     {
         _logger = logger;
         _nfoService = nfoService;

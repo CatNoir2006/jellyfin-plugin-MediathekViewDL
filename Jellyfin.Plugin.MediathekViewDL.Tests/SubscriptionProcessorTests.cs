@@ -30,7 +30,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         private readonly Mock<IVideoParser> _videoParserMock;
         private readonly Mock<ILocalMediaScanner> _localMediaScannerMock;
         private readonly Mock<IFileNameBuilderService> _fileNameBuilderServiceMock;
-        private readonly Mock<IStrmValidationService> _strmValidationServiceMock;
+        private readonly Mock<IUrlValidationService> _strmValidationServiceMock;
         private readonly Mock<IFFmpegService> _ffmpegServiceMock;
         private readonly Mock<IDownloadHistoryRepository> _downloadHistoryRepositoryMock;
         private readonly Mock<IConfigurationProvider> _configurationProviderMock;
@@ -44,7 +44,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _videoParserMock = new Mock<IVideoParser>();
             _localMediaScannerMock = new Mock<ILocalMediaScanner>();
             _fileNameBuilderServiceMock = new Mock<IFileNameBuilderService>();
-            _strmValidationServiceMock = new Mock<IStrmValidationService>();
+            _strmValidationServiceMock = new Mock<IUrlValidationService>();
             _ffmpegServiceMock = new Mock<IFFmpegService>();
             _downloadHistoryRepositoryMock = new Mock<IDownloadHistoryRepository>();
             _configurationProviderMock = new Mock<IConfigurationProvider>();

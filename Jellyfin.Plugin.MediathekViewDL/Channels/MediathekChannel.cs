@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
-using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Providers;
@@ -15,6 +14,7 @@ using MediaBrowser.Model.Channels;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.MediaInfo;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Channels;
@@ -23,25 +23,28 @@ namespace Jellyfin.Plugin.MediathekViewDL.Channels;
 /// Exposes the items of virtual subscriptions as a Jellyfin channel. Items are streamed on demand
 /// directly from the Mediathek URL without downloading files or creating STRMs.
 /// </summary>
-public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
+public class MediathekChannel : IChannel, IRequiresMediaInfoCallback, IDisposable
 {
     private const string FolderPrefix = "vsub:";
     private const string ItemPrefix = "vitem:";
     private const int MaxCacheEntries = 512;
 
-    // The channel is a singleton, so the cache needs an entry lifetime and a hard cap to
-    // avoid unbounded growth and stale playback entries for removed subscriptions/items.
-    private static readonly TimeSpan CacheEntryLifetime = TimeSpan.FromMinutes(30);
+    // Setup caching Settings
+    private static readonly TimeSpan _cacheEntryLifetime = TimeSpan.FromMinutes(30);
+    private static readonly MemoryCacheEntryOptions _defaultCacheOptions = new MemoryCacheEntryOptions()
+        .SetAbsoluteExpiration(_cacheEntryLifetime)
+        .SetSize(1);
 
     private readonly ILogger<MediathekChannel> _logger;
     private readonly IConfigurationProvider _configurationProvider;
     private readonly ISubscriptionProcessor _subscriptionProcessor;
 
     // Cache of channel item id -> the API result used to resolve the stream URL on playback.
-    private readonly ConcurrentDictionary<string, ApiResultCacheEntry> _itemCache = new(StringComparer.OrdinalIgnoreCase);
+    private readonly MemoryCache _memoryCache = new(new MemoryCacheOptions { SizeLimit = MaxCacheEntries });
 
     // The state (DataVersion) the cache was built from; a mismatch invalidates all entries.
     private string? _cacheStateKey;
+    private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MediathekChannel"/> class.
@@ -96,7 +99,9 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
     public ChannelParentalRating ParentalRating => ChannelParentalRating.GeneralAudience;
 
     /// <inheritdoc />
-    public bool IsEnabledFor(string userId) => true;
+    public bool IsEnabledFor(string userId) => _configurationProvider
+        .ConfigurationOrNull?
+        .Subscriptions.Any(s => s is { IsEnabled: true, IsVirtual: true }) ?? false;
 
     /// <inheritdoc />
     public IEnumerable<ImageType> GetSupportedChannelImages() => [];
@@ -112,11 +117,11 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
     {
         return new InternalChannelFeatures
         {
-            MediaTypes = new List<ChannelMediaType> { ChannelMediaType.Video },
-            ContentTypes = new List<ChannelMediaContentType> { ChannelMediaContentType.Clip, ChannelMediaContentType.Episode },
-            DefaultSortFields = new List<ChannelItemSortField> { ChannelItemSortField.PremiereDate, ChannelItemSortField.Name },
+            MediaTypes = [ChannelMediaType.Video],
+            ContentTypes = [ChannelMediaContentType.Clip, ChannelMediaContentType.Episode],
+            DefaultSortFields = [ChannelItemSortField.PremiereDate, ChannelItemSortField.Name],
             SupportsSortOrderToggle = true,
-            SupportsContentDownloading = false,
+            SupportsContentDownloading = false
         };
     }
 
@@ -132,7 +137,7 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
         InvalidateStaleCache();
 
         var virtualSubscriptions = config.Subscriptions
-            .Where(s => s.IsEnabled && s.IsVirtual)
+            .Where(s => s is { IsEnabled: true, IsVirtual: true })
             .ToList();
 
         if (string.IsNullOrEmpty(query.FolderId))
@@ -158,7 +163,7 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
     /// <inheritdoc />
     public async Task<IEnumerable<MediaSourceInfo>> GetChannelItemMediaInfo(string id, CancellationToken cancellationToken)
     {
-        if (!_itemCache.TryGetValue(id, out var entry) || IsExpired(entry))
+        if (!TryGetCache(id, out var entry))
         {
             _logger.LogWarning("No (longer) cached item found for channel item '{Id}'.", id);
             return [];
@@ -184,7 +189,7 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
             SupportsDirectPlay = true,
         };
 
-        return new List<MediaSourceInfo> { mediaSource };
+        return [mediaSource];
     }
 
     private ChannelItemResult BuildFolderListing(IReadOnlyCollection<Subscription> virtualSubscriptions)
@@ -196,7 +201,7 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
             Type = ChannelItemType.Folder,
             FolderType = ChannelFolderType.Container,
             MediaType = ChannelMediaType.Video,
-            DateCreated = subscription.LastDownloadedTimestamp,
+            DateCreated = subscription.LastDownloadedTimestamp
         }).ToList();
 
         return new ChannelItemResult
@@ -213,7 +218,7 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
         await foreach (var (item, videoInfo) in _subscriptionProcessor.GetChannelItemsAsync(subscription, cancellationToken).ConfigureAwait(false))
         {
             var itemId = ItemPrefix + subscription.Id.ToString("N", System.Globalization.CultureInfo.InvariantCulture) + "-" + item.Id;
-            _itemCache[itemId] = new ApiResultCacheEntry(subscription, item, DateTimeOffset.UtcNow);
+            _memoryCache.Set(itemId, new ApiResultCacheEntry(subscription, item, DateTimeOffset.UtcNow), _defaultCacheOptions);
 
             var isEpisode = videoInfo.IsShow;
             var channelItem = new ChannelItemInfo
@@ -234,7 +239,7 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
 
             if (!string.IsNullOrWhiteSpace(item.Channel))
             {
-                channelItem.Studios = new List<string> { item.Channel };
+                channelItem.Studios = [item.Channel];
             }
 
             if (!string.IsNullOrWhiteSpace(item.Topic))
@@ -262,35 +267,17 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
         var stateKey = DataVersion;
         if (_cacheStateKey != stateKey)
         {
-            _itemCache.Clear();
+            _memoryCache.Clear();
             _cacheStateKey = stateKey;
             return;
         }
-
-        if (_itemCache.IsEmpty)
-        {
-            return;
-        }
-
-        var now = DateTimeOffset.UtcNow;
-        foreach (var (key, entry) in _itemCache)
-        {
-            if (IsExpired(entry, now))
-            {
-                _itemCache.TryRemove(key, out _);
-            }
-        }
-
-        if (_itemCache.Count > MaxCacheEntries)
-        {
-            _logger.LogDebug("Channel item cache exceeded {MaxCacheEntries} entries; clearing.", MaxCacheEntries);
-            _itemCache.Clear();
-        }
     }
 
-    private bool IsExpired(in ApiResultCacheEntry entry) => IsExpired(entry, DateTimeOffset.UtcNow);
-
-    private static bool IsExpired(in ApiResultCacheEntry entry, DateTimeOffset now) => now - entry.CachedAt > CacheEntryLifetime;
+    private bool TryGetCache(string id, out ApiResultCacheEntry entry)
+    {
+        // Die generische Extension-Method TryGetValue<T> wandelt den Wert automatisch um
+        return _memoryCache.TryGetValue(id, out entry);
+    }
 
     /// <summary>
     /// Creates a stable <see cref="Guid"/> from an arbitrary string.
@@ -305,6 +292,34 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback
         // deprecated MD5 algorithm while remaining deterministic across restarts.
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(value));
         return new Guid(hash.AsSpan(0, 16));
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        // CA1063 & CA1816: Ruft Dispose(true) und anschließend GC.SuppressFinalize auf
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+    /// </summary>
+    /// <param name="disposing">Should Dispose.</param>
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        if (disposing)
+        {
+            // Verwaltete Ressourcen freigeben
+            _memoryCache.Dispose();
+        }
+
+        _disposed = true;
     }
 
     private readonly record struct ApiResultCacheEntry(Subscription Subscription, Api.Models.ResultItemDto Item, DateTimeOffset CachedAt);

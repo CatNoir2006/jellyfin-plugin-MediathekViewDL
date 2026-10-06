@@ -74,6 +74,7 @@ public class TempFileCleanup : IScheduledTask
             directoriesToScan.Add(_appPaths.TempDirectory);
         }
 
+        // ToDo: Update to use the new Split Paths for Shows and Movies.
         if (config != null)
         {
             // 2. Configured Plugin Temp Directory

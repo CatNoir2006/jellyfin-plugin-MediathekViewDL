@@ -135,6 +135,9 @@ dotnet_naming_style.pascal_case_style.capitalization = pascal_case
 ###############################
 # C# Coding Conventions       #
 ###############################
+
+
+dotnet_diagnostic.CA1873.severity = suggestion
 [*.cs]
 # var preferences
 csharp_style_var_for_built_in_types = true:silent

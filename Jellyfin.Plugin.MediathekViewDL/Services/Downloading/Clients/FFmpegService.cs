@@ -24,22 +24,24 @@ public class FFmpegService : IFFmpegService
 {
     private readonly ILogger<FFmpegService> _logger;
     private readonly IMediaEncoder _mediaEncoder;
-    private readonly IStrmValidationService _strmValidationService;
+    private readonly IUrlValidationService _urlValidationService;
 
     private static readonly Regex DurationRegex = new Regex(@"Duration:\s+(\d{2}:\d{2}:\d{2}\.\d+)", RegexOptions.Compiled);
     private static readonly Regex TimeRegex = new Regex(@"time=(\d{2}:\d{2}:\d{2}\.\d+)", RegexOptions.Compiled);
+    private static readonly Regex BitrateRegex = new Regex(@"bitrate=\s*([\d\.]+\s*\w+/s)", RegexOptions.Compiled);
+    private static readonly Regex SpeedRegex = new Regex(@"speed=\s*([\d\.]+x)", RegexOptions.Compiled);
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FFmpegService"/> class.
     /// </summary>
     /// <param name="logger">The logger.</param>
     /// <param name="mediaEncoder">The MediaEncoder.</param>
-    /// <param name="strmValidationService">The StrmValidationService.</param>
-    public FFmpegService(ILogger<FFmpegService> logger, IMediaEncoder mediaEncoder, IStrmValidationService strmValidationService)
+    /// <param name="urlValidationService">The UrlValidationService.</param>
+    public FFmpegService(ILogger<FFmpegService> logger, IMediaEncoder mediaEncoder, IUrlValidationService urlValidationService)
     {
         _logger = logger;
         _mediaEncoder = mediaEncoder;
-        _strmValidationService = strmValidationService;
+        _urlValidationService = urlValidationService;
     }
 
     /// <inheritdoc />
@@ -65,7 +67,7 @@ public class FFmpegService : IFFmpegService
     {
         try
         {
-            if (!await _strmValidationService.ValidateUrlAsync(videoUrl, cancellationToken).ConfigureAwait(false))
+            if (!await _urlValidationService.ValidateUrlAsync(videoUrl, cancellationToken).ConfigureAwait(false))
             {
                 _logger.LogError("URL validation failed for '{Url}'", videoUrl);
                 return false;
@@ -149,7 +151,7 @@ public class FFmpegService : IFFmpegService
         {
             try
             {
-                if (!await _strmValidationService.ValidateUrlAsync(actualUrlOrPath, cancellationToken).ConfigureAwait(false))
+                if (!await _urlValidationService.ValidateUrlAsync(actualUrlOrPath, cancellationToken).ConfigureAwait(false))
                 {
                     _logger.LogError("Validation failed for '{Input}' (not a local file and URL validation failed)", actualUrlOrPath);
                     return null;
@@ -252,7 +254,7 @@ public class FFmpegService : IFFmpegService
     {
         try
         {
-            if (!await _strmValidationService.ValidateUrlAsync(url, cancellationToken).ConfigureAwait(false))
+            if (!await _urlValidationService.ValidateUrlAsync(url, cancellationToken).ConfigureAwait(false))
             {
                 _logger.LogError("URL validation failed for '{Url}'", url);
                 return false;
@@ -372,7 +374,8 @@ public class FFmpegService : IFFmpegService
                     if (e.Data != null)
                     {
                         errorBuilder.AppendLine(e.Data);
-                        ParseProgress(e.Data, progress, ref totalDuration);
+                        var parseResult = ParseLine(e.Data);
+                        ParseProgress(parseResult, progress, ref totalDuration);
                     }
                 };
 
@@ -410,39 +413,66 @@ public class FFmpegService : IFFmpegService
         }
     }
 
-    private void ParseProgress(string line, IProgress<double> progress, ref TimeSpan totalDuration)
+    private void ParseProgress(ParseResult parseResult, IProgress<double> progress, ref TimeSpan totalDuration)
     {
         // Check for duration
         if (totalDuration == TimeSpan.Zero)
         {
-            var match = DurationRegex.Match(line);
-            if (match.Success)
-            {
-                if (TimeSpan.TryParse(match.Groups[1].Value, CultureInfo.InvariantCulture, out var duration))
-                {
-                    totalDuration = duration;
-                }
-            }
+            totalDuration = parseResult.TotalDuration;
         }
 
         // Check for time
-        if (totalDuration != TimeSpan.Zero)
+        if (totalDuration != TimeSpan.Zero && parseResult.CurrentTime != TimeSpan.Zero)
         {
-            var match = TimeRegex.Match(line);
-            if (match.Success)
+            var percentage = (parseResult.CurrentTime.TotalSeconds / totalDuration.TotalSeconds) * 100;
+            if (percentage > 100)
             {
-                if (TimeSpan.TryParse(match.Groups[1].Value, CultureInfo.InvariantCulture, out var currentTime))
-                {
-                    var percentage = (currentTime.TotalSeconds / totalDuration.TotalSeconds) * 100;
-                    if (percentage > 100)
-                    {
-                        percentage = 100;
-                    }
+                percentage = 100;
+            }
 
-                    progress.Report(percentage);
-                }
+            progress.Report(percentage);
+        }
+    }
+
+    private ParseResult ParseLine(string line)
+    {
+        var parseResult = new ParseResult();
+
+        // Parse Total Duration
+        var matchTotal = DurationRegex.Match(line);
+        if (matchTotal.Success)
+        {
+            if (TimeSpan.TryParse(matchTotal.Groups[1].Value, CultureInfo.InvariantCulture, out var duration))
+            {
+                parseResult.TotalDuration = duration;
             }
         }
+
+        // Parse Current Time
+        var matchTime = TimeRegex.Match(line);
+        if (matchTime.Success)
+        {
+            if (TimeSpan.TryParse(matchTime.Groups[1].Value, CultureInfo.InvariantCulture, out var currentTime))
+            {
+                parseResult.CurrentTime = currentTime;
+            }
+        }
+
+        // Parse Bitrate
+        var matchBitrate = BitrateRegex.Match(line);
+        if (matchBitrate.Success)
+        {
+            parseResult.Bitrate = matchBitrate.Groups[1].Value;
+        }
+
+        // Parse Speed
+        var matchSpeed = SpeedRegex.Match(line);
+        if (matchSpeed.Success)
+        {
+            parseResult.CurrentSpeed = matchSpeed.Groups[1].Value;
+        }
+
+        return parseResult;
     }
 
     private EventHandler GetProcessExitHandler(Process process)
@@ -500,5 +530,16 @@ public class FFmpegService : IFFmpegService
 
         [JsonPropertyName("size")]
         public string? Size { get; init; } // Size as string
+    }
+
+    private sealed record ParseResult
+    {
+        public TimeSpan TotalDuration { get; set; }
+
+        public TimeSpan CurrentTime { get; set; }
+
+        public string? CurrentSpeed { get; set; }
+
+        public string? Bitrate { get; set; }
     }
 }

@@ -20,7 +20,7 @@ public class DownloadManagerTests
     private readonly Mock<ILogger<DownloadManager>> _loggerMock;
     private readonly Mock<INfoService> _nfoServiceMock;
     private readonly Mock<IFileDownloader> _fileDownloaderMock;
-    private readonly Mock<IStrmValidationService> _validationServiceMock;
+    private readonly Mock<IUrlValidationService> _validationServiceMock;
     private readonly DownloadManager _downloadManager;
 
     public DownloadManagerTests()
@@ -28,7 +28,7 @@ public class DownloadManagerTests
         _loggerMock = new Mock<ILogger<DownloadManager>>();
         _nfoServiceMock = new Mock<INfoService>();
         _fileDownloaderMock = new Mock<IFileDownloader>();
-        _validationServiceMock = new Mock<IStrmValidationService>();
+        _validationServiceMock = new Mock<IUrlValidationService>();
 
         var handler = _fileDownloaderMock.As<IDownloadHandler>();
         handler.Setup(h => h.CanHandle(It.IsAny<DownloadType>())).Returns(true);

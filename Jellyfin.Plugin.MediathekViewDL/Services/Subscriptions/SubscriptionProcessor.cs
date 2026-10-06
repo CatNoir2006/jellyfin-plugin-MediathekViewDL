@@ -32,7 +32,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private readonly IVideoParser _videoParser;
     private readonly ILocalMediaScanner _localMediaScanner;
     private readonly IFileNameBuilderService _fileNameBuilderService;
-    private readonly IStrmValidationService _strmValidationService;
+    private readonly IUrlValidationService _urlValidationService;
     private readonly IFFmpegService _ffmpegService;
     private readonly IDownloadHistoryRepository _downloadHistoryRepository;
     private readonly IConfigurationProvider _configurationProvider;
@@ -46,7 +46,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="videoParser">The video parser.</param>
     /// <param name="localMediaScanner">The local media scanner.</param>
     /// <param name="fileNameBuilderService">The file name builder service.</param>
-    /// <param name="strmValidationService">The STRM validation service.</param>
+    /// <param name="urlValidationService">The STRM validation service.</param>
     /// <param name="ffmpegService">The ffmpeg Service.</param>
     /// <param name="downloadHistoryRepository">The Download History Repo.</param>
     /// <param name="configurationProvider">The Configuration Provider.</param>
@@ -57,7 +57,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         IVideoParser videoParser,
         ILocalMediaScanner localMediaScanner,
         IFileNameBuilderService fileNameBuilderService,
-        IStrmValidationService strmValidationService,
+        IUrlValidationService urlValidationService,
         IFFmpegService ffmpegService,
         IDownloadHistoryRepository downloadHistoryRepository,
         IConfigurationProvider configurationProvider,
@@ -68,7 +68,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         _videoParser = videoParser;
         _localMediaScanner = localMediaScanner;
         _fileNameBuilderService = fileNameBuilderService;
-        _strmValidationService = strmValidationService;
+        _urlValidationService = urlValidationService;
         _ffmpegService = ffmpegService;
         _downloadHistoryRepository = downloadHistoryRepository;
         _configurationProvider = configurationProvider;
@@ -493,7 +493,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             cancellationToken.ThrowIfCancellationRequested();
             try
             {
-                if (await _strmValidationService.ValidateUrlAsync(url, cancellationToken).ConfigureAwait(false))
+                if (await _urlValidationService.ValidateUrlAsync(url, cancellationToken).ConfigureAwait(false))
                 {
                     candidateUrl = url;
                     if (url != validCandidates.First())

@@ -12,7 +12,7 @@ public class PluginConfigurationProvider : IConfigurationProvider
     {
         get
         {
-            if (Plugin.Instance == null)
+            if (Plugin.Instance?.Configuration == null)
             {
                 throw new InvalidOperationException("Plugin instance is not initialized.");
             }

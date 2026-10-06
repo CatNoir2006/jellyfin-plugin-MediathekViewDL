@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Jellyfin.Plugin.MediathekViewDL</RootNamespace>
     <AssemblyName>Jellyfin.Plugin.MediathekViewDL</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -18,21 +18,27 @@
 
   <ItemGroup>
     <PackageReference Include="FuzzySharp" Version="2.0.2" GeneratePathProperty="true" />
-    <PackageReference Include="Jellyfin.Controller" Version="10.11.0">
+
+    <!-- Jellyfin Core Assemblies auf 12.1.0 -->
+    <PackageReference Include="Jellyfin.Controller" Version="12.1.0">
       <ExcludeAssets>$(PluginDependencyExcludeAssets)</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Jellyfin.Model" Version="10.11.0">
+    <PackageReference Include="Jellyfin.Model" Version="12.1.0">
       <ExcludeAssets>$(PluginDependencyExcludeAssets)</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+
+    <!-- EntityFrameworkCore: compile-Asset erlauben, aber runtime ausschließen -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
+      <IncludeAssets>build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
       <ExcludeAssets>$(PluginDependencyExcludeAssets)</ExcludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0">
-      <ExcludeAssets>$(PluginDependencyExcludeAssets)</ExcludeAssets>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.11">
+      <ExcludeAssets>runtime</ExcludeAssets>
+      <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Polly" Version="8.6.4" />
+
+    <PackageReference Include="Polly" Version="8.8.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,7 +51,6 @@
     <EmbeddedResource Include="Configuration\Web\configPageVueJS.html" />
     <None Remove="Configuration\Web\MediathekViewDLVueJS.js" />
     <EmbeddedResource Include="Configuration\Web\MediathekViewDLVueJS.js" />
-
   </ItemGroup>
 
   <ItemGroup>
