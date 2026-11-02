@@ -322,5 +322,5 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback, IDisposabl
         _disposed = true;
     }
 
-    private readonly record struct ApiResultCacheEntry(Subscription Subscription, Api.Models.ResultItemDto Item, DateTimeOffset CachedAt);
+    private readonly record struct ApiResultCacheEntry(Subscription Subscription, MediathekView.Api.Models.ResultItemDto Item, DateTimeOffset CachedAt);
 }

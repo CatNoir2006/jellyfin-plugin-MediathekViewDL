@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using Jellyfin.Plugin.MediathekViewDL.Api.Models;
-using Jellyfin.Plugin.MediathekViewDL.Api.Models.ResourceItem;
+using MediathekView.Api.Models;
+using MediathekView.Api.Models.ResourceItem;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using Xunit;

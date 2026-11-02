@@ -39,7 +39,9 @@ EnableEfDesign=true dotnet tool run dotnet-ef migrations add <Name> --project Je
 
 ## Architecture
 
-- **Plugin entry:** `Plugin.cs` (BasePlugin\<PluginConfiguration\>)
+- **Separate API project:** `MediathekView.Api/` (namespace `MediathekView.Api.*`) is a standalone C# class library containing the MediathekViewWeb/Zapp API client (`Api/External`, DTOs, `QueryParser`, `Exceptions`), with **no Jellyfin or plugin-configuration dependency**. The plugin references it via `ProjectReference` (issue #201).
+- **Client options coupling:** `MediathekViewApiClient` takes `IOptionsMonitor<MediathekViewApiClientOptions>` (MaxSearchPages/AllowHttp/FetchStreamSizes). The plugin supplies a live view of the plugin configuration through `Configuration/MediathekViewApiClientOptionsMonitor.cs`, registered in `ServiceRegistrator.cs`.
+- **Plugin entry:** `Plugin.cs` (BasePlugin<PluginConfiguration>)
 - **DI:** `ServiceRegistrator.cs` (IPluginServiceRegistrator)
 - **Scheduled download task:** `Tasks/DownloadScheduledTask.cs`
 - **Config:** `Configuration/PluginConfiguration.cs` — uses grouped settings classes (`SearchSettings`, `DownloadSettings`, etc.)

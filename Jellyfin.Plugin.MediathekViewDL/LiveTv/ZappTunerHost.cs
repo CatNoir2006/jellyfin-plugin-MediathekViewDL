@@ -6,7 +6,6 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Extensions;
-using Jellyfin.Plugin.MediathekViewDL.Api.External;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;
@@ -16,6 +15,7 @@ using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.LiveTv;
 using MediaBrowser.Model.MediaInfo;
+using MediathekView.Api.External;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 

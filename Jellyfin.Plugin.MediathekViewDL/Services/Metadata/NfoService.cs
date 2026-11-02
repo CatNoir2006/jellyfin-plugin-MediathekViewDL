@@ -2,7 +2,6 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Xml.Linq;
-using Jellyfin.Plugin.MediathekViewDL.Api;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Microsoft.Extensions.Logging;
 
