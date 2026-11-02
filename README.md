@@ -168,8 +168,10 @@ Das Herzstück des Plugins. Hier definieren Sie, was regelmäßig gesucht wird.
 | **Audiodeskription erlauben** | Lädt auch Versionen mit Bildbeschreibung herunter. |
 | **Gebärdensprache erlauben** | Lädt auch Versionen mit Gebärdensprache herunter. |
 | **Erweiterte Duplikaterkennung** | Scannt das Zielverzeichnis physisch nach vorhandenen Dateien (SxxExx), um Doppelte zu vermeiden. |
-| **Fallback auf niedrigere Qualität** | Erlaubt den Download schlechterer Qualität, wenn HD nicht verfügbar ist. |
-| **URL-Check vor Download** | Prüft vorab, ob der Videolink erreichbar ist (vermeidet defekte Downloads, kostet Zeit). (Nur bei Fallback aktiv). |
+| **Min. / Max. Auflösung** | Legt den zulässigen Auflösungsbereich fest (2160p/4K bis 144p). Streams außerhalb des Bereichs werden übersprungen. Wird ein Bereich gesetzt, wird für jeden Stream die reale Auflösung geprüft (verlangsamt den Scan leicht). Ohne Bereich wird standardmäßig die höchste verfügbare Qualität gewählt. |
+| ↳ **Bevorzugte Reihenfolge** | Legt fest, welche innerhalb des Bereichs bevorzugt wird: *Höchste zuerst* (Standard) oder *Niedrigste zuerst* (spart Speicherplatz). (Nur aktiv wenn Min. oder Max. Auflösung gesetzt). |
+| ↳ **Streng** | Überspringt Streams, deren Auflösung nicht ermittelt werden konnte. Andernfalls wird eine Schätzung anhand der Ziel-Qualität (1080p/720p/480p) verwendet. (Nur aktiv wenn Min. oder Max. Auflösung gesetzt). |
+| **URL-Check vor Download** | Prüft vorab, ob der Videolink erreichbar ist (vermeidet defekte Downloads, kostet Zeit); andernfalls wird die nächst niedrigere Qualität versucht. |
 | **Datum/Uhrzeit im Titel** | Hängt das Datum oder die Uhrzeit an den Titel an (ideal für News/Daily). |
 | **Abo prüfen (Dry Run)** | Testet die Sucheinstellungen, ohne Dateien herunterzuladen. |
 

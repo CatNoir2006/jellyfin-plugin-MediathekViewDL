@@ -47,8 +47,23 @@ const defUseStreamingUrlFiles = ref(false)
 const defDownloadFullVideoSecondaryAudio = ref(false)
 const defAlwaysCreateSubfolder = ref(false)
 const defEnhancedDuplicateDetection = ref(false)
-const defAllowFallbackToLowerQuality = ref(true)
+const defMinHeight = ref('')
+const defMaxHeight = ref('')
+const defSelectionOrder = ref('0')
+const defStrictResolution = ref(false)
 const defQualityCheckWithUrl = ref(false)
+
+// Download quality dropdown options (heights are stored as int on the backend).
+const heightOptions = [
+  { value: '2160', label: '2160p (4K)' },
+  { value: '1440', label: '1440p (QHD)' },
+  { value: '1080', label: '1080p (FullHD)' },
+  { value: '720', label: '720p (HD)' },
+  { value: '480', label: '480p (SD)' },
+  { value: '360', label: '360p' },
+  { value: '240', label: '240p' },
+  { value: '144', label: '144p' }
+]
 
 // Subscription Defaults - Series
 const defEnforceSeries = ref(false)
@@ -135,7 +150,10 @@ async function loadConfig() {
     defDownloadFullVideoSecondaryAudio.value = defDl.DownloadFullVideoForSecondaryAudio ?? false
     defAlwaysCreateSubfolder.value = defDl.AlwaysCreateSubfolder ?? false
     defEnhancedDuplicateDetection.value = defDl.EnhancedDuplicateDetection ?? false
-    defAllowFallbackToLowerQuality.value = defDl.AllowFallbackToLowerQuality !== undefined ? defDl.AllowFallbackToLowerQuality : true
+    defMinHeight.value = defDl.MinHeight ?? ''
+    defMaxHeight.value = defDl.MaxHeight ?? ''
+    defSelectionOrder.value = defDl.SelectionOrder !== undefined && defDl.SelectionOrder !== null ? String(defDl.SelectionOrder) : '0'
+    defStrictResolution.value = defDl.StrictResolution ?? false
     defQualityCheckWithUrl.value = defDl.QualityCheckWithUrl ?? false
 
     defEnforceSeries.value = defSeries.EnforceSeriesParsing ?? false
@@ -213,7 +231,10 @@ async function saveConfig() {
         DownloadFullVideoForSecondaryAudio: defDownloadFullVideoSecondaryAudio.value,
         AlwaysCreateSubfolder: defAlwaysCreateSubfolder.value,
         EnhancedDuplicateDetection: defEnhancedDuplicateDetection.value,
-        AllowFallbackToLowerQuality: defAllowFallbackToLowerQuality.value,
+        MinHeight: defMinHeight.value !== '' ? parseInt(defMinHeight.value) : null,
+        MaxHeight: defMaxHeight.value !== '' ? parseInt(defMaxHeight.value) : null,
+        SelectionOrder: parseInt(defSelectionOrder.value) || 0,
+        StrictResolution: defStrictResolution.value,
         QualityCheckWithUrl: defQualityCheckWithUrl.value
       },
       SeriesSettings: {
@@ -507,13 +528,39 @@ onMounted(() => {
             <p class="field-desc">Scannt das Zielverzeichnis nach vorhandenen Dateien mit passenden SxxExx-Mustern (oder absoluter Nummerierung), um doppelte Downloads zu vermeiden (auch bei abweichenden Dateinamen).</p>
           </div>
           <div class="checkbox-field">
-            <label><input v-model="defAllowFallbackToLowerQuality" type="checkbox"> Fallback auf niedrigere Qualität erlauben</label>
-            <p class="field-desc">Wenn aktiviert, wird beim Herunterladen einer Episode geprüft, ob eine niedrigere Qualität verfügbar ist falls die HD-URL nicht gesetzt ist.</p>
+            <label><input v-model="defQualityCheckWithUrl" type="checkbox"> URL-Gültigkeit prüfen</label>
+            <p class="field-desc">Wenn aktiviert wird auch geprüft, ob die URLs von MediathekView noch verfügbar sind und ggf. die nächst niedrigere versucht.</p>
           </div>
-          <div v-if="defAllowFallbackToLowerQuality" class="sub-options">
+          <div class="grid-2">
+            <div class="field">
+              <label class="field-label">Minimale Auflösung</label>
+              <select v-model="defMinHeight" class="field-select">
+                <option value="">Kein Limit</option>
+                <option v-for="opt in heightOptions" :key="'min-' + opt.value" :value="opt.value">{{ opt.label }}</option>
+              </select>
+              <p class="field-desc">Streams mit einer kleineren Auflösung werden übersprungen.</p>
+            </div>
+            <div class="field">
+              <label class="field-label">Maximale Auflösung</label>
+              <select v-model="defMaxHeight" class="field-select">
+                <option value="">Kein Limit</option>
+                <option v-for="opt in heightOptions" :key="'max-' + opt.value" :value="opt.value">{{ opt.label }}</option>
+              </select>
+              <p class="field-desc">Streams mit einer größeren Auflösung werden übersprungen (z.B. 720p wählen, um 1080p zu vermeiden).</p>
+            </div>
+          </div>
+          <div v-if="defMinHeight !== '' || defMaxHeight !== ''" class="sub-options">
+            <div class="field">
+              <label class="field-label">Bevorzugte Reihenfolge</label>
+              <select v-model="defSelectionOrder" class="field-select">
+                <option value="0">Höchste Qualität zuerst</option>
+                <option value="1">Niedrigste Qualität zuerst</option>
+              </select>
+              <p class="field-desc">Legt fest, welche der zulässigen Auflösungen bevorzugt wird.</p>
+            </div>
             <div class="checkbox-field">
-              <label><input v-model="defQualityCheckWithUrl" type="checkbox"> URL-Gültigkeit prüfen</label>
-              <p class="field-desc">Wenn aktiviert wird auch geprüft, ob die URLs von MediathekView noch verfügbar sind und ggf. die nächst niedrigere versucht. HD → Default → SD</p>
+              <label><input v-model="defStrictResolution" type="checkbox"> Streng</label>
+              <p class="field-desc">Wenn aktiviert, werden Streams ohne ermittelbare Auflösung übersprungen. Andernfalls wird bei fehlender Auflösung eine Schätzung anhand der Ziel-Qualität (1080p/720p/480p) verwendet. Einen Auflösungsbereich zu setzen verlangsamt den Scan leicht, da jeder Stream geprüft werden muss.</p>
             </div>
           </div>
 

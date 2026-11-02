@@ -66,6 +66,7 @@ namespace Jellyfin.Plugin.MediathekViewDL
             // IMediathekViewApiClient is already registered via AddHttpClient above
             serviceCollection.AddTransient<IFFmpegService, FFmpegService>();
             serviceCollection.AddTransient<IFileDownloader, FileDownloader>();
+            serviceCollection.AddTransient<IVideoQualitySelector, VideoQualitySelector>();
             serviceCollection.AddTransient<ISubscriptionProcessor, SubscriptionProcessor>();
 
             // Live TV

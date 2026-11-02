@@ -37,7 +37,10 @@ describe('SubscriptionFactory', () => {
                 DownloadSettings: {
                     UseStreamingUrlFiles: true,
                     AlwaysCreateSubfolder: true,
-                    AllowFallbackToLowerQuality: false,
+                    MinHeight: 720,
+                    MaxHeight: 2160,
+                    SelectionOrder: 1,
+                    StrictResolution: true,
                     EnhancedDuplicateDetection: true,
                     QualityCheckWithUrl: true,
                     DownloadFullVideoForSecondaryAudio: true
@@ -48,17 +51,23 @@ describe('SubscriptionFactory', () => {
             // Assert
             expect(subscription.Download.UseStreamingUrlFiles).toBe(true)
             expect(subscription.Download.AlwaysCreateSubfolder).toBe(true)
-            expect(subscription.Download.AllowFallbackToLowerQuality).toBe(false)
+            expect(subscription.Download.MinHeight).toBe(720)
+            expect(subscription.Download.MaxHeight).toBe(2160)
+            expect(subscription.Download.SelectionOrder).toBe(1)
+            expect(subscription.Download.StrictResolution).toBe(true)
             expect(subscription.Download.EnhancedDuplicateDetection).toBe(true)
             expect(subscription.Download.QualityCheckWithUrl).toBe(true)
             expect(subscription.Download.DownloadFullVideoForSecondaryAudio).toBe(true)
         })
 
-        it('ShouldDefaultAllowFallbackToLowerQualityToTrue_WhenNotProvided', () => {
+        it('ShouldDefaultHeightRangeToNullAndOrderToHighestToLowest_WhenNotProvided', () => {
             // Arrange / Act
             const subscription = SubscriptionFactory.createDefault({})
             // Assert
-            expect(subscription.Download.AllowFallbackToLowerQuality).toBe(true)
+            expect(subscription.Download.MinHeight).toBeNull()
+            expect(subscription.Download.MaxHeight).toBeNull()
+            expect(subscription.Download.SelectionOrder).toBe(0)
+            expect(subscription.Download.StrictResolution).toBe(false)
         })
 
         it('ShouldUseSeriesSettingsFlags_WhenProvided', () => {

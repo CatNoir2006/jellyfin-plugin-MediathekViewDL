@@ -37,6 +37,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         private readonly Mock<IDownloadHistoryRepository> _downloadHistoryRepositoryMock;
         private readonly Mock<IConfigurationProvider> _configurationProviderMock;
         private readonly Mock<IDownloadQueueManager> _downloadQueueManagerMock;
+        private readonly IVideoQualitySelector _qualitySelector;
         private readonly SubscriptionProcessor _processor;
 
         public SubscriptionProcessorTests()
@@ -61,6 +62,8 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 .Setup(x => x.Configuration)
                 .Returns(new PluginConfiguration());
 
+            _qualitySelector = CreateQualitySelector(_ffmpegServiceMock);
+
             _processor = new SubscriptionProcessor(
                 _loggerMock.Object,
                 _apiClientMock.Object,
@@ -71,8 +74,16 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 _ffmpegServiceMock.Object,
                 _downloadHistoryRepositoryMock.Object,
                 _configurationProviderMock.Object,
-                _downloadQueueManagerMock.Object
+                _downloadQueueManagerMock.Object,
+                _qualitySelector
             );
+        }
+
+        private static VideoQualitySelector CreateQualitySelector(Mock<IFFmpegService> ffmpegServiceMock)
+        {
+            return new VideoQualitySelector(
+                new Mock<ILogger<VideoQualitySelector>>().Object,
+                ffmpegServiceMock.Object);
         }
 
         [Fact]
@@ -283,6 +294,106 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _strmValidationServiceMock.Verify(x => x.ValidateUrlAsync("http://hd.mp4", It.IsAny<CancellationToken>()), Times.Once);
             _strmValidationServiceMock.Verify(x => x.ValidateUrlAsync("http://sd.mp4", It.IsAny<CancellationToken>()), Times.Once);
             _strmValidationServiceMock.Verify(x => x.ValidateUrlAsync("http://low.mp4", It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task GetJobsForSubscriptionAsync_ShouldRespectMaxHeight_WhenRangeConfigured()
+        {
+            // Arrange
+            var subscription = new Subscription
+            {
+                Name = "TestSub",
+                Download = new DownloadSettings { MaxHeight = 720 }
+            };
+            var item = new ResultItem
+            {
+                Id = "123",
+                UrlVideoHd = "http://hd.mp4",
+                UrlVideo = "http://sd.mp4",
+                UrlVideoLow = "http://low.mp4"
+            };
+
+            var resultChannels = new ResultChannels
+            {
+                Results = new Collection<ResultItem> { item },
+                QueryInfo = new QueryInfo { TotalResults = 1 }
+            };
+
+            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultChannels.ToDto(new ApiQueryDto(), false));
+
+            var videoInfo = new VideoInfo { Title = "Test", Language = "deu" };
+            _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(videoInfo);
+
+            _fileNameBuilderServiceMock
+                .Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<DownloadContext>(), It.IsAny<FileType?>()))
+                .Returns(new DownloadPaths { DirectoryPath = "/tmp", MainFilePath = "/tmp/v.mp4" });
+
+            // Proberesulte: HD=1080p (excluded), SD=720p (matches), Low=480p (matches, lower rank)
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Returns((string url, CancellationToken _) =>
+                {
+                    var height = url switch
+                    {
+                        "http://hd.mp4" => 1080,
+                        "http://sd.mp4" => 720,
+                        _ => 480
+                    };
+                    return Task.FromResult<LocalMediaInfo?>(new LocalMediaInfo { FilePath = url, Height = height });
+                });
+
+            // Act
+            var jobs = await _processor.GetJobsForSubscriptionAsync(subscription, false, CancellationToken.None);
+
+            // Assert
+            Assert.Single(jobs);
+            Assert.Equal("http://sd.mp4", jobs[0].DownloadItems.First().SourceUrl);
+        }
+
+        [Fact]
+        public async Task GetJobsForSubscriptionAsync_ShouldSkip_WhenNoStreamMatchesRange()
+        {
+            // Arrange
+            var subscription = new Subscription
+            {
+                Name = "TestSub",
+                Download = new DownloadSettings { MaxHeight = 360 }
+            };
+            var item = new ResultItem
+            {
+                Id = "123",
+                UrlVideoHd = "http://hd.mp4",
+                UrlVideo = "http://sd.mp4"
+            };
+
+            var resultChannels = new ResultChannels
+            {
+                Results = new Collection<ResultItem> { item },
+                QueryInfo = new QueryInfo { TotalResults = 1 }
+            };
+
+            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultChannels.ToDto(new ApiQueryDto(), false));
+
+            var videoInfo = new VideoInfo { Title = "Test", Language = "deu" };
+            _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(videoInfo);
+
+            _fileNameBuilderServiceMock
+                .Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<DownloadContext>(), It.IsAny<FileType?>()))
+                .Returns(new DownloadPaths { DirectoryPath = "/tmp", MainFilePath = "/tmp/v.mp4" });
+
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .Returns((string url, CancellationToken _) => Task.FromResult<LocalMediaInfo?>(new LocalMediaInfo { FilePath = url, Height = 720 }));
+
+            // Act
+            var jobs = await _processor.GetJobsForSubscriptionAsync(subscription, false, CancellationToken.None);
+
+            // Assert
+            Assert.Empty(jobs);
         }
 
         [Fact]

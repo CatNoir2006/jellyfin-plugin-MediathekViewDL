@@ -2,10 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Configuration.SubscriptionSettings;
 using Jellyfin.Plugin.MediathekViewDL.Data;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Models;
@@ -34,6 +36,7 @@ public class DownloadsController : ControllerBase
     private readonly IConfigurationProvider _configurationProvider;
     private readonly IVideoParser _videoParser;
     private readonly IFileNameBuilderService _fileNameBuilder;
+    private readonly IVideoQualitySelector _qualitySelector;
     private readonly ILogger<DownloadsController> _logger;
 
     /// <summary>
@@ -44,6 +47,7 @@ public class DownloadsController : ControllerBase
     /// <param name="configurationProvider">The configuration provider.</param>
     /// <param name="videoParser">The video parser.</param>
     /// <param name="fileNameBuilder">The file name builder service.</param>
+    /// <param name="qualitySelector">The video quality selector.</param>
     /// <param name="logger">The logger.</param>
     public DownloadsController(
         IDownloadQueueManager downloadQueueManager,
@@ -51,6 +55,7 @@ public class DownloadsController : ControllerBase
         IConfigurationProvider configurationProvider,
         IVideoParser videoParser,
         IFileNameBuilderService fileNameBuilder,
+        IVideoQualitySelector qualitySelector,
         ILogger<DownloadsController> logger)
     {
         _downloadQueueManager = downloadQueueManager;
@@ -58,7 +63,23 @@ public class DownloadsController : ControllerBase
         _configurationProvider = configurationProvider;
         _videoParser = videoParser;
         _fileNameBuilder = fileNameBuilder;
+        _qualitySelector = qualitySelector;
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Selects the best matching video URL for a manual download using the globally configured default quality settings.
+    /// </summary>
+    /// <param name="item">The item to select a video URL for.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The best matching video URL, or null if none matches.</returns>
+    private async Task<string?> SelectVideoUrlAsync(ResultItemDto item, CancellationToken cancellationToken)
+    {
+        var settings = _configurationProvider.ConfigurationOrNull?.SubscriptionDefaults.DownloadSettings ?? new BaseDownloadSettings();
+        var candidates = await _qualitySelector
+            .GetOrderedCandidatesAsync(item.VideoUrls, settings, cancellationToken)
+            .ConfigureAwait(false);
+        return candidates.Count > 0 ? candidates[0].Url : null;
     }
 
     /// <summary>
@@ -215,9 +236,10 @@ public class DownloadsController : ControllerBase
     /// Triggers a download for a single item.
     /// </summary>
     /// <param name="item">The item to download.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An OK result.</returns>
     [HttpPost]
-    public IActionResult Download([FromBody] ResultItemDto? item)
+    public async Task<IActionResult> Download([FromBody] ResultItemDto? item, CancellationToken cancellationToken)
     {
         if (Plugin.Instance?.InitializationException is not null)
         {
@@ -231,7 +253,11 @@ public class DownloadsController : ControllerBase
             return StatusCode(500, new ApiErrorDto(ApiErrorId.ConfigurationNotAvailable, "Plugin-Konfiguration ist nicht verfügbar."));
         }
 
-        var videoUrl = item?.GetVideoByQuality()?.Url;
+        string? videoUrl = null;
+        if (item is not null)
+        {
+            videoUrl = await SelectVideoUrlAsync(item, cancellationToken).ConfigureAwait(false);
+        }
 
         if (item == null || string.IsNullOrWhiteSpace(videoUrl))
         {
@@ -288,9 +314,10 @@ public class DownloadsController : ControllerBase
     /// Triggers an advanced download for a single item with custom options.
     /// </summary>
     /// <param name="options">The advanced download options.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>An OK result.</returns>
     [HttpPost("Advanced")]
-    public IActionResult AdvancedDownload([FromBody] AdvancedDownloadOptions? options)
+    public async Task<IActionResult> AdvancedDownload([FromBody] AdvancedDownloadOptions? options, CancellationToken cancellationToken)
     {
         if (Plugin.Instance?.InitializationException is not null)
         {
@@ -310,7 +337,7 @@ public class DownloadsController : ControllerBase
         }
 
         var item = options.Item;
-        var videoUrl = item.GetVideoByQuality()?.Url;
+        var videoUrl = await SelectVideoUrlAsync(item, cancellationToken).ConfigureAwait(false);
 
         if (string.IsNullOrWhiteSpace(videoUrl))
         {

@@ -15,6 +15,18 @@ const emit = defineEmits(['save', 'cancel'])
 const editedSub = ref(null)
 const activeTab = ref('basic')
 
+// Download quality dropdown options (heights are stored as int on the backend).
+const heightOptions = [
+  { value: '2160', label: '2160p (4K)' },
+  { value: '1440', label: '1440p (QHD)' },
+  { value: '1080', label: '1080p (FullHD)' },
+  { value: '720', label: '720p (HD)' },
+  { value: '480', label: '480p (SD)' },
+  { value: '360', label: '360p' },
+  { value: '240', label: '240p' },
+  { value: '144', label: '144p' }
+]
+
 const availableChannels = ref([])
 const availableTopics = ref([])
 
@@ -46,6 +58,11 @@ watch(() => props.subscription, (newVal) => {
         copy.Series = copy.Series || {}
         copy.Metadata = copy.Metadata || {}
         copy.Accessibility = copy.Accessibility || {}
+        // Normalize quality settings for subscriptions created before the new options existed
+        copy.Download.MinHeight = copy.Download.MinHeight ?? null
+        copy.Download.MaxHeight = copy.Download.MaxHeight ?? null
+        copy.Download.SelectionOrder = copy.Download.SelectionOrder ?? 0
+        copy.Download.StrictResolution = copy.Download.StrictResolution ?? false
         editedSub.value = copy
         // Reset active tab when a new subscription is opened
         activeTab.value = 'basic'
@@ -271,16 +288,42 @@ function updateDate(target, field, value) {
                     </div>
                     <div class="checkbox-field">
                         <label>
-                            <input v-model="editedSub.Download.AllowFallbackToLowerQuality" type="checkbox"> Fallback auf niedrigere Qualität erlauben
+                            <input v-model="editedSub.Download.QualityCheckWithUrl" type="checkbox"> URL-Gültigkeit prüfen
                         </label>
-                        <p class="field-desc">Wenn aktiviert, wird beim Herunterladen einer Episode geprüft, ob eine niedrigere Qualität verfügbar ist falls die HD-URL nicht gesetzt ist.</p>
+                        <p class="field-desc">Wenn aktiviert wird auch geprüft, ob die URLs von MediathekView noch verfügbar sind und ggf. die nächst niedrigere versucht.</p>
                     </div>
-                    <div v-if="editedSub.Download.AllowFallbackToLowerQuality" class="sub-options">
+                    <div class="grid-2">
+                        <div class="field">
+                            <label class="field-label">Minimale Auflösung</label>
+                            <select v-model="editedSub.Download.MinHeight" class="field-select">
+                                <option :value="null">Kein Limit</option>
+                                <option v-for="opt in heightOptions" :key="'min-' + opt.value" :value="parseInt(opt.value)">{{ opt.label }}</option>
+                            </select>
+                            <p class="field-desc">Streams mit einer kleineren Auflösung werden übersprungen.</p>
+                        </div>
+                        <div class="field">
+                            <label class="field-label">Maximale Auflösung</label>
+                            <select v-model="editedSub.Download.MaxHeight" class="field-select">
+                                <option :value="null">Kein Limit</option>
+                                <option v-for="opt in heightOptions" :key="'max-' + opt.value" :value="parseInt(opt.value)">{{ opt.label }}</option>
+                            </select>
+                            <p class="field-desc">Streams mit einer größeren Auflösung werden übersprungen (z.B. 720p wählen, um 1080p zu vermeiden).</p>
+                        </div>
+                    </div>
+                    <div v-if="editedSub.Download.MinHeight !== null || editedSub.Download.MaxHeight !== null" class="sub-options">
+                        <div class="field">
+                            <label class="field-label">Bevorzugte Reihenfolge</label>
+                            <select v-model="editedSub.Download.SelectionOrder" class="field-select">
+                                <option :value="0">Höchste Qualität zuerst</option>
+                                <option :value="1">Niedrigste Qualität zuerst</option>
+                            </select>
+                            <p class="field-desc">Legt fest, welche der zulässigen Auflösungen bevorzugt wird.</p>
+                        </div>
                         <div class="checkbox-field">
                             <label>
-                                <input v-model="editedSub.Download.QualityCheckWithUrl" type="checkbox"> Prüft ob die URLs gültig ist.
+                                <input v-model="editedSub.Download.StrictResolution" type="checkbox"> Streng
                             </label>
-                            <p class="field-desc">Wenn aktiviert wird auch geprüft, ob die URLs von MediathekView noch verfügbar sind und ggf. die nächst niedrigere versucht. HD → Default → SD</p>
+                            <p class="field-desc">Wenn aktiviert, werden Streams ohne ermittelbare Auflösung übersprungen. Andernfalls wird bei fehlender Auflösung eine Schätzung anhand der Ziel-Qualität (1080p/720p/480p) verwendet. Einen Auflösungsbereich zu setzen verlangsamt den Scan leicht, da jeder Stream geprüft werden muss.</p>
                         </div>
                     </div>
                 </div>

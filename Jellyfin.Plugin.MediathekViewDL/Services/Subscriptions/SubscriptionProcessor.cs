@@ -37,6 +37,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private readonly IDownloadHistoryRepository _downloadHistoryRepository;
     private readonly IConfigurationProvider _configurationProvider;
     private readonly IDownloadQueueManager _downloadQueueManager;
+    private readonly IVideoQualitySelector _qualitySelector;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="SubscriptionProcessor"/> class.
@@ -51,6 +52,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="downloadHistoryRepository">The Download History Repo.</param>
     /// <param name="configurationProvider">The Configuration Provider.</param>
     /// <param name="downloadQueueManager">The download queue manager.</param>
+    /// <param name="qualitySelector">The video quality selector.</param>
     public SubscriptionProcessor(
         ILogger<SubscriptionProcessor> logger,
         IMediathekViewApiClient apiClient,
@@ -61,7 +63,8 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         IFFmpegService ffmpegService,
         IDownloadHistoryRepository downloadHistoryRepository,
         IConfigurationProvider configurationProvider,
-        IDownloadQueueManager downloadQueueManager)
+        IDownloadQueueManager downloadQueueManager,
+        IVideoQualitySelector qualitySelector)
     {
         _logger = logger;
         _apiClient = apiClient;
@@ -73,6 +76,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         _downloadHistoryRepository = downloadHistoryRepository;
         _configurationProvider = configurationProvider;
         _downloadQueueManager = downloadQueueManager;
+        _qualitySelector = qualitySelector;
     }
 
     /// <inheritdoc/>
@@ -467,41 +471,35 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <returns>The best URL candidate, or null if none found.</returns>
     private async Task<string?> GetUrlCandidate(ResultItemDto item, Subscription subscription, CancellationToken cancellationToken = default)
     {
-        // Quality: 3=HD, 2=Std, 1=Low
-        var hdUrl = item.VideoUrls.FirstOrDefault(v => v.Quality == 3)?.Url;
+        var candidates = await _qualitySelector
+            .GetOrderedCandidatesAsync(item.VideoUrls, subscription.Download, cancellationToken)
+            .ConfigureAwait(false);
 
-        // If no fallback is allowed, return HD URL if available
-        if (!subscription.Download.AllowFallbackToLowerQuality)
+        if (candidates.Count == 0)
         {
-            return hdUrl;
+            _logger.LogWarning("No video URL matches the configured quality settings for item '{Title}'.", item.Title);
+            return null;
         }
 
-        List<string> candidateUrls = item.VideoUrls.OrderByDescending(s => s.Quality).Select(s => s.Url).ToList();
-
-        // If no url availability check is required, return the first URL
         if (!subscription.Download.QualityCheckWithUrl)
         {
-            return candidateUrls.Count > 0 ? candidateUrls[0] : null;
+            return candidates[0].Url;
         }
 
-        string? candidateUrl = null;
-
-        var validCandidates = candidateUrls.Where(u => !string.IsNullOrWhiteSpace(u)).Distinct().ToList();
-
-        foreach (var url in validCandidates)
+        foreach (var candidate in candidates)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            var url = candidate.Url;
             try
             {
                 if (await _urlValidationService.ValidateUrlAsync(url, cancellationToken).ConfigureAwait(false))
                 {
-                    candidateUrl = url;
-                    if (url != validCandidates.First())
+                    if (url != candidates[0].Url)
                     {
                         _logger.LogWarning("Primary quality download failed for '{Title}'. Fallback to: {Url}", item.Title, url);
                     }
 
-                    break;
+                    return url;
                 }
             }
             catch (Exception ex)
@@ -510,13 +508,8 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             }
         }
 
-        if (string.IsNullOrWhiteSpace(candidateUrl))
-        {
-            _logger.LogWarning("No valid video URL found for item '{Title}'.", item.Title);
-            return null;
-        }
-
-        return candidateUrl;
+        _logger.LogWarning("No valid video URL found for item '{Title}'.", item.Title);
+        return null;
     }
 
     /// <summary>
