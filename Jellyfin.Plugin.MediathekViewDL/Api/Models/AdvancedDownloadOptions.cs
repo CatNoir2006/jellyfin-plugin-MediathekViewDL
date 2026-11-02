@@ -1,3 +1,5 @@
+using MediathekView.Api.Models;
+
 namespace Jellyfin.Plugin.MediathekViewDL.Api.Models
 {
     /// <summary>

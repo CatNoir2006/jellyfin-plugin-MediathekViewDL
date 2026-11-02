@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
-using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
+using MediathekView.Api.Models;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 

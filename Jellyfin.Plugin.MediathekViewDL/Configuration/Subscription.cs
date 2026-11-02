@@ -1,7 +1,5 @@
 using System;
 using System.Diagnostics;
-using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
-using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using Jellyfin.Plugin.MediathekViewDL.Configuration.SubscriptionSettings;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Configuration;

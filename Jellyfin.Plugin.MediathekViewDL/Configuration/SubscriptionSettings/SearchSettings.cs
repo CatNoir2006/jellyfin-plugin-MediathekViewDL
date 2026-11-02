@@ -1,5 +1,5 @@
 using System.Collections.ObjectModel;
-using Jellyfin.Plugin.MediathekViewDL.Api.Models;
+using MediathekView.Api.Models;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Configuration.SubscriptionSettings;
 

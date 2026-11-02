@@ -6,13 +6,13 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Jellyfin.Plugin.MediathekViewDL.Api.External;
-using Jellyfin.Plugin.MediathekViewDL.Api.External.Models;
-using Jellyfin.Plugin.MediathekViewDL.Api.Models;
-using Jellyfin.Plugin.MediathekViewDL.Api.Models.Enums;
-using Jellyfin.Plugin.MediathekViewDL.Configuration;
-using Jellyfin.Plugin.MediathekViewDL.Exceptions.ExternalApi;
+using MediathekView.Api.External;
+using MediathekView.Api.External.Models;
+using MediathekView.Api.Models;
+using MediathekView.Api.Models.Enums;
+using MediathekView.Api.Exceptions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Moq;
 using Moq.Protected;
 using Xunit;
@@ -55,14 +55,9 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             var httpClient = new HttpClient(mockHttpMessageHandler.Object);
             var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
-            var mockConfigProvider = new Mock<IConfigurationProvider>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions { MaxSearchPages = 5 });
 
-            // Ensure Configuration returns something valid
-            var config = new PluginConfiguration();
-            mockConfigProvider.Setup(x => x.Configuration).Returns(config);
-            mockConfigProvider.Setup(x => x.ConfigurationOrNull).Returns(config);
-
-            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, mockConfigProvider.Object);
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
 
             // Act
             await client.SearchAsync(new ApiQueryDto(), CancellationToken.None);
@@ -117,13 +112,9 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             var httpClient = new HttpClient(mockHttpMessageHandler.Object);
             var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
-            var mockConfigProvider = new Mock<IConfigurationProvider>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions { MaxSearchPages = 5 });
 
-            var config = new PluginConfiguration();
-            mockConfigProvider.Setup(x => x.Configuration).Returns(config);
-            mockConfigProvider.Setup(x => x.ConfigurationOrNull).Returns(config);
-
-            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, mockConfigProvider.Object);
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
 
             // Act
             await client.SearchAsync(new ApiQueryDto(), CancellationToken.None);
@@ -154,13 +145,9 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             var httpClient = new HttpClient(mockHttpMessageHandler.Object);
             var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
-            var mockConfigProvider = new Mock<IConfigurationProvider>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions { MaxSearchPages = 5 });
 
-            var config = new PluginConfiguration();
-            mockConfigProvider.Setup(x => x.Configuration).Returns(config);
-            mockConfigProvider.Setup(x => x.ConfigurationOrNull).Returns(config);
-
-            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, mockConfigProvider.Object);
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
 
             // Act + Assert
             await Assert.ThrowsAsync<MediathekApiException>(
@@ -183,13 +170,9 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             var httpClient = new HttpClient(mockHttpMessageHandler.Object);
             var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
-            var mockConfigProvider = new Mock<IConfigurationProvider>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions { MaxSearchPages = 5 });
 
-            var config = new PluginConfiguration();
-            mockConfigProvider.Setup(x => x.Configuration).Returns(config);
-            mockConfigProvider.Setup(x => x.ConfigurationOrNull).Returns(config);
-
-            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, mockConfigProvider.Object);
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
 
             // Act + Assert
             await Assert.ThrowsAsync<MediathekApiException>(
@@ -212,13 +195,9 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             var httpClient = new HttpClient(mockHttpMessageHandler.Object);
             var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
-            var mockConfigProvider = new Mock<IConfigurationProvider>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions { MaxSearchPages = 5 });
 
-            var config = new PluginConfiguration();
-            mockConfigProvider.Setup(x => x.Configuration).Returns(config);
-            mockConfigProvider.Setup(x => x.ConfigurationOrNull).Returns(config);
-
-            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, mockConfigProvider.Object);
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
 
             // Act + Assert
             var ex = await Assert.ThrowsAsync<MediathekApiException>(
@@ -245,13 +224,9 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             var httpClient = new HttpClient(mockHttpMessageHandler.Object);
             var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
-            var mockConfigProvider = new Mock<IConfigurationProvider>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions { MaxSearchPages = 5 });
 
-            var config = new PluginConfiguration();
-            mockConfigProvider.Setup(x => x.Configuration).Returns(config);
-            mockConfigProvider.Setup(x => x.ConfigurationOrNull).Returns(config);
-
-            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, mockConfigProvider.Object);
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
 
             // Act + Assert
             await Assert.ThrowsAsync<MediathekParsingException>(
@@ -277,13 +252,9 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             var httpClient = new HttpClient(mockHttpMessageHandler.Object);
             var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
-            var mockConfigProvider = new Mock<IConfigurationProvider>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions { MaxSearchPages = 5 });
 
-            var config = new PluginConfiguration();
-            mockConfigProvider.Setup(x => x.Configuration).Returns(config);
-            mockConfigProvider.Setup(x => x.ConfigurationOrNull).Returns(config);
-
-            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, mockConfigProvider.Object);
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
 
             // Act + Assert
             await Assert.ThrowsAsync<MediathekParsingException>(
@@ -332,19 +303,31 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             var httpClient = new HttpClient(mockHttpMessageHandler.Object);
             var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
-            var mockConfigProvider = new Mock<IConfigurationProvider>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions { MaxSearchPages = 5 });
 
-            var config = new PluginConfiguration();
-            mockConfigProvider.Setup(x => x.Configuration).Returns(config);
-            mockConfigProvider.Setup(x => x.ConfigurationOrNull).Returns(config);
-
-            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, mockConfigProvider.Object);
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
 
             // Act
             await client.SearchAsync(new ApiQueryDto { Size = 42 }, CancellationToken.None);
 
             // Assert
             Assert.Equal(42, capturedSize);
+        }
+
+        private sealed class TestOptionsMonitor : IOptionsMonitor<MediathekViewApiClientOptions>
+        {
+            private readonly MediathekViewApiClientOptions _options;
+
+            public TestOptionsMonitor(MediathekViewApiClientOptions options)
+            {
+                _options = options;
+            }
+
+            public MediathekViewApiClientOptions CurrentValue => _options;
+
+            public MediathekViewApiClientOptions Get(string? name) => _options;
+
+            public IDisposable? OnChange(Action<MediathekViewApiClientOptions, string?> listener) => null;
         }
     }
 }

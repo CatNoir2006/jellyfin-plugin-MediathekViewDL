@@ -1,8 +1,6 @@
 using System;
 using System.IO;
 using System.Net.Http;
-using Jellyfin.Plugin.MediathekViewDL.Api;
-using Jellyfin.Plugin.MediathekViewDL.Api.External;
 using Jellyfin.Plugin.MediathekViewDL.Channels;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Data;
@@ -19,8 +17,11 @@ using MediaBrowser.Controller;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Controller.Plugins;
+using MediathekView.Api;
+using MediathekView.Api.External;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace Jellyfin.Plugin.MediathekViewDL
 {
@@ -35,7 +36,8 @@ namespace Jellyfin.Plugin.MediathekViewDL
             // Register a named client for FileDownloader
             serviceCollection.AddHttpClient("FileDownloaderClient");
 
-            // Register the typed client for API
+            // Register the typed client for API with live configuration
+            serviceCollection.AddSingleton<IOptionsMonitor<MediathekViewApiClientOptions>, MediathekViewApiClientOptionsMonitor>();
             serviceCollection.AddHttpClient<IMediathekViewApiClient, MediathekViewApiClient>();
 
             // Database

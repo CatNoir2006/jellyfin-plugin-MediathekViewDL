@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Jellyfin.Plugin.MediathekViewDL\Jellyfin.Plugin.MediathekViewDL.csproj" />
+    <ProjectReference Include="..\MediathekView.Api\MediathekView.Api.csproj" />
   </ItemGroup>
 
 </Project>
