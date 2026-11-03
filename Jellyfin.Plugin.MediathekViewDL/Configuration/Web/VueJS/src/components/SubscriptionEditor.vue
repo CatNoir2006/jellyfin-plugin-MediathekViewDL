@@ -61,7 +61,7 @@ watch(() => props.subscription, (newVal) => {
         // Normalize quality settings for subscriptions created before the new options existed
         copy.Download.MinHeight = copy.Download.MinHeight ?? null
         copy.Download.MaxHeight = copy.Download.MaxHeight ?? null
-        copy.Download.SelectionOrder = copy.Download.SelectionOrder ?? 0
+        copy.Download.SelectionOrder = copy.Download.SelectionOrder || 'HighestToLowest'
         copy.Download.StrictResolution = copy.Download.StrictResolution ?? false
         editedSub.value = copy
         // Reset active tab when a new subscription is opened
@@ -289,8 +289,8 @@ function updateDate(target, field, value) {
                     <div class="field">
                         <label class="field-label">Bevorzugte Reihenfolge</label>
                         <select v-model="editedSub.Download.SelectionOrder" class="field-select">
-                            <option :value="0">Höchste Qualität zuerst</option>
-                            <option :value="1">Niedrigste Qualität zuerst</option>
+                            <option value="HighestToLowest">Höchste Qualität zuerst</option>
+                            <option value="LowestToHighest">Niedrigste Qualität zuerst</option>
                         </select>
                         <p class="field-desc">Legt fest, welche der zulässigen Auflösungen bevorzugt wird. Die Auflösung wird für jeden Stream per ffmpeg ermittelt.</p>
                     </div>

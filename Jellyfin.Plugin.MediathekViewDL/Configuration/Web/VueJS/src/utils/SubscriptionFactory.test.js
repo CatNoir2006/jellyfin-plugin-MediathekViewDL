@@ -39,7 +39,7 @@ describe('SubscriptionFactory', () => {
                     AlwaysCreateSubfolder: true,
                     MinHeight: 720,
                     MaxHeight: 2160,
-                    SelectionOrder: 1,
+                    SelectionOrder: 'LowestToHighest',
                     StrictResolution: true,
                     EnhancedDuplicateDetection: true,
                     DownloadFullVideoForSecondaryAudio: true
@@ -52,7 +52,7 @@ describe('SubscriptionFactory', () => {
             expect(subscription.Download.AlwaysCreateSubfolder).toBe(true)
             expect(subscription.Download.MinHeight).toBe(720)
             expect(subscription.Download.MaxHeight).toBe(2160)
-            expect(subscription.Download.SelectionOrder).toBe(1)
+            expect(subscription.Download.SelectionOrder).toBe('LowestToHighest')
             expect(subscription.Download.StrictResolution).toBe(true)
             expect(subscription.Download.EnhancedDuplicateDetection).toBe(true)
             expect(subscription.Download.DownloadFullVideoForSecondaryAudio).toBe(true)
@@ -64,7 +64,7 @@ describe('SubscriptionFactory', () => {
             // Assert
             expect(subscription.Download.MinHeight).toBeNull()
             expect(subscription.Download.MaxHeight).toBeNull()
-            expect(subscription.Download.SelectionOrder).toBe(0)
+            expect(subscription.Download.SelectionOrder).toBe('HighestToLowest')
             expect(subscription.Download.StrictResolution).toBe(false)
         })
 

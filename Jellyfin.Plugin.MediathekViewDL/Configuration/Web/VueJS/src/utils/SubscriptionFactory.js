@@ -16,7 +16,7 @@ export const SubscriptionFactory = {
       AlwaysCreateSubfolder: defaults.DownloadSettings?.AlwaysCreateSubfolder || false,
       MinHeight: defaults.DownloadSettings?.MinHeight ?? null,
       MaxHeight: defaults.DownloadSettings?.MaxHeight ?? null,
-      SelectionOrder: defaults.DownloadSettings?.SelectionOrder ?? 0,
+      SelectionOrder: defaults.DownloadSettings?.SelectionOrder || 'HighestToLowest',
       StrictResolution: defaults.DownloadSettings?.StrictResolution || false,
       EnhancedDuplicateDetection: defaults.DownloadSettings?.EnhancedDuplicateDetection || false,
       DownloadFullVideoForSecondaryAudio: defaults.DownloadSettings?.DownloadFullVideoForSecondaryAudio || false

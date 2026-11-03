@@ -49,7 +49,7 @@ const defAlwaysCreateSubfolder = ref(false)
 const defEnhancedDuplicateDetection = ref(false)
 const defMinHeight = ref('')
 const defMaxHeight = ref('')
-const defSelectionOrder = ref('0')
+const defSelectionOrder = ref('HighestToLowest')
 const defStrictResolution = ref(false)
 
 // Download quality dropdown options (heights are stored as int on the backend).
@@ -151,7 +151,7 @@ async function loadConfig() {
     defEnhancedDuplicateDetection.value = defDl.EnhancedDuplicateDetection ?? false
     defMinHeight.value = defDl.MinHeight ?? ''
     defMaxHeight.value = defDl.MaxHeight ?? ''
-    defSelectionOrder.value = defDl.SelectionOrder !== undefined && defDl.SelectionOrder !== null ? String(defDl.SelectionOrder) : '0'
+    defSelectionOrder.value = defDl.SelectionOrder || 'HighestToLowest'
     defStrictResolution.value = defDl.StrictResolution ?? false
 
     defEnforceSeries.value = defSeries.EnforceSeriesParsing ?? false
@@ -231,7 +231,7 @@ async function saveConfig() {
         EnhancedDuplicateDetection: defEnhancedDuplicateDetection.value,
         MinHeight: defMinHeight.value !== '' ? parseInt(defMinHeight.value) : null,
         MaxHeight: defMaxHeight.value !== '' ? parseInt(defMaxHeight.value) : null,
-        SelectionOrder: parseInt(defSelectionOrder.value) || 0,
+        SelectionOrder: defSelectionOrder.value,
         StrictResolution: defStrictResolution.value
       },
       SeriesSettings: {
@@ -528,8 +528,8 @@ onMounted(() => {
             <div class="field">
               <label class="field-label">Bevorzugte Reihenfolge</label>
               <select v-model="defSelectionOrder" class="field-select">
-                <option value="0">Höchste Qualität zuerst</option>
-                <option value="1">Niedrigste Qualität zuerst</option>
+                <option value="HighestToLowest">Höchste Qualität zuerst</option>
+                <option value="LowestToHighest">Niedrigste Qualität zuerst</option>
               </select>
               <p class="field-desc">Legt fest, welche der zulässigen Auflösungen bevorzugt wird. Die Auflösung wird für jeden Stream per ffmpeg ermittelt.</p>
             </div>
