@@ -25,6 +25,7 @@ const tempDownloadPath = ref('')
 // Download
 const downloadSubtitles = ref(false)
 const readRate = ref(0)
+const maxParallelDownloads = ref(1)
 const scanLibraryAfterDownload = ref(true)
 const minFreeDiskSpaceMiB = ref('')
 
@@ -115,6 +116,7 @@ async function loadConfig() {
     // Download
     downloadSubtitles.value = config.Download?.DownloadSubtitles ?? false
     readRate.value = config.Download?.ReadRate ?? 0
+    maxParallelDownloads.value = config.Download?.MaxParallelDownloads ?? 1
     scanLibraryAfterDownload.value = config.Download?.ScanLibraryAfterDownload ?? true
     minFreeDiskSpaceMiB.value = config.Download?.MinFreeDiskSpaceBytes
       ? (config.Download.MinFreeDiskSpaceBytes / (1024 * 1024)).toString()
@@ -198,6 +200,7 @@ async function saveConfig() {
     config.Download.DownloadSubtitles = downloadSubtitles.value
     config.Download.ScanLibraryAfterDownload = scanLibraryAfterDownload.value
     config.Download.ReadRate = readRate.value
+    config.Download.MaxParallelDownloads = Math.min(10, Math.max(1, parseInt(maxParallelDownloads.value) || 1))
     const minFree = parseInt(minFreeDiskSpaceMiB.value)
     config.Download.MinFreeDiskSpaceBytes = isNaN(minFree) ? (1.5 * 1024 * 1024 * 1024) : (minFree * 1024 * 1024)
 
@@ -257,6 +260,12 @@ async function saveConfig() {
     }
 
      await ApiService.updatePluginConfig(PLUGIN_ID, config)
+     // Notify plugin services so live settings (e.g. MaxParallelDownloads) apply without a restart.
+     try {
+       await ApiService.notifyConfigChanged()
+     } catch (e) {
+       console.warn('Config change notification failed (settings apply after restart):', e)
+     }
      if (Dashboard) Dashboard.alert('Einstellungen gespeichert.')
      // Notify parent to refresh config
      emit('config-saved')
@@ -437,6 +446,13 @@ onMounted(() => {
               <label class="field-label">Download-Geschwindigkeit</label>
               <input v-model="readRate" type="number" class="field-input" min="0" step="0.1" placeholder="0 = unbegrenzt">
               <p class="field-desc">FFmpeg readrate: 1 = Echtzeit, 2 = doppelte Geschwindigkeit, 0 = unbegrenzt.</p>
+            </div>
+          </div>
+          <div class="grid-2">
+            <div class="field">
+              <label class="field-label">Parallele Downloads</label>
+              <input v-model="maxParallelDownloads" type="number" class="field-input" min="1" max="10">
+              <p class="field-desc">Anzahl der gleichzeitig laufenden Downloads (1–10). Höhere Werte können die I/O-Last auf langsamen Festplatten erhöhen.</p>
             </div>
           </div>
         </div>

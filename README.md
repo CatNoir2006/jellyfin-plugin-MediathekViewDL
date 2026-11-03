@@ -128,6 +128,7 @@ Hier konfigurieren Sie das globale Verhalten des Plugins. Die Einstellungen sind
 | **Untertitel herunterladen** | Aktiviert den automatischen Untertitel-Download. |
 | **Minimaler freier Speicherplatz** | Stoppt Downloads bei wenig Speicherplatz (konfigurierbar). |
 | **Maximale Bandbreite** | Begrenzung in MBit/s (0 = unbegrenzt). |
+| **Parallele Downloads** | Anzahl der gleichzeitig laufenden Downloads (1–10, Standard: 1). |
 | **Bibliotheks-Scan** | Aktualisiert die Jellyfin-Bibliothek automatisch nach fertigen Downloads. |
 
 ### 📺 Abonnements (Automatische Downloads)

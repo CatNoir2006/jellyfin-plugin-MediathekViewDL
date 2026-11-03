@@ -144,6 +144,11 @@ async function persistWizardResult(payload = {}) {
     }
     cfg.WizardCompleted = true
     await ApiService.updatePluginConfig(PLUGIN_ID, cfg)
+    try {
+      await ApiService.notifyConfigChanged()
+    } catch (e) {
+      console.warn('Config change notification failed:', e)
+    }
     // Refresh local state so the wizard doesn't auto-open again on next mount
     if (pluginConfig.value) {
       pluginConfig.value.WizardCompleted = true

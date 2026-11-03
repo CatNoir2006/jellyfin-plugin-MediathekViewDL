@@ -540,6 +540,29 @@ class ApiService {
     }
 
     /**
+     * Notify the plugin that the configuration changed, so live settings
+     * (e.g. the parallel download limit) apply without a restart.
+     * @returns {Promise<any>} - Response
+     */
+    async notifyConfigChanged() {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+
+        const url = this.apiClient.getUrl('MediathekViewDL/Plugin/ConfigurationChanged')
+        console.log(`🔔 POST Plugin/ConfigurationChanged`)
+
+        try {
+            const response = await this.apiClient.ajax({
+                type: 'POST',
+                url: url
+            })
+            return response
+        } catch (error) {
+            console.error(`❌ NotifyConfigChanged failed:`, error)
+            throw error
+        }
+    }
+
+    /**
      * Get all scheduled tasks
      * @returns {Promise<Array>} - List of tasks
      */

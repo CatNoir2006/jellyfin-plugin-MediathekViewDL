@@ -43,6 +43,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MediathekView.Api\MediathekView.Api.csproj" />
+    <InternalsVisibleTo Include="Jellyfin.Plugin.MediathekViewDL.Tests" />
   </ItemGroup>
 
   <ItemGroup>

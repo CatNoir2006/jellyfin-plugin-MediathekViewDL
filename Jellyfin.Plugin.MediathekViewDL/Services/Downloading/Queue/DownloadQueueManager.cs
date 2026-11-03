@@ -21,12 +21,13 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
 {
     private readonly ConcurrentDictionary<Guid, ActiveDownload> _activeDownloads = new();
     private readonly Channel<ActiveDownload> _queueChannel;
-    private readonly SemaphoreSlim _concurrencySemaphore = new(1, 1); // Limit to 1 concurrent download
+    private readonly object _semaphoreLock = new();
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<DownloadQueueManager> _logger;
     private readonly IConfigurationProvider _configurationProvider;
     private readonly CancellationTokenSource _shutdownCts = new();
     private readonly Task _queueProcessor;
+    private DynamicSemaphore? _semaphore;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DownloadQueueManager"/> class.
@@ -42,8 +43,32 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
         _scopeFactory = scopeFactory;
         _logger = logger;
         _configurationProvider = configurationProvider;
+        Plugin.ConfigurationSaved += OnConfigurationSaved;
+
         _queueChannel = Channel.CreateUnbounded<ActiveDownload>();
         _queueProcessor = Task.Run(ProcessQueueAsync);
+    }
+
+    /// <summary>
+    /// Gets the concurrency semaphore, creating it on first use so the configured
+    /// limit is read after the plugin configuration has been applied.
+    /// </summary>
+    /// <returns>The dynamic concurrency semaphore.</returns>
+    private DynamicSemaphore GetSemaphore()
+    {
+        lock (_semaphoreLock)
+        {
+            if (_semaphore is null)
+            {
+                var limit = GetParallelDownloadLimit();
+                _semaphore = new DynamicSemaphore(limit);
+                _logger.LogInformation(
+                    "Download queue initialized with a concurrency limit of {Limit} parallel download(s).",
+                    limit);
+            }
+
+            return _semaphore;
+        }
     }
 
     /// <inheritdoc />
@@ -157,10 +182,71 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
     /// </summary>
     public void Dispose()
     {
+        Plugin.ConfigurationSaved -= OnConfigurationSaved;
         _shutdownCts.Cancel();
         _shutdownCts.Dispose();
-        _concurrencySemaphore.Dispose();
         GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Gets the limit of simultaneous downloads from the plugin configuration, clamped to the range 1..10.
+    /// </summary>
+    /// <returns>The configured download concurrency limit.</returns>
+    private int GetParallelDownloadLimit()
+    {
+        const int AbsoluteMaximum = 10;
+
+        var configured = _configurationProvider.ConfigurationOrNull?.Download.MaxParallelDownloads ?? 1;
+        var limit = Math.Clamp(configured, 1, AbsoluteMaximum);
+
+        if (limit != configured)
+        {
+            _logger.LogWarning(
+                "Configured MaxParallelDownloads value {Configured} is outside the supported range 1..{Maximum}. Using {Limit} instead.",
+                configured,
+                AbsoluteMaximum,
+                limit);
+        }
+
+        return limit;
+    }
+
+    /// <summary>
+    /// Handles plugin configuration updates by adjusting the concurrency limit without a restart.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="eventArgs">The event arguments.</param>
+    private void OnConfigurationSaved(object? sender, EventArgs eventArgs)
+    {
+        try
+        {
+            var newLimit = GetParallelDownloadLimit();
+            lock (_semaphoreLock)
+            {
+                if (_semaphore is null)
+                {
+                    // The semaphore is created lazily on first use and will pick up the
+                    // current configuration at that point.
+                    return;
+                }
+
+                var oldLimit = _semaphore.CurrentLimit;
+                if (oldLimit == newLimit)
+                {
+                    return;
+                }
+
+                _semaphore.SetLimit(newLimit);
+                _logger.LogInformation(
+                    "Adjusted the parallel download limit to {NewLimit} (previous limit: {OldLimit}).",
+                    newLimit,
+                    oldLimit);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to apply the updated download concurrency limit.");
+        }
     }
 
     private async Task ProcessQueueAsync()
@@ -176,11 +262,11 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
                         continue;
                     }
 
-                    await _concurrencySemaphore.WaitAsync(_shutdownCts.Token).ConfigureAwait(false);
+                    await GetSemaphore().WaitAsync(_shutdownCts.Token).ConfigureAwait(false);
 
                     if (download.Status == DownloadStatus.Cancelled)
                     {
-                        _concurrencySemaphore.Release();
+                        GetSemaphore().Release();
                         continue;
                     }
 
@@ -197,7 +283,7 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
                             }
                             finally
                             {
-                                _concurrencySemaphore.Release();
+                                GetSemaphore().Release();
                             }
                         },
                         _shutdownCts.Token);
@@ -255,7 +341,11 @@ public sealed class DownloadQueueManager : IDownloadQueueManager, IDisposable
                         download.Job.ItemInfo.Language).ConfigureAwait(false);
                 }
 
-                if (_configurationProvider.ConfigurationOrNull?.Download.ScanLibraryAfterDownload == true && _activeDownloads.Values.All(d => d.Status != DownloadStatus.Queued))
+                // Only trigger a scan when no downloads are queued or still running.
+                if (_configurationProvider.ConfigurationOrNull?.Download.ScanLibraryAfterDownload == true
+                    && _activeDownloads.Values.All(d => d.Status != DownloadStatus.Queued
+                        && d.Status != DownloadStatus.Downloading
+                        && d.Status != DownloadStatus.Processing))
                 {
                     _logger.LogInformation("Triggering library scan (all downloads finished).");
                     libraryManager.QueueLibraryScan();
