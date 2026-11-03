@@ -45,15 +45,7 @@ public class VideoQualitySelector : IVideoQualitySelector
             .Where(v => !string.IsNullOrWhiteSpace(v.Url))
             .DistinctBy(v => v.Url, StringComparer.OrdinalIgnoreCase);
 
-        bool probingRequired = settings.MinHeight is not null || settings.MaxHeight is not null;
-        if (!probingRequired)
-        {
-            // Fast path: no resolution probing required; ranking by the surface quality index (1..3).
-            return OrderByHeight(candidates.Select(c => (c, (int?)null)), settings.SelectionOrder)
-                .Select(entry => entry.Stream)
-                .ToList();
-        }
-
+        bool rangeConfigured = settings.MinHeight is not null || settings.MaxHeight is not null;
         var matched = new List<(VideoUrlDto Stream, int? Height)>();
         foreach (var candidate in candidates)
         {
@@ -64,17 +56,20 @@ public class VideoQualitySelector : IVideoQualitySelector
                 continue;
             }
 
-            if (settings.MinHeight is int minHeight && height.Value < minHeight)
+            if (rangeConfigured)
             {
-                continue;
+                if (settings.MinHeight is int minHeight && height.Value < minHeight)
+                {
+                    continue;
+                }
+
+                if (settings.MaxHeight is int maxHeight && height.Value > maxHeight)
+                {
+                    continue;
+                }
             }
 
-            if (settings.MaxHeight is int maxHeight && height.Value > maxHeight)
-            {
-                continue;
-            }
-
-            matched.Add((candidate, height.Value));
+            matched.Add((candidate, height));
         }
 
         return OrderByHeight(matched, settings.SelectionOrder)

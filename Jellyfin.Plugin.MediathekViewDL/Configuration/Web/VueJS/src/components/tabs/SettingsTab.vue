@@ -51,7 +51,6 @@ const defMinHeight = ref('')
 const defMaxHeight = ref('')
 const defSelectionOrder = ref('0')
 const defStrictResolution = ref(false)
-const defQualityCheckWithUrl = ref(false)
 
 // Download quality dropdown options (heights are stored as int on the backend).
 const heightOptions = [
@@ -154,7 +153,6 @@ async function loadConfig() {
     defMaxHeight.value = defDl.MaxHeight ?? ''
     defSelectionOrder.value = defDl.SelectionOrder !== undefined && defDl.SelectionOrder !== null ? String(defDl.SelectionOrder) : '0'
     defStrictResolution.value = defDl.StrictResolution ?? false
-    defQualityCheckWithUrl.value = defDl.QualityCheckWithUrl ?? false
 
     defEnforceSeries.value = defSeries.EnforceSeriesParsing ?? false
     defAllowAbsoluteEpisodeNumbering.value = defSeries.AllowAbsoluteEpisodeNumbering ?? false
@@ -234,8 +232,7 @@ async function saveConfig() {
         MinHeight: defMinHeight.value !== '' ? parseInt(defMinHeight.value) : null,
         MaxHeight: defMaxHeight.value !== '' ? parseInt(defMaxHeight.value) : null,
         SelectionOrder: parseInt(defSelectionOrder.value) || 0,
-        StrictResolution: defStrictResolution.value,
-        QualityCheckWithUrl: defQualityCheckWithUrl.value
+        StrictResolution: defStrictResolution.value
       },
       SeriesSettings: {
         EnforceSeriesParsing: defEnforceSeries.value,
@@ -527,9 +524,15 @@ onMounted(() => {
             <label><input v-model="defEnhancedDuplicateDetection" type="checkbox"> Erweiterte Duplikaterkennung</label>
             <p class="field-desc">Scannt das Zielverzeichnis nach vorhandenen Dateien mit passenden SxxExx-Mustern (oder absoluter Nummerierung), um doppelte Downloads zu vermeiden (auch bei abweichenden Dateinamen).</p>
           </div>
-          <div class="checkbox-field">
-            <label><input v-model="defQualityCheckWithUrl" type="checkbox"> URL-Gültigkeit prüfen</label>
-            <p class="field-desc">Wenn aktiviert wird auch geprüft, ob die URLs von MediathekView noch verfügbar sind und ggf. die nächst niedrigere versucht.</p>
+          <div class="grid-2">
+            <div class="field">
+              <label class="field-label">Bevorzugte Reihenfolge</label>
+              <select v-model="defSelectionOrder" class="field-select">
+                <option value="0">Höchste Qualität zuerst</option>
+                <option value="1">Niedrigste Qualität zuerst</option>
+              </select>
+              <p class="field-desc">Legt fest, welche der zulässigen Auflösungen bevorzugt wird. Die Auflösung wird für jeden Stream per ffmpeg ermittelt.</p>
+            </div>
           </div>
           <div class="grid-2">
             <div class="field">
@@ -546,21 +549,13 @@ onMounted(() => {
                 <option value="">Kein Limit</option>
                 <option v-for="opt in heightOptions" :key="'max-' + opt.value" :value="opt.value">{{ opt.label }}</option>
               </select>
-              <p class="field-desc">Streams mit einer größeren Auflösung werden übersprungen (z.B. 720p wählen, um 1080p zu vermeiden).</p>
+              <p class="field-desc">Streams mit einer größeren Auflösung werden übersprungen (z.B. 720p wählen, um 1080p zu vermeiden). Verlangsamt den Scan leicht, da jeder Stream geprüft werden muss.</p>
             </div>
           </div>
           <div v-if="defMinHeight !== '' || defMaxHeight !== ''" class="sub-options">
-            <div class="field">
-              <label class="field-label">Bevorzugte Reihenfolge</label>
-              <select v-model="defSelectionOrder" class="field-select">
-                <option value="0">Höchste Qualität zuerst</option>
-                <option value="1">Niedrigste Qualität zuerst</option>
-              </select>
-              <p class="field-desc">Legt fest, welche der zulässigen Auflösungen bevorzugt wird.</p>
-            </div>
             <div class="checkbox-field">
               <label><input v-model="defStrictResolution" type="checkbox"> Streng</label>
-              <p class="field-desc">Wenn aktiviert, werden Streams ohne ermittelbare Auflösung übersprungen. Andernfalls wird bei fehlender Auflösung eine Schätzung anhand der Ziel-Qualität (1080p/720p/480p) verwendet. Einen Auflösungsbereich zu setzen verlangsamt den Scan leicht, da jeder Stream geprüft werden muss.</p>
+              <p class="field-desc">Wenn aktiviert, werden Streams ohne ermittelbare Auflösung übersprungen. Andernfalls wird bei fehlender Auflösung eine Schätzung anhand der Ziel-Qualität (1080p/720p/480p) verwendet.</p>
             </div>
           </div>
 

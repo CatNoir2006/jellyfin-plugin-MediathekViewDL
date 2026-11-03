@@ -32,7 +32,6 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         private readonly Mock<IVideoParser> _videoParserMock;
         private readonly Mock<ILocalMediaScanner> _localMediaScannerMock;
         private readonly Mock<IFileNameBuilderService> _fileNameBuilderServiceMock;
-        private readonly Mock<IUrlValidationService> _strmValidationServiceMock;
         private readonly Mock<IFFmpegService> _ffmpegServiceMock;
         private readonly Mock<IDownloadHistoryRepository> _downloadHistoryRepositoryMock;
         private readonly Mock<IConfigurationProvider> _configurationProviderMock;
@@ -47,17 +46,12 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _videoParserMock = new Mock<IVideoParser>();
             _localMediaScannerMock = new Mock<ILocalMediaScanner>();
             _fileNameBuilderServiceMock = new Mock<IFileNameBuilderService>();
-            _strmValidationServiceMock = new Mock<IUrlValidationService>();
             _ffmpegServiceMock = new Mock<IFFmpegService>();
             _downloadHistoryRepositoryMock = new Mock<IDownloadHistoryRepository>();
             _configurationProviderMock = new Mock<IConfigurationProvider>();
             _downloadQueueManagerMock = new Mock<IDownloadQueueManager>();
 
-            // Default setup: Validation always succeeds
-            _strmValidationServiceMock
-                .Setup(x => x.ValidateUrlAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(true);
-
+            // Default setup: Probing returns null (resolution unknown, fallback estimate used)
             _configurationProviderMock
                 .Setup(x => x.Configuration)
                 .Returns(new PluginConfiguration());
@@ -70,7 +64,6 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 _videoParserMock.Object,
                 _localMediaScannerMock.Object,
                 _fileNameBuilderServiceMock.Object,
-                _strmValidationServiceMock.Object,
                 _ffmpegServiceMock.Object,
                 _downloadHistoryRepositoryMock.Object,
                 _configurationProviderMock.Object,
@@ -242,13 +235,13 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         }
 
         [Fact]
-        public async Task GetJobsForSubscriptionAsync_ShouldFallback_ToNextQuality_WhenPrimaryFails()
+        public async Task GetJobsForSubscriptionAsync_ShouldExcludeUnprobeableStream_AndUseNextQuality_WhenStrictResolution()
         {
             // Arrange
             var subscription = new Subscription
             {
                 Name = "TestSub",
-                Download = new DownloadSettings { QualityCheckWithUrl = true }
+                Download = new DownloadSettings { StrictResolution = true }
             };
             var item = new ResultItem
             {
@@ -274,26 +267,69 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _fileNameBuilderServiceMock
                 .Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<DownloadContext>(), It.IsAny<FileType?>()))
                 .Returns(new DownloadPaths { DirectoryPath = "/tmp", MainFilePath = "/tmp/v.mp4" });
-            _strmValidationServiceMock
-                .Setup(x => x.ValidateUrlAsync("http://hd.mp4", It.IsAny<CancellationToken>()))
-                .ReturnsAsync(false); // Fail
 
-            _strmValidationServiceMock
-                .Setup(x => x.ValidateUrlAsync("http://sd.mp4", It.IsAny<CancellationToken>()))
-                .ReturnsAsync(true); // Success
+            // Probing: HD fails (invalid/unmeasurable), SD=720p, Low=480p
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync("http://hd.mp4", It.IsAny<CancellationToken>()))
+                .ReturnsAsync((LocalMediaInfo?)null);
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync("http://sd.mp4", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new LocalMediaInfo { FilePath = "http://sd.mp4", Height = 720 });
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync("http://low.mp4", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new LocalMediaInfo { FilePath = "http://low.mp4", Height = 480 });
 
             // Act
             var jobs = await _processor.GetJobsForSubscriptionAsync(subscription, false, CancellationToken.None);
 
             // Assert
+            // The unprobeable HD stream is excluded by StrictResolution; the next best (SD) is used.
             Assert.Single(jobs);
-            var job = jobs[0];
-            Assert.Equal("http://sd.mp4", job.DownloadItems.First().SourceUrl);
+            Assert.Equal("http://sd.mp4", jobs[0].DownloadItems.First().SourceUrl);
+            _ffmpegServiceMock.Verify(x => x.GetMediaInfoAsync("http://low.mp4", It.IsAny<CancellationToken>()), Times.Once);
+        }
 
-            // Verify HD was checked first
-            _strmValidationServiceMock.Verify(x => x.ValidateUrlAsync("http://hd.mp4", It.IsAny<CancellationToken>()), Times.Once);
-            _strmValidationServiceMock.Verify(x => x.ValidateUrlAsync("http://sd.mp4", It.IsAny<CancellationToken>()), Times.Once);
-            _strmValidationServiceMock.Verify(x => x.ValidateUrlAsync("http://low.mp4", It.IsAny<CancellationToken>()), Times.Never);
+        [Fact]
+        public async Task GetJobsForSubscriptionAsync_ShouldKeepHighestStream_ViaEstimate_WhenProbeFails_AndNotStrict()
+        {
+            // Arrange
+            var subscription = new Subscription { Name = "TestSub" };
+            var item = new ResultItem
+            {
+                Id = "123",
+                UrlVideoHd = "http://hd.mp4",
+                UrlVideo = "http://sd.mp4"
+            };
+
+            var resultChannels = new ResultChannels
+            {
+                Results = new Collection<ResultItem> { item },
+                QueryInfo = new QueryInfo { TotalResults = 1 }
+            };
+
+            _apiClientMock.Setup(x => x.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(resultChannels.ToDto(new ApiQueryDto(), false));
+
+            var videoInfo = new VideoInfo { Title = "Test", Language = "deu" };
+            _videoParserMock.Setup(x => x.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(videoInfo);
+
+            _fileNameBuilderServiceMock
+                .Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<DownloadContext>(), It.IsAny<FileType?>()))
+                .Returns(new DownloadPaths { DirectoryPath = "/tmp", MainFilePath = "/tmp/v.mp4" });
+
+            // Probing fails for every stream (resolution unknown)
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((LocalMediaInfo?)null);
+
+            // Act
+            var jobs = await _processor.GetJobsForSubscriptionAsync(subscription, false, CancellationToken.None);
+
+            // Assert
+            // Without StrictResolution the quality index estimate keeps the highest stream first.
+            Assert.Single(jobs);
+            Assert.Equal("http://hd.mp4", jobs[0].DownloadItems.First().SourceUrl);
         }
 
         [Fact]
@@ -397,13 +433,13 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         }
 
         [Fact]
-        public async Task GetJobsForSubscriptionAsync_ShouldSkip_WhenAllQualitiesFail()
+        public async Task GetJobsForSubscriptionAsync_ShouldSkip_WhenAllStreamsAreUnprobeable_AndStrictResolution()
         {
             // Arrange
             var subscription = new Subscription
             {
                 Name = "TestSub",
-                Download = new DownloadSettings { QualityCheckWithUrl = true }
+                Download = new DownloadSettings { StrictResolution = true }
             };
             var item = new ResultItem
             {
@@ -429,10 +465,10 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 .Setup(x => x.GenerateDownloadPaths(It.IsAny<VideoInfo>(), It.IsAny<Subscription>(), It.IsAny<DownloadContext>(), It.IsAny<FileType?>()))
                 .Returns(new DownloadPaths { DirectoryPath = "/tmp", MainFilePath = "/tmp/v.mp4" });
 
-            // Fail all
-            _strmValidationServiceMock
-                .Setup(x => x.ValidateUrlAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(false);
+            // Fail all probes (URLs invalid or resolution unmeasurable)
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((LocalMediaInfo?)null);
 
             // Act
             var jobs = await _processor.GetJobsForSubscriptionAsync(subscription, false, CancellationToken.None);

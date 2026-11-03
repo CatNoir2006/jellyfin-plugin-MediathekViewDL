@@ -42,7 +42,6 @@ describe('SubscriptionFactory', () => {
                     SelectionOrder: 1,
                     StrictResolution: true,
                     EnhancedDuplicateDetection: true,
-                    QualityCheckWithUrl: true,
                     DownloadFullVideoForSecondaryAudio: true
                 }
             }
@@ -56,7 +55,6 @@ describe('SubscriptionFactory', () => {
             expect(subscription.Download.SelectionOrder).toBe(1)
             expect(subscription.Download.StrictResolution).toBe(true)
             expect(subscription.Download.EnhancedDuplicateDetection).toBe(true)
-            expect(subscription.Download.QualityCheckWithUrl).toBe(true)
             expect(subscription.Download.DownloadFullVideoForSecondaryAudio).toBe(true)
         })
 

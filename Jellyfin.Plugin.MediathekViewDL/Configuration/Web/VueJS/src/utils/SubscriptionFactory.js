@@ -19,7 +19,6 @@ export const SubscriptionFactory = {
       SelectionOrder: defaults.DownloadSettings?.SelectionOrder ?? 0,
       StrictResolution: defaults.DownloadSettings?.StrictResolution || false,
       EnhancedDuplicateDetection: defaults.DownloadSettings?.EnhancedDuplicateDetection || false,
-      QualityCheckWithUrl: defaults.DownloadSettings?.QualityCheckWithUrl || false,
       DownloadFullVideoForSecondaryAudio: defaults.DownloadSettings?.DownloadFullVideoForSecondaryAudio || false
     },
     Series: {

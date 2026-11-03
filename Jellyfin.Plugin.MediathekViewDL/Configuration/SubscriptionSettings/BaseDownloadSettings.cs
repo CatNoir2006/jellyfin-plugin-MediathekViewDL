@@ -42,13 +42,6 @@ public record BaseDownloadSettings
     public bool StrictResolution { get; init; }
 
     /// <summary>
-    /// Gets a value indicating whether to check if the URL retrieved from MediathekViewWeb API is valid.
-    /// If not it will try with the next lower quality available.
-    /// This can slow down the Scan. Especially if thers a lot of unavailable videos.
-    /// </summary>
-    public bool QualityCheckWithUrl { get; init; }
-
-    /// <summary>
     /// Gets a value indicating whether to always create a subfolder for the subscription (using the subscription name),
     /// even if the content is a movie and the global setting 'UseTopicForMoviePath' is disabled.
     /// </summary>

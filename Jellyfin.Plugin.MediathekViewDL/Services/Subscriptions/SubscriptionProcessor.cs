@@ -32,7 +32,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     private readonly IVideoParser _videoParser;
     private readonly ILocalMediaScanner _localMediaScanner;
     private readonly IFileNameBuilderService _fileNameBuilderService;
-    private readonly IUrlValidationService _urlValidationService;
     private readonly IFFmpegService _ffmpegService;
     private readonly IDownloadHistoryRepository _downloadHistoryRepository;
     private readonly IConfigurationProvider _configurationProvider;
@@ -47,7 +46,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
     /// <param name="videoParser">The video parser.</param>
     /// <param name="localMediaScanner">The local media scanner.</param>
     /// <param name="fileNameBuilderService">The file name builder service.</param>
-    /// <param name="urlValidationService">The STRM validation service.</param>
     /// <param name="ffmpegService">The ffmpeg Service.</param>
     /// <param name="downloadHistoryRepository">The Download History Repo.</param>
     /// <param name="configurationProvider">The Configuration Provider.</param>
@@ -59,7 +57,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         IVideoParser videoParser,
         ILocalMediaScanner localMediaScanner,
         IFileNameBuilderService fileNameBuilderService,
-        IUrlValidationService urlValidationService,
         IFFmpegService ffmpegService,
         IDownloadHistoryRepository downloadHistoryRepository,
         IConfigurationProvider configurationProvider,
@@ -71,7 +68,6 @@ public class SubscriptionProcessor : ISubscriptionProcessor
         _videoParser = videoParser;
         _localMediaScanner = localMediaScanner;
         _fileNameBuilderService = fileNameBuilderService;
-        _urlValidationService = urlValidationService;
         _ffmpegService = ffmpegService;
         _downloadHistoryRepository = downloadHistoryRepository;
         _configurationProvider = configurationProvider;
@@ -481,35 +477,7 @@ public class SubscriptionProcessor : ISubscriptionProcessor
             return null;
         }
 
-        if (!subscription.Download.QualityCheckWithUrl)
-        {
-            return candidates[0].Url;
-        }
-
-        foreach (var candidate in candidates)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var url = candidate.Url;
-            try
-            {
-                if (await _urlValidationService.ValidateUrlAsync(url, cancellationToken).ConfigureAwait(false))
-                {
-                    if (url != candidates[0].Url)
-                    {
-                        _logger.LogWarning("Primary quality download failed for '{Title}'. Fallback to: {Url}", item.Title, url);
-                    }
-
-                    return url;
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to validate URL '{Url}' for '{Title}'. Trying next quality...", url, item.Title);
-            }
-        }
-
-        _logger.LogWarning("No valid video URL found for item '{Title}'.", item.Title);
-        return null;
+        return candidates[0].Url;
     }
 
     /// <summary>

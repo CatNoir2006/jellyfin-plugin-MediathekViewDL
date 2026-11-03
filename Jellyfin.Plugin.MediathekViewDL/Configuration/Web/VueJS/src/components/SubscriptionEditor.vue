@@ -286,11 +286,13 @@ function updateDate(target, field, value) {
                         </label>
                         <p class="field-desc">Scannt das Zielverzeichnis nach vorhandenen Dateien mit passenden SxxExx-Mustern (oder absoluter Nummerierung), um doppelte Downloads zu vermeiden (auch bei abweichenden Dateinamen).</p>
                     </div>
-                    <div class="checkbox-field">
-                        <label>
-                            <input v-model="editedSub.Download.QualityCheckWithUrl" type="checkbox"> URL-Gültigkeit prüfen
-                        </label>
-                        <p class="field-desc">Wenn aktiviert wird auch geprüft, ob die URLs von MediathekView noch verfügbar sind und ggf. die nächst niedrigere versucht.</p>
+                    <div class="field">
+                        <label class="field-label">Bevorzugte Reihenfolge</label>
+                        <select v-model="editedSub.Download.SelectionOrder" class="field-select">
+                            <option :value="0">Höchste Qualität zuerst</option>
+                            <option :value="1">Niedrigste Qualität zuerst</option>
+                        </select>
+                        <p class="field-desc">Legt fest, welche der zulässigen Auflösungen bevorzugt wird. Die Auflösung wird für jeden Stream per ffmpeg ermittelt.</p>
                     </div>
                     <div class="grid-2">
                         <div class="field">
@@ -307,23 +309,15 @@ function updateDate(target, field, value) {
                                 <option :value="null">Kein Limit</option>
                                 <option v-for="opt in heightOptions" :key="'max-' + opt.value" :value="parseInt(opt.value)">{{ opt.label }}</option>
                             </select>
-                            <p class="field-desc">Streams mit einer größeren Auflösung werden übersprungen (z.B. 720p wählen, um 1080p zu vermeiden).</p>
+                            <p class="field-desc">Streams mit einer größeren Auflösung werden übersprungen (z.B. 720p wählen, um 1080p zu vermeiden). Verlangsamt den Scan leicht, da jeder Stream geprüft werden muss.</p>
                         </div>
                     </div>
                     <div v-if="editedSub.Download.MinHeight !== null || editedSub.Download.MaxHeight !== null" class="sub-options">
-                        <div class="field">
-                            <label class="field-label">Bevorzugte Reihenfolge</label>
-                            <select v-model="editedSub.Download.SelectionOrder" class="field-select">
-                                <option :value="0">Höchste Qualität zuerst</option>
-                                <option :value="1">Niedrigste Qualität zuerst</option>
-                            </select>
-                            <p class="field-desc">Legt fest, welche der zulässigen Auflösungen bevorzugt wird.</p>
-                        </div>
                         <div class="checkbox-field">
                             <label>
                                 <input v-model="editedSub.Download.StrictResolution" type="checkbox"> Streng
                             </label>
-                            <p class="field-desc">Wenn aktiviert, werden Streams ohne ermittelbare Auflösung übersprungen. Andernfalls wird bei fehlender Auflösung eine Schätzung anhand der Ziel-Qualität (1080p/720p/480p) verwendet. Einen Auflösungsbereich zu setzen verlangsamt den Scan leicht, da jeder Stream geprüft werden muss.</p>
+                            <p class="field-desc">Wenn aktiviert, werden Streams ohne ermittelbare Auflösung übersprungen. Andernfalls wird bei fehlender Auflösung eine Schätzung anhand der Ziel-Qualität (1080p/720p/480p) verwendet.</p>
                         </div>
                     </div>
                 </div>

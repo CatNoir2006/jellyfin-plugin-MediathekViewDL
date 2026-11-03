@@ -40,9 +40,58 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         }
 
         [Fact]
-        public async Task GetOrderedCandidatesAsync_WithoutHeightRange_ShouldOrderByQualityDescending_WithoutProbing()
+        public async Task GetOrderedCandidatesAsync_ShouldOrderByProbedHeightDescending_WithoutHeightRange()
         {
             // Arrange
+            var settings = new BaseDownloadSettings { SelectionOrder = QualitySelectionOrder.HighestToLowest };
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync("http://hd.mp4", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMediaInfo(1080));
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync("http://sd.mp4", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMediaInfo(720));
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync("http://low.mp4", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMediaInfo(480));
+
+            // Act
+            var result = await _selector.GetOrderedCandidatesAsync(CreateStreams(), settings, CancellationToken.None);
+
+            // Assert
+            Assert.Equal(new[] { "http://hd.mp4", "http://sd.mp4", "http://low.mp4" }, result.Select(v => v.Url));
+        }
+
+        [Fact]
+        public async Task GetOrderedCandidatesAsync_ShouldOrderByProbedHeightAscending_WhenLowestToHighest()
+        {
+            // Arrange
+            var settings = new BaseDownloadSettings { SelectionOrder = QualitySelectionOrder.LowestToHighest };
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync("http://hd.mp4", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMediaInfo(1080));
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync("http://sd.mp4", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMediaInfo(720));
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync("http://low.mp4", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMediaInfo(480));
+
+            // Act
+            var result = await _selector.GetOrderedCandidatesAsync(CreateStreams(), settings, CancellationToken.None);
+
+            // Assert
+            Assert.Equal(new[] { "http://low.mp4", "http://sd.mp4", "http://hd.mp4" }, result.Select(v => v.Url));
+        }
+
+        [Fact]
+        public async Task GetOrderedCandidatesAsync_ShouldOrderByQualityIndex_AndProbe_WhenProbesFail_AndNotStrict()
+        {
+            // Arrange
+            // All probes fail (e.g. invalid URL or unsupported stream): the quality index estimate
+            // (3=1080p, 2=720p, 1=480p) preserves the expected ranking.
+            _ffmpegServiceMock
+                .Setup(x => x.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync((LocalMediaInfo?)null);
             var settings = new BaseDownloadSettings { SelectionOrder = QualitySelectionOrder.HighestToLowest };
 
             // Act
@@ -50,20 +99,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
 
             // Assert
             Assert.Equal(new[] { "http://hd.mp4", "http://sd.mp4", "http://low.mp4" }, result.Select(v => v.Url));
-            _ffmpegServiceMock.Verify(x => x.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        }
-
-        [Fact]
-        public async Task GetOrderedCandidatesAsync_WithoutHeightRange_ShouldOrderByQualityAscending_WhenLowestToHighest()
-        {
-            // Arrange
-            var settings = new BaseDownloadSettings { SelectionOrder = QualitySelectionOrder.LowestToHighest };
-
-            // Act
-            var result = await _selector.GetOrderedCandidatesAsync(CreateStreams(), settings, CancellationToken.None);
-
-            // Assert
-            Assert.Equal(new[] { "http://low.mp4", "http://sd.mp4", "http://hd.mp4" }, result.Select(v => v.Url));
+            _ffmpegServiceMock.Verify(x => x.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(3));
         }
 
         [Fact]
