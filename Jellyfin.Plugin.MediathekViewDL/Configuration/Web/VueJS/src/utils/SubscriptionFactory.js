@@ -14,9 +14,11 @@ export const SubscriptionFactory = {
       DownloadPath: '',
       UseStreamingUrlFiles: defaults.DownloadSettings?.UseStreamingUrlFiles || false,
       AlwaysCreateSubfolder: defaults.DownloadSettings?.AlwaysCreateSubfolder || false,
-      AllowFallbackToLowerQuality: defaults.DownloadSettings?.AllowFallbackToLowerQuality ?? true,
+      MinHeight: defaults.DownloadSettings?.MinHeight ?? null,
+      MaxHeight: defaults.DownloadSettings?.MaxHeight ?? null,
+      SelectionOrder: defaults.DownloadSettings?.SelectionOrder || 'HighestToLowest',
+      StrictResolution: defaults.DownloadSettings?.StrictResolution || false,
       EnhancedDuplicateDetection: defaults.DownloadSettings?.EnhancedDuplicateDetection || false,
-      QualityCheckWithUrl: defaults.DownloadSettings?.QualityCheckWithUrl || false,
       DownloadFullVideoForSecondaryAudio: defaults.DownloadSettings?.DownloadFullVideoForSecondaryAudio || false
     },
     Series: {
