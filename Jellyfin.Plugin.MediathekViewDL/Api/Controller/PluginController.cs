@@ -32,4 +32,17 @@ public class PluginController : ControllerBase
 
         return Ok(msg);
     }
+
+    /// <summary>
+    /// Notifies plugin services that the configuration was updated.
+    /// Used by the frontend after saving through Jellyfin's configuration endpoints,
+    /// so that settings like the parallel download limit apply without a restart.
+    /// </summary>
+    /// <returns>No content.</returns>
+    [HttpPost("ConfigurationChanged")]
+    public IActionResult NotifyConfigurationChanged()
+    {
+        Plugin.RaiseConfigurationSaved();
+        return NoContent();
+    }
 }

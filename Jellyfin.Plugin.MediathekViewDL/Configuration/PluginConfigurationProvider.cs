@@ -33,6 +33,7 @@ public class PluginConfigurationProvider : IConfigurationProvider
         }
 
         Plugin.Instance.UpdateConfiguration(config);
+        Plugin.RaiseConfigurationSaved();
     }
 
     /// <inheritdoc />
@@ -44,6 +45,7 @@ public class PluginConfigurationProvider : IConfigurationProvider
         }
 
         Plugin.Instance.UpdateConfiguration(config);
+        Plugin.RaiseConfigurationSaved();
         return true;
     }
 

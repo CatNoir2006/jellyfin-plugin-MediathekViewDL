@@ -27,6 +27,12 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
         Instance = this;
     }
 
+    /// <summary>
+    /// Occurs whenever the plugin configuration was updated, regardless of whether
+    /// the update came from Jellyfin's configuration endpoints or from plugin internals.
+    /// </summary>
+    public static event EventHandler? ConfigurationSaved;
+
     /// <inheritdoc />
     public override string Name => "Mediathek Downloader";
 
@@ -37,7 +43,7 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     public override Guid Id => Guid.Parse("a31b415a-5264-419d-b152-8c8192a54994");
 
     /// <summary>
-    /// Gets the current plugin instance.
+    /// Gets the static plugin instance.
     /// </summary>
     public static Plugin? Instance { get; private set; }
 
@@ -45,6 +51,14 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
     /// Gets the exception that occurred during plugin initialization, if any.
     /// </summary>
     public Exception? InitializationException { get; internal set; }
+
+    /// <summary>
+    /// Notifies all <see cref="ConfigurationSaved"/> subscribers that the plugin configuration was updated.
+    /// </summary>
+    internal static void RaiseConfigurationSaved()
+    {
+        ConfigurationSaved?.Invoke(null, EventArgs.Empty);
+    }
 
     /// <inheritdoc />
     public IEnumerable<PluginPageInfo> GetPages()

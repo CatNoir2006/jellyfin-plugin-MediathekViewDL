@@ -25,6 +25,7 @@ const tempDownloadPath = ref('')
 // Download
 const downloadSubtitles = ref(false)
 const readRate = ref(0)
+const maxParallelDownloads = ref(1)
 const scanLibraryAfterDownload = ref(true)
 const minFreeDiskSpaceMiB = ref('')
 
@@ -51,6 +52,7 @@ const defMinHeight = ref('')
 const defMaxHeight = ref('')
 const defSelectionOrder = ref('HighestToLowest')
 const defStrictResolution = ref(false)
+const defSkipVideoQualityProbing = ref(true)
 
 // Download quality dropdown options (heights are stored as int on the backend).
 const heightOptions = [
@@ -115,6 +117,7 @@ async function loadConfig() {
     // Download
     downloadSubtitles.value = config.Download?.DownloadSubtitles ?? false
     readRate.value = config.Download?.ReadRate ?? 0
+    maxParallelDownloads.value = config.Download?.MaxParallelDownloads ?? 1
     scanLibraryAfterDownload.value = config.Download?.ScanLibraryAfterDownload ?? true
     minFreeDiskSpaceMiB.value = config.Download?.MinFreeDiskSpaceBytes
       ? (config.Download.MinFreeDiskSpaceBytes / (1024 * 1024)).toString()
@@ -153,6 +156,7 @@ async function loadConfig() {
     defMaxHeight.value = defDl.MaxHeight ?? ''
     defSelectionOrder.value = defDl.SelectionOrder || 'HighestToLowest'
     defStrictResolution.value = defDl.StrictResolution ?? false
+    defSkipVideoQualityProbing.value = defDl.SkipVideoQualityProbing ?? true
 
     defEnforceSeries.value = defSeries.EnforceSeriesParsing ?? false
     defAllowAbsoluteEpisodeNumbering.value = defSeries.AllowAbsoluteEpisodeNumbering ?? false
@@ -198,6 +202,7 @@ async function saveConfig() {
     config.Download.DownloadSubtitles = downloadSubtitles.value
     config.Download.ScanLibraryAfterDownload = scanLibraryAfterDownload.value
     config.Download.ReadRate = readRate.value
+    config.Download.MaxParallelDownloads = Math.min(10, Math.max(1, parseInt(maxParallelDownloads.value) || 1))
     const minFree = parseInt(minFreeDiskSpaceMiB.value)
     config.Download.MinFreeDiskSpaceBytes = isNaN(minFree) ? (1.5 * 1024 * 1024 * 1024) : (minFree * 1024 * 1024)
 
@@ -232,7 +237,8 @@ async function saveConfig() {
         MinHeight: defMinHeight.value !== '' ? parseInt(defMinHeight.value) : null,
         MaxHeight: defMaxHeight.value !== '' ? parseInt(defMaxHeight.value) : null,
         SelectionOrder: defSelectionOrder.value,
-        StrictResolution: defStrictResolution.value
+        StrictResolution: defStrictResolution.value,
+        SkipVideoQualityProbing: defSkipVideoQualityProbing.value
       },
       SeriesSettings: {
         EnforceSeriesParsing: defEnforceSeries.value,
@@ -257,6 +263,12 @@ async function saveConfig() {
     }
 
      await ApiService.updatePluginConfig(PLUGIN_ID, config)
+     // Notify plugin services so live settings (e.g. MaxParallelDownloads) apply without a restart.
+     try {
+       await ApiService.notifyConfigChanged()
+     } catch (e) {
+       console.warn('Config change notification failed (settings apply after restart):', e)
+     }
      if (Dashboard) Dashboard.alert('Einstellungen gespeichert.')
      // Notify parent to refresh config
      emit('config-saved')
@@ -439,6 +451,13 @@ onMounted(() => {
               <p class="field-desc">FFmpeg readrate: 1 = Echtzeit, 2 = doppelte Geschwindigkeit, 0 = unbegrenzt.</p>
             </div>
           </div>
+          <div class="grid-2">
+            <div class="field">
+              <label class="field-label">Parallele Downloads</label>
+              <input v-model="maxParallelDownloads" type="number" class="field-input" min="1" max="10">
+              <p class="field-desc">Anzahl der gleichzeitig laufenden Downloads (1–10). Höhere Werte können die I/O-Last auf langsamen Festplatten erhöhen.</p>
+            </div>
+          </div>
         </div>
       </details>
 
@@ -557,6 +576,10 @@ onMounted(() => {
               <label><input v-model="defStrictResolution" type="checkbox"> Streng</label>
               <p class="field-desc">Wenn aktiviert, werden Streams ohne ermittelbare Auflösung übersprungen. Andernfalls wird bei fehlender Auflösung eine Schätzung anhand der Ziel-Qualität (1080p/720p/480p) verwendet.</p>
             </div>
+          </div>
+          <div class="checkbox-field">
+            <label><input v-model="defSkipVideoQualityProbing" type="checkbox"> Auflösung-Prüfung überspringen (schnelleres Einreihen)</label>
+            <p class="field-desc">Vertraut der von der API geschätzten Qualität statt jedes Video per ffprobe zu prüfen — deutlich schnelleres Einreihen. Min-/Max-Height-Filter arbeiten dann mit Schätzwerten (HD=1080, Mitte=720, Niedrig=480).</p>
           </div>
 
           <div class="sub-section-title">Serien</div>

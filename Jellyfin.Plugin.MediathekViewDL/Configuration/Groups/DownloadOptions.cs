@@ -6,6 +6,12 @@ namespace Jellyfin.Plugin.MediathekViewDL.Configuration.Groups;
 public record DownloadOptions
 {
     /// <summary>
+    /// Gets or sets the maximum number of downloads that may run at the same time.
+    /// Valid values are 1 to 10; values outside this range are clamped by the download queue.
+    /// </summary>
+    public int MaxParallelDownloads { get; set; } = 1;
+
+    /// <summary>
     /// Gets or sets a value indicating whether subtitles should be downloaded if available.
     /// </summary>
     public bool DownloadSubtitles { get; set; } = true;

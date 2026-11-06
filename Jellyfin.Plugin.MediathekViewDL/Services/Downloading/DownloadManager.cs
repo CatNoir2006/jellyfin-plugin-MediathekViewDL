@@ -56,6 +56,7 @@ public class DownloadManager : IDownloadManager
 
         foreach (var item in job.DownloadItems)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             _logger.LogInformation("Processing download item: {Type} -> {Path}", item.JobType, item.DestinationPath);
             if (File.Exists(item.DestinationPath))
             {

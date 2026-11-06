@@ -42,6 +42,13 @@ public record BaseDownloadSettings
     public bool StrictResolution { get; init; }
 
     /// <summary>
+    /// Gets a value indicating whether the video resolution probing (HTTP availability
+    /// check and ffprobe) is skipped during enqueueing and the quality estimated from
+    /// the API is used instead. This makes enqueueing significantly faster.
+    /// </summary>
+    public bool SkipVideoQualityProbing { get; init; } = true;
+
+    /// <summary>
     /// Gets a value indicating whether to always create a subfolder for the subscription (using the subscription name),
     /// even if the content is a movie and the global setting 'UseTopicForMoviePath' is disabled.
     /// </summary>
