@@ -43,7 +43,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetOrderedCandidatesAsync_ShouldOrderByProbedHeightDescending_WithoutHeightRange()
         {
             // Arrange
-            var settings = new BaseDownloadSettings { SelectionOrder = QualitySelectionOrder.HighestToLowest };
+            var settings = new BaseDownloadSettings { SelectionOrder = QualitySelectionOrder.HighestToLowest, SkipVideoQualityProbing = false };
             _ffmpegServiceMock
                 .Setup(x => x.GetMediaInfoAsync("http://hd.mp4", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateMediaInfo(1080));
@@ -65,7 +65,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetOrderedCandidatesAsync_ShouldOrderByProbedHeightAscending_WhenLowestToHighest()
         {
             // Arrange
-            var settings = new BaseDownloadSettings { SelectionOrder = QualitySelectionOrder.LowestToHighest };
+            var settings = new BaseDownloadSettings { SelectionOrder = QualitySelectionOrder.LowestToHighest, SkipVideoQualityProbing = false };
             _ffmpegServiceMock
                 .Setup(x => x.GetMediaInfoAsync("http://hd.mp4", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateMediaInfo(1080));
@@ -92,7 +92,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _ffmpegServiceMock
                 .Setup(x => x.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((LocalMediaInfo?)null);
-            var settings = new BaseDownloadSettings { SelectionOrder = QualitySelectionOrder.HighestToLowest };
+            var settings = new BaseDownloadSettings { SelectionOrder = QualitySelectionOrder.HighestToLowest, SkipVideoQualityProbing = false };
 
             // Act
             var result = await _selector.GetOrderedCandidatesAsync(CreateStreams(), settings, CancellationToken.None);
@@ -106,7 +106,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetOrderedCandidatesAsync_WithMaxHeight_ShouldFilterByProbedHeight()
         {
             // Arrange
-            var settings = new BaseDownloadSettings { MaxHeight = 720 };
+            var settings = new BaseDownloadSettings { MaxHeight = 720, SkipVideoQualityProbing = false };
             _ffmpegServiceMock
                 .Setup(x => x.GetMediaInfoAsync("http://hd.mp4", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateMediaInfo(1080));
@@ -128,7 +128,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
         public async Task GetOrderedCandidatesAsync_WithMinHeight_ShouldFilterByProbedHeight()
         {
             // Arrange
-            var settings = new BaseDownloadSettings { MinHeight = 720 };
+            var settings = new BaseDownloadSettings { MinHeight = 720, SkipVideoQualityProbing = false };
             _ffmpegServiceMock
                 .Setup(x => x.GetMediaInfoAsync("http://hd.mp4", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateMediaInfo(1080));
@@ -154,7 +154,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _ffmpegServiceMock
                 .Setup(x => x.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync((LocalMediaInfo?)null);
-            var settings = new BaseDownloadSettings { MaxHeight = 720 };
+            var settings = new BaseDownloadSettings { MaxHeight = 720, SkipVideoQualityProbing = false };
 
             // Act
             var result = await _selector.GetOrderedCandidatesAsync(CreateStreams(), settings, CancellationToken.None);
@@ -177,7 +177,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _ffmpegServiceMock
                 .Setup(x => x.GetMediaInfoAsync("http://low.mp4", It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateMediaInfo(480));
-            var settings = new BaseDownloadSettings { MaxHeight = 1080, StrictResolution = true };
+            var settings = new BaseDownloadSettings { MaxHeight = 1080, StrictResolution = true, SkipVideoQualityProbing = false };
 
             // Act
             var result = await _selector.GetOrderedCandidatesAsync(CreateStreams(), settings, CancellationToken.None);
@@ -194,7 +194,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             _ffmpegServiceMock
                 .Setup(x => x.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(CreateMediaInfo(1080));
-            var settings = new BaseDownloadSettings { MaxHeight = 240 };
+            var settings = new BaseDownloadSettings { MaxHeight = 240, SkipVideoQualityProbing = false };
 
             // Act
             var result = await _selector.GetOrderedCandidatesAsync(CreateStreams(), settings, CancellationToken.None);
@@ -212,7 +212,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 new VideoUrlDto { Url = "http://hd.mp4", Quality = 3 },
                 new VideoUrlDto { Url = "http://hd.mp4", Quality = 3 }
             };
-            var settings = new BaseDownloadSettings();
+            var settings = new BaseDownloadSettings { SkipVideoQualityProbing = false };
 
             // Act
             var result = await _selector.GetOrderedCandidatesAsync(streams, settings, CancellationToken.None);
@@ -230,7 +230,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 new VideoUrlDto { Url = string.Empty, Quality = 3 },
                 new VideoUrlDto { Url = "http://sd.mp4", Quality = 2 }
             };
-            var settings = new BaseDownloadSettings();
+            var settings = new BaseDownloadSettings { SkipVideoQualityProbing = false };
 
             // Act
             var result = await _selector.GetOrderedCandidatesAsync(streams, settings, CancellationToken.None);
@@ -238,6 +238,41 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             // Assert
             Assert.Single(result);
             Assert.Equal("http://sd.mp4", result[0].Url);
+        }
+
+        [Fact]
+        public async Task GetOrderedCandidatesAsync_ShouldTrustApiEstimate_WhenSkipVideoQualityProbingIsEnabled()
+        {
+            // Arrange
+            var settings = new BaseDownloadSettings { SelectionOrder = QualitySelectionOrder.HighestToLowest, MaxHeight = 720 };
+
+            // Act
+            var result = await _selector.GetOrderedCandidatesAsync(CreateStreams(), settings, CancellationToken.None);
+
+            // Assert — no probing happens; heights come from the API quality estimates only.
+            _ffmpegServiceMock.Verify(x => x.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+
+            // The HD stream (estimated 1080p) is filtered out by MaxHeight.
+            Assert.Equal(new[] { "http://sd.mp4", "http://low.mp4" }, result.Select(v => v.Url));
+        }
+
+        [Fact]
+        public async Task GetOrderedCandidatesAsync_ShouldExcludeStreamsWithoutEstimate_WhenProbingIsSkipped_AndStrictResolution()
+        {
+            // Arrange
+            var streams = new List<VideoUrlDto>
+            {
+                new VideoUrlDto { Url = "http://unknown.mp4", Quality = 9 },
+                new VideoUrlDto { Url = "http://sd.mp4", Quality = 2 }
+            };
+            var settings = new BaseDownloadSettings { StrictResolution = true };
+
+            // Act
+            var result = await _selector.GetOrderedCandidatesAsync(streams, settings, CancellationToken.None);
+
+            // Assert — the stream with an unknown quality index has no estimate and is excluded.
+            _ffmpegServiceMock.Verify(x => x.GetMediaInfoAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            Assert.Equal(new[] { "http://sd.mp4" }, result.Select(v => v.Url));
         }
     }
 }

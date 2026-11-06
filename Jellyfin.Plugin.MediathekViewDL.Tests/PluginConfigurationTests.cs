@@ -38,5 +38,15 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             Assert.NotNull(config.Subscriptions);
             Assert.Empty(config.Subscriptions);
         }
+
+        [Fact]
+        public void Constructor_ShouldInitializeSubscriptionDownloadSettingsWithProbingSkippedByDefault()
+        {
+            // Arrange / Act
+            var config = new PluginConfiguration();
+
+            // Assert
+            Assert.True(config.SubscriptionDefaults.DownloadSettings.SkipVideoQualityProbing);
+        }
     }
 }

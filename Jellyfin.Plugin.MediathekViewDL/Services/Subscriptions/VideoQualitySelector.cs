@@ -50,7 +50,7 @@ public class VideoQualitySelector : IVideoQualitySelector
         foreach (var candidate in candidates)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var height = await GetEffectiveHeightAsync(candidate, settings.StrictResolution, cancellationToken).ConfigureAwait(false);
+            var height = await GetEffectiveHeightAsync(candidate, settings, cancellationToken).ConfigureAwait(false);
             if (height is null)
             {
                 continue;
@@ -86,22 +86,31 @@ public class VideoQualitySelector : IVideoQualitySelector
             : entries.OrderBy(e => e.Height ?? e.Stream.Quality).ThenBy(e => e.Stream.Quality);
     }
 
-    private async Task<int?> GetEffectiveHeightAsync(VideoUrlDto stream, bool strict, CancellationToken cancellationToken)
+    private async Task<int?> GetEffectiveHeightAsync(VideoUrlDto stream, BaseDownloadSettings settings, CancellationToken cancellationToken)
     {
         if (_probedHeights.TryGetValue(stream.Url, out var cached))
         {
-            return cached ?? (strict ? null : EstimateHeight(stream.Quality));
+            return cached ?? (settings.StrictResolution ? null : EstimateHeight(stream.Quality));
         }
 
         int? height = null;
-        try
+        if (settings.SkipVideoQualityProbing)
         {
-            var info = await _ffmpegService.GetMediaInfoAsync(stream.Url, cancellationToken).ConfigureAwait(false);
-            height = info?.Height;
+            // Probing is disabled: trust the quality estimation of the API instead
+            // of running ffprobe (and its URL validation) against the stream.
+            height = EstimateHeight(stream.Quality);
         }
-        catch (Exception ex)
+        else
         {
-            _logger.LogWarning(ex, "Failed to probe the resolution of '{Url}'. Using fallback estimate.", stream.Url);
+            try
+            {
+                var info = await _ffmpegService.GetMediaInfoAsync(stream.Url, cancellationToken).ConfigureAwait(false);
+                height = info?.Height;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to probe the resolution of '{Url}'. Using fallback estimate.", stream.Url);
+            }
         }
 
         _probedHeights[stream.Url] = height;
@@ -111,7 +120,7 @@ public class VideoQualitySelector : IVideoQualitySelector
             return height;
         }
 
-        return strict ? null : EstimateHeight(stream.Quality);
+        return settings.StrictResolution ? null : EstimateHeight(stream.Quality);
     }
 
     private static int? EstimateHeight(int quality)

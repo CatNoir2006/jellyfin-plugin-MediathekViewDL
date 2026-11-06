@@ -52,6 +52,7 @@ const defMinHeight = ref('')
 const defMaxHeight = ref('')
 const defSelectionOrder = ref('HighestToLowest')
 const defStrictResolution = ref(false)
+const defSkipVideoQualityProbing = ref(true)
 
 // Download quality dropdown options (heights are stored as int on the backend).
 const heightOptions = [
@@ -155,6 +156,7 @@ async function loadConfig() {
     defMaxHeight.value = defDl.MaxHeight ?? ''
     defSelectionOrder.value = defDl.SelectionOrder || 'HighestToLowest'
     defStrictResolution.value = defDl.StrictResolution ?? false
+    defSkipVideoQualityProbing.value = defDl.SkipVideoQualityProbing ?? true
 
     defEnforceSeries.value = defSeries.EnforceSeriesParsing ?? false
     defAllowAbsoluteEpisodeNumbering.value = defSeries.AllowAbsoluteEpisodeNumbering ?? false
@@ -235,7 +237,8 @@ async function saveConfig() {
         MinHeight: defMinHeight.value !== '' ? parseInt(defMinHeight.value) : null,
         MaxHeight: defMaxHeight.value !== '' ? parseInt(defMaxHeight.value) : null,
         SelectionOrder: defSelectionOrder.value,
-        StrictResolution: defStrictResolution.value
+        StrictResolution: defStrictResolution.value,
+        SkipVideoQualityProbing: defSkipVideoQualityProbing.value
       },
       SeriesSettings: {
         EnforceSeriesParsing: defEnforceSeries.value,
@@ -573,6 +576,10 @@ onMounted(() => {
               <label><input v-model="defStrictResolution" type="checkbox"> Streng</label>
               <p class="field-desc">Wenn aktiviert, werden Streams ohne ermittelbare Auflösung übersprungen. Andernfalls wird bei fehlender Auflösung eine Schätzung anhand der Ziel-Qualität (1080p/720p/480p) verwendet.</p>
             </div>
+          </div>
+          <div class="checkbox-field">
+            <label><input v-model="defSkipVideoQualityProbing" type="checkbox"> Auflösung-Prüfung überspringen (schnelleres Einreihen)</label>
+            <p class="field-desc">Vertraut der von der API geschätzten Qualität statt jedes Video per ffprobe zu prüfen — deutlich schnelleres Einreihen. Min-/Max-Height-Filter arbeiten dann mit Schätzwerten (HD=1080, Mitte=720, Niedrig=480).</p>
           </div>
 
           <div class="sub-section-title">Serien</div>

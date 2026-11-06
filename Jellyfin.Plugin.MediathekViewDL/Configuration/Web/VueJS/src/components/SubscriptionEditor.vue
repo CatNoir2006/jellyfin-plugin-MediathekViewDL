@@ -63,6 +63,7 @@ watch(() => props.subscription, (newVal) => {
         copy.Download.MaxHeight = copy.Download.MaxHeight ?? null
         copy.Download.SelectionOrder = copy.Download.SelectionOrder || 'HighestToLowest'
         copy.Download.StrictResolution = copy.Download.StrictResolution ?? false
+        copy.Download.SkipVideoQualityProbing = copy.Download.SkipVideoQualityProbing ?? true
         editedSub.value = copy
         // Reset active tab when a new subscription is opened
         activeTab.value = 'basic'
@@ -319,6 +320,12 @@ function updateDate(target, field, value) {
                             </label>
                             <p class="field-desc">Wenn aktiviert, werden Streams ohne ermittelbare Auflösung übersprungen. Andernfalls wird bei fehlender Auflösung eine Schätzung anhand der Ziel-Qualität (1080p/720p/480p) verwendet.</p>
                         </div>
+                    </div>
+                    <div class="checkbox-field">
+                        <label>
+                            <input v-model="editedSub.Download.SkipVideoQualityProbing" type="checkbox"> Auflösung-Prüfung überspringen (schnelleres Einreihen)
+                        </label>
+                        <p class="field-desc">Vertraut der von der API geschätzten Qualität statt jedes Video per ffprobe zu prüfen — deutlich schnelleres Einreihen. Min-/Max-Height-Filter arbeiten dann mit Schätzwerten (HD=1080, Mitte=720, Niedrig=480).</p>
                     </div>
                 </div>
 

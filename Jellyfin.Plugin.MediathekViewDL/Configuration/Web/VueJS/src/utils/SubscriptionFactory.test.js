@@ -41,6 +41,7 @@ describe('SubscriptionFactory', () => {
                     MaxHeight: 2160,
                     SelectionOrder: 'LowestToHighest',
                     StrictResolution: true,
+                    SkipVideoQualityProbing: false,
                     EnhancedDuplicateDetection: true,
                     DownloadFullVideoForSecondaryAudio: true
                 }
@@ -54,6 +55,7 @@ describe('SubscriptionFactory', () => {
             expect(subscription.Download.MaxHeight).toBe(2160)
             expect(subscription.Download.SelectionOrder).toBe('LowestToHighest')
             expect(subscription.Download.StrictResolution).toBe(true)
+            expect(subscription.Download.SkipVideoQualityProbing).toBe(false)
             expect(subscription.Download.EnhancedDuplicateDetection).toBe(true)
             expect(subscription.Download.DownloadFullVideoForSecondaryAudio).toBe(true)
         })
@@ -66,6 +68,7 @@ describe('SubscriptionFactory', () => {
             expect(subscription.Download.MaxHeight).toBeNull()
             expect(subscription.Download.SelectionOrder).toBe('HighestToLowest')
             expect(subscription.Download.StrictResolution).toBe(false)
+            expect(subscription.Download.SkipVideoQualityProbing).toBe(true)
         })
 
         it('ShouldUseSeriesSettingsFlags_WhenProvided', () => {

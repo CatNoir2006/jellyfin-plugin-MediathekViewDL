@@ -129,7 +129,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var subscription = new Subscription
             {
                 Name = "TestSub",
-                Download = new DownloadSettings { EnhancedDuplicateDetection = true }
+                Download = new DownloadSettings { EnhancedDuplicateDetection = true, SkipVideoQualityProbing = false }
             };
             var item = new ResultItem { Id = "456", Title = "ExistingTitle" };
 
@@ -241,7 +241,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var subscription = new Subscription
             {
                 Name = "TestSub",
-                Download = new DownloadSettings { StrictResolution = true }
+                Download = new DownloadSettings { StrictResolution = true, SkipVideoQualityProbing = false }
             };
             var item = new ResultItem
             {
@@ -339,7 +339,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var subscription = new Subscription
             {
                 Name = "TestSub",
-                Download = new DownloadSettings { MaxHeight = 720 }
+                Download = new DownloadSettings { MaxHeight = 720, SkipVideoQualityProbing = false }
             };
             var item = new ResultItem
             {
@@ -395,7 +395,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var subscription = new Subscription
             {
                 Name = "TestSub",
-                Download = new DownloadSettings { MaxHeight = 360 }
+                Download = new DownloadSettings { MaxHeight = 360, SkipVideoQualityProbing = false }
             };
             var item = new ResultItem
             {
@@ -439,7 +439,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             var subscription = new Subscription
             {
                 Name = "TestSub",
-                Download = new DownloadSettings { StrictResolution = true }
+                Download = new DownloadSettings { StrictResolution = true, SkipVideoQualityProbing = false }
             };
             var item = new ResultItem
             {
