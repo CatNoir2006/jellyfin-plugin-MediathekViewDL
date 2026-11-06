@@ -38,6 +38,9 @@ const searchMaxPages = ref(5)
 // Network
 const allowUnknownDomains = ref(false)
 const allowHttp = ref(false)
+const apiBaseUrl = ref('')
+const testingConnection = ref(false)
+const connectionTestResult = ref(null)
 
 // Subscription Defaults - Search
 const defMinDuration = ref('')
@@ -132,6 +135,7 @@ async function loadConfig() {
     // Network
     allowUnknownDomains.value = config.Network?.AllowUnknownDomains ?? false
     allowHttp.value = config.Network?.AllowHttp ?? false
+    apiBaseUrl.value = config.Network?.ApiBaseUrl ?? ''
 
     // Maintenance
     enableStrmCleanup.value = config.Maintenance?.EnableStrmCleanup ?? false
@@ -217,6 +221,8 @@ async function saveConfig() {
     if (!config.Network) config.Network = {}
     config.Network.AllowUnknownDomains = allowUnknownDomains.value
     config.Network.AllowHttp = allowHttp.value
+    const defaultApiBaseUrl = 'https://mediathekviewweb.de'
+    config.Network.ApiBaseUrl = (apiBaseUrl.value || '').trim() || defaultApiBaseUrl
 
     // Maintenance
     if (!config.Maintenance) config.Maintenance = {}
@@ -277,6 +283,22 @@ async function saveConfig() {
     if (Dashboard) Dashboard.alert('Fehler beim Speichern der Einstellungen.')
   } finally {
     saving.value = false
+  }
+}
+
+async function testConnection() {
+  if (testingConnection.value || loading.value) return
+  testingConnection.value = true
+  connectionTestResult.value = null
+  try {
+    const baseUrl = (apiBaseUrl.value || '').trim()
+    const result = await ApiService.testApiConnection(baseUrl || null)
+    connectionTestResult.value = result
+  } catch (e) {
+    console.error('Failed to test API connection', e)
+    connectionTestResult.value = { Success: false, Message: 'Der Verbindungstest ist fehlgeschlagen.' }
+  } finally {
+    testingConnection.value = false
   }
 }
 
@@ -495,6 +517,19 @@ onMounted(() => {
       <details class="settings-section">
         <summary class="section-title">Netzwerk &amp; Sicherheit</summary>
         <div class="section-body">
+          <div class="field">
+            <label class="field-label">MediathekViewWeb API Base-URL</label>
+            <div style="display:flex; gap:8px;">
+              <input v-model="apiBaseUrl" type="text" class="field-input" placeholder="https://mediathekviewweb.de" style="flex:1;">
+              <button type="button" class="btn btn-secondary btn-sm" :disabled="testingConnection" @click="testConnection()">
+                {{ testingConnection ? 'Prüfe…' : '🔌 Testen' }}
+              </button>
+            </div>
+            <p class="field-desc">Basis-URL des MediathekViewWeb Servers (ohne <code>/api</code>). Leer lassen für den Standard. Kann z. B. auf einen lokalen Testserver wie <code>http://localhost:8000</code> gesetzt werden, um neue Backend-Features zu testen. Der Verbindungstest ruft <code>&lt;Base-URL&gt;/stats</code> auf; dieser muss mit 200 und "Server is up and running" antworten.</p>
+            <p v-if="connectionTestResult" class="field-desc" :style="{ color: connectionTestResult.Success ? 'var(--primary-color, green)' : 'red' }">
+              {{ connectionTestResult.Success ? '✔ ' : '✘ ' }}{{ connectionTestResult.Message }}
+            </p>
+          </div>
           <div class="checkbox-field">
             <label><input v-model="allowUnknownDomains" type="checkbox"> Downloads von unbekannten Domains erlauben</label>
             <p class="field-desc">Ermöglicht das Herunterladen von Inhalten von Domains, die nicht auf der Whitelist stehen. Dies kann nützlich sein, wenn ARD oder ZDF neue CDNs hinzufügen. <strong>Sicherheitsrisiko – mit Vorsicht verwenden.</strong></p>

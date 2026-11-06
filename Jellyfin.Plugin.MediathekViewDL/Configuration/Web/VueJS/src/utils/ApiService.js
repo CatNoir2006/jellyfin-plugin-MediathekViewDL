@@ -563,6 +563,35 @@ class ApiService {
     }
 
     /**
+     * Test the connection to the MediathekViewWeb server via its stats health endpoint.
+     * @param {string|null} baseUrl - Optional base URL to test. When empty, the configured base URL is used.
+     * @returns {Promise<Object>} - { Success, Message }
+     */
+    async testApiConnection(baseUrl) {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+
+        let url = 'MediathekViewDL/Plugin/TestApiConnection'
+        if (baseUrl) {
+            url += '?baseUrl=' + encodeURIComponent(baseUrl)
+        }
+
+        console.log(`🔌 POST Plugin/TestApiConnection`, baseUrl ? `baseUrl=${baseUrl}` : '(configured)')
+
+        try {
+            const response = await this.apiClient.ajax({
+                type: 'POST',
+                url: this.apiClient.getUrl(url),
+                dataType: 'json'
+            })
+            console.log(`✅ TestApiConnection response:`, response)
+            return response
+        } catch (error) {
+            console.error(`❌ TestApiConnection failed:`, error)
+            throw error
+        }
+    }
+
+    /**
      * Get all scheduled tasks
      * @returns {Promise<Array>} - List of tasks
      */

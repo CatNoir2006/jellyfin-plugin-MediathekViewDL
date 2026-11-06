@@ -314,6 +314,408 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             Assert.Equal(42, capturedSize);
         }
 
+        [Fact]
+        public async Task SearchAsync_ShouldUseConfiguredApiBaseUrl_WhenSet()
+        {
+            // Arrange
+            HttpRequestMessage? capturedRequest = null;
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .Returns(async (HttpRequestMessage req, CancellationToken _) =>
+                {
+                    capturedRequest = req;
+                    var validResponse = new ApiResult
+                    {
+                        Result = new ResultChannels
+                        {
+                            Results = new Collection<ResultItem>(),
+                            QueryInfo = new QueryInfo()
+                        }
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(validResponse))
+                    };
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ApiBaseUrl = "http://localhost:8000",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act
+            await client.SearchAsync(new ApiQueryDto(), CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("http://localhost:8000/api/query", capturedRequest!.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task SearchAsync_ShouldUseDefaultApiBaseUrl_WhenConfiguredValueIsEmpty()
+        {
+            // Arrange
+            HttpRequestMessage? capturedRequest = null;
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .Returns(async (HttpRequestMessage req, CancellationToken _) =>
+                {
+                    capturedRequest = req;
+                    var validResponse = new ApiResult
+                    {
+                        Result = new ResultChannels
+                        {
+                            Results = new Collection<ResultItem>(),
+                            QueryInfo = new QueryInfo()
+                        }
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(validResponse))
+                    };
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ApiBaseUrl = "   ",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act
+            await client.SearchAsync(new ApiQueryDto(), CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("https://mediathekviewweb.de/api/query", capturedRequest!.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task SearchAsync_ShouldThrowMediathekApiException_WhenApiBaseUrlIsInvalid()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ApiBaseUrl = "not a valid url",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act + Assert
+            await Assert.ThrowsAsync<MediathekApiException>(
+                async () => await client.SearchAsync(new ApiQueryDto(), CancellationToken.None).ConfigureAwait(false));
+        }
+
+        [Fact]
+        public async Task SearchAsync_ShouldTrimTrailingSlash_WhenApiBaseUrlEndsWithSlash()
+        {
+            // Arrange
+            HttpRequestMessage? capturedRequest = null;
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .Returns(async (HttpRequestMessage req, CancellationToken _) =>
+                {
+                    capturedRequest = req;
+                    var validResponse = new ApiResult
+                    {
+                        Result = new ResultChannels
+                        {
+                            Results = new Collection<ResultItem>(),
+                            QueryInfo = new QueryInfo()
+                        }
+                    };
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(JsonSerializer.Serialize(validResponse))
+                    };
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ApiBaseUrl = "http://localhost:8000/",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act
+            await client.SearchAsync(new ApiQueryDto(), CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("http://localhost:8000/api/query", capturedRequest!.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task CheckConnectionAsync_ShouldCallStatsEndpoint_WhenServerRespondsCorrectly()
+        {
+            // Arrange
+            HttpRequestMessage? capturedRequest = null;
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .Returns(async (HttpRequestMessage req, CancellationToken _) =>
+                {
+                    capturedRequest = req;
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(MediathekViewApiClientOptions.ExpectedStatsResponse)
+                    };
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ApiBaseUrl = "http://localhost:8000",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act
+            await client.CheckConnectionAsync(null, CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("http://localhost:8000/stats", capturedRequest!.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task CheckConnectionAsync_ShouldAcceptTrailingPeriod_WhenServerHttpBodyContainsOne()
+        {
+            // Arrange
+            HttpRequestMessage? capturedRequest = null;
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .Returns(async (HttpRequestMessage req, CancellationToken _) =>
+                {
+                    capturedRequest = req;
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(MediathekViewApiClientOptions.ExpectedStatsResponse + ".")
+                    };
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ApiBaseUrl = "http://localhost:8000",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act
+            await client.CheckConnectionAsync(null, CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("http://localhost:8000/stats", capturedRequest!.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task CheckConnectionAsync_ShouldUseBaseUrlOverride_WhenProvided()
+        {
+            // Arrange
+            HttpRequestMessage? capturedRequest = null;
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .Returns(async (HttpRequestMessage req, CancellationToken _) =>
+                {
+                    capturedRequest = req;
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent(MediathekViewApiClientOptions.ExpectedStatsResponse)
+                    };
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ApiBaseUrl = "https://mediathekviewweb.de",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act
+            await client.CheckConnectionAsync("http://localhost:8000", CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("http://localhost:8000/stats", capturedRequest!.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task CheckConnectionAsync_ShouldThrowMediathekApiException_WhenResponseBodyIsUnexpected()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("Hello world")
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ApiBaseUrl = "http://localhost:8000",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act + Assert
+            var ex = await Assert.ThrowsAsync<MediathekApiException>(
+                async () => await client.CheckConnectionAsync(null, CancellationToken.None).ConfigureAwait(false));
+            Assert.Contains("Server is up and running", ex.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public async Task CheckConnectionAsync_ShouldThrowMediathekApiException_WhenServerRespondsWithErrorStatusCode()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.NotFound));
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ApiBaseUrl = "http://localhost:8000",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act + Assert
+            var ex = await Assert.ThrowsAsync<MediathekApiException>(
+                async () => await client.CheckConnectionAsync(null, CancellationToken.None).ConfigureAwait(false));
+            Assert.Equal(HttpStatusCode.NotFound, ex.StatusCode);
+        }
+
+        [Fact]
+        public async Task CheckConnectionAsync_ShouldThrowMediathekConnectionException_WhenServerIsNotReachable()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ThrowsAsync(new HttpRequestException("Connection refused"));
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ApiBaseUrl = "http://localhost:8000",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act + Assert
+            await Assert.ThrowsAsync<MediathekConnectionException>(
+                async () => await client.CheckConnectionAsync(null, CancellationToken.None).ConfigureAwait(false));
+        }
+
+        [Fact]
+        public async Task CheckConnectionAsync_ShouldThrowMediathekApiException_WhenBaseUrlIsInvalid()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ApiBaseUrl = "not a valid url",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act + Assert
+            await Assert.ThrowsAsync<MediathekApiException>(
+                async () => await client.CheckConnectionAsync(null, CancellationToken.None).ConfigureAwait(false));
+        }
+
         private sealed class TestOptionsMonitor : IOptionsMonitor<MediathekViewApiClientOptions>
         {
             private readonly MediathekViewApiClientOptions _options;

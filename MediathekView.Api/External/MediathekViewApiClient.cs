@@ -27,16 +27,9 @@ namespace MediathekView.Api.External;
 /// </summary>
 public class MediathekViewApiClient : IMediathekViewApiClient
 {
-    private const string BaseApiUrl = "https://mediathekviewweb.de/api";
-    private const string SearchEndpoint = BaseApiUrl + "/query";
-    private const string StreamSizeEndpoint = BaseApiUrl + "/content-length?url=";
-
     private const string ZappBaseApiUrl = "https://api.zapp.mediathekview.de/v1";
     private const string ZappChannelsEndpoint = ZappBaseApiUrl + "/channelInfoList";
     private const string ZappShowsEndpoint = ZappBaseApiUrl + "/shows/";
-
-    private const string ChannelsEndpoint = BaseApiUrl + "/channels";
-    private const string TopicsEndpoint = BaseApiUrl + "/topics";
 
     private static readonly SemaphoreSlim _channelsSemaphore = new(1, 1);
     private static readonly SemaphoreSlim _topicsSemaphore = new(1, 1);
@@ -70,6 +63,61 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         _logger = logger;
         _optionsMonitor = optionsMonitor;
         _jsonSerializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, };
+    }
+
+    /// <summary>
+    /// Gets the search endpoint, derived from the configured API base URL.
+    /// </summary>
+    private string SearchEndpoint => BuildApiEndpoint("/query");
+
+    /// <summary>
+    /// Gets the stream size endpoint, derived from the configured API base URL.
+    /// </summary>
+    private string StreamSizeEndpoint => BuildApiEndpoint("/content-length?url=");
+
+    /// <summary>
+    /// Gets the channels endpoint, derived from the configured API base URL.
+    /// </summary>
+    private string ChannelsEndpoint => BuildApiEndpoint("/channels");
+
+    /// <summary>
+    /// Gets the topics endpoint, derived from the configured API base URL.
+    /// </summary>
+    private string TopicsEndpoint => BuildApiEndpoint("/topics");
+
+    /// <summary>
+    /// Builds a MediathekViewWeb API endpoint URL from the configured base URL.
+    /// The <c>/api</c> path is added between the base URL and the endpoint path.
+    /// Falls back to the default URL when no valid base URL is configured.
+    /// </summary>
+    /// <param name="relativeEndpoint">The endpoint path, starting with a forward slash.</param>
+    /// <returns>The absolute endpoint URL.</returns>
+    /// <exception cref="MediathekApiException">Thrown when the configured base URL is not a valid absolute http(s) URL.</exception>
+    private string BuildApiEndpoint(string relativeEndpoint)
+    {
+        return GetApiBaseUrl(_optionsMonitor.CurrentValue.ApiBaseUrl) + "/api" + relativeEndpoint;
+    }
+
+    /// <summary>
+    /// Gets the normalized base URL of a MediathekViewWeb server.
+    /// Falls back to the default URL when no base URL is given.
+    /// </summary>
+    /// <param name="configuredUrl">The base URL to normalize. May be null or empty, in which case the default URL is used.</param>
+    /// <returns>The absolute server root URL without a trailing slash.</returns>
+    /// <exception cref="MediathekApiException">Thrown when the given base URL is not a valid absolute http(s) URL.</exception>
+    private string GetApiBaseUrl(string? configuredUrl)
+    {
+        var baseUrl = string.IsNullOrWhiteSpace(configuredUrl)
+            ? MediathekViewApiClientOptions.DefaultApiBaseUrl
+            : configuredUrl.Trim().TrimEnd('/');
+
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri)
+            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            throw new MediathekApiException($"The configured API base URL '{configuredUrl}' is not a valid absolute http(s) URL.");
+        }
+
+        return baseUrl;
     }
 
     /// <summary>
@@ -192,6 +240,48 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         {
             _logger.LogError(ex, "An unexpected error occurred while calling the MediathekViewWeb API");
             throw new MediathekApiException("An unexpected error occurred while calling the MediathekViewWeb API", ex);
+        }
+    }
+
+    /// <summary>
+    /// Validates the given or configured MediathekViewWeb server URL by calling its stats health endpoint.
+    /// The server must respond with status code 200 and the body "Server is up and running".
+    /// </summary>
+    /// <param name="baseUrlOverride">Optional base URL to validate. When null or empty, the configured base URL is used.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task representing the asynchronous check.</returns>
+    /// <exception cref="MediathekConnectionException">Thrown when the server is not reachable.</exception>
+    /// <exception cref="MediathekApiException">Thrown when the server responds with an unexpected status code or body, or when the configured base URL is invalid.</exception>
+    public async Task CheckConnectionAsync(string? baseUrlOverride, CancellationToken cancellationToken)
+    {
+        var baseUrl = GetApiBaseUrl(string.IsNullOrWhiteSpace(baseUrlOverride)
+            ? _optionsMonitor.CurrentValue.ApiBaseUrl
+            : baseUrlOverride);
+        var statsUrl = baseUrl + "/stats";
+        _logger.LogDebug("Checking MediathekViewWeb server availability at: {Url}", statsUrl);
+
+        try
+        {
+            using var response = await _httpClient.GetAsync(statsUrl, cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Stats health check of the MediathekViewWeb server failed with status code {StatusCode}", response.StatusCode);
+                throw new MediathekApiException($"The MediathekViewWeb server at '{baseUrl}' responded with status code {response.StatusCode}.", response.StatusCode);
+            }
+
+            var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            var normalizedBody = body.Trim().TrimEnd('.', ' ');
+            if (!string.Equals(normalizedBody, MediathekViewApiClientOptions.ExpectedStatsResponse, StringComparison.Ordinal))
+            {
+                _logger.LogError("Stats health check of the MediathekViewWeb server returned an unexpected body: '{Body}'", body);
+                throw new MediathekApiException($"The MediathekViewWeb server at '{baseUrl}' did not return the expected response. Expected '{MediathekViewApiClientOptions.ExpectedStatsResponse}' but got '{body.Trim()}'");
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "The MediathekViewWeb server at {BaseUrl} is not reachable", baseUrl);
+            throw new MediathekConnectionException($"The MediathekViewWeb server at '{baseUrl}' is not reachable.", ex);
         }
     }
 
