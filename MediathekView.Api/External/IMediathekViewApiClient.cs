@@ -21,6 +21,26 @@ public interface IMediathekViewApiClient
     Task<QueryResultDto> SearchAsync(ApiQueryDto apiQueryDto, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Validates the given or configured MediathekViewWeb server URL by calling its stats health endpoint.
+    /// The server must respond with status code 200 and the body "Server is up and running".
+    /// </summary>
+    /// <param name="baseUrlOverride">Optional base URL to validate. When null or empty, the configured base URL is used.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task representing the asynchronous check.</returns>
+    /// <exception cref="MediathekView.Api.Exceptions.MediathekException">Thrown when the server is not reachable or responds unexpectedly.</exception>
+    Task CheckConnectionAsync(string? baseUrlOverride, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Validates the given or configured Zapp API server URL by calling its channelInfoList endpoint.
+    /// The server must respond with status code 200 and a parsable JSON body.
+    /// </summary>
+    /// <param name="baseUrlOverride">Optional base URL to validate. When null or empty, the configured Zapp base URL is used.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task representing the asynchronous check.</returns>
+    /// <exception cref="MediathekView.Api.Exceptions.MediathekException">Thrown when the server is not reachable or responds unexpectedly.</exception>
+    Task CheckZappConnectionAsync(string? baseUrlOverride, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Gets the size of a media stream from a given URL.
     /// </summary>
     /// <param name="streamUrl">The Url to get size of.</param>

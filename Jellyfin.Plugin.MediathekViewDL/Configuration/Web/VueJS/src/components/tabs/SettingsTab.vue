@@ -38,6 +38,12 @@ const searchMaxPages = ref(5)
 // Network
 const allowUnknownDomains = ref(false)
 const allowHttp = ref(false)
+const apiBaseUrl = ref('')
+const zappApiBaseUrl = ref('')
+const testingZappConnection = ref(false)
+const zappConnectionTestResult = ref(null)
+const testingConnection = ref(false)
+const connectionTestResult = ref(null)
 
 // Subscription Defaults - Search
 const defMinDuration = ref('')
@@ -132,6 +138,8 @@ async function loadConfig() {
     // Network
     allowUnknownDomains.value = config.Network?.AllowUnknownDomains ?? false
     allowHttp.value = config.Network?.AllowHttp ?? false
+    apiBaseUrl.value = config.Network?.ApiBaseUrl ?? ''
+    zappApiBaseUrl.value = config.Network?.ZappApiBaseUrl ?? ''
 
     // Maintenance
     enableStrmCleanup.value = config.Maintenance?.EnableStrmCleanup ?? false
@@ -217,6 +225,10 @@ async function saveConfig() {
     if (!config.Network) config.Network = {}
     config.Network.AllowUnknownDomains = allowUnknownDomains.value
     config.Network.AllowHttp = allowHttp.value
+    const defaultApiBaseUrl = 'https://mediathekviewweb.de'
+    config.Network.ApiBaseUrl = (apiBaseUrl.value || '').trim() || defaultApiBaseUrl
+    const defaultZappApiBaseUrl = 'https://api.zapp.mediathekview.de'
+    config.Network.ZappApiBaseUrl = (zappApiBaseUrl.value || '').trim() || defaultZappApiBaseUrl
 
     // Maintenance
     if (!config.Maintenance) config.Maintenance = {}
@@ -278,6 +290,65 @@ async function saveConfig() {
   } finally {
     saving.value = false
   }
+}
+
+async function testConnection() {
+  if (testingConnection.value || loading.value) return
+  testingConnection.value = true
+  connectionTestResult.value = null
+  try {
+    const baseUrl = (apiBaseUrl.value || '').trim()
+    const result = await ApiService.testApiConnection(baseUrl || null)
+    connectionTestResult.value = result
+    if (!result.Success) {
+      confirmResetToDefault(apiBaseUrl, 'https://mediathekviewweb.de', 'MediathekViewWeb Server')
+    }
+  } catch (e) {
+    console.error('Failed to test API connection', e)
+    connectionTestResult.value = { Success: false, Message: 'Der Verbindungstest ist fehlgeschlagen.' }
+    confirmResetToDefault(apiBaseUrl, 'https://mediathekviewweb.de', 'MediathekViewWeb Server')
+  } finally {
+    testingConnection.value = false
+  }
+}
+
+async function testZappConnection() {
+  if (testingZappConnection.value || loading.value) return
+  testingZappConnection.value = true
+  zappConnectionTestResult.value = null
+  try {
+    const baseUrl = (zappApiBaseUrl.value || '').trim()
+    const result = await ApiService.testZappConnection(baseUrl || null)
+    zappConnectionTestResult.value = result
+    if (!result.Success) {
+      confirmResetToDefault(zappApiBaseUrl, 'https://api.zapp.mediathekview.de', 'Zapp API')
+    }
+  } catch (e) {
+    console.error('Failed to test Zapp API connection', e)
+    zappConnectionTestResult.value = { Success: false, Message: 'Der Verbindungstest ist fehlgeschlagen.' }
+    confirmResetToDefault(zappApiBaseUrl, 'https://api.zapp.mediathekview.de', 'Zapp API')
+  } finally {
+    testingZappConnection.value = false
+  }
+}
+
+function confirmResetToDefault(targetRef, defaultUrl, serverName) {
+  const reset = () => {
+    targetRef.value = defaultUrl
+  }
+
+  if (!Dashboard) {
+    reset()
+    return
+  }
+
+  Dashboard.confirm(
+    `Der Verbindungstest für ${serverName} ist fehlgeschlagen. Soll die Base-URL auf den Standard '${defaultUrl}' zurückgesetzt werden?`,
+    'Base-URL zurücksetzen',
+    (result) => {
+      if (result) reset()
+    }
+  )
 }
 
 async function copyConfig() {
@@ -495,6 +566,34 @@ onMounted(() => {
       <details class="settings-section">
         <summary class="section-title">Netzwerk &amp; Sicherheit</summary>
         <div class="section-body">
+          <div class="field">
+            <label class="field-label">MediathekViewWeb API Base-URL</label>
+            <div style="display:flex; gap:8px;">
+              <input v-model="apiBaseUrl" type="text" class="field-input" placeholder="https://mediathekviewweb.de" style="flex:1;">
+              <button type="button" class="btn btn-secondary btn-sm" :disabled="testingConnection" @click="testConnection()">
+                <span v-if="testingConnection" class="spinner-sm"></span>
+                {{ testingConnection ? ' Prüfe…' : '🔌 Testen' }}
+              </button>
+            </div>
+            <p class="field-desc">Basis-URL des MediathekViewWeb Servers (ohne <code>/api</code>). Leer lassen für den Standard. Kann z. B. auf einen lokalen Testserver wie <code>http://localhost:8000</code> gesetzt werden, um neue Backend-Features zu testen. Der Verbindungstest ruft <code>&lt;Base-URL&gt;/stats</code> auf; dieser muss mit 200 und "Server is up and running" antworten.</p>
+            <p v-if="connectionTestResult" class="field-desc" :style="{ color: connectionTestResult.Success ? 'var(--primary-color, green)' : 'red' }">
+              {{ connectionTestResult.Success ? '✔ ' : '✘ ' }}{{ connectionTestResult.Message }}
+            </p>
+          </div>
+          <div class="field">
+            <label class="field-label">Zapp API Base-URL</label>
+            <div style="display:flex; gap:8px;">
+              <input v-model="zappApiBaseUrl" type="text" class="field-input" placeholder="https://api.zapp.mediathekview.de" style="flex:1;">
+              <button type="button" class="btn btn-secondary btn-sm" :disabled="testingZappConnection" @click="testZappConnection()">
+                <span v-if="testingZappConnection" class="spinner-sm"></span>
+                {{ testingZappConnection ? ' Prüfe…' : '🔌 Testen' }}
+              </button>
+            </div>
+            <p class="field-desc">Basis-URL der Zapp API (ohne <code>/v1</code>). Leer lassen für den Standard. Kann z. B. auf einen lokalen Testserver wie <code>http://localhost:3000</code> gesetzt werden, um neue Backend-Features der Zapp API zu testen. Der Verbindungstest ruft <code>&lt;Base-URL&gt;/v1/channelInfoList</code> auf; ein parsbares Ergebnis gilt als Erfolg.</p>
+            <p v-if="zappConnectionTestResult" class="field-desc" :style="{ color: zappConnectionTestResult.Success ? 'var(--primary-color, green)' : 'red' }">
+              {{ zappConnectionTestResult.Success ? '✔ ' : '✘ ' }}{{ zappConnectionTestResult.Message }}
+            </p>
+          </div>
           <div class="checkbox-field">
             <label><input v-model="allowUnknownDomains" type="checkbox"> Downloads von unbekannten Domains erlauben</label>
             <p class="field-desc">Ermöglicht das Herunterladen von Inhalten von Domains, die nicht auf der Whitelist stehen. Dies kann nützlich sein, wenn ARD oder ZDF neue CDNs hinzufügen. <strong>Sicherheitsrisiko – mit Vorsicht verwenden.</strong></p>
@@ -702,6 +801,22 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.spinner-sm {
+  display: inline-block;
+  vertical-align: middle;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  border-top: 2px solid currentColor;
+  width: 14px;
+  height: 14px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .settings-card {
   padding: 0;
 }

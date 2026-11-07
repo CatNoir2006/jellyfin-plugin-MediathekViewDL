@@ -1,0 +1,47 @@
+# syntax=docker/dockerfile:1
+#
+# Containerfile für mediathekviewweb (Server + Client).
+# Das Projekt wird beim Build direkt aus Git geklont – kein Build-Kontext nötig.
+# URL/Ref sind per Build-Arg überschreibbar.
+
+ARG NODE_VERSION=26-alpine
+
+FROM node:${NODE_VERSION} AS builder
+
+ARG MVW_GIT_URL=https://github.com/CatNoir2006/mediathekviewweb.git
+ARG MVW_GIT_REF=master
+
+RUN apk add --no-cache git
+
+WORKDIR /src
+RUN git clone --depth 1 --branch "${MVW_GIT_REF}" "${MVW_GIT_URL}" .
+
+RUN npm ci --prefix server
+RUN npm ci --prefix client
+RUN npm run build --prefix server
+RUN npm ci --omit=dev --prefix server
+RUN npm run build --prefix client
+
+RUN mkdir -p /dist/client /dist/data \
+    && cp -R /src/server/dist/* /dist/ \
+    && cp -R /src/client/dist/* /dist/client/
+
+
+FROM node:${NODE_VERSION}
+
+ENV NODE_ENV=production \
+    WEBSERVER_PORT=8000
+
+RUN addgroup -S mediathekviewweb \
+    && adduser -S mediathekviewweb -G mediathekviewweb
+
+COPY --from=builder /dist /srv/mediathekviewweb
+RUN chown mediathekviewweb:mediathekviewweb /srv/mediathekviewweb/data
+
+USER mediathekviewweb
+
+WORKDIR /srv/mediathekviewweb
+
+EXPOSE 8000
+
+CMD [ "node", "app.js" ]

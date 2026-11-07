@@ -1,6 +1,13 @@
+using System.Threading;
+using System.Threading.Tasks;
+using Jellyfin.Plugin.MediathekViewDL.Api.Models;
 using MediaBrowser.Common.Api;
+using MediathekView.Api.Exceptions;
+using MediathekView.Api.External;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Api.Controller;
 
@@ -12,6 +19,20 @@ namespace Jellyfin.Plugin.MediathekViewDL.Api.Controller;
 [Authorize(Policy = Policies.RequiresElevation)]
 public class PluginController : ControllerBase
 {
+    private readonly IMediathekViewApiClient _apiClient;
+    private readonly ILogger<PluginController> _logger;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PluginController"/> class.
+    /// </summary>
+    /// <param name="apiClient">The MediathekView API client.</param>
+    /// <param name="logger">The logger.</param>
+    public PluginController(IMediathekViewApiClient apiClient, ILogger<PluginController> logger)
+    {
+        _apiClient = apiClient;
+        _logger = logger;
+    }
+
     /// <summary>
     /// Gets the initialization error, if any.
     /// </summary>
@@ -31,6 +52,50 @@ public class PluginController : ControllerBase
         }
 
         return Ok(msg);
+    }
+
+    /// <summary>
+    /// Tests the connection to the MediathekViewWeb server by calling its stats health endpoint.
+    /// </summary>
+    /// <param name="baseUrl">Optional base URL to test. When omitted, the currently configured base URL is used.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The connection test result.</returns>
+    [HttpPost("TestApiConnection")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<ConnectionTestResultDto>> TestApiConnection([FromQuery] string? baseUrl, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _apiClient.CheckConnectionAsync(baseUrl, cancellationToken).ConfigureAwait(false);
+            return Ok(new ConnectionTestResultDto(true, "Verbindung erfolgreich: Der MediathekViewWeb Server läuft."));
+        }
+        catch (MediathekException ex)
+        {
+            _logger.LogWarning(ex, "API connection test failed for base URL '{BaseUrl}'", baseUrl);
+            return Ok(new ConnectionTestResultDto(false, ex.Message));
+        }
+    }
+
+    /// <summary>
+    /// Tests the connection to the Zapp API server by calling its channelInfoList endpoint.
+    /// </summary>
+    /// <param name="baseUrl">Optional base URL to test. When omitted, the currently configured Zapp base URL is used.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The connection test result.</returns>
+    [HttpPost("TestZappConnection")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<ConnectionTestResultDto>> TestZappConnection([FromQuery] string? baseUrl, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _apiClient.CheckZappConnectionAsync(baseUrl, cancellationToken).ConfigureAwait(false);
+            return Ok(new ConnectionTestResultDto(true, "Verbindung erfolgreich: Die Zapp API ist erreichbar und liefert ein parsbares Ergebnis."));
+        }
+        catch (MediathekException ex)
+        {
+            _logger.LogWarning(ex, "Zapp API connection test failed for base URL '{BaseUrl}'", baseUrl);
+            return Ok(new ConnectionTestResultDto(false, ex.Message));
+        }
     }
 
     /// <summary>

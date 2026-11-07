@@ -1,0 +1,36 @@
+# syntax=docker/dockerfile:1
+#
+# Containerfile für zapp-backend.
+# Das Projekt wird beim Build direkt aus Git geklont – kein Build-Kontext nötig.
+# URL/Ref sind per Build-Arg überschreibbar.
+#
+# Hinweis: zapp-backend erfordert Node >= 26 (startet index.ts nativ ohne Build).
+
+ARG NODE_VERSION=26-alpine
+
+FROM node:${NODE_VERSION} AS builder
+
+ARG ZAPP_GIT_URL=https://github.com/CatNoir2006/zapp-backend.git
+ARG ZAPP_GIT_REF=master
+
+RUN apk add --no-cache git
+
+WORKDIR /src
+RUN git clone --depth 1 --branch "${ZAPP_GIT_REF}" "${ZAPP_GIT_URL}" .
+RUN npm ci
+
+
+FROM node:${NODE_VERSION}
+
+ENV NODE_ENV=production \
+    PORT=3000
+
+WORKDIR /srv/zapp-backend
+
+COPY --from=builder /src .
+
+USER 1000
+
+EXPOSE 3000
+
+CMD [ "node", "src/index.ts" ]

@@ -32,6 +32,12 @@ public sealed class MediathekViewApiClientOptionsMonitor : IOptionsMonitor<Media
         var defaults = new MediathekViewApiClientOptions();
         return new MediathekViewApiClientOptions
         {
+            ApiBaseUrl = string.IsNullOrWhiteSpace(config?.Network.ApiBaseUrl)
+                ? defaults.ApiBaseUrl
+                : config.Network.ApiBaseUrl,
+            ZappApiBaseUrl = string.IsNullOrWhiteSpace(config?.Network.ZappApiBaseUrl)
+                ? defaults.ZappApiBaseUrl
+                : config.Network.ZappApiBaseUrl,
             MaxSearchPages = config?.Search.MaxPages ?? defaults.MaxSearchPages,
             AllowHttp = config?.Network.AllowHttp ?? false,
             FetchStreamSizes = config?.Search.FetchStreamSizes ?? false
