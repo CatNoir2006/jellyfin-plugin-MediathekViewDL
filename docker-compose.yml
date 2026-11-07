@@ -40,9 +40,101 @@ services:
         unzip -o ./Debug/artifacts/*.zip -d /jellyfin-config/plugins/TemplatePlugin/
       "
 
+  # === MediathekView backends (started with: docker compose --profile backends up -d) ===
+  # Reachable from the jellyfin container by name:
+  #   MediathekViewWeb API Base-URL: http://mediathekviewweb:8000
+  #   Zapp API Base-URL:             http://zapp-backend:3000
+  mediathekviewweb:
+    image: mediathekviewweb-git:local
+    build:
+      context: .
+      dockerfile: Debug/Containerfile.mediathekviewweb
+      args:
+        MVW_GIT_URL: https://github.com/CatNoir2006/mediathekviewweb.git
+        MVW_GIT_REF: master
+    container_name: mediathekviewweb
+    restart: unless-stopped
+    profiles:
+      - backends
+    environment:
+      WEBSERVER_PORT: "8000"
+      INDEX: "true"
+      OPENSEARCH_HOST: opensearch
+      OPENSEARCH_PORT: "9200"
+      VALKEY_HOST: valkey
+      VALKEY_PORT: "6379"
+      NODE_OPTIONS: "--max-old-space-size=400"
+    depends_on:
+      - opensearch
+      - valkey
+    networks:
+      - plugin-dev
+    deploy:
+      resources:
+        limits:
+          memory: 500m
+
+  zapp-backend:
+    image: zapp-backend-git:local
+    build:
+      context: .
+      dockerfile: Debug/Containerfile.zapp-backend
+      args:
+        ZAPP_GIT_URL: https://github.com/CatNoir2006/zapp-backend.git
+        ZAPP_GIT_REF: master
+    container_name: zapp-backend
+    restart: unless-stopped
+    profiles:
+      - backends
+    environment:
+      PORT: "3000"
+      NODE_OPTIONS: "--max-old-space-size=40"
+    networks:
+      - plugin-dev
+    deploy:
+      resources:
+        limits:
+          memory: 50m
+
+  opensearch:
+    image: opensearchproject/opensearch:3
+    container_name: opensearch
+    restart: unless-stopped
+    profiles:
+      - backends
+    environment:
+      discovery.type: single-node
+      bootstrap.memory_lock: "true"
+      OPENSEARCH_JAVA_OPTS: -Xms128m -Xmx128m
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: MediathekViewWeb01!
+    volumes:
+      - "opensearch:/usr/share/opensearch/data"
+    networks:
+      - plugin-dev
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  valkey:
+    image: valkey/valkey:9-alpine
+    container_name: valkey
+    restart: unless-stopped
+    profiles:
+      - backends
+    command: [ "--save 60 1" ]
+    volumes:
+      - "valkey:/data"
+    networks:
+      - plugin-dev
+
 networks:
   plugin-dev:
 
 volumes:
   jellyfin-config:
   jellyfin-cache:
+  opensearch:
+  valkey:
