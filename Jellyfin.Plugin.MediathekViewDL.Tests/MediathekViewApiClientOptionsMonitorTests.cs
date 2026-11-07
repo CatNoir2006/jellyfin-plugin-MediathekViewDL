@@ -57,6 +57,42 @@ public class MediathekViewApiClientOptionsMonitorTests
     }
 
     [Fact]
+    public void Get_ShouldReturnConfiguredZappApiBaseUrl_WhenSet()
+    {
+        // Arrange
+        var config = new PluginConfiguration
+        {
+            Network = new Configuration.Groups.NetworkOptions { ZappApiBaseUrl = "http://localhost:3000" }
+        };
+        _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+        var monitor = CreateMonitor();
+
+        // Act
+        var options = monitor.Get(null);
+
+        // Assert
+        Assert.Equal("http://localhost:3000", options.ZappApiBaseUrl);
+    }
+
+    [Fact]
+    public void Get_ShouldReturnDefaultZappApiBaseUrl_WhenConfiguredValueIsEmpty()
+    {
+        // Arrange
+        var config = new PluginConfiguration
+        {
+            Network = new Configuration.Groups.NetworkOptions { ZappApiBaseUrl = "   " }
+        };
+        _configProviderMock.Setup(x => x.ConfigurationOrNull).Returns(config);
+        var monitor = CreateMonitor();
+
+        // Act
+        var options = monitor.Get(null);
+
+        // Assert
+        Assert.Equal(MediathekViewApiClientOptions.DefaultZappApiBaseUrl, options.ZappApiBaseUrl);
+    }
+
+    [Fact]
     public void Get_ShouldReturnDefaultApiBaseUrl_WhenConfigurationIsNull()
     {
         // Arrange

@@ -77,6 +77,28 @@ public class PluginController : ControllerBase
     }
 
     /// <summary>
+    /// Tests the connection to the Zapp API server by calling its channelInfoList endpoint.
+    /// </summary>
+    /// <param name="baseUrl">Optional base URL to test. When omitted, the currently configured Zapp base URL is used.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>The connection test result.</returns>
+    [HttpPost("TestZappConnection")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<ConnectionTestResultDto>> TestZappConnection([FromQuery] string? baseUrl, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _apiClient.CheckZappConnectionAsync(baseUrl, cancellationToken).ConfigureAwait(false);
+            return Ok(new ConnectionTestResultDto(true, "Verbindung erfolgreich: Die Zapp API ist erreichbar und liefert ein parsbares Ergebnis."));
+        }
+        catch (MediathekException ex)
+        {
+            _logger.LogWarning(ex, "Zapp API connection test failed for base URL '{BaseUrl}'", baseUrl);
+            return Ok(new ConnectionTestResultDto(false, ex.Message));
+        }
+    }
+
+    /// <summary>
     /// Notifies plugin services that the configuration was updated.
     /// Used by the frontend after saving through Jellyfin's configuration endpoints,
     /// so that settings like the parallel download limit apply without a restart.

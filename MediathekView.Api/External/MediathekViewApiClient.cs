@@ -27,10 +27,6 @@ namespace MediathekView.Api.External;
 /// </summary>
 public class MediathekViewApiClient : IMediathekViewApiClient
 {
-    private const string ZappBaseApiUrl = "https://api.zapp.mediathekview.de/v1";
-    private const string ZappChannelsEndpoint = ZappBaseApiUrl + "/channelInfoList";
-    private const string ZappShowsEndpoint = ZappBaseApiUrl + "/shows/";
-
     private static readonly SemaphoreSlim _channelsSemaphore = new(1, 1);
     private static readonly SemaphoreSlim _topicsSemaphore = new(1, 1);
 
@@ -86,6 +82,16 @@ public class MediathekViewApiClient : IMediathekViewApiClient
     private string TopicsEndpoint => BuildApiEndpoint("/topics");
 
     /// <summary>
+    /// Gets the Zapp channels endpoint, derived from the configured Zapp API base URL.
+    /// </summary>
+    private string ZappChannelsEndpoint => GetZappBaseUrl(_optionsMonitor.CurrentValue.ZappApiBaseUrl) + "/v1/channelInfoList";
+
+    /// <summary>
+    /// Gets the Zapp shows endpoint, derived from the configured Zapp API base URL.
+    /// </summary>
+    private string ZappShowsEndpoint => GetZappBaseUrl(_optionsMonitor.CurrentValue.ZappApiBaseUrl) + "/v1/shows/";
+
+    /// <summary>
     /// Builds a MediathekViewWeb API endpoint URL from the configured base URL.
     /// The <c>/api</c> path is added between the base URL and the endpoint path.
     /// Falls back to the default URL when no valid base URL is configured.
@@ -115,6 +121,28 @@ public class MediathekViewApiClient : IMediathekViewApiClient
             || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
         {
             throw new MediathekApiException($"The configured API base URL '{configuredUrl}' is not a valid absolute http(s) URL.");
+        }
+
+        return baseUrl;
+    }
+
+    /// <summary>
+    /// Gets the normalized base URL of a Zapp API server.
+    /// Falls back to the default URL when no base URL is given.
+    /// </summary>
+    /// <param name="configuredUrl">The base URL to normalize. May be null or empty, in which case the default URL is used.</param>
+    /// <returns>The absolute server root URL without a trailing slash.</returns>
+    /// <exception cref="MediathekApiException">Thrown when the given base URL is not a valid absolute http(s) URL.</exception>
+    private string GetZappBaseUrl(string? configuredUrl)
+    {
+        var baseUrl = string.IsNullOrWhiteSpace(configuredUrl)
+            ? MediathekViewApiClientOptions.DefaultZappApiBaseUrl
+            : configuredUrl.Trim().TrimEnd('/');
+
+        if (!Uri.TryCreate(baseUrl, UriKind.Absolute, out var uri)
+            || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            throw new MediathekApiException($"The configured Zapp API base URL '{configuredUrl}' is not a valid absolute http(s) URL.");
         }
 
         return baseUrl;
@@ -260,9 +288,12 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         var statsUrl = baseUrl + "/stats";
         _logger.LogDebug("Checking MediathekViewWeb server availability at: {Url}", statsUrl);
 
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(_optionsMonitor.CurrentValue.ConnectionCheckTimeoutSeconds));
+
         try
         {
-            using var response = await _httpClient.GetAsync(statsUrl, cancellationToken).ConfigureAwait(false);
+            using var response = await _httpClient.GetAsync(statsUrl, timeoutCts.Token).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -270,7 +301,7 @@ public class MediathekViewApiClient : IMediathekViewApiClient
                 throw new MediathekApiException($"The MediathekViewWeb server at '{baseUrl}' responded with status code {response.StatusCode}.", response.StatusCode);
             }
 
-            var body = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+            var body = await response.Content.ReadAsStringAsync(timeoutCts.Token).ConfigureAwait(false);
             var normalizedBody = body.Trim().TrimEnd('.', ' ');
             if (!string.Equals(normalizedBody, MediathekViewApiClientOptions.ExpectedStatsResponse, StringComparison.Ordinal))
             {
@@ -282,6 +313,68 @@ public class MediathekViewApiClient : IMediathekViewApiClient
         {
             _logger.LogError(ex, "The MediathekViewWeb server at {BaseUrl} is not reachable", baseUrl);
             throw new MediathekConnectionException($"The MediathekViewWeb server at '{baseUrl}' is not reachable.", ex);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogError("The connection check of the MediathekViewWeb server at {BaseUrl} timed out", baseUrl);
+            throw new MediathekConnectionException($"The MediathekViewWeb server at '{baseUrl}' did not respond within {_optionsMonitor.CurrentValue.ConnectionCheckTimeoutSeconds} seconds.");
+        }
+    }
+
+    /// <summary>
+    /// Validates the given or configured Zapp API server URL by calling its channelInfoList endpoint.
+    /// The server must respond with a status code 200 and a parsable JSON body (a dictionary of channel info entries).
+    /// </summary>
+    /// <param name="baseUrlOverride">Optional base URL to validate. When null or empty, the configured Zapp base URL is used.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>A task representing the asynchronous check.</returns>
+    /// <exception cref="MediathekConnectionException">Thrown when the server is not reachable.</exception>
+    /// <exception cref="MediathekApiException">Thrown when the server responds with an unexpected status code or a non-parsable body, or when the configured base URL is invalid.</exception>
+    public async Task CheckZappConnectionAsync(string? baseUrlOverride, CancellationToken cancellationToken)
+    {
+        var baseUrl = GetZappBaseUrl(string.IsNullOrWhiteSpace(baseUrlOverride)
+            ? _optionsMonitor.CurrentValue.ZappApiBaseUrl
+            : baseUrlOverride);
+        var channelsUrl = baseUrl + "/v1/channelInfoList";
+        _logger.LogDebug("Checking Zapp API server availability at: {Url}", channelsUrl);
+
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(_optionsMonitor.CurrentValue.ConnectionCheckTimeoutSeconds));
+
+        try
+        {
+            using var response = await _httpClient.GetAsync(channelsUrl, timeoutCts.Token).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Zapp connection check failed with status code {StatusCode}", response.StatusCode);
+                throw new MediathekApiException($"The Zapp API server at '{baseUrl}' responded with status code {response.StatusCode}.", response.StatusCode);
+            }
+
+            var responseStream = await response.Content.ReadAsStreamAsync(timeoutCts.Token).ConfigureAwait(false);
+            Dictionary<string, ZappChannelInfo> channels;
+            try
+            {
+                channels = await JsonSerializer.DeserializeAsync<Dictionary<string, ZappChannelInfo>>(responseStream, _jsonSerializerOptions, timeoutCts.Token).ConfigureAwait(false)
+                    ?? throw new MediathekApiException($"The Zapp API server at '{baseUrl}' returned a non-parsable response body.");
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "The Zapp API server at {BaseUrl} returned a non-parsable response body", baseUrl);
+                throw new MediathekApiException($"The Zapp API server at '{baseUrl}' returned a non-parsable response body.", ex);
+            }
+
+            _logger.LogDebug("Zapp connection check succeeded with {Count} channels", channels.Count);
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "The Zapp API server at {BaseUrl} is not reachable", baseUrl);
+            throw new MediathekConnectionException($"The Zapp API server at '{baseUrl}' is not reachable.", ex);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogError("The connection check of the Zapp API server at {BaseUrl} timed out", baseUrl);
+            throw new MediathekConnectionException($"The Zapp API server at '{baseUrl}' did not respond within {_optionsMonitor.CurrentValue.ConnectionCheckTimeoutSeconds} seconds.");
         }
     }
 

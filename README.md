@@ -131,6 +131,7 @@ Hier konfigurieren Sie das globale Verhalten des Plugins. Die Einstellungen sind
 | **Parallele Downloads** | Anzahl der gleichzeitig laufenden Downloads (1–10, Standard: 1). |
 | **Bibliotheks-Scan** | Aktualisiert die Jellyfin-Bibliothek automatisch nach fertigen Downloads. |
 | **MediathekViewWeb API Base-URL** | Basis-URL des MediathekViewWeb Servers (ohne `/api`, die wird automatisch ergänzt). Leer lassen für den Standard (`https://mediathekviewweb.de`). Kann z. B. auf einen lokalen Testserver (`http://localhost:8000`) gesetzt werden, um neue Backend-Features von MediathekViewWeb zu testen. Über den 🔌-Button neben dem Feld wird die Verbindung geprüft (`<Base-URL>/stats` muss mit 200 und "Server is up and running" antworten). |
+| **Zapp API Base-URL** | Basis-URL der Zapp API (ohne `/v1`, die wird automatisch ergänzt). Leer lassen für den Standard (`https://api.zapp.mediathekview.de`). Kann z. B. auf einen lokalen Testserver (`http://localhost:3000`) gesetzt werden, um neue Backend-Features der Zapp API zu testen. |
 
 ### 📺 Abonnements (Automatische Downloads)
 (Tab: *Abo Verwaltung*)

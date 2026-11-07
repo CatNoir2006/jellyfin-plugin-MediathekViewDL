@@ -16,6 +16,14 @@ public record NetworkOptions
     public string ApiBaseUrl { get; set; } = MediathekViewApiClientOptions.DefaultApiBaseUrl;
 
     /// <summary>
+    /// Gets or sets the base URL of the Zapp API server.
+    /// The <c>/v1</c> path is added automatically when building Zapp endpoint URLs.
+    /// Can be changed to point at a local test server instance, e.g. http://localhost:3000, to test new backend features.
+    /// Leave empty to use the default.
+    /// </summary>
+    public string ZappApiBaseUrl { get; set; } = MediathekViewApiClientOptions.DefaultZappApiBaseUrl;
+
+    /// <summary>
     /// Gets or sets a value indicating whether downloads from unknown domains are allowed.
     /// This may be usefull if ARD or ZDF adds new CDNs that are not yet whitelisted.
     /// This may pose a security risk, so use with caution.

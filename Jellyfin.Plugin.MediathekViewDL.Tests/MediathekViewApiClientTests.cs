@@ -716,6 +716,364 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
                 async () => await client.CheckConnectionAsync(null, CancellationToken.None).ConfigureAwait(false));
         }
 
+        [Fact]
+        public async Task GetZappChannelsAsync_ShouldUseConfiguredZappApiBaseUrl_WhenSet()
+        {
+            // Arrange
+            HttpRequestMessage? capturedRequest = null;
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .Returns(async (HttpRequestMessage req, CancellationToken _) =>
+                {
+                    capturedRequest = req;
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent("{\"kika\":{\"name\":\"KiKA\",\"streamUrl\":\"http://localhost:3000/stream\"}}")
+                    };
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ZappApiBaseUrl = "http://localhost:3000",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act
+            await client.GetZappChannelsAsync(CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("http://localhost:3000/v1/channelInfoList", capturedRequest!.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task GetZappChannelsAsync_ShouldTrimTrailingSlash_WhenZappApiBaseUrlEndsWithSlash()
+        {
+            // Arrange
+            HttpRequestMessage? capturedRequest = null;
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .Returns(async (HttpRequestMessage req, CancellationToken _) =>
+                {
+                    capturedRequest = req;
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent("{}")
+                    };
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ZappApiBaseUrl = "http://localhost:3000/",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act
+            await client.GetZappChannelsAsync(CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("http://localhost:3000/v1/channelInfoList", capturedRequest!.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task GetZappChannelsAsync_ShouldThrowMediathekApiException_WhenZappApiBaseUrlIsInvalid()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ZappApiBaseUrl = "not a valid url",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act + Assert
+            await Assert.ThrowsAsync<MediathekApiException>(
+                async () => await client.GetZappChannelsAsync(CancellationToken.None).ConfigureAwait(false));
+        }
+
+        [Fact]
+        public async Task CheckZappConnectionAsync_ShouldCallChannelInfoListEndpoint_WhenServerRespondsParsableJson()
+        {
+            // Arrange
+            HttpRequestMessage? capturedRequest = null;
+
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .Returns(async (HttpRequestMessage req, CancellationToken _) =>
+                {
+                    capturedRequest = req;
+                    return new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StringContent("{\"kika\":{\"name\":\"KiKA\",\"streamUrl\":\"http://localhost:3000/stream\"}}")
+                    };
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ZappApiBaseUrl = "https://api.zapp.mediathekview.de",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act
+            await client.CheckZappConnectionAsync("http://localhost:3000", CancellationToken.None);
+
+            // Assert
+            Assert.NotNull(capturedRequest);
+            Assert.Equal("http://localhost:3000/v1/channelInfoList", capturedRequest!.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task CheckZappConnectionAsync_ShouldAcceptEmptyJson_WhenBodyIsParsable()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("{}")
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ZappApiBaseUrl = "http://localhost:3000",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act + Assert (does not throw)
+            await client.CheckZappConnectionAsync(null, CancellationToken.None);
+        }
+
+        [Fact]
+        public async Task CheckZappConnectionAsync_ShouldThrowMediathekApiException_WhenResponseBodyIsNotParsable()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent("<html>not json</html>")
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ZappApiBaseUrl = "http://localhost:3000",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act + Assert
+            var ex = await Assert.ThrowsAsync<MediathekApiException>(
+                async () => await client.CheckZappConnectionAsync(null, CancellationToken.None).ConfigureAwait(false));
+            Assert.Contains("non-parsable", ex.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public async Task CheckZappConnectionAsync_ShouldThrowMediathekApiException_WhenServerRespondsWithErrorStatusCode()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(new HttpResponseMessage(HttpStatusCode.InternalServerError));
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ZappApiBaseUrl = "http://localhost:3000",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act + Assert
+            var ex = await Assert.ThrowsAsync<MediathekApiException>(
+                async () => await client.CheckZappConnectionAsync(null, CancellationToken.None).ConfigureAwait(false));
+            Assert.Equal(HttpStatusCode.InternalServerError, ex.StatusCode);
+        }
+
+        [Fact]
+        public async Task CheckZappConnectionAsync_ShouldThrowMediathekConnectionException_WhenServerIsNotReachable()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ThrowsAsync(new HttpRequestException("Connection refused"));
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ZappApiBaseUrl = "http://localhost:3000",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act + Assert
+            await Assert.ThrowsAsync<MediathekConnectionException>(
+                async () => await client.CheckZappConnectionAsync(null, CancellationToken.None).ConfigureAwait(false));
+        }
+
+        [Fact]
+        public async Task CheckZappConnectionAsync_ShouldThrowMediathekApiException_WhenZappApiBaseUrlIsInvalid()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ZappApiBaseUrl = "not a valid url",
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act + Assert
+            await Assert.ThrowsAsync<MediathekApiException>(
+                async () => await client.CheckZappConnectionAsync(null, CancellationToken.None).ConfigureAwait(false));
+        }
+
+        [Fact]
+        public async Task CheckConnectionAsync_ShouldThrowMediathekConnectionException_WhenServerDoesNotRespondWithinTimeout()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .Returns((HttpRequestMessage _, CancellationToken ct) =>
+                {
+                    var tcs = new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    ct.Register(() => tcs.TrySetCanceled());
+                    return tcs.Task;
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ApiBaseUrl = "http://192.168.1.1",
+                ConnectionCheckTimeoutSeconds = 1,
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act + Assert
+            var ex = await Assert.ThrowsAsync<MediathekConnectionException>(
+                async () => await client.CheckConnectionAsync(null, CancellationToken.None).ConfigureAwait(false));
+            Assert.Contains("did not respond within", ex.Message, StringComparison.Ordinal);
+        }
+
+        [Fact]
+        public async Task CheckZappConnectionAsync_ShouldThrowMediathekConnectionException_WhenServerDoesNotRespondWithinTimeout()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler
+                .Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .Returns((HttpRequestMessage _, CancellationToken ct) =>
+                {
+                    var tcs = new TaskCompletionSource<HttpResponseMessage>(TaskCreationOptions.RunContinuationsAsynchronously);
+                    ct.Register(() => tcs.TrySetCanceled());
+                    return tcs.Task;
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            var mockLogger = new Mock<ILogger<MediathekViewApiClient>>();
+            var optionsMonitor = new TestOptionsMonitor(new MediathekViewApiClientOptions
+            {
+                ZappApiBaseUrl = "http://192.168.1.1",
+                ConnectionCheckTimeoutSeconds = 1,
+                MaxSearchPages = 5
+            });
+
+            var client = new MediathekViewApiClient(httpClient, mockLogger.Object, optionsMonitor);
+
+            // Act + Assert
+            var ex = await Assert.ThrowsAsync<MediathekConnectionException>(
+                async () => await client.CheckZappConnectionAsync(null, CancellationToken.None).ConfigureAwait(false));
+            Assert.Contains("did not respond within", ex.Message, StringComparison.Ordinal);
+        }
+
         private sealed class TestOptionsMonitor : IOptionsMonitor<MediathekViewApiClientOptions>
         {
             private readonly MediathekViewApiClientOptions _options;

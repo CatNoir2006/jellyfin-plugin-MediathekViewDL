@@ -592,6 +592,35 @@ class ApiService {
     }
 
     /**
+     * Test the connection to the Zapp API server via its channelInfoList endpoint.
+     * @param {string|null} baseUrl - Optional base URL to test. When empty, the configured base URL is used.
+     * @returns {Promise<Object>} - { Success, Message }
+     */
+    async testZappConnection(baseUrl) {
+        if (!this.apiClient) throw new Error('ApiClient not available')
+
+        let url = 'MediathekViewDL/Plugin/TestZappConnection'
+        if (baseUrl) {
+            url += '?baseUrl=' + encodeURIComponent(baseUrl)
+        }
+
+        console.log(`🔌 POST Plugin/TestZappConnection`, baseUrl ? `baseUrl=${baseUrl}` : '(configured)')
+
+        try {
+            const response = await this.apiClient.ajax({
+                type: 'POST',
+                url: this.apiClient.getUrl(url),
+                dataType: 'json'
+            })
+            console.log(`✅ TestZappConnection response:`, response)
+            return response
+        } catch (error) {
+            console.error(`❌ TestZappConnection failed:`, error)
+            throw error
+        }
+    }
+
+    /**
      * Get all scheduled tasks
      * @returns {Promise<Array>} - List of tasks
      */
