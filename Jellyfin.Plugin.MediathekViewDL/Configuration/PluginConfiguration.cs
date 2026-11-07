@@ -64,6 +64,12 @@ public class PluginConfiguration : BasePluginConfiguration
     public bool WizardCompleted { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether dynamic external links to ARD / ZDF Mediathek are displayed in Jellyfin UI.
+    /// Default is false.
+    /// </summary>
+    public bool EnableExternalUrlProvider { get; set; }
+
+    /// <summary>
     /// Gets the list of download subscriptions.
     /// </summary>
     public Collection<Subscription> Subscriptions { get; init; }

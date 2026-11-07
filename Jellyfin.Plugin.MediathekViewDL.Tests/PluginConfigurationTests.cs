@@ -48,5 +48,15 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             // Assert
             Assert.True(config.SubscriptionDefaults.DownloadSettings.SkipVideoQualityProbing);
         }
+
+        [Fact]
+        public void Constructor_ShouldInitializeEnableExternalUrlProviderAsFalse()
+        {
+            // Arrange / Act
+            var config = new PluginConfiguration();
+
+            // Assert
+            Assert.False(config.EnableExternalUrlProvider);
+        }
     }
 }
