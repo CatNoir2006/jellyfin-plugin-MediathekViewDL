@@ -58,5 +58,17 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             // Assert
             Assert.False(config.EnableExternalUrlProvider);
         }
+
+        [Fact]
+        public void Constructor_ShouldInitializeMissingEpisodesSyncAsDisabledByDefault()
+        {
+            // Arrange / Act
+            var config = new PluginConfiguration();
+
+            // Assert
+            Assert.NotNull(config.MissingEpisodes);
+            Assert.False(config.MissingEpisodes.EnableMissingEpisodesSync);
+            Assert.Equal(Configuration.Groups.MissingEpisodeSyncMode.Download, config.MissingEpisodes.SyncMode);
+        }
     }
 }

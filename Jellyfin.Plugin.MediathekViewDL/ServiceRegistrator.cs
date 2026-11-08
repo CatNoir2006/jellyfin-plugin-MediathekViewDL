@@ -14,12 +14,14 @@ using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
 using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
+using Jellyfin.Plugin.MediathekViewDL.Tasks;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Controller.Plugins;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Providers;
+using MediaBrowser.Model.Tasks;
 using MediathekView.Api;
 using MediathekView.Api.External;
 using Microsoft.EntityFrameworkCore;
@@ -89,6 +91,8 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddSingleton<IDownloadQueueManager, DownloadQueueManager>();
             serviceCollection.AddSingleton<IUrlValidationService, UrlValidationService>();
             serviceCollection.AddTransient<INfoService, NfoService>();
+            serviceCollection.AddTransient<IMissingEpisodeService, MissingEpisodeService>();
+            serviceCollection.AddSingleton<IScheduledTask, MissingEpisodesSyncTask>();
 
             // External URL and ID Providers
             serviceCollection.AddSingleton<IExternalUrlProvider, MediathekExternalUrlProvider>();
