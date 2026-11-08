@@ -571,4 +571,3 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
         return false;
     }
 }
-
