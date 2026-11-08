@@ -95,5 +95,19 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             Assert.False(config.Merging.AutoDeleteStrmWhenLocalExists);
             Assert.True(config.Merging.GroupAsMultiVersion);
         }
+
+        [Fact]
+        public void Constructor_ShouldInitializeFederationOptionsAsDisabledByDefault()
+        {
+            // Arrange / Act
+            var config = new PluginConfiguration();
+
+            // Assert
+            Assert.NotNull(config.Federation);
+            Assert.False(config.Federation.EnableFastMediaSourceResolution);
+            Assert.False(config.Federation.AutoTriggerSeerrScan);
+            Assert.Equal(string.Empty, config.Federation.SeerrUrl);
+            Assert.Equal(string.Empty, config.Federation.SeerrApiKey);
+        }
     }
 }

@@ -72,6 +72,11 @@ public class PluginConfiguration : BasePluginConfiguration
     public MediaMergingOptions Merging { get; set; } = new();
 
     /// <summary>
+    /// Gets or sets the federation and external integration options (Seerr, Fast MediaSource).
+    /// </summary>
+    public FederationEnhancementsOptions Federation { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets a value indicating whether the setup wizard has been completed.
     /// Used to auto-show the first-run wizard on fresh installations
     /// and to suppress it once the user has finished (or explicitly skipped) the setup.

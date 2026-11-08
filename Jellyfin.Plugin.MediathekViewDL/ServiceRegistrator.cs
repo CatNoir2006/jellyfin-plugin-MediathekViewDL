@@ -10,6 +10,7 @@ using Jellyfin.Plugin.MediathekViewDL.Services.Downloading;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Clients;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Handlers;
 using Jellyfin.Plugin.MediathekViewDL.Services.Downloading.Queue;
+using Jellyfin.Plugin.MediathekViewDL.Services.Integration;
 using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 using Jellyfin.Plugin.MediathekViewDL.Services.Metadata;
@@ -17,6 +18,7 @@ using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 using Jellyfin.Plugin.MediathekViewDL.Tasks;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Channels;
+using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Controller.Plugins;
 using MediaBrowser.Controller.Providers;
@@ -97,9 +99,11 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddSingleton<IScheduledTask, SyncVirtualMediathekLibraryTask>();
             serviceCollection.AddTransient<IMediaMergeService, MediaMergeService>();
             serviceCollection.AddSingleton<IScheduledTask, MediaInstanceMergeTask>();
+            serviceCollection.AddTransient<ISeerrNotificationService, SeerrNotificationService>();
 
-            // External URL and ID Providers
+            // External URL, ID and MediaSource Providers
             serviceCollection.AddSingleton<IExternalUrlProvider, MediathekExternalUrlProvider>();
+            serviceCollection.AddSingleton<IMediaSourceProvider, MediathekMediaSourceProvider>();
             serviceCollection.AddSingleton<IExternalId, MediathekMovieExternalId>();
             serviceCollection.AddSingleton<IExternalId, MediathekSeriesExternalId>();
             serviceCollection.AddSingleton<IExternalId, MediathekEpisodeExternalId>();
