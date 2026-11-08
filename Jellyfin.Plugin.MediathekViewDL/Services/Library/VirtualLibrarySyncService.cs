@@ -260,11 +260,18 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
             }
 
             var isPopularSeries = DefaultPopularSeries.Any(s => string.Equals(s, item.Topic, StringComparison.OrdinalIgnoreCase));
-            var seasonNum = videoInfo?.SeasonNumber ?? (isPopularSeries || videoInfo?.IsShow == true ? 1 : (int?)null);
-            var episodeNum = videoInfo?.EpisodeNumber ?? videoInfo?.AbsoluteNumber;
+            var seasonNum = videoInfo?.SeasonNumber;
+            var episodeNum = videoInfo?.EpisodeNumber ?? videoInfo?.AbsoluteEpisodeNumber;
+            if (!seasonNum.HasValue && (isPopularSeries || videoInfo?.IsShow == true) && episodeNum.HasValue)
+            {
+                seasonNum = 1;
+            }
 
             if (seasonNum.HasValue && episodeNum.HasValue)
             {
+                var sVal = seasonNum.Value;
+                var eVal = episodeNum.Value;
+
                 // Series Episode
                 var showTitle = SanitizePath(CleanTitlePunctuation(item.Topic));
 
@@ -275,7 +282,7 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
                 }
 
                 var showDir = Path.Combine(seriesDir, showTitle);
-                var seasonDir = Path.Combine(showDir, $"Season {seasonNum.Value:D2}");
+                var seasonDir = Path.Combine(showDir, $"Season {sVal:D2}");
                 Directory.CreateDirectory(seasonDir);
 
                 // Write tvshow.nfo if missing
@@ -287,14 +294,14 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
                 }
 
                 var epCleanTitle = CleanTitlePunctuation(videoInfo?.Title ?? item.Title);
-                var fileName = $"{showTitle} - S{seasonNum.Value:D2}E{episodeNum.Value:D2} - {SanitizePath(epCleanTitle)}";
+                var fileName = $"{showTitle} - S{sVal:D2}E{eVal:D2} - {SanitizePath(epCleanTitle)}";
                 var strmPath = Path.Combine(seasonDir, $"{fileName}.strm");
                 var nfoPath = Path.Combine(seasonDir, $"{fileName}.nfo");
 
                 if (!File.Exists(strmPath))
                 {
                     await File.WriteAllTextAsync(strmPath, videoUrl, cancellationToken).ConfigureAwait(false);
-                    var epNfo = BuildEpisodeNfo(epCleanTitle, item.Description, seasonNum.Value, episodeNum.Value, item.Timestamp.DateTime, videoUrl);
+                    var epNfo = BuildEpisodeNfo(epCleanTitle, item.Description, sVal, eVal, item.Timestamp.DateTime, videoUrl);
                     await File.WriteAllTextAsync(nfoPath, epNfo, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
                     synced++;
                 }
