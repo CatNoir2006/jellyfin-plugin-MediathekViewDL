@@ -48,6 +48,11 @@ public class MissingEpisodesOptions
     public string SeriesWhitelist { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets an optional comma-separated list of seasons to ignore (e.g. "6, 7" or "Season 06, Season 07").
+    /// </summary>
+    public string IgnoredSeasons { get; set; } = string.Empty;
+
+    /// <summary>
     /// Gets or sets a value indicating whether dual-audio episodes (German + Original English) should be preferred.
     /// Default is false.
     /// </summary>

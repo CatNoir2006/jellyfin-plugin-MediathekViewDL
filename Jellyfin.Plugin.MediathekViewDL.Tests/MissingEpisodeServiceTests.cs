@@ -159,4 +159,56 @@ public class MissingEpisodeServiceTests : IDisposable
         var content = await File.ReadAllTextAsync(strmFiles[0]);
         Assert.Equal("https://rodlzdf-a.akamaihd.net/rookie_s01e01.mp4", content);
     }
+
+    [Fact]
+    public async Task SyncSeriesMissingEpisodes_WithIgnoredSeasons_SkipsIgnoredSeasons()
+    {
+        var config = new PluginConfiguration();
+        config.MissingEpisodes.EnableMissingEpisodesSync = true;
+        config.MissingEpisodes.SyncMode = MissingEpisodeSyncMode.StreamLink;
+        config.MissingEpisodes.IgnoredSeasons = "6, 7";
+
+        var configProviderMock = new Mock<IConfigurationProvider>();
+        configProviderMock.Setup(c => c.ConfigurationOrNull).Returns(config);
+
+        var seriesDir = Path.Combine(_testDir, "The Rookie");
+        Directory.CreateDirectory(seriesDir);
+
+        var scannerMock = new Mock<ILocalMediaScanner>();
+        var localResult = new LocalScanResult();
+        scannerMock.Setup(s => s.ScanSubscriptionDirectory(seriesDir, "The Rookie"))
+            .Returns(localResult);
+
+        var mockResults = new List<ResultItemDto>
+        {
+            CreateMockResultItem("item-1", "The Rookie", "S07/E01: Der Schuss", "https://rodlzdf-a.akamaihd.net/rookie_s07e01.mp4")
+        };
+
+        var apiClientMock = new Mock<IMediathekViewApiClient>();
+        apiClientMock.Setup(a => a.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateMockQueryResult(mockResults));
+
+        var videoParserMock = new Mock<IVideoParser>();
+        videoParserMock.Setup(v => v.ParseVideoInfo("The Rookie", "S07/E01: Der Schuss"))
+            .Returns(new VideoInfo
+            {
+                Title = "Der Schuss",
+                SeasonNumber = 7,
+                EpisodeNumber = 1,
+                IsShow = true
+            });
+
+        var service = new MissingEpisodeService(
+            NullLogger<MissingEpisodeService>.Instance,
+            configProviderMock.Object,
+            scannerMock.Object,
+            apiClientMock.Object,
+            videoParserMock.Object,
+            new Mock<IFileNameBuilderService>().Object,
+            new Mock<IDownloadQueueManager>().Object,
+            new Mock<IVideoQualitySelector>().Object);
+
+        var synced = await service.SyncSeriesMissingEpisodesAsync("The Rookie", seriesDir, CancellationToken.None);
+        Assert.Equal(0, synced);
+    }
 }

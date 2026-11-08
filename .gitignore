@@ -9,3 +9,5 @@ artifacts
 node_modules/
 configPageVueJS.js
 Jellyfin.Plugin.MediathekViewDL/Configuration/Web/MediathekViewDLVueJS.js
+dist/
+

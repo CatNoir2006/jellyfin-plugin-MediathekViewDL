@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
@@ -170,6 +171,19 @@ public class MissingEpisodeService : IMissingEpisodeService
             return 0;
         }
 
+        var ignoredSeasons = new HashSet<int>();
+        if (!string.IsNullOrWhiteSpace(config.MissingEpisodes.IgnoredSeasons))
+        {
+            foreach (var s in config.MissingEpisodes.IgnoredSeasons.Split(SeriesSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                var match = Regex.Match(s, @"\d+");
+                if (match.Success && int.TryParse(match.Value, out var seasonNum))
+                {
+                    ignoredSeasons.Add(seasonNum);
+                }
+            }
+        }
+
         var syncedCount = 0;
         var isStreamMode = config.MissingEpisodes.SyncMode == MissingEpisodeSyncMode.StreamLink;
 
@@ -186,8 +200,13 @@ public class MissingEpisodeService : IMissingEpisodeService
             var season = videoInfo.SeasonNumber.Value;
             var episode = videoInfo.EpisodeNumber.Value;
 
-            // Check if episode is already locally present
-            if (localCache.Contains(videoInfo))
+            if (ignoredSeasons.Contains(season))
+            {
+                continue;
+            }
+
+            // Check if episode is already locally present (in any audio/file format)
+            if (localCache.ContainsSeasonEpisode(season, episode))
             {
                 continue;
             }
