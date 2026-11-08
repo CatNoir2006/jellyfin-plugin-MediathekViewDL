@@ -25,6 +25,50 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
 {
     private static readonly char[] TopicSeparators = [',', ';'];
 
+    /// <summary>
+    /// Default curated popular series across German public broadcasters.
+    /// </summary>
+    public static readonly string[] DefaultPopularSeries =
+    [
+        "The Rookie",
+        "Babylon Berlin",
+        "Sherlock",
+        "Peaky Blinders",
+        "Das Boot",
+        "Bad Banks",
+        "Charité",
+        "Tatort",
+        "Polizeiruf 110",
+        "Nord bei Nordwest",
+        "Der Bergdoktor",
+        "Die Bergretter",
+        "Der Pass",
+        "Kafka",
+        "Mord mit Aussicht",
+        "Hubert ohne Staller",
+        "Lauchhammer",
+        "Sløborn",
+        "Oderbruch",
+        "Deutsches Haus",
+        "Gestern waren wir noch Kinder",
+        "Tschugger",
+        "Die Kanzlei",
+        "Morden im Norden",
+        "WaPo Bodensee",
+        "WaPo Berlin"
+    ];
+
+    /// <summary>
+    /// Default movie topics that index full-length feature films and blockbusters.
+    /// </summary>
+    public static readonly string[] DefaultBlockbusterMovieTopics =
+    [
+        "Filme",
+        "Spielfilm",
+        "Fernsehfilm",
+        "Kino"
+    ];
+
     private readonly ILogger<VirtualLibrarySyncService> _logger;
     private readonly IConfigurationProvider _configurationProvider;
     private readonly IMediathekViewApiClient _apiClient;
@@ -77,7 +121,21 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
 
         var topics = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        // 1. Custom topics
+        // 1. Curated popular series and blockbuster movie topics
+        if (config.VirtualLibrary.CuratedPopularOnly)
+        {
+            foreach (var series in DefaultPopularSeries)
+            {
+                topics.Add(series);
+            }
+
+            foreach (var movieTopic in DefaultBlockbusterMovieTopics)
+            {
+                topics.Add(movieTopic);
+            }
+        }
+
+        // 2. Custom topics
         if (!string.IsNullOrWhiteSpace(config.VirtualLibrary.CustomTopics))
         {
             foreach (var t in config.VirtualLibrary.CustomTopics.Split(TopicSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
@@ -86,7 +144,7 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
             }
         }
 
-        // 2. Subscription topics
+        // 3. Subscription topics
         if (config.VirtualLibrary.IncludeSubscriptions)
         {
             foreach (var sub in config.Subscriptions)
@@ -137,6 +195,7 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
     {
         var config = _configurationProvider.ConfigurationOrNull;
         var minDuration = (config?.VirtualLibrary.MinDurationMinutes ?? 10) * 60;
+        var minMovieDuration = (config?.VirtualLibrary.MinMovieDurationMinutes ?? 75) * 60;
 
         var queryDto = new QueryFieldsDto
         {
@@ -214,6 +273,11 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
             else
             {
                 // Standalone Movie / Feature
+                if (config?.VirtualLibrary.CuratedPopularOnly == true && item.Duration < TimeSpan.FromSeconds(minMovieDuration))
+                {
+                    continue;
+                }
+
                 var year = item.Timestamp.Year > 1900 ? item.Timestamp.Year : DateTime.UtcNow.Year;
                 var movieTitle = $"{SanitizePath(item.Title)} ({year})";
                 var movieFolder = Path.Combine(moviesDir, movieTitle);

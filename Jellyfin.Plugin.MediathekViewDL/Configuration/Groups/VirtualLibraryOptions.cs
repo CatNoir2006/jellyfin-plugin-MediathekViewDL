@@ -37,6 +37,18 @@ public class VirtualLibraryOptions
     public string CustomTopics { get; set; } = string.Empty;
 
     /// <summary>
+    /// Gets or sets a value indicating whether only curated popular/trending series and blockbuster movies should be synced.
+    /// Default is true.
+    /// </summary>
+    public bool CuratedPopularOnly { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets minimum movie duration in minutes to qualify as a feature film/blockbuster.
+    /// Default is 75 minutes.
+    /// </summary>
+    public int MinMovieDurationMinutes { get; set; } = 75;
+
+    /// <summary>
     /// Gets or sets minimum duration in minutes to exclude short clips or previews.
     /// Default is 10 minutes.
     /// </summary>

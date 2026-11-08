@@ -143,4 +143,45 @@ public class VirtualLibrarySyncServiceTests : IDisposable
         var nfoFiles = Directory.GetFiles(seriesDir, "*.nfo");
         Assert.Single(nfoFiles);
     }
+
+    [Fact]
+    public async Task SyncTopicAsync_CuratedPopularOnly_FiltersOutShortMovies()
+    {
+        var config = new PluginConfiguration();
+        config.VirtualLibrary.EnableVirtualLibrary = true;
+        config.VirtualLibrary.VirtualLibraryPath = _testDir;
+        config.VirtualLibrary.CuratedPopularOnly = true;
+        config.VirtualLibrary.MinMovieDurationMinutes = 75;
+
+        var configProviderMock = new Mock<IConfigurationProvider>();
+        configProviderMock.Setup(c => c.ConfigurationOrNull).Returns(config);
+
+        var apiClientMock = new Mock<IMediathekViewApiClient>();
+        var mockResults = new List<ResultItemDto>
+        {
+            CreateMockResultItem("short_doc", "Spielfilm", "Kurzfilm", "https://example.com/short.mp4", TimeSpan.FromMinutes(30)),
+            CreateMockResultItem("full_movie", "Spielfilm", "Blockbuster Movie", "https://example.com/movie.mp4", TimeSpan.FromMinutes(95))
+        };
+        apiClientMock.Setup(a => a.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateMockQueryResult(mockResults));
+
+        var videoParserMock = new Mock<IVideoParser>();
+        videoParserMock.Setup(v => v.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(new VideoInfo { IsShow = false });
+
+        var service = new VirtualLibrarySyncService(
+            NullLogger<VirtualLibrarySyncService>.Instance,
+            configProviderMock.Object,
+            apiClientMock.Object,
+            videoParserMock.Object);
+
+        var synced = await service.SyncTopicAsync("Spielfilm", _testDir, CancellationToken.None);
+        Assert.Equal(1, synced);
+
+        var moviesDir = Path.Combine(_testDir, "movies");
+        var movieSubDirs = Directory.GetDirectories(moviesDir);
+        Assert.Single(movieSubDirs);
+        Assert.Contains("Blockbuster Movie", movieSubDirs[0]);
+    }
 }
+
