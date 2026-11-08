@@ -86,7 +86,17 @@ public class AccessibilityFilterHelperTests
 
             var apiClientMock = new Mock<IMediathekViewApiClient>();
             apiClientMock.Setup(a => a.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new QueryResultDto { Results = new System.Collections.ObjectModel.Collection<ResultItemDto>() });
+                .ReturnsAsync(new QueryResultDto
+                {
+                    QueryInfo = new QueryInfoDto
+                    {
+                        MovieListTimestamp = 0,
+                        ResultCount = 0,
+                        TotalResults = 0,
+                        TotalEntries = 0
+                    },
+                    Results = new List<ResultItemDto>()
+                });
 
             var videoParserMock = new Mock<IVideoParser>();
 
