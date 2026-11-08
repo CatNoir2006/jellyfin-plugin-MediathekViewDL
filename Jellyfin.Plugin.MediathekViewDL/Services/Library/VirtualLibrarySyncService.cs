@@ -120,7 +120,7 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
             Directory.CreateDirectory(rootPath);
         }
 
-        CleanupLegacyAccessibilityDirectories(rootPath);
+        CleanupLegacyMovieAndAccessibilityDirectories(rootPath);
 
         var topics = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -261,7 +261,7 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
             if (videoInfo?.SeasonNumber.HasValue == true && videoInfo.EpisodeNumber.HasValue)
             {
                 // Series Episode
-                var showTitle = SanitizePath(item.Topic);
+                var showTitle = SanitizePath(CleanTitlePunctuation(item.Topic));
 
                 // Skip series that are already present in primary local TV libraries (merging handles them directly)
                 if (config != null && IsSeriesLocallyPresent(showTitle, config))
@@ -277,18 +277,19 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
                 var tvshowNfo = Path.Combine(showDir, "tvshow.nfo");
                 if (!File.Exists(tvshowNfo))
                 {
-                    var showNfoContent = BuildSeriesNfo(item.Topic, item.Description);
+                    var showNfoContent = BuildSeriesNfo(CleanTitlePunctuation(item.Topic), item.Description);
                     await File.WriteAllTextAsync(tvshowNfo, showNfoContent, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
                 }
 
-                var fileName = $"{showTitle} - S{videoInfo.SeasonNumber.Value:D2}E{videoInfo.EpisodeNumber.Value:D2} - {SanitizePath(videoInfo.Title)}";
+                var epCleanTitle = CleanTitlePunctuation(videoInfo.Title);
+                var fileName = $"{showTitle} - S{videoInfo.SeasonNumber.Value:D2}E{videoInfo.EpisodeNumber.Value:D2} - {SanitizePath(epCleanTitle)}";
                 var strmPath = Path.Combine(seasonDir, $"{fileName}.strm");
                 var nfoPath = Path.Combine(seasonDir, $"{fileName}.nfo");
 
                 if (!File.Exists(strmPath))
                 {
                     await File.WriteAllTextAsync(strmPath, videoUrl, cancellationToken).ConfigureAwait(false);
-                    var epNfo = BuildEpisodeNfo(videoInfo.Title, item.Description, videoInfo.SeasonNumber.Value, videoInfo.EpisodeNumber.Value, item.Timestamp.DateTime, videoUrl);
+                    var epNfo = BuildEpisodeNfo(epCleanTitle, item.Description, videoInfo.SeasonNumber.Value, videoInfo.EpisodeNumber.Value, item.Timestamp.DateTime, videoUrl);
                     await File.WriteAllTextAsync(nfoPath, epNfo, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
                     synced++;
                 }
@@ -319,7 +320,7 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
                 if (!File.Exists(strmPath))
                 {
                     await File.WriteAllTextAsync(strmPath, videoUrl, cancellationToken).ConfigureAwait(false);
-                    var movNfo = BuildMovieNfo(cleanTitle, item.Description, year ?? item.Timestamp.Year, videoUrl);
+                    var movNfo = BuildMovieNfo(cleanTitle, item.Description, year, videoUrl);
                     await File.WriteAllTextAsync(nfoPath, movNfo, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
                     synced++;
                 }
@@ -342,6 +343,7 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>");
         sb.AppendLine("<tvshow>");
         sb.AppendLine(CultureInfo.InvariantCulture, $"  <title>{WebUtility.HtmlEncode(title)}</title>");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"  <originaltitle>{WebUtility.HtmlEncode(title)}</originaltitle>");
         if (!string.IsNullOrWhiteSpace(plot))
         {
             sb.AppendLine(CultureInfo.InvariantCulture, $"  <plot>{WebUtility.HtmlEncode(plot)}</plot>");
@@ -378,13 +380,18 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
         return sb.ToString();
     }
 
-    private static string BuildMovieNfo(string title, string? plot, int year, string webUrl)
+    private static string BuildMovieNfo(string title, string? plot, int? year, string webUrl)
     {
         var sb = new StringBuilder();
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\"?>");
         sb.AppendLine("<movie>");
         sb.AppendLine(CultureInfo.InvariantCulture, $"  <title>{WebUtility.HtmlEncode(title)}</title>");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"  <year>{year}</year>");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"  <originaltitle>{WebUtility.HtmlEncode(title)}</originaltitle>");
+        if (year.HasValue && year.Value >= 1900 && year.Value <= DateTime.UtcNow.Year + 1)
+        {
+            sb.AppendLine(CultureInfo.InvariantCulture, $"  <year>{year.Value}</year>");
+        }
+
         if (!string.IsNullOrWhiteSpace(plot))
         {
             sb.AppendLine(CultureInfo.InvariantCulture, $"  <plot>{WebUtility.HtmlEncode(plot)}</plot>");
@@ -399,7 +406,7 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
         return sb.ToString();
     }
 
-    private void CleanupLegacyAccessibilityDirectories(string rootPath)
+    private void CleanupLegacyMovieAndAccessibilityDirectories(string rootPath)
     {
         var dirsToScan = new[]
         {
@@ -419,46 +426,121 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
                 foreach (var dir in Directory.GetDirectories(baseDir))
                 {
                     var dirName = Path.GetFileName(dir);
-                    if (AccessibilityFilterHelper.IsAudioDescription(dirName) || AccessibilityFilterHelper.IsSignLanguage(dirName))
+                    var isAccessibility = AccessibilityFilterHelper.IsAudioDescription(dirName) || AccessibilityFilterHelper.IsSignLanguage(dirName);
+
+                    var isDirtyMovie = false;
+                    if (baseDir.EndsWith("movies", StringComparison.OrdinalIgnoreCase))
+                    {
+                        isDirtyMovie = dirName.Contains("(klare Sprache)", StringComparison.OrdinalIgnoreCase) ||
+                                       dirName.Contains("- Spielfilm", StringComparison.OrdinalIgnoreCase) ||
+                                       dirName.Contains("- Fernsehfilm", StringComparison.OrdinalIgnoreCase) ||
+                                       dirName.Contains("- Kurzfilm", StringComparison.OrdinalIgnoreCase) ||
+                                       dirName.Contains("- Film,", StringComparison.OrdinalIgnoreCase) ||
+                                       dirName.Contains("| Thriller", StringComparison.OrdinalIgnoreCase) ||
+                                       dirName.Contains("| Krimi", StringComparison.OrdinalIgnoreCase) ||
+                                       dirName.Contains("| Drama", StringComparison.OrdinalIgnoreCase) ||
+                                       dirName.Contains("| Komödie", StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    if (isAccessibility || isDirtyMovie)
                     {
                         try
                         {
                             Directory.Delete(dir, true);
-                            _logger.LogInformation("Removed legacy accessibility directory: {Path}", dir);
+                            _logger.LogInformation("Removed legacy dirty directory: {Path}", dir);
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogWarning(ex, "Failed to remove legacy accessibility directory: {Path}", dir);
+                            _logger.LogWarning(ex, "Failed to remove legacy dirty directory: {Path}", dir);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Error scanning for legacy accessibility directories in {Path}", baseDir);
+                _logger.LogDebug(ex, "Error scanning for legacy directories in {Path}", baseDir);
             }
         }
     }
 
-    private static (string Title, int? Year) ParseMovieTitleAndYear(string rawTitle, DateTimeOffset broadcastDate)
+    /// <summary>
+    /// Normalizes punctuation and special Unicode characters in titles to prevent scraper search failures.
+    /// </summary>
+    /// <param name="title">The raw title string.</param>
+    /// <returns>A cleaned title string.</returns>
+    internal static string CleanTitlePunctuation(string title)
     {
-        // Check for broadcaster pattern: "- Spielfilm, Deutschland 2020" or "- Spielfilm, USA 1979_2019"
-        var broadMatch = Regex.Match(rawTitle, @"\s*-\s*(?:Spielfilm|Fernsehfilm|Kino|Film).*?([12][90]\d{2})", RegexOptions.IgnoreCase);
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return string.Empty;
+        }
+
+        // Replace unicode middle dot, en-dash, em-dash, bullet with standard hyphen
+        var normalized = title.Replace('‧', '-')
+            .Replace('–', '-')
+            .Replace('—', '-')
+            .Replace('•', '-');
+
+        // Normalize spacing around hyphens
+        normalized = Regex.Replace(normalized, @"\s*-\s*", " - ");
+        normalized = Regex.Replace(normalized, @"\s+", " ");
+
+        return normalized.Trim(' ', '-', '.', ':');
+    }
+
+    /// <summary>
+    /// Parses a raw movie title to strip broadcaster artifacts and extract the actual release year.
+    /// </summary>
+    /// <param name="rawTitle">The raw movie title.</param>
+    /// <param name="broadcastDate">The broadcast date.</param>
+    /// <returns>A tuple containing the cleaned movie title and an optional release year.</returns>
+    internal static (string Title, int? Year) ParseMovieTitleAndYear(string rawTitle, DateTimeOffset broadcastDate)
+    {
+        if (string.IsNullOrWhiteSpace(rawTitle))
+        {
+            return (string.Empty, null);
+        }
+
+        var cleaned = rawTitle;
+
+        // 1. Strip language/accessibility markers in parentheses or brackets:
+        cleaned = Regex.Replace(cleaned, @"\s*[\(\[](?:klare Sprache|Englisch|Französisch|Originalversion[^)\]]*|OmU|OmeU|OV|DF)[\)\]]", string.Empty, RegexOptions.IgnoreCase);
+
+        // 2. Strip pipe categories often added by ARD/ZDF/Arte (e.g. "Zero | Thriller"):
+        cleaned = Regex.Replace(cleaned, @"\s*\|\s*(?:Thriller|Krimi|Drama|Komödie|Film|Spielfilm|Dokumentation|Kino|Action|Sci-Fi|Fantasy).*$", string.Empty, RegexOptions.IgnoreCase);
+
+        // 3. Extract release year and country from broadcaster patterns:
+        // "- Spielfilm, Deutschland 2020", "- Spielfilm, USA 1979_2019", "- Fernsehfilm Deutschland 2018", "- Film, F 2021"
+        int? year = null;
+        var broadMatch = Regex.Match(cleaned, @"\s*-\s*(?:Spielfilm|Fernsehfilm|Kurzfilm|Kino|Film|Drama|Komödie|Thriller|Krimi).*?([12][90]\d{2})", RegexOptions.IgnoreCase);
         if (broadMatch.Success && int.TryParse(broadMatch.Groups[1].Value, out var yearVal))
         {
-            var cleaned = Regex.Replace(rawTitle, @"\s*-\s*(?:Spielfilm|Fernsehfilm|Kino|Film).*$", string.Empty, RegexOptions.IgnoreCase).Trim();
-            return (cleaned, yearVal);
+            year = yearVal;
+            cleaned = Regex.Replace(cleaned, @"\s*-\s*(?:Spielfilm|Fernsehfilm|Kurzfilm|Kino|Film|Drama|Komödie|Thriller|Krimi).*$", string.Empty, RegexOptions.IgnoreCase);
         }
-
-        // Check for (YYYY) in title: e.g. "Cash (2024)"
-        var parenMatch = Regex.Match(rawTitle, @"\((\d{4})\)");
-        if (parenMatch.Success && int.TryParse(parenMatch.Groups[1].Value, out var pYear))
+        else
         {
-            var cleaned = Regex.Replace(rawTitle, @"\s*\(\d{4}\)", string.Empty).Trim();
-            return (cleaned, pYear);
+            cleaned = Regex.Replace(cleaned, @"\s*-\s*(?:Spielfilm|Fernsehfilm|Kurzfilm|Kino).*$", string.Empty, RegexOptions.IgnoreCase);
         }
 
-        return (rawTitle.Trim(), null);
+        // 4. Extract standalone (YYYY) or [YYYY]
+        if (!year.HasValue)
+        {
+            var yearMatch = Regex.Match(cleaned, @"[\(\[]([12][90]\d{2})[\)\]]");
+            if (yearMatch.Success && int.TryParse(yearMatch.Groups[1].Value, out var y))
+            {
+                year = y;
+                cleaned = Regex.Replace(cleaned, @"\s*[\(\[]" + y + @"[\)\]]", string.Empty);
+            }
+        }
+
+        if (year.HasValue && (year.Value < 1900 || year.Value > DateTime.UtcNow.Year + 1))
+        {
+            year = null;
+        }
+
+        cleaned = CleanTitlePunctuation(cleaned);
+        return (cleaned, year);
     }
 
     private bool IsSeriesLocallyPresent(string showTitle, PluginConfiguration config)

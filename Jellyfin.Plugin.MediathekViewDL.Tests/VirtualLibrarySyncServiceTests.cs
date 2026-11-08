@@ -315,5 +315,73 @@ public class VirtualLibrarySyncServiceTests : IDisposable
         Assert.Single(movieSubDirs);
         Assert.Equal("Cash (2020)", Path.GetFileName(movieSubDirs[0]));
     }
+
+    [Theory]
+    [InlineData("Cash - Spielfilm, Deutschland 2020", "Cash", 2020)]
+    [InlineData("Die Reifeprüfung - Spielfilm, USA 1967", "Die Reifeprüfung", 1967)]
+    [InlineData("Apocalypse Now - Final Cut - Spielfilm, USA 1979_2019", "Apocalypse Now - Final Cut", 1979)]
+    [InlineData("Zero | Thriller", "Zero", null)]
+    [InlineData("Tatort: Mord (klare Sprache)", "Tatort: Mord", null)]
+    [InlineData("The Gentlemen (2019)", "The Gentlemen", 2019)]
+    public void ParseMovieTitleAndYear_CorrectlyStripsBroadcasterInfoAndExtractsYear(string rawTitle, string expectedTitle, int? expectedYear)
+    {
+        var (title, year) = VirtualLibrarySyncService.ParseMovieTitleAndYear(rawTitle, DateTimeOffset.UtcNow);
+        Assert.Equal(expectedTitle, title);
+        Assert.Equal(expectedYear, year);
+    }
+
+    [Theory]
+    [InlineData("Charité intensiv ‧ Gegen die Zeit", "Charité intensiv - Gegen die Zeit")]
+    [InlineData("Babylon Berlin – Die Show", "Babylon Berlin - Die Show")]
+    [InlineData("Nord bei Nordwest — Neue Folgen", "Nord bei Nordwest - Neue Folgen")]
+    public void CleanTitlePunctuation_NormalizesUnicodeSpecialCharacters(string raw, string expected)
+    {
+        var result = VirtualLibrarySyncService.CleanTitlePunctuation(raw);
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public async Task SyncTopicAsync_MovieWithoutYear_DoesNotAddBroadcastYearToFolderOrNfo()
+    {
+        var config = new PluginConfiguration();
+        config.VirtualLibrary.EnableVirtualLibrary = true;
+        config.VirtualLibrary.VirtualLibraryPath = _testDir;
+        config.VirtualLibrary.CuratedPopularOnly = false;
+
+        var configProviderMock = new Mock<IConfigurationProvider>();
+        configProviderMock.Setup(c => c.ConfigurationOrNull).Returns(config);
+
+        var apiClientMock = new Mock<IMediathekViewApiClient>();
+        var mockResults = new List<ResultItemDto>
+        {
+            CreateMockResultItem("zero_thriller", "Filme", "Zero | Thriller", "https://example.com/zero.mp4", TimeSpan.FromMinutes(90))
+        };
+        apiClientMock.Setup(a => a.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateMockQueryResult(mockResults));
+
+        var videoParserMock = new Mock<IVideoParser>();
+        videoParserMock.Setup(v => v.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(new VideoInfo { IsShow = false });
+
+        var service = new VirtualLibrarySyncService(
+            NullLogger<VirtualLibrarySyncService>.Instance,
+            configProviderMock.Object,
+            apiClientMock.Object,
+            videoParserMock.Object);
+
+        var synced = await service.SyncTopicAsync("Filme", _testDir, CancellationToken.None);
+        Assert.Equal(1, synced);
+
+        var moviesDir = Path.Combine(_testDir, "movies");
+        var movieSubDirs = Directory.GetDirectories(moviesDir);
+        Assert.Single(movieSubDirs);
+        Assert.Equal("Zero", Path.GetFileName(movieSubDirs[0]));
+
+        var nfoPath = Path.Combine(movieSubDirs[0], "Zero.nfo");
+        Assert.True(File.Exists(nfoPath));
+        var nfoContent = await File.ReadAllTextAsync(nfoPath);
+        Assert.Contains("<originaltitle>Zero</originaltitle>", nfoContent);
+        Assert.DoesNotContain("<year>", nfoContent);
+    }
 }
 
