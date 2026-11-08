@@ -93,6 +93,8 @@ namespace Jellyfin.Plugin.MediathekViewDL
             serviceCollection.AddTransient<INfoService, NfoService>();
             serviceCollection.AddTransient<IMissingEpisodeService, MissingEpisodeService>();
             serviceCollection.AddSingleton<IScheduledTask, MissingEpisodesSyncTask>();
+            serviceCollection.AddTransient<IVirtualLibrarySyncService, VirtualLibrarySyncService>();
+            serviceCollection.AddSingleton<IScheduledTask, SyncVirtualMediathekLibraryTask>();
 
             // External URL and ID Providers
             serviceCollection.AddSingleton<IExternalUrlProvider, MediathekExternalUrlProvider>();

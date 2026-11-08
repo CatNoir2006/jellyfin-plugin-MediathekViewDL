@@ -62,6 +62,11 @@ public class PluginConfiguration : BasePluginConfiguration
     public MissingEpisodesOptions MissingEpisodes { get; set; } = new();
 
     /// <summary>
+    /// Gets or sets the dedicated virtual streaming library options.
+    /// </summary>
+    public VirtualLibraryOptions VirtualLibrary { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets a value indicating whether the setup wizard has been completed.
     /// Used to auto-show the first-run wizard on fresh installations
     /// and to suppress it once the user has finished (or explicitly skipped) the setup.
