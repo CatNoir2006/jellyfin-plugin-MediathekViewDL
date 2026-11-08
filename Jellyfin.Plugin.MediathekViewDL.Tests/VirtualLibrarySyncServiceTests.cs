@@ -183,5 +183,137 @@ public class VirtualLibrarySyncServiceTests : IDisposable
         Assert.Single(movieSubDirs);
         Assert.Contains("Blockbuster Movie", movieSubDirs[0]);
     }
+
+    [Fact]
+    public async Task SyncTopicAsync_ShowAlreadyPresentInLocalTvLibrary_SkipsVirtualSeries()
+    {
+        var localTvDir = Path.Combine(Path.GetTempPath(), "LocalTvTest_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(localTvDir, "The Rookie"));
+
+        try
+        {
+            var config = new PluginConfiguration();
+            config.VirtualLibrary.EnableVirtualLibrary = true;
+            config.VirtualLibrary.VirtualLibraryPath = _testDir;
+            config.Paths.DefaultSubscriptionShowPath = localTvDir;
+
+            var configProviderMock = new Mock<IConfigurationProvider>();
+            configProviderMock.Setup(c => c.ConfigurationOrNull).Returns(config);
+
+            var apiClientMock = new Mock<IMediathekViewApiClient>();
+            var mockResults = new List<ResultItemDto>
+            {
+                CreateMockResultItem("rookie_s01e01", "The Rookie", "Frischfleisch", "https://example.com/stream.mp4", TimeSpan.FromMinutes(45))
+            };
+            apiClientMock.Setup(a => a.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreateMockQueryResult(mockResults));
+
+            var videoParserMock = new Mock<IVideoParser>();
+            videoParserMock.Setup(v => v.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(new VideoInfo
+                {
+                    Title = "Frischfleisch",
+                    SeasonNumber = 1,
+                    EpisodeNumber = 1,
+                    IsShow = true
+                });
+
+            var service = new VirtualLibrarySyncService(
+                NullLogger<VirtualLibrarySyncService>.Instance,
+                configProviderMock.Object,
+                apiClientMock.Object,
+                videoParserMock.Object);
+
+            var synced = await service.SyncTopicAsync("The Rookie", _testDir, CancellationToken.None);
+            Assert.Equal(0, synced);
+
+            var seriesDir = Path.Combine(_testDir, "series", "The Rookie");
+            Assert.False(Directory.Exists(seriesDir));
+        }
+        finally
+        {
+            if (Directory.Exists(localTvDir))
+            {
+                Directory.Delete(localTvDir, true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task SyncTopicAsync_FiltersOutAccessibilityDuplicates()
+    {
+        var config = new PluginConfiguration();
+        config.VirtualLibrary.EnableVirtualLibrary = true;
+        config.VirtualLibrary.VirtualLibraryPath = _testDir;
+        config.VirtualLibrary.CuratedPopularOnly = false;
+
+        var configProviderMock = new Mock<IConfigurationProvider>();
+        configProviderMock.Setup(c => c.ConfigurationOrNull).Returns(config);
+
+        var apiClientMock = new Mock<IMediathekViewApiClient>();
+        var mockResults = new List<ResultItemDto>
+        {
+            CreateMockResultItem("ad_movie", "Filme", "Tatort - Mord (Audiodeskription)", "https://example.com/ad.mp4", TimeSpan.FromMinutes(90)),
+            CreateMockResultItem("clean_movie", "Filme", "Tatort - Mord", "https://example.com/clean.mp4", TimeSpan.FromMinutes(90))
+        };
+        apiClientMock.Setup(a => a.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateMockQueryResult(mockResults));
+
+        var videoParserMock = new Mock<IVideoParser>();
+        videoParserMock.Setup(v => v.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(new VideoInfo { IsShow = false });
+
+        var service = new VirtualLibrarySyncService(
+            NullLogger<VirtualLibrarySyncService>.Instance,
+            configProviderMock.Object,
+            apiClientMock.Object,
+            videoParserMock.Object);
+
+        var synced = await service.SyncTopicAsync("Filme", _testDir, CancellationToken.None);
+        Assert.Equal(1, synced);
+
+        var moviesDir = Path.Combine(_testDir, "movies");
+        var movieSubDirs = Directory.GetDirectories(moviesDir);
+        Assert.Single(movieSubDirs);
+        Assert.DoesNotContain("Audiodeskription", movieSubDirs[0]);
+    }
+
+    [Fact]
+    public async Task SyncTopicAsync_ParsesCleanMovieTitleAndYear()
+    {
+        var config = new PluginConfiguration();
+        config.VirtualLibrary.EnableVirtualLibrary = true;
+        config.VirtualLibrary.VirtualLibraryPath = _testDir;
+        config.VirtualLibrary.CuratedPopularOnly = false;
+
+        var configProviderMock = new Mock<IConfigurationProvider>();
+        configProviderMock.Setup(c => c.ConfigurationOrNull).Returns(config);
+
+        var apiClientMock = new Mock<IMediathekViewApiClient>();
+        var mockResults = new List<ResultItemDto>
+        {
+            CreateMockResultItem("doc_broadcaster", "Filme", "Cash - Spielfilm, Deutschland 2020", "https://example.com/cash.mp4", TimeSpan.FromMinutes(90))
+        };
+        apiClientMock.Setup(a => a.SearchAsync(It.IsAny<ApiQueryDto>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(CreateMockQueryResult(mockResults));
+
+        var videoParserMock = new Mock<IVideoParser>();
+        videoParserMock.Setup(v => v.ParseVideoInfo(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(new VideoInfo { IsShow = false });
+
+        var service = new VirtualLibrarySyncService(
+            NullLogger<VirtualLibrarySyncService>.Instance,
+            configProviderMock.Object,
+            apiClientMock.Object,
+            videoParserMock.Object);
+
+        var synced = await service.SyncTopicAsync("Filme", _testDir, CancellationToken.None);
+        Assert.Equal(1, synced);
+
+        var moviesDir = Path.Combine(_testDir, "movies");
+        var movieSubDirs = Directory.GetDirectories(moviesDir);
+        Assert.Single(movieSubDirs);
+        Assert.Equal("Cash (2020)", Path.GetFileName(movieSubDirs[0]));
+    }
 }
 

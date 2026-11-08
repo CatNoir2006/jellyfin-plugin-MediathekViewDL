@@ -6,6 +6,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
@@ -246,6 +247,13 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
             {
                 // Series Episode
                 var showTitle = SanitizePath(item.Topic);
+
+                // Skip series that are already present in primary local TV libraries (merging handles them directly)
+                if (config != null && IsSeriesLocallyPresent(showTitle, config))
+                {
+                    continue;
+                }
+
                 var showDir = Path.Combine(seriesDir, showTitle);
                 var seasonDir = Path.Combine(showDir, $"Season {videoInfo.SeasonNumber.Value:D2}");
                 Directory.CreateDirectory(seasonDir);
@@ -273,13 +281,25 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
             else
             {
                 // Standalone Movie / Feature
+                if (IsAccessibilityDuplicate(item.Title))
+                {
+                    continue;
+                }
+
                 if (config?.VirtualLibrary.CuratedPopularOnly == true && item.Duration < TimeSpan.FromSeconds(minMovieDuration))
                 {
                     continue;
                 }
 
-                var year = item.Timestamp.Year > 1900 ? item.Timestamp.Year : DateTime.UtcNow.Year;
-                var movieTitle = $"{SanitizePath(item.Title)} ({year})";
+                var (cleanTitle, year) = ParseMovieTitleAndYear(item.Title, item.Timestamp);
+
+                // Skip if movie is already present in primary local movie libraries
+                if (config != null && IsMovieLocallyPresent(cleanTitle, config))
+                {
+                    continue;
+                }
+
+                var movieTitle = year.HasValue ? $"{SanitizePath(cleanTitle)} ({year.Value})" : SanitizePath(cleanTitle);
                 var movieFolder = Path.Combine(moviesDir, movieTitle);
                 Directory.CreateDirectory(movieFolder);
 
@@ -289,7 +309,7 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
                 if (!File.Exists(strmPath))
                 {
                     await File.WriteAllTextAsync(strmPath, videoUrl, cancellationToken).ConfigureAwait(false);
-                    var movNfo = BuildMovieNfo(item.Title, item.Description, year, videoUrl);
+                    var movNfo = BuildMovieNfo(cleanTitle, item.Description, year ?? item.Timestamp.Year, videoUrl);
                     await File.WriteAllTextAsync(nfoPath, movNfo, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
                     synced++;
                 }
@@ -368,4 +388,187 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
         sb.AppendLine("</movie>");
         return sb.ToString();
     }
+
+    private static bool IsAccessibilityDuplicate(string title)
+    {
+        return title.Contains("Audiodeskription", StringComparison.OrdinalIgnoreCase) ||
+               title.Contains("(AD)", StringComparison.OrdinalIgnoreCase) ||
+               title.Contains("Gebärdensprache", StringComparison.OrdinalIgnoreCase) ||
+               title.Contains("(DGS)", StringComparison.OrdinalIgnoreCase) ||
+               title.Contains("(mit Untertitel)", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static (string Title, int? Year) ParseMovieTitleAndYear(string rawTitle, DateTimeOffset broadcastDate)
+    {
+        // Check for broadcaster pattern: "- Spielfilm, Deutschland 2020" or "- Spielfilm, USA 1979_2019"
+        var broadMatch = Regex.Match(rawTitle, @"\s*-\s*(?:Spielfilm|Fernsehfilm|Kino|Film).*?([12][90]\d{2})", RegexOptions.IgnoreCase);
+        if (broadMatch.Success && int.TryParse(broadMatch.Groups[1].Value, out var yearVal))
+        {
+            var cleaned = Regex.Replace(rawTitle, @"\s*-\s*(?:Spielfilm|Fernsehfilm|Kino|Film).*$", string.Empty, RegexOptions.IgnoreCase).Trim();
+            return (cleaned, yearVal);
+        }
+
+        // Check for (YYYY) in title: e.g. "Cash (2024)"
+        var parenMatch = Regex.Match(rawTitle, @"\((\d{4})\)");
+        if (parenMatch.Success && int.TryParse(parenMatch.Groups[1].Value, out var pYear))
+        {
+            var cleaned = Regex.Replace(rawTitle, @"\s*\(\d{4}\)", string.Empty).Trim();
+            return (cleaned, pYear);
+        }
+
+        return (rawTitle.Trim(), null);
+    }
+
+    private bool IsSeriesLocallyPresent(string showTitle, PluginConfiguration config)
+    {
+        var candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (!string.IsNullOrWhiteSpace(config.Paths.DefaultSubscriptionShowPath))
+        {
+            candidates.Add(config.Paths.DefaultSubscriptionShowPath);
+        }
+
+        if (!string.IsNullOrWhiteSpace(config.Paths.DefaultManualShowPath))
+        {
+            candidates.Add(config.Paths.DefaultManualShowPath);
+        }
+
+        var virtRoot = config.VirtualLibrary?.VirtualLibraryPath;
+
+        if (_libraryManager != null)
+        {
+            try
+            {
+                foreach (var vf in _libraryManager.GetVirtualFolders())
+                {
+                    if (string.Equals(vf.CollectionType?.ToString(), "tvshows", StringComparison.OrdinalIgnoreCase) && vf.Locations != null)
+                    {
+                        foreach (var loc in vf.Locations)
+                        {
+                            if (!string.IsNullOrWhiteSpace(virtRoot) && loc.StartsWith(virtRoot, StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
+                            candidates.Add(loc);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Failed to query library virtual folders for series deduplication.");
+            }
+        }
+
+        foreach (var dir in candidates)
+        {
+            if (!Directory.Exists(dir))
+            {
+                continue;
+            }
+
+            var target = Path.Combine(dir, showTitle);
+            if (Directory.Exists(target))
+            {
+                return true;
+            }
+
+            try
+            {
+                foreach (var sub in Directory.GetDirectories(dir))
+                {
+                    var name = Path.GetFileName(sub);
+                    if (string.Equals(name, showTitle, StringComparison.OrdinalIgnoreCase) ||
+                        name.StartsWith(showTitle + " ", StringComparison.OrdinalIgnoreCase) ||
+                        name.StartsWith(showTitle + "(", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore enumeration errors
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsMovieLocallyPresent(string movieTitle, PluginConfiguration config)
+    {
+        var candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (!string.IsNullOrWhiteSpace(config.Paths.DefaultSubscriptionMoviePath))
+        {
+            candidates.Add(config.Paths.DefaultSubscriptionMoviePath);
+        }
+
+        if (!string.IsNullOrWhiteSpace(config.Paths.DefaultManualMoviePath))
+        {
+            candidates.Add(config.Paths.DefaultManualMoviePath);
+        }
+
+        var virtRoot = config.VirtualLibrary?.VirtualLibraryPath;
+
+        if (_libraryManager != null)
+        {
+            try
+            {
+                foreach (var vf in _libraryManager.GetVirtualFolders())
+                {
+                    if (string.Equals(vf.CollectionType?.ToString(), "movies", StringComparison.OrdinalIgnoreCase) && vf.Locations != null)
+                    {
+                        foreach (var loc in vf.Locations)
+                        {
+                            if (!string.IsNullOrWhiteSpace(virtRoot) && loc.StartsWith(virtRoot, StringComparison.OrdinalIgnoreCase))
+                            {
+                                continue;
+                            }
+
+                            candidates.Add(loc);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Failed to query library virtual folders for movie deduplication.");
+            }
+        }
+
+        foreach (var dir in candidates)
+        {
+            if (!Directory.Exists(dir))
+            {
+                continue;
+            }
+
+            var target = Path.Combine(dir, movieTitle);
+            if (Directory.Exists(target))
+            {
+                return true;
+            }
+
+            try
+            {
+                foreach (var sub in Directory.GetDirectories(dir))
+                {
+                    var name = Path.GetFileName(sub);
+                    if (string.Equals(name, movieTitle, StringComparison.OrdinalIgnoreCase) ||
+                        name.StartsWith(movieTitle + " ", StringComparison.OrdinalIgnoreCase) ||
+                        name.StartsWith(movieTitle + "(", StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore enumeration errors
+            }
+        }
+
+        return false;
+    }
 }
+
