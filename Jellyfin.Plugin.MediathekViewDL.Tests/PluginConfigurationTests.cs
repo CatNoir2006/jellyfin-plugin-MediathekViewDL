@@ -82,5 +82,18 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             Assert.False(config.VirtualLibrary.EnableVirtualLibrary);
             Assert.Equal(string.Empty, config.VirtualLibrary.VirtualLibraryPath);
         }
+
+        [Fact]
+        public void Constructor_ShouldInitializeMediaMergingAsDisabledByDefault()
+        {
+            // Arrange / Act
+            var config = new PluginConfiguration();
+
+            // Assert
+            Assert.NotNull(config.Merging);
+            Assert.False(config.Merging.EnableInstanceMerging);
+            Assert.False(config.Merging.AutoDeleteStrmWhenLocalExists);
+            Assert.True(config.Merging.GroupAsMultiVersion);
+        }
     }
 }
