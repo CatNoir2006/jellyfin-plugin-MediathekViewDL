@@ -432,9 +432,9 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
                     if (baseDir.EndsWith("movies", StringComparison.OrdinalIgnoreCase))
                     {
                         isDirtyMovie = dirName.EndsWith(" (2026)", StringComparison.OrdinalIgnoreCase) ||
-                                       dirName.Contains('–') ||
-                                       dirName.Contains('—') ||
-                                       dirName.Contains('‧') ||
+                                       dirName.Contains("–", StringComparison.Ordinal) ||
+                                       dirName.Contains("—", StringComparison.Ordinal) ||
+                                       dirName.Contains("‧", StringComparison.Ordinal) ||
                                        dirName.Contains("(klare Sprache)", StringComparison.OrdinalIgnoreCase) ||
                                        dirName.Contains("(Originalversion", StringComparison.OrdinalIgnoreCase) ||
                                        dirName.Contains("- Spielfilm", StringComparison.OrdinalIgnoreCase) ||
