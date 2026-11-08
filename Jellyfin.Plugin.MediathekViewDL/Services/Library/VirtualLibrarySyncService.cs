@@ -120,6 +120,8 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
             Directory.CreateDirectory(rootPath);
         }
 
+        CleanupLegacyAccessibilityDirectories(rootPath);
+
         var topics = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         // 1. Curated popular series and blockbuster movie topics
@@ -243,6 +245,19 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
 
             var videoInfo = _videoParser.ParseVideoInfo(item.Topic, item.Title);
 
+            var allowAd = config?.SubscriptionDefaults.AccessibilitySettings?.AllowAudioDescription == true;
+            var allowSign = config?.SubscriptionDefaults.AccessibilitySettings?.AllowSignLanguage == true;
+
+            if (AccessibilityFilterHelper.ShouldFilterOut(item.Title, videoInfo, allowAd, allowSign))
+            {
+                continue;
+            }
+
+            if (videoInfo?.IsTrailer == true || videoInfo?.IsInterview == true)
+            {
+                continue;
+            }
+
             if (videoInfo?.SeasonNumber.HasValue == true && videoInfo.EpisodeNumber.HasValue)
             {
                 // Series Episode
@@ -281,11 +296,6 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
             else
             {
                 // Standalone Movie / Feature
-                if (IsAccessibilityDuplicate(item.Title))
-                {
-                    continue;
-                }
-
                 if (config?.VirtualLibrary.CuratedPopularOnly == true && item.Duration < TimeSpan.FromSeconds(minMovieDuration))
                 {
                     continue;
@@ -389,13 +399,45 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
         return sb.ToString();
     }
 
-    private static bool IsAccessibilityDuplicate(string title)
+    private void CleanupLegacyAccessibilityDirectories(string rootPath)
     {
-        return title.Contains("Audiodeskription", StringComparison.OrdinalIgnoreCase) ||
-               title.Contains("(AD)", StringComparison.OrdinalIgnoreCase) ||
-               title.Contains("Gebärdensprache", StringComparison.OrdinalIgnoreCase) ||
-               title.Contains("(DGS)", StringComparison.OrdinalIgnoreCase) ||
-               title.Contains("(mit Untertitel)", StringComparison.OrdinalIgnoreCase);
+        var dirsToScan = new[]
+        {
+            Path.Combine(rootPath, "movies"),
+            Path.Combine(rootPath, "series")
+        };
+
+        foreach (var baseDir in dirsToScan)
+        {
+            if (!Directory.Exists(baseDir))
+            {
+                continue;
+            }
+
+            try
+            {
+                foreach (var dir in Directory.GetDirectories(baseDir))
+                {
+                    var dirName = Path.GetFileName(dir);
+                    if (AccessibilityFilterHelper.IsAudioDescription(dirName) || AccessibilityFilterHelper.IsSignLanguage(dirName))
+                    {
+                        try
+                        {
+                            Directory.Delete(dir, true);
+                            _logger.LogInformation("Removed legacy accessibility directory: {Path}", dir);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to remove legacy accessibility directory: {Path}", dir);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Error scanning for legacy accessibility directories in {Path}", baseDir);
+            }
+        }
     }
 
     private static (string Title, int? Year) ParseMovieTitleAndYear(string rawTitle, DateTimeOffset broadcastDate)

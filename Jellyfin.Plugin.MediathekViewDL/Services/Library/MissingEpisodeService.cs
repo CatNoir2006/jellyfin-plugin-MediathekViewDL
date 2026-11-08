@@ -197,6 +197,19 @@ public class MissingEpisodeService : IMissingEpisodeService
                 continue;
             }
 
+            var allowAd = config.SubscriptionDefaults.AccessibilitySettings?.AllowAudioDescription == true;
+            var allowSign = config.SubscriptionDefaults.AccessibilitySettings?.AllowSignLanguage == true;
+
+            if (AccessibilityFilterHelper.ShouldFilterOut(item.Title, videoInfo, allowAd, allowSign))
+            {
+                continue;
+            }
+
+            if (videoInfo.IsTrailer || videoInfo.IsInterview)
+            {
+                continue;
+            }
+
             var season = videoInfo.SeasonNumber.Value;
             var episode = videoInfo.EpisodeNumber.Value;
 
