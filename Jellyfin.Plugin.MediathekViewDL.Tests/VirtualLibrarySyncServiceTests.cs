@@ -334,6 +334,8 @@ public class VirtualLibrarySyncServiceTests : IDisposable
     [InlineData("Charité intensiv ‧ Gegen die Zeit", "Charité intensiv - Gegen die Zeit")]
     [InlineData("Babylon Berlin – Die Show", "Babylon Berlin - Die Show")]
     [InlineData("Nord bei Nordwest — Neue Folgen", "Nord bei Nordwest - Neue Folgen")]
+    [InlineData("Déjà-vu", "Déjà-vu")]
+    [InlineData("Aus der Traum ...", "Aus der Traum")]
     public void CleanTitlePunctuation_NormalizesUnicodeSpecialCharacters(string raw, string expected)
     {
         var result = VirtualLibrarySyncService.CleanTitlePunctuation(raw);

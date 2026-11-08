@@ -259,7 +259,11 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
                 continue;
             }
 
-            if (videoInfo?.SeasonNumber.HasValue == true && videoInfo.EpisodeNumber.HasValue)
+            var isPopularSeries = DefaultPopularSeries.Any(s => string.Equals(s, item.Topic, StringComparison.OrdinalIgnoreCase));
+            var seasonNum = videoInfo?.SeasonNumber ?? (isPopularSeries || videoInfo?.IsShow == true ? 1 : (int?)null);
+            var episodeNum = videoInfo?.EpisodeNumber ?? videoInfo?.AbsoluteNumber;
+
+            if (seasonNum.HasValue && episodeNum.HasValue)
             {
                 // Series Episode
                 var showTitle = SanitizePath(CleanTitlePunctuation(item.Topic));
@@ -271,7 +275,7 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
                 }
 
                 var showDir = Path.Combine(seriesDir, showTitle);
-                var seasonDir = Path.Combine(showDir, $"Season {videoInfo.SeasonNumber.Value:D2}");
+                var seasonDir = Path.Combine(showDir, $"Season {seasonNum.Value:D2}");
                 Directory.CreateDirectory(seasonDir);
 
                 // Write tvshow.nfo if missing
@@ -282,15 +286,41 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
                     await File.WriteAllTextAsync(tvshowNfo, showNfoContent, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
                 }
 
-                var epCleanTitle = CleanTitlePunctuation(videoInfo.Title);
-                var fileName = $"{showTitle} - S{videoInfo.SeasonNumber.Value:D2}E{videoInfo.EpisodeNumber.Value:D2} - {SanitizePath(epCleanTitle)}";
+                var epCleanTitle = CleanTitlePunctuation(videoInfo?.Title ?? item.Title);
+                var fileName = $"{showTitle} - S{seasonNum.Value:D2}E{episodeNum.Value:D2} - {SanitizePath(epCleanTitle)}";
                 var strmPath = Path.Combine(seasonDir, $"{fileName}.strm");
                 var nfoPath = Path.Combine(seasonDir, $"{fileName}.nfo");
 
                 if (!File.Exists(strmPath))
                 {
                     await File.WriteAllTextAsync(strmPath, videoUrl, cancellationToken).ConfigureAwait(false);
-                    var epNfo = BuildEpisodeNfo(epCleanTitle, item.Description, videoInfo.SeasonNumber.Value, videoInfo.EpisodeNumber.Value, item.Timestamp.DateTime, videoUrl);
+                    var epNfo = BuildEpisodeNfo(epCleanTitle, item.Description, seasonNum.Value, episodeNum.Value, item.Timestamp.DateTime, videoUrl);
+                    await File.WriteAllTextAsync(nfoPath, epNfo, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
+                    synced++;
+                }
+            }
+            else if (isPopularSeries || videoInfo?.IsShow == true)
+            {
+                // Unnumbered episode belonging to a known series topic -> keep in series/
+                var showTitle = SanitizePath(CleanTitlePunctuation(item.Topic));
+                if (config != null && IsSeriesLocallyPresent(showTitle, config))
+                {
+                    continue;
+                }
+
+                var showDir = Path.Combine(seriesDir, showTitle);
+                var seasonDir = Path.Combine(showDir, "Season 01");
+                Directory.CreateDirectory(seasonDir);
+
+                var epCleanTitle = CleanTitlePunctuation(videoInfo?.Title ?? item.Title);
+                var fileName = $"{showTitle} - {SanitizePath(epCleanTitle)}";
+                var strmPath = Path.Combine(seasonDir, $"{fileName}.strm");
+                var nfoPath = Path.Combine(seasonDir, $"{fileName}.nfo");
+
+                if (!File.Exists(strmPath))
+                {
+                    await File.WriteAllTextAsync(strmPath, videoUrl, cancellationToken).ConfigureAwait(false);
+                    var epNfo = BuildEpisodeNfo(epCleanTitle, item.Description, 1, 1, item.Timestamp.DateTime, videoUrl);
                     await File.WriteAllTextAsync(nfoPath, epNfo, Encoding.UTF8, cancellationToken).ConfigureAwait(false);
                     synced++;
                 }
@@ -433,6 +463,9 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
                     if (baseDir.EndsWith("movies", StringComparison.OrdinalIgnoreCase))
                     {
                         isDirtyMovie = dirName.EndsWith(" (2026)", StringComparison.OrdinalIgnoreCase) ||
+                                       dirName.EndsWith('.') ||
+                                       dirName.EndsWith('…') ||
+                                       string.Equals(dirName, "Déjà - vu", StringComparison.OrdinalIgnoreCase) ||
                                        dirName.IndexOfAny(LegacyDirtyChars) >= 0 ||
                                        dirName.Contains("(klare Sprache)", StringComparison.OrdinalIgnoreCase) ||
                                        dirName.Contains("(Originalversion", StringComparison.OrdinalIgnoreCase) ||
@@ -443,7 +476,8 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
                                        dirName.Contains("| Thriller", StringComparison.OrdinalIgnoreCase) ||
                                        dirName.Contains("| Krimi", StringComparison.OrdinalIgnoreCase) ||
                                        dirName.Contains("| Drama", StringComparison.OrdinalIgnoreCase) ||
-                                       dirName.Contains("| Komödie", StringComparison.OrdinalIgnoreCase);
+                                       dirName.Contains("| Komödie", StringComparison.OrdinalIgnoreCase) ||
+                                       DefaultPopularSeries.Any(s => dirName.StartsWith(s + " - ", StringComparison.OrdinalIgnoreCase) || string.Equals(dirName, s, StringComparison.OrdinalIgnoreCase));
                     }
 
                     if (isAccessibility || isDirtyMovie)
@@ -485,11 +519,12 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
             .Replace('—', '-')
             .Replace('•', '-');
 
-        // Normalize spacing around hyphens
-        normalized = Regex.Replace(normalized, @"\s*-\s*", " - ");
+        // Normalize spacing around hyphens that had spaces (do not alter compound words like Déjà-vu)
+        normalized = Regex.Replace(normalized, @"\s+-\s*", " - ");
+        normalized = Regex.Replace(normalized, @"\s*-\s+", " - ");
         normalized = Regex.Replace(normalized, @"\s+", " ");
 
-        return normalized.Trim(' ', '-', '.', ':');
+        return normalized.Trim(' ', '-', '.', ':', '…');
     }
 
     /// <summary>
