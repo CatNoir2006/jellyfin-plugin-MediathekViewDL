@@ -25,6 +25,7 @@ namespace Jellyfin.Plugin.MediathekViewDL.Services.Library;
 public class VirtualLibrarySyncService : IVirtualLibrarySyncService
 {
     private static readonly char[] TopicSeparators = [',', ';'];
+    private static readonly char[] LegacyDirtyChars = ['–', '—', '‧'];
 
     /// <summary>
     /// Default curated popular series across German public broadcasters.
@@ -432,9 +433,7 @@ public class VirtualLibrarySyncService : IVirtualLibrarySyncService
                     if (baseDir.EndsWith("movies", StringComparison.OrdinalIgnoreCase))
                     {
                         isDirtyMovie = dirName.EndsWith(" (2026)", StringComparison.OrdinalIgnoreCase) ||
-                                       dirName.Contains("–", StringComparison.Ordinal) ||
-                                       dirName.Contains("—", StringComparison.Ordinal) ||
-                                       dirName.Contains("‧", StringComparison.Ordinal) ||
+                                       dirName.IndexOfAny(LegacyDirtyChars) >= 0 ||
                                        dirName.Contains("(klare Sprache)", StringComparison.OrdinalIgnoreCase) ||
                                        dirName.Contains("(Originalversion", StringComparison.OrdinalIgnoreCase) ||
                                        dirName.Contains("- Spielfilm", StringComparison.OrdinalIgnoreCase) ||
