@@ -9,11 +9,15 @@ using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
 using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
 using MediaBrowser.Controller.Channels;
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Channels;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.MediaInfo;
+using MediathekView.Api.Models;
+using MediathekView.Api.Models.Enums;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
@@ -38,6 +42,7 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback, IDisposabl
     private readonly ILogger<MediathekChannel> _logger;
     private readonly IConfigurationProvider _configurationProvider;
     private readonly ISubscriptionProcessor _subscriptionProcessor;
+    private readonly ILibraryManager _libraryManager;
 
     // Cache of channel item id -> the API result used to resolve the stream URL on playback.
     private readonly MemoryCache _memoryCache = new(new MemoryCacheOptions { SizeLimit = MaxCacheEntries });
@@ -52,14 +57,17 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback, IDisposabl
     /// <param name="logger">The logger.</param>
     /// <param name="configurationProvider">The configuration provider.</param>
     /// <param name="subscriptionProcessor">The subscription processor.</param>
+    /// <param name="libraryManager">Jellyfin's library manager.</param>
     public MediathekChannel(
         ILogger<MediathekChannel> logger,
         IConfigurationProvider configurationProvider,
-        ISubscriptionProcessor subscriptionProcessor)
+        ISubscriptionProcessor subscriptionProcessor,
+        ILibraryManager libraryManager)
     {
         _logger = logger;
         _configurationProvider = configurationProvider;
         _subscriptionProcessor = subscriptionProcessor;
+        _libraryManager = libraryManager;
     }
 
     /// <inheritdoc />
@@ -165,8 +173,14 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback, IDisposabl
     {
         if (!TryGetCache(id, out var entry))
         {
-            _logger.LogWarning("No (longer) cached item found for channel item '{Id}'.", id);
-            return [];
+            var resolved = await ResolveItemAsync(id, cancellationToken).ConfigureAwait(false);
+            if (resolved is null)
+            {
+                _logger.LogWarning("No available media found for channel item '{Id}'.", id);
+                return [];
+            }
+
+            entry = resolved.Value;
         }
 
         var url = await _subscriptionProcessor.GetStreamUrlAsync(entry.Subscription, entry.Item, cancellationToken).ConfigureAwait(false);
@@ -189,7 +203,67 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback, IDisposabl
             SupportsDirectPlay = true,
         };
 
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri)
+            && string.Equals(uri.IdnHost, "apasfiis.sf.apa.at", StringComparison.OrdinalIgnoreCase))
+        {
+            mediaSource.RequiredHttpHeaders["User-Agent"] = "Mozilla/5.0";
+        }
+
         return [mediaSource];
+    }
+
+    private async Task<ApiResultCacheEntry?> ResolveItemAsync(string id, CancellationToken cancellationToken)
+    {
+        const int SubscriptionIdLength = 32;
+        var itemIdOffset = ItemPrefix.Length + SubscriptionIdLength + 1;
+        if (!id.StartsWith(ItemPrefix, StringComparison.Ordinal)
+            || id.Length <= itemIdOffset
+            || id[itemIdOffset - 1] != '-'
+            || !Guid.TryParseExact(id.AsSpan(ItemPrefix.Length, SubscriptionIdLength), "N", out var subscriptionId))
+        {
+            return null;
+        }
+
+        var subscription = _configurationProvider.ConfigurationOrNull?.Subscriptions
+            .FirstOrDefault(s => s.Id == subscriptionId && s.IsEnabled && s.IsVirtual);
+        if (subscription is null)
+        {
+            return null;
+        }
+
+        var itemId = id[itemIdOffset..];
+        var stored = _libraryManager.GetItemList(new InternalItemsQuery { ExternalId = id, Limit = 1 })
+            .FirstOrDefault(item => string.Equals(item.ExternalId, id, StringComparison.Ordinal));
+        ResultItemDto? media = null;
+        if (!string.IsNullOrWhiteSpace(stored?.Name))
+        {
+            var title = new QueryFieldsDto { Fields = { QueryFieldType.Title }, Query = stored.Name };
+            var search = subscription.Search with { Criteria = [.. subscription.Search.Criteria, title] };
+            media = await FindItemAsync(subscription with { Search = search }, itemId, cancellationToken).ConfigureAwait(false);
+        }
+
+        media ??= await FindItemAsync(subscription, itemId, cancellationToken).ConfigureAwait(false);
+        if (media is null)
+        {
+            return null;
+        }
+
+        var entry = new ApiResultCacheEntry(subscription, media, DateTimeOffset.UtcNow);
+        _memoryCache.Set(id, entry, _defaultCacheOptions);
+        return entry;
+    }
+
+    private async Task<ResultItemDto?> FindItemAsync(Subscription subscription, string itemId, CancellationToken cancellationToken)
+    {
+        await foreach (var (item, _) in _subscriptionProcessor.GetChannelItemsAsync(subscription, cancellationToken).ConfigureAwait(false))
+        {
+            if (string.Equals(item.Id, itemId, StringComparison.Ordinal))
+            {
+                return item;
+            }
+        }
+
+        return null;
     }
 
     private ChannelItemResult BuildFolderListing(IReadOnlyCollection<Subscription> virtualSubscriptions)
