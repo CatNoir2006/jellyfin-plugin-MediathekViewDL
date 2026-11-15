@@ -2,15 +2,20 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Plugin.MediathekViewDL.Configuration;
+using Jellyfin.Plugin.MediathekViewDL.Services.Library;
 using Jellyfin.Plugin.MediathekViewDL.Services.Subscriptions;
+using MediaBrowser.Common;
 using MediaBrowser.Controller.Channels;
+using MediaBrowser.Controller.MediaEncoding;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Channels;
+using MediaBrowser.Model.Dlna;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.MediaInfo;
@@ -38,6 +43,8 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback, IDisposabl
     private readonly ILogger<MediathekChannel> _logger;
     private readonly IConfigurationProvider _configurationProvider;
     private readonly ISubscriptionProcessor _subscriptionProcessor;
+    private readonly IMediaEncoder _mediaEncoder;
+    private readonly IUrlValidationService _urlValidationService;
 
     // Cache of channel item id -> the API result used to resolve the stream URL on playback.
     private readonly MemoryCache _memoryCache = new(new MemoryCacheOptions { SizeLimit = MaxCacheEntries });
@@ -52,14 +59,20 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback, IDisposabl
     /// <param name="logger">The logger.</param>
     /// <param name="configurationProvider">The configuration provider.</param>
     /// <param name="subscriptionProcessor">The subscription processor.</param>
+    /// <param name="mediaEncoder">Jellyfin's media encoder.</param>
+    /// <param name="urlValidationService">The stream URL validation service.</param>
     public MediathekChannel(
         ILogger<MediathekChannel> logger,
         IConfigurationProvider configurationProvider,
-        ISubscriptionProcessor subscriptionProcessor)
+        ISubscriptionProcessor subscriptionProcessor,
+        IMediaEncoder mediaEncoder,
+        IUrlValidationService urlValidationService)
     {
         _logger = logger;
         _configurationProvider = configurationProvider;
         _subscriptionProcessor = subscriptionProcessor;
+        _mediaEncoder = mediaEncoder;
+        _urlValidationService = urlValidationService;
     }
 
     /// <inheritdoc />
@@ -188,6 +201,29 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback, IDisposabl
             SupportsDirectStream = true,
             SupportsDirectPlay = true,
         };
+        using var probeCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        probeCancellation.CancelAfter(TimeSpan.FromSeconds(4));
+        try
+        {
+            if (await _urlValidationService.ValidateUrlAsync(url, probeCancellation.Token).ConfigureAwait(false))
+            {
+                var info = await _mediaEncoder.GetMediaInfo(
+                    new MediaInfoRequest
+                    {
+                        MediaSource = mediaSource,
+                        MediaType = DlnaProfileType.Video,
+                    },
+                    probeCancellation.Token).ConfigureAwait(false);
+                mediaSource.Container = info.Container;
+                mediaSource.Bitrate = info.Bitrate;
+                mediaSource.MediaStreams = info.MediaStreams;
+            }
+        }
+        catch (Exception ex) when (ex is FfmpegException or HttpRequestException or ArgumentException or InvalidOperationException
+            || (ex is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+        {
+            _logger.LogDebug("Could not detect playback formats for Mediathek item '{Id}'.", id);
+        }
 
         return [mediaSource];
     }
