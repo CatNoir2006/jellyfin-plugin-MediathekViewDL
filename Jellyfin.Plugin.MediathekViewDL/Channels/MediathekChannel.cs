@@ -171,9 +171,11 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback, IDisposabl
     /// <inheritdoc />
     public async Task<IEnumerable<MediaSourceInfo>> GetChannelItemMediaInfo(string id, CancellationToken cancellationToken)
     {
+        var stored = _libraryManager.GetItemList(new InternalItemsQuery { ExternalId = id, Limit = 1 })
+            .FirstOrDefault(item => string.Equals(item.ExternalId, id, StringComparison.Ordinal));
         if (!TryGetCache(id, out var entry))
         {
-            var resolved = await ResolveItemAsync(id, cancellationToken).ConfigureAwait(false);
+            var resolved = await ResolveItemAsync(id, stored?.Name, cancellationToken).ConfigureAwait(false);
             if (resolved is null)
             {
                 _logger.LogWarning("No available media found for channel item '{Id}'.", id);
@@ -193,7 +195,7 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback, IDisposabl
         var mediaSource = new MediaSourceInfo
         {
             Protocol = MediaProtocol.Http,
-            Id = CreateStableGuid(entry.Item.Id).ToString("N", System.Globalization.CultureInfo.InvariantCulture),
+            Id = (stored?.Id ?? CreateStableGuid(entry.Item.Id)).ToString("N", System.Globalization.CultureInfo.InvariantCulture),
             Path = url,
             IsRemote = true,
             Name = entry.Item.Title,
@@ -212,7 +214,7 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback, IDisposabl
         return [mediaSource];
     }
 
-    private async Task<ApiResultCacheEntry?> ResolveItemAsync(string id, CancellationToken cancellationToken)
+    private async Task<ApiResultCacheEntry?> ResolveItemAsync(string id, string? storedName, CancellationToken cancellationToken)
     {
         const int SubscriptionIdLength = 32;
         var itemIdOffset = ItemPrefix.Length + SubscriptionIdLength + 1;
@@ -232,12 +234,10 @@ public class MediathekChannel : IChannel, IRequiresMediaInfoCallback, IDisposabl
         }
 
         var itemId = id[itemIdOffset..];
-        var stored = _libraryManager.GetItemList(new InternalItemsQuery { ExternalId = id, Limit = 1 })
-            .FirstOrDefault(item => string.Equals(item.ExternalId, id, StringComparison.Ordinal));
         ResultItemDto? media = null;
-        if (!string.IsNullOrWhiteSpace(stored?.Name))
+        if (!string.IsNullOrWhiteSpace(storedName))
         {
-            var title = new QueryFieldsDto { Fields = { QueryFieldType.Title }, Query = stored.Name };
+            var title = new QueryFieldsDto { Fields = { QueryFieldType.Title }, Query = storedName };
             var search = subscription.Search with { Criteria = [.. subscription.Search.Criteria, title] };
             media = await FindItemAsync(subscription with { Search = search }, itemId, cancellationToken).ConfigureAwait(false);
         }
