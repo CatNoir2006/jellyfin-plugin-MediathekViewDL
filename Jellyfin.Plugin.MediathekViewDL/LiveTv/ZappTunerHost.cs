@@ -69,7 +69,7 @@ public class ZappTunerHost : ITunerHost, IConfigurableTunerHost
         var tunerHostInfo = LiveTvUtils.GetTunerHostInfo(_serverConfig);
         if (tunerHostInfo is null)
         {
-            _logger.LogWarning("Zapp tuner host is not configured. Please add a tuner host with type 'zapp' in the Live TV settings.");
+            _logger.LogDebug("Zapp tuner host is not configured. Skipping channel retrieval.");
             return [];
         }
 
