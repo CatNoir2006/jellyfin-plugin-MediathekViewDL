@@ -48,5 +48,66 @@ namespace Jellyfin.Plugin.MediathekViewDL.Tests
             // Assert
             Assert.True(config.SubscriptionDefaults.DownloadSettings.SkipVideoQualityProbing);
         }
+
+        [Fact]
+        public void Constructor_ShouldInitializeEnableExternalUrlProviderAsFalse()
+        {
+            // Arrange / Act
+            var config = new PluginConfiguration();
+
+            // Assert
+            Assert.False(config.EnableExternalUrlProvider);
+        }
+
+        [Fact]
+        public void Constructor_ShouldInitializeMissingEpisodesSyncAsDisabledByDefault()
+        {
+            // Arrange / Act
+            var config = new PluginConfiguration();
+
+            // Assert
+            Assert.NotNull(config.MissingEpisodes);
+            Assert.False(config.MissingEpisodes.EnableMissingEpisodesSync);
+            Assert.Equal(Configuration.Groups.MissingEpisodeSyncMode.Download, config.MissingEpisodes.SyncMode);
+        }
+
+        [Fact]
+        public void Constructor_ShouldInitializeVirtualLibraryAsDisabledByDefault()
+        {
+            // Arrange / Act
+            var config = new PluginConfiguration();
+
+            // Assert
+            Assert.NotNull(config.VirtualLibrary);
+            Assert.False(config.VirtualLibrary.EnableVirtualLibrary);
+            Assert.Equal(string.Empty, config.VirtualLibrary.VirtualLibraryPath);
+        }
+
+        [Fact]
+        public void Constructor_ShouldInitializeMediaMergingAsDisabledByDefault()
+        {
+            // Arrange / Act
+            var config = new PluginConfiguration();
+
+            // Assert
+            Assert.NotNull(config.Merging);
+            Assert.False(config.Merging.EnableInstanceMerging);
+            Assert.False(config.Merging.AutoDeleteStrmWhenLocalExists);
+            Assert.True(config.Merging.GroupAsMultiVersion);
+        }
+
+        [Fact]
+        public void Constructor_ShouldInitializeFederationOptionsAsDisabledByDefault()
+        {
+            // Arrange / Act
+            var config = new PluginConfiguration();
+
+            // Assert
+            Assert.NotNull(config.Federation);
+            Assert.False(config.Federation.EnableFastMediaSourceResolution);
+            Assert.False(config.Federation.AutoTriggerSeerrScan);
+            Assert.Equal(string.Empty, config.Federation.SeerrUrl);
+            Assert.Equal(string.Empty, config.Federation.SeerrApiKey);
+        }
     }
 }

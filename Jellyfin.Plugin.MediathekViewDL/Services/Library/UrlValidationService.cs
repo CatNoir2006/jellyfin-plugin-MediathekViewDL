@@ -90,10 +90,10 @@ public class UrlValidationService : IUrlValidationService
             return true;
         }
 
-        // If HEAD fails (some servers might not support it), try a Range request for the first byte
-        if (response.StatusCode == HttpStatusCode.MethodNotAllowed)
+        // If HEAD fails (some CDNs reject HEAD with 405 or 403), try a Range request for the first byte
+        if (response.StatusCode == HttpStatusCode.MethodNotAllowed || response.StatusCode == HttpStatusCode.Forbidden)
         {
-            _logger.LogDebug("HEAD request not allowed for {Url}, trying GET with Range header.", url);
+            _logger.LogDebug("HEAD request returned {StatusCode} for {Url}, trying GET with Range header.", response.StatusCode, url);
             using var getRequest = new HttpRequestMessage(HttpMethod.Get, url);
             getRequest.Headers.Range = new System.Net.Http.Headers.RangeHeaderValue(0, 0);
             using var getResponse = await client.SendAsync(getRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);

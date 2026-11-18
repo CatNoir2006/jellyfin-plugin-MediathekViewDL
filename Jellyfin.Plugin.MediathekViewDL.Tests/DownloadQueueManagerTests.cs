@@ -242,6 +242,10 @@ public class DownloadQueueManagerTests : IDisposable
             "download B finished");
 
         // Assert — the scan is triggered exactly once, after all running downloads finished.
+        await WaitForConditionAsync(
+            () => _libraryManagerMock.Invocations.Count == 1,
+            TimeSpan.FromSeconds(10),
+            "library scan triggered");
         _libraryManagerMock.Verify(l => l.QueueLibraryScan(), Times.Once);
     }
 

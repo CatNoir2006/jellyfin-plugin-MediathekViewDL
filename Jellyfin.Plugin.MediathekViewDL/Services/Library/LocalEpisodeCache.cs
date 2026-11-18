@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Jellyfin.Plugin.MediathekViewDL.Services.Media;
 
 namespace Jellyfin.Plugin.MediathekViewDL.Services.Library;
@@ -42,6 +43,17 @@ public class LocalEpisodeCache
         {
             _absoluteEpisodes[(absolute.Value, lang)] = filePath;
         }
+    }
+
+    /// <summary>
+    /// Checks if the cache contains the specified season and episode regardless of language.
+    /// </summary>
+    /// <param name="season">The season number.</param>
+    /// <param name="episode">The episode number.</param>
+    /// <returns>True if any audio version of this season/episode exists.</returns>
+    public bool ContainsSeasonEpisode(int season, int episode)
+    {
+        return _seasonEpisodes.Keys.Any(k => k.Season == season && k.Episode == episode);
     }
 
     /// <summary>

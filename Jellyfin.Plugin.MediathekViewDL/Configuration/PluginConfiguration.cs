@@ -57,11 +57,37 @@ public class PluginConfiguration : BasePluginConfiguration
     public SubscriptionDefaults SubscriptionDefaults { get; set; } = new();
 
     /// <summary>
+    /// Gets or sets the missing episodes sync options.
+    /// </summary>
+    public MissingEpisodesOptions MissingEpisodes { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the dedicated virtual streaming library options.
+    /// </summary>
+    public VirtualLibraryOptions VirtualLibrary { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the multi-source instance merging options.
+    /// </summary>
+    public MediaMergingOptions Merging { get; set; } = new();
+
+    /// <summary>
+    /// Gets or sets the federation and external integration options (Seerr, Fast MediaSource).
+    /// </summary>
+    public FederationEnhancementsOptions Federation { get; set; } = new();
+
+    /// <summary>
     /// Gets or sets a value indicating whether the setup wizard has been completed.
     /// Used to auto-show the first-run wizard on fresh installations
     /// and to suppress it once the user has finished (or explicitly skipped) the setup.
     /// </summary>
     public bool WizardCompleted { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether dynamic external links to ARD / ZDF Mediathek are displayed in Jellyfin UI.
+    /// Default is false.
+    /// </summary>
+    public bool EnableExternalUrlProvider { get; set; }
 
     /// <summary>
     /// Gets the list of download subscriptions.
